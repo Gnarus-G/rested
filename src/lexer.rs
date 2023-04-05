@@ -2,8 +2,23 @@ use std::ops::Range;
 
 #[derive(Debug, PartialEq)]
 pub enum TokenKind {
+    // keywords
     Get,
+    Header,
+
+    Ident,
+
+    // literals
+    StringLiteral,
     Url,
+
+    // operators
+    Assign,
+
+    // special characters
+    Quote,
+    LBracket,
+    RBracket,
     End,
 }
 
@@ -111,28 +126,67 @@ impl<'i> Lexer<'i> {
         };
 
         let t = match ch {
-            _ => {
-                let (s, e) = self.read_while(|c| c.is_ascii_alphabetic());
-                let string = self.input_slice(s..e);
-
-                match string {
-                    "get" => Token {
-                        kind: Get,
-                        text: string,
-                    },
-                    "http" | "https" => {
-                        let (.., e) = self.read_while(|&c| c != b';');
-                        let s = self.input_slice(s..e);
-                        Token { kind: Url, text: s }
-                    }
-                    _ => panic!(),
-                }
-            }
+            b'"' => Token {
+                kind: Quote,
+                text: "\"",
+            },
+            b'{' => Token {
+                kind: LBracket,
+                text: "{",
+            },
+            b'}' => Token {
+                kind: RBracket,
+                text: "}",
+            },
+            b'=' => Token {
+                kind: Assign,
+                text: "=",
+            },
+            _ if self.if_previous(b'"') => self.string_literal(),
+            c if c.is_ascii_alphabetic() => self.keyword_or_identifier(),
+            &c => todo!("{}", c as char),
         };
 
         self.step();
 
         t
+    }
+
+    fn string_literal(&mut self) -> Token<'i> {
+        let (s, e) = self.read_while(|&c| c != b'"');
+        let string = self.input_slice(s..e);
+
+        Token {
+            kind: TokenKind::StringLiteral,
+            text: string,
+        }
+    }
+
+    fn keyword_or_identifier(&mut self) -> Token<'i> {
+        let (s, e) = self.read_while(|c| c.is_ascii_alphabetic());
+        let string = self.input_slice(s..e);
+
+        use TokenKind::*;
+
+        match string {
+            "get" => Token {
+                kind: Get,
+                text: string,
+            },
+            "header" => Token {
+                kind: Header,
+                text: string,
+            },
+            "http" | "https" => {
+                let (.., e) = self.read_while(|&c| c != b' ');
+                let s = self.input_slice(s..e);
+                Token { kind: Url, text: s }
+            }
+            s => Token {
+                kind: Ident,
+                text: s,
+            },
+        }
     }
 }
 
@@ -141,6 +195,18 @@ mod tests {
     use super::*;
 
     use TokenKind::*;
+
+    impl<'i> Iterator for Lexer<'i> {
+        type Item = Token<'i>;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            let token = self.next();
+            if let TokenKind::End = token.kind {
+                return None;
+            }
+            return Some(token);
+        }
+    }
 
     #[test]
     fn lex_get_url() {
@@ -160,6 +226,59 @@ mod tests {
                 kind: Url,
                 text: "http://localhost"
             }
+        )
+    }
+
+    #[test]
+    fn lex_get_url_with_header() {
+        let lexer = Lexer::new("get http://localhost { header Authorization = \"Bearer token\" }");
+
+        let tokens: Vec<_> = lexer.into_iter().collect();
+
+        assert_eq!(
+            tokens,
+            vec![
+                Token {
+                    kind: Get,
+                    text: "get"
+                },
+                Token {
+                    kind: Url,
+                    text: "http://localhost"
+                },
+                Token {
+                    kind: LBracket,
+                    text: "{"
+                },
+                Token {
+                    kind: Header,
+                    text: "header"
+                },
+                Token {
+                    kind: Ident,
+                    text: "Authorization"
+                },
+                Token {
+                    kind: Assign,
+                    text: "="
+                },
+                Token {
+                    kind: Quote,
+                    text: "\""
+                },
+                Token {
+                    kind: StringLiteral,
+                    text: "Bearer token"
+                },
+                Token {
+                    kind: Quote,
+                    text: "\""
+                },
+                Token {
+                    kind: RBracket,
+                    text: "}"
+                },
+            ]
         )
     }
 }
