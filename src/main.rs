@@ -21,7 +21,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         for s in ast.requests {
             match s {
                 ast::Request::Get(get) => {
-                    let res = ureq::get(get.url).call()?.into_string()?;
+                    let mut req = ureq::get(get.url);
+
+                    if let Some(headers) = get.headers {
+                        for h in headers {
+                            req = req.set(h.name, h.value);
+                        }
+                    }
+
+                    let res = req.call()?.into_string()?;
                     println!("{res}");
                 }
             }
