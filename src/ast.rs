@@ -6,6 +6,13 @@ pub enum Request<'i> {
 #[derive(Debug, PartialEq)]
 pub struct GetRequestParams<'i> {
     pub url: &'i str,
+    pub headers: Option<Vec<Header<'i>>>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct Header<'i> {
+    pub name: &'i str,
+    pub value: &'i str,
 }
 
 #[derive(Debug, PartialEq)]

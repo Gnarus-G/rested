@@ -1,6 +1,6 @@
 use crate::{
-    ast::{Program, Request},
-    lexer::{Lexer, Token},
+    ast::{Header, Program, Request},
+    lexer::{Lexer, Token, TokenKind},
 };
 
 #[derive(Debug)]
@@ -42,7 +42,7 @@ impl<'i> Parser<'i> {
         while token.kind != End {
             let request = match token.kind {
                 Get => self.parse_get_request(),
-                _ => todo!(),
+                tk => todo!("{tk:?}"),
             };
             program.requests.push(request);
             token = self.token();
@@ -54,7 +54,49 @@ impl<'i> Parser<'i> {
     fn parse_get_request(&mut self) -> Request<'i> {
         Request::Get(crate::ast::GetRequestParams {
             url: self.token().text,
+            headers: self.parse_get_params(),
         })
+    }
+
+    fn parse_get_params(&mut self) -> Option<Vec<Header<'i>>> {
+        let mut token = self.token();
+        if let crate::lexer::TokenKind::LBracket = token.kind {
+            token = self.token();
+            let mut headers = vec![];
+            while token.kind != TokenKind::RBracket {
+                let h = match token.kind {
+                    TokenKind::Header => self.parse_header(),
+                    TokenKind::Ident => todo!(),
+                    TokenKind::StringLiteral => todo!(),
+                    TokenKind::Assign => todo!(),
+                    TokenKind::Quote => todo!(),
+                    tk => todo!("{tk:?}"),
+                };
+
+                headers.push(h);
+                token = self.token();
+            }
+            Some(headers)
+        } else {
+            None
+        }
+    }
+
+    fn parse_header(&mut self) -> Header<'i> {
+        let t = self.token();
+
+        let header_name = t.text;
+
+        self.eat_token();
+
+        self.eat_token();
+        let header_value = self.token().text;
+        self.eat_token();
+
+        Header {
+            name: header_name,
+            value: header_value,
+        }
     }
 }
 
@@ -62,18 +104,40 @@ impl<'i> Parser<'i> {
 mod tests {
     use super::*;
 
-    use crate::ast::{GetRequestParams, Program, Request};
+    use crate::ast::{GetRequestParams, Header, Program, Request};
+
+    macro_rules! assert_program {
+        ($input:literal, $program:expr) => {
+            let lexer = Lexer::new($input);
+            let mut parser = Parser::new(lexer);
+            assert_eq!(parser.parse(), $program);
+        };
+    }
 
     #[test]
     fn parse_get_url() {
-        let lex = Lexer::new("get http://localhost");
-        let mut p = Parser::new(lex);
-
-        assert_eq!(
-            p.parse(),
+        assert_program!(
+            "get http://localhost",
             Program {
                 requests: vec![Request::Get(GetRequestParams {
-                    url: "http://localhost"
+                    url: "http://localhost",
+                    headers: None
+                })]
+            }
+        );
+    }
+
+    #[test]
+    fn parse_get_with_headers() {
+        assert_program!(
+            "get http://localhost { header Authorization = \"Bearer token\" }",
+            Program {
+                requests: vec![Request::Get(GetRequestParams {
+                    url: "http://localhost",
+                    headers: Some(vec![Header {
+                        name: "Authorization",
+                        value: "Bearer token"
+                    }])
                 })]
             }
         );
