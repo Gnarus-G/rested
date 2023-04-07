@@ -26,9 +26,6 @@ enum Command {
 fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
 
-    print!(":>> ");
-    stdout().flush()?;
-
     match cli.command {
         Some(command) => match command {
             Command::Run { file } => {
