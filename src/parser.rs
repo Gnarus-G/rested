@@ -1,6 +1,6 @@
 use crate::{
     ast::{Header, Program, Request},
-    error::ParseError,
+    error::{ParseError, ParseErrorKind},
     lexer::{Lexer, Token, TokenKind},
 };
 
@@ -119,9 +119,13 @@ impl<'i> Parser<'i> {
             return Ok(());
         }
 
-        Err(ParseError {
-            message: format!("unexpected token: expected {:?}, got {}", kind, ahead.text),
-        })
+        Err(ParseError::new(
+            ParseErrorKind::Unexpected {
+                expected: kind,
+                found: ahead.kind,
+            },
+            ahead.location,
+        ))
     }
 }
 

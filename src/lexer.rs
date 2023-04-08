@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum TokenKind {
     // keywords
     Get,
