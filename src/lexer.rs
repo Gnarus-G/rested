@@ -22,16 +22,24 @@ pub enum TokenKind {
     End,
 }
 
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct Location {
+    pub line: usize,
+    pub col: usize,
+}
+
 #[derive(Debug, PartialEq)]
 pub struct Token<'t> {
     pub kind: TokenKind,
     pub text: &'t str,
+    pub location: Location,
 }
 
 #[derive(Debug)]
 pub struct Lexer<'i> {
     input: &'i [u8],
     position: usize,
+    cursor: Location,
 }
 
 impl<'i> Lexer<'i> {
@@ -39,6 +47,7 @@ impl<'i> Lexer<'i> {
         Self {
             input: input.as_bytes(),
             position: 0,
+            cursor: Location { line: 0, col: 0 },
         }
     }
 
@@ -62,7 +71,14 @@ impl<'i> Lexer<'i> {
     }
 
     fn step(&mut self) {
-        self.position += 1;
+        if let Some(b'\n') = self.ch() {
+            self.position += 1;
+            self.cursor.line += 1;
+            self.cursor.col = 0;
+        } else {
+            self.position += 1;
+            self.cursor.col += 1;
+        };
     }
 
     fn peek_char(&self) -> Option<&u8> {
@@ -120,6 +136,7 @@ impl<'i> Lexer<'i> {
             None => {
                 return Token {
                     kind: TokenKind::End,
+                    location: self.cursor,
                     text: "",
                 }
             }
@@ -128,18 +145,22 @@ impl<'i> Lexer<'i> {
         let t = match ch {
             b'"' => Token {
                 kind: Quote,
+                location: self.cursor,
                 text: "\"",
             },
             b'{' => Token {
                 kind: LBracket,
+                location: self.cursor,
                 text: "{",
             },
             b'}' => Token {
                 kind: RBracket,
+                location: self.cursor,
                 text: "}",
             },
             b'=' => Token {
                 kind: Assign,
+                location: self.cursor,
                 text: "=",
             },
             _ if self.if_previous(b'"') => self.string_literal(),
@@ -153,16 +174,19 @@ impl<'i> Lexer<'i> {
     }
 
     fn string_literal(&mut self) -> Token<'i> {
+        let location = self.cursor;
         let (s, e) = self.read_while(|&c| c != b'"');
         let string = self.input_slice(s..e);
 
         Token {
             kind: TokenKind::StringLiteral,
+            location,
             text: string,
         }
     }
 
     fn keyword_or_identifier(&mut self) -> Token<'i> {
+        let location = self.cursor;
         let (s, e) = self.read_while(|c| c.is_ascii_alphabetic());
         let string = self.input_slice(s..e);
 
@@ -171,19 +195,26 @@ impl<'i> Lexer<'i> {
         match string {
             "get" => Token {
                 kind: Get,
+                location,
                 text: string,
             },
             "header" => Token {
                 kind: Header,
+                location,
                 text: string,
             },
             "http" | "https" => {
                 let (.., e) = self.read_while(|&c| c != b' ');
                 let s = self.input_slice(s..e);
-                Token { kind: Url, text: s }
+                Token {
+                    kind: Url,
+                    location,
+                    text: s,
+                }
             }
             s => Token {
                 kind: Ident,
+                location,
                 text: s,
             },
         }
@@ -208,6 +239,15 @@ mod tests {
         }
     }
 
+    impl Into<Location> for (usize, usize) {
+        fn into(self) -> Location {
+            Location {
+                line: self.0,
+                col: self.1,
+            }
+        }
+    }
+
     #[test]
     fn lex_get_url() {
         let mut s = Lexer::new("get http://localhost");
@@ -216,7 +256,8 @@ mod tests {
             s.next(),
             Token {
                 kind: Get,
-                text: "get"
+                text: "get",
+                location: (0, 0).into()
             }
         );
 
@@ -224,7 +265,8 @@ mod tests {
             s.next(),
             Token {
                 kind: Url,
-                text: "http://localhost"
+                text: "http://localhost",
+                location: (0, 4).into(),
             }
         )
     }
@@ -240,45 +282,78 @@ mod tests {
             vec![
                 Token {
                     kind: Get,
+                    location: (0, 0).into(),
                     text: "get"
                 },
                 Token {
                     kind: Url,
+                    location: (0, 4).into(),
                     text: "http://localhost"
                 },
                 Token {
                     kind: LBracket,
+                    location: (0, 21).into(),
                     text: "{"
                 },
                 Token {
                     kind: Header,
+                    location: (0, 23).into(),
                     text: "header"
                 },
                 Token {
                     kind: Ident,
+                    location: (0, 30).into(),
                     text: "Authorization"
                 },
                 Token {
                     kind: Assign,
+                    location: (0, 44).into(),
                     text: "="
                 },
                 Token {
                     kind: Quote,
+                    location: (0, 46).into(),
                     text: "\""
                 },
                 Token {
                     kind: StringLiteral,
+                    location: (0, 47).into(),
                     text: "Bearer token"
                 },
                 Token {
                     kind: Quote,
+                    location: (0, 59).into(),
                     text: "\""
                 },
                 Token {
                     kind: RBracket,
+                    location: (0, 61).into(),
                     text: "}"
                 },
             ]
         )
+    }
+
+    #[test]
+    fn lex_get_url_over_two_lines() {
+        let lexer = Lexer::new("get\nhttp://localhost");
+
+        let tokens: Vec<_> = lexer.into_iter().collect();
+
+        assert_eq!(
+            tokens,
+            [
+                Token {
+                    kind: Get,
+                    text: "get",
+                    location: (0, 0).into()
+                },
+                Token {
+                    kind: Url,
+                    text: "http://localhost",
+                    location: (1, 0).into(),
+                }
+            ]
+        );
     }
 }
