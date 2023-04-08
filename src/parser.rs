@@ -55,6 +55,7 @@ impl<'i> Parser<'i> {
     }
 
     fn parse_get_request(&mut self) -> Result<Request<'i>> {
+        self.expect(TokenKind::Url)?;
         Ok(Request::Get(crate::ast::GetRequestParams {
             url: self.token().text,
             headers: self.parse_get_params()?,

@@ -1,10 +1,10 @@
 use crate::lexer::{Location, TokenKind};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ParseErrorKind {
     Unexpected {
-        expected: TokenKind,
         found: TokenKind,
+        expected: TokenKind,
     },
 }
 
@@ -44,5 +44,36 @@ impl std::fmt::Display for ParseError {
             Some(m) => writeln!(f, "{}\n{}", formatted_error, m),
             None => writeln!(f, "{}", formatted_error),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{lexer::Lexer, parser::Parser};
+
+    use TokenKind::*;
+
+    macro_rules! assert_errs {
+        ($input:literal, $kind:expr) => {
+            let lexer = Lexer::new($input);
+            let mut parser = Parser::new(lexer);
+            let error = parser.parse().unwrap_err();
+
+            assert_eq!(error.kind, $kind)
+        };
+    }
+
+    use ParseErrorKind::*;
+
+    #[test]
+    fn unexpected_token() {
+        assert_errs!(
+            "get {}",
+            Unexpected {
+                found: LBracket,
+                expected: Url,
+            }
+        );
     }
 }
