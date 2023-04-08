@@ -1,3 +1,7 @@
-get https://jsonplaceholder.typicode.com/posts {
-   header random = "header"
+get http://localhost:8080 {
+   header random = "billy bob"
+}
+
+get http://localhost:8080 {
+   header random = "billy bob"
 }
