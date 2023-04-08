@@ -78,5 +78,13 @@ mod tests {
                 expected: Url,
             }
         );
+
+        assert_errs!(
+            "get",
+            Unexpected {
+                found: End,
+                expected: Url,
+            }
+        );
     }
 }
