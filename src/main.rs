@@ -24,7 +24,13 @@ enum Command {
     Run { file: PathBuf },
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() {
+    if let Err(e) = run() {
+        print!("{e}");
+    }
+}
+
+fn run() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
 
     match cli.command {
@@ -58,7 +64,7 @@ fn interpret(code: &str) -> Result<(), Box<dyn Error>> {
     let lex = lexer::Lexer::new(&code);
     let mut parser = parser::Parser::new(lex);
 
-    let ast = parser.parse()?;
+    let ast = parser.parse().map_err(|e| e.to_string())?;
 
     for s in ast.requests {
         match s {

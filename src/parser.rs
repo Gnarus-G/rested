@@ -1,22 +1,22 @@
 use crate::{
     ast::{Header, Program, Request},
-    error::ParseError,
+    error::{ParseError, ParseErrorConstructor},
     lexer::{Lexer, Token, TokenKind},
 };
 
-type Result<T> = std::result::Result<T, ParseError>;
+pub type Result<T> = std::result::Result<T, ParseError>;
 
 #[derive(Debug)]
-pub struct Parser<'a> {
-    lexer: Lexer<'a>,
-    peeked: Option<Token<'a>>,
+pub struct Parser<'i> {
+    lexer: Lexer<'i>,
+    peeked: Option<Token<'i>>,
 }
 
 impl<'i> Parser<'i> {
     pub fn new(lexer: Lexer<'i>) -> Self {
         Self {
-            lexer,
             peeked: None,
+            lexer,
         }
     }
 
@@ -120,7 +120,13 @@ impl<'i> Parser<'i> {
             return Ok(());
         }
 
-        Err(ParseError::unexpected_token(ahead, expected_kind))
+        let error = self.error().unexpected_token(&self.token(), expected_kind);
+
+        Err(error)
+    }
+
+    fn error(&self) -> ParseErrorConstructor<'i> {
+        ParseErrorConstructor::new(self.lexer.input())
     }
 }
 
