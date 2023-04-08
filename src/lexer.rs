@@ -227,18 +227,6 @@ mod tests {
 
     use TokenKind::*;
 
-    impl<'i> Iterator for Lexer<'i> {
-        type Item = Token<'i>;
-
-        fn next(&mut self) -> Option<Self::Item> {
-            let token = self.next();
-            if let TokenKind::End = token.kind {
-                return None;
-            }
-            return Some(token);
-        }
-    }
-
     impl Into<Location> for (usize, usize) {
         fn into(self) -> Location {
             Location {
@@ -248,37 +236,39 @@ mod tests {
         }
     }
 
+    macro_rules! assert_lexes {
+        ($input:literal, $tokens:expr) => {
+            let mut lexer = Lexer::new($input);
+
+            for token in $tokens {
+                assert_eq!(lexer.next(), token);
+            }
+        };
+    }
+
     #[test]
     fn lex_get_url() {
-        let mut s = Lexer::new("get http://localhost");
-
-        assert_eq!(
-            s.next(),
-            Token {
-                kind: Get,
-                text: "get",
-                location: (0, 0).into()
-            }
+        assert_lexes!(
+            "get http://localhost",
+            [
+                Token {
+                    kind: Get,
+                    text: "get",
+                    location: (0, 0).into()
+                },
+                Token {
+                    kind: Url,
+                    text: "http://localhost",
+                    location: (0, 4).into(),
+                }
+            ]
         );
-
-        assert_eq!(
-            s.next(),
-            Token {
-                kind: Url,
-                text: "http://localhost",
-                location: (0, 4).into(),
-            }
-        )
     }
 
     #[test]
     fn lex_get_url_with_header() {
-        let lexer = Lexer::new("get http://localhost { header Authorization = \"Bearer token\" }");
-
-        let tokens: Vec<_> = lexer.into_iter().collect();
-
-        assert_eq!(
-            tokens,
+        assert_lexes!(
+            "get http://localhost { header Authorization = \"Bearer token\" }",
             vec![
                 Token {
                     kind: Get,
@@ -331,17 +321,13 @@ mod tests {
                     text: "}"
                 },
             ]
-        )
+        );
     }
 
     #[test]
-    fn lex_get_url_over_two_lines() {
-        let lexer = Lexer::new("get\nhttp://localhost");
-
-        let tokens: Vec<_> = lexer.into_iter().collect();
-
-        assert_eq!(
-            tokens,
+    fn lex_get_url_over_many_lines() {
+        assert_lexes!(
+            "get\nhttp://localhost",
             [
                 Token {
                     kind: Get,
@@ -352,6 +338,35 @@ mod tests {
                     kind: Url,
                     text: "http://localhost",
                     location: (1, 0).into(),
+                }
+            ]
+        );
+
+        assert_lexes!(
+            r#"get 
+    http://localhost 
+{
+}"#,
+            [
+                Token {
+                    kind: Get,
+                    text: "get",
+                    location: (0, 0).into()
+                },
+                Token {
+                    kind: Url,
+                    text: "http://localhost",
+                    location: (1, 4).into(),
+                },
+                Token {
+                    kind: LBracket,
+                    text: "{",
+                    location: (2, 0).into(),
+                },
+                Token {
+                    kind: RBracket,
+                    text: "}",
+                    location: (3, 0).into(),
                 }
             ]
         );
