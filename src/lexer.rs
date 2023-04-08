@@ -72,13 +72,13 @@ impl<'i> Lexer<'i> {
 
     fn step(&mut self) {
         if let Some(b'\n') = self.ch() {
-            self.position += 1;
             self.cursor.line += 1;
             self.cursor.col = 0;
         } else {
-            self.position += 1;
             self.cursor.col += 1;
         };
+
+        self.position += 1;
     }
 
     fn peek_char(&self) -> Option<&u8> {
