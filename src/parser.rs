@@ -1,6 +1,6 @@
 use crate::{
     ast::{Header, Program, Request},
-    error::{ParseError, ParseErrorKind},
+    error::ParseError,
     lexer::{Lexer, Token, TokenKind},
 };
 
@@ -113,20 +113,14 @@ impl<'i> Parser<'i> {
         })
     }
 
-    fn expect(&mut self, kind: TokenKind) -> Result<()> {
+    fn expect(&mut self, expected_kind: TokenKind) -> Result<()> {
         let ahead = self.peek_token();
 
-        if ahead.kind == kind {
+        if ahead.kind == expected_kind {
             return Ok(());
         }
 
-        Err(ParseError::new(
-            ParseErrorKind::Unexpected {
-                expected: kind,
-                found: ahead.kind,
-            },
-            ahead.location,
-        ))
+        Err(ParseError::unexpected_token(ahead, expected_kind))
     }
 }
 

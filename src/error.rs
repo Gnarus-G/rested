@@ -1,7 +1,7 @@
-use crate::lexer::{Location, TokenKind};
+use crate::lexer::{Location, Token, TokenKind};
 
 #[derive(Debug, PartialEq)]
-pub enum ParseErrorKind {
+enum ParseErrorKind {
     Unexpected {
         found: TokenKind,
         expected: TokenKind,
@@ -16,10 +16,13 @@ pub struct ParseError {
 }
 
 impl ParseError {
-    pub fn new(kind: ParseErrorKind, at: Location) -> Self {
+    pub fn unexpected_token(token: &Token, expected: TokenKind) -> Self {
         Self {
-            kind,
-            location: at,
+            kind: ParseErrorKind::Unexpected {
+                found: token.kind,
+                expected,
+            },
+            location: token.location,
             message: None,
         }
     }
