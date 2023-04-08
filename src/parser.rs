@@ -1,7 +1,10 @@
 use crate::{
     ast::{Header, Program, Request},
+    error::ParseError,
     lexer::{Lexer, Token, TokenKind},
 };
+
+type Result<T> = std::result::Result<T, ParseError>;
 
 #[derive(Debug)]
 pub struct Parser<'a> {
@@ -32,7 +35,7 @@ impl<'i> Parser<'i> {
         self.token();
     }
 
-    pub fn parse(&mut self) -> Program<'i> {
+    pub fn parse(&mut self) -> Result<Program<'i>> {
         let mut program = Program::new();
 
         use crate::lexer::TokenKind::*;
@@ -41,31 +44,31 @@ impl<'i> Parser<'i> {
 
         while token.kind != End {
             let request = match token.kind {
-                Get => self.parse_get_request(),
+                Get => self.parse_get_request()?,
                 tk => todo!("{tk:?}"),
             };
             program.requests.push(request);
             token = self.token();
         }
 
-        program
+        Ok(program)
     }
 
-    fn parse_get_request(&mut self) -> Request<'i> {
-        Request::Get(crate::ast::GetRequestParams {
+    fn parse_get_request(&mut self) -> Result<Request<'i>> {
+        Ok(Request::Get(crate::ast::GetRequestParams {
             url: self.token().text,
-            headers: self.parse_get_params(),
-        })
+            headers: self.parse_get_params()?,
+        }))
     }
 
-    fn parse_get_params(&mut self) -> Option<Vec<Header<'i>>> {
+    fn parse_get_params(&mut self) -> Result<Option<Vec<Header<'i>>>> {
         let mut token = self.token();
         if let crate::lexer::TokenKind::LBracket = token.kind {
             token = self.token();
             let mut headers = vec![];
             while token.kind != TokenKind::RBracket {
                 let h = match token.kind {
-                    TokenKind::Header => self.parse_header(),
+                    TokenKind::Header => self.parse_header()?,
                     TokenKind::Ident => todo!(),
                     TokenKind::StringLiteral => todo!(),
                     TokenKind::Assign => todo!(),
@@ -76,27 +79,49 @@ impl<'i> Parser<'i> {
                 headers.push(h);
                 token = self.token();
             }
-            Some(headers)
+            Ok(Some(headers))
         } else {
-            None
+            Ok(None)
         }
     }
 
-    fn parse_header(&mut self) -> Header<'i> {
+    fn parse_header(&mut self) -> Result<Header<'i>> {
         let t = self.token();
 
         let header_name = t.text;
 
-        self.eat_token();
+        self.expect(TokenKind::Assign)?;
 
         self.eat_token();
+
+        self.expect(TokenKind::Quote)?;
+
+        self.eat_token();
+
+        self.expect(TokenKind::StringLiteral)?;
+
         let header_value = self.token().text;
+
+        self.expect(TokenKind::Quote)?;
+
         self.eat_token();
 
-        Header {
+        Ok(Header {
             name: header_name,
             value: header_value,
+        })
+    }
+
+    fn expect(&mut self, kind: TokenKind) -> Result<()> {
+        let ahead = self.peek_token();
+
+        if ahead.kind == kind {
+            return Ok(());
         }
+
+        Err(ParseError {
+            message: format!("unexpected token: expected {:?}, got {}", kind, ahead.text),
+        })
     }
 }
 
@@ -110,7 +135,7 @@ mod tests {
         ($input:literal, $program:expr) => {
             let lexer = Lexer::new($input);
             let mut parser = Parser::new(lexer);
-            assert_eq!(parser.parse(), $program);
+            assert_eq!(parser.parse().unwrap(), $program);
         };
     }
 

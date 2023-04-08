@@ -8,6 +8,7 @@ use std::{
 };
 
 mod ast;
+mod error;
 mod lexer;
 mod parser;
 
@@ -57,7 +58,7 @@ fn interpret(code: &str) -> Result<(), Box<dyn Error>> {
     let lex = lexer::Lexer::new(&code);
     let mut parser = parser::Parser::new(lex);
 
-    let ast = parser.parse();
+    let ast = parser.parse()?;
 
     for s in ast.requests {
         match s {
