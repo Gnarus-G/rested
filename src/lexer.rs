@@ -21,6 +21,9 @@ pub enum TokenKind {
     LBracket,
     RBracket,
     End,
+
+    //edge cases
+    UnfinishedStringLiteral,
 }
 
 #[derive(PartialEq, Clone, Copy)]
@@ -194,10 +197,18 @@ impl<'i> Lexer<'i> {
             };
         }
 
-        let (s, e) = self.read_while(|&c| c != b'"');
+        let (s, e) = self.read_while(|&c| c != b'"' && c != b'\n');
         let string = self.input_slice(s..e);
 
-        self.step(); //eat the closing quote
+        self.step(); //eat the closing quote or newline character
+
+        if let Some(b'\n') = self.ch() {
+            return Token {
+                kind: TokenKind::UnfinishedStringLiteral,
+                location,
+                text: string,
+            };
+        }
 
         Token {
             kind: TokenKind::StringLiteral,
@@ -286,6 +297,25 @@ mod tests {
                 text: "hello",
                 location: (0, 0).into()
             },]
+        );
+
+        assert_lexes!(
+            r#"
+"hello
+"world
+"#,
+            [
+                Token {
+                    kind: UnfinishedStringLiteral,
+                    text: "hello",
+                    location: (1, 0).into()
+                },
+                Token {
+                    kind: UnfinishedStringLiteral,
+                    text: "world",
+                    location: (2, 0).into()
+                }
+            ]
         );
 
         assert_lexes!(
