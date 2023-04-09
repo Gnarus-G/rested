@@ -18,23 +18,34 @@ pub enum TokenKind {
     Assign,
 
     // special characters
-    Quote,
     LBracket,
     RBracket,
     End,
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy)]
 pub struct Location {
     pub line: usize,
     pub col: usize,
 }
 
-#[derive(Debug, PartialEq)]
+impl std::fmt::Debug for Location {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}:{}", self.line, self.col)
+    }
+}
+
+#[derive(PartialEq)]
 pub struct Token<'t> {
     pub kind: TokenKind,
     pub text: &'t str,
     pub location: Location,
+}
+
+impl<'i> std::fmt::Debug for Token<'i> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}({:?}) at {:?}", self.kind, self.text, self.location)
+    }
 }
 
 #[derive(Debug)]
@@ -105,7 +116,7 @@ impl<'i> Lexer<'i> {
     }
 
     /// Assumes that the character at the current position, immediately before calling
-    /// this function is also true the predicate function given.
+    /// this function is also true for the predicate function given.
     fn read_while<P: Fn(&u8) -> bool>(&mut self, predicate: P) -> (usize, usize) {
         let start_pos = self.position;
 
@@ -145,12 +156,7 @@ impl<'i> Lexer<'i> {
         };
 
         let t = match ch {
-            _ if self.if_previous(b'"') => self.string_literal(),
-            b'"' => Token {
-                kind: Quote,
-                location: self.cursor,
-                text: "\"",
-            },
+            b'"' => self.string_literal(),
             b'{' => Token {
                 kind: LBracket,
                 location: self.cursor,
@@ -177,8 +183,21 @@ impl<'i> Lexer<'i> {
 
     fn string_literal(&mut self) -> Token<'i> {
         let location = self.cursor;
+
+        self.step(); //eat the opening quote
+
+        if let Some(b'"') = self.ch() {
+            return Token {
+                kind: TokenKind::StringLiteral,
+                location,
+                text: "",
+            };
+        }
+
         let (s, e) = self.read_while(|&c| c != b'"');
         let string = self.input_slice(s..e);
+
+        self.step(); //eat the closing quote
 
         Token {
             kind: TokenKind::StringLiteral,
@@ -259,6 +278,55 @@ mod tests {
     }
 
     #[test]
+    fn lex_string_literals() {
+        assert_lexes!(
+            r#""hello""#,
+            [Token {
+                kind: StringLiteral,
+                text: "hello",
+                location: (0, 0).into()
+            },]
+        );
+
+        assert_lexes!(
+            r#" "" "" "#,
+            [
+                Token {
+                    kind: StringLiteral,
+                    text: "",
+                    location: (0, 1).into()
+                },
+                Token {
+                    kind: StringLiteral,
+                    text: "",
+                    location: (0, 4).into()
+                }
+            ]
+        );
+
+        assert_lexes!(
+            r#" { "Bearer token" } "#,
+            [
+                Token {
+                    kind: LBracket,
+                    text: "{",
+                    location: (0, 1).into()
+                },
+                Token {
+                    kind: StringLiteral,
+                    text: "Bearer token",
+                    location: (0, 3).into()
+                },
+                Token {
+                    kind: RBracket,
+                    text: "}",
+                    location: (0, 18).into()
+                }
+            ]
+        );
+    }
+
+    #[test]
     fn lex_get_url() {
         assert_lexes!(
             "get http://localhost",
@@ -313,19 +381,9 @@ mod tests {
                     text: "="
                 },
                 Token {
-                    kind: Quote,
-                    location: (0, 46).into(),
-                    text: "\""
-                },
-                Token {
                     kind: StringLiteral,
-                    location: (0, 47).into(),
+                    location: (0, 46).into(),
                     text: "Bearer token"
-                },
-                Token {
-                    kind: Quote,
-                    location: (0, 59).into(),
-                    text: "\""
                 },
                 Token {
                     kind: RBracket,
@@ -424,19 +482,9 @@ post http://localhost {
                     text: "="
                 },
                 Token {
-                    kind: Quote,
-                    location: (2, 27).into(),
-                    text: "\""
-                },
-                Token {
                     kind: StringLiteral,
-                    location: (2, 28).into(),
+                    location: (2, 27).into(),
                     text: "Bearer token"
-                },
-                Token {
-                    kind: Quote,
-                    location: (2, 40).into(),
-                    text: "\""
                 },
                 Token {
                     kind: Body,
@@ -444,19 +492,9 @@ post http://localhost {
                     text: "body"
                 },
                 Token {
-                    kind: Quote,
-                    location: (3, 9).into(),
-                    text: "\""
-                },
-                Token {
                     kind: StringLiteral,
-                    location: (3, 10).into(),
+                    location: (3, 9).into(),
                     text: "{neet: 1337}"
-                },
-                Token {
-                    kind: Quote,
-                    location: (3, 22).into(),
-                    text: "\""
                 },
                 Token {
                     kind: RBracket,

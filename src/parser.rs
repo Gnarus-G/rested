@@ -94,17 +94,9 @@ impl<'i> Parser<'i> {
 
         self.eat_token();
 
-        self.expect(TokenKind::Quote)?;
-
-        self.eat_token();
-
         self.expect(TokenKind::StringLiteral)?;
 
         let header_value = self.token();
-
-        self.expect(TokenKind::Quote)?;
-
-        self.eat_token();
 
         Ok(Statement::HeaderStatement {
             name: header_name,
@@ -122,19 +114,6 @@ impl<'i> Parser<'i> {
         let value = match token.kind {
             TokenKind::Ident => Expression::Identifier(token.text),
             TokenKind::StringLiteral => Expression::StringLiteral(token.text),
-            TokenKind::Quote => {
-                let token = self.token();
-
-                let value = match token.kind {
-                    TokenKind::StringLiteral => Expression::StringLiteral(token.text),
-                    _ => todo!(),
-                };
-
-                self.expect(TokenKind::Quote)?;
-                self.eat_token();
-
-                value
-            }
             _ => todo!(),
         };
 
