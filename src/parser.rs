@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Expression, Program, Statement},
+    ast::{Expression, Program, RequestMethod, Statement},
     error::{ParseError, ParseErrorConstructor},
     lexer::{Lexer, Token, TokenKind},
 };
@@ -44,7 +44,7 @@ impl<'i> Parser<'i> {
 
         while token.kind != End {
             let request = match token.kind {
-                Get => self.parse_request()?,
+                Get => self.parse_request(RequestMethod::GET)?,
                 tk => todo!("{tk:?}"),
             };
             program.statements.push(request);
@@ -54,9 +54,10 @@ impl<'i> Parser<'i> {
         Ok(program)
     }
 
-    fn parse_request(&mut self) -> Result<Statement<'i>> {
+    fn parse_request(&mut self, method: RequestMethod) -> Result<Statement<'i>> {
         self.expect(TokenKind::Url)?;
         Ok(Statement::Request(crate::ast::RequestParams {
+            method,
             url: self.token().text,
             params: self.parse_request_params()?,
         }))
@@ -138,9 +139,10 @@ impl<'i> Parser<'i> {
 mod tests {
     use super::*;
 
-    use crate::ast::{Expression, Program, RequestParams, Statement};
+    use crate::ast::{Expression, Program, RequestMethod, RequestParams, Statement};
 
     use Expression::*;
+    use RequestMethod::*;
     use Statement::*;
 
     macro_rules! assert_program {
@@ -157,6 +159,7 @@ mod tests {
             "get http://localhost",
             Program {
                 statements: vec![Request(RequestParams {
+                    method: GET,
                     url: "http://localhost",
                     params: vec![]
                 })]
@@ -174,6 +177,7 @@ get http://localhost {
 }"#,
             Program {
                 statements: vec![Request(RequestParams {
+                    method: GET,
                     url: "http://localhost",
                     params: (vec![
                         HeaderStatement {

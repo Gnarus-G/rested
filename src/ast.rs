@@ -15,8 +15,14 @@ pub enum Expression<'i> {
 
 #[derive(Debug, PartialEq)]
 pub struct RequestParams<'i> {
+    pub method: RequestMethod,
     pub url: &'i str,
     pub params: Vec<Statement<'i>>,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum RequestMethod {
+    GET,
 }
 
 #[derive(Debug, PartialEq)]
