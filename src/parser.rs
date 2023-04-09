@@ -72,10 +72,7 @@ impl<'i> Parser<'i> {
             while token.kind != TokenKind::RBracket {
                 let h = match token.kind {
                     TokenKind::Header => self.parse_header()?,
-                    TokenKind::Ident => todo!(),
-                    TokenKind::StringLiteral => todo!(),
-                    TokenKind::Assign => todo!(),
-                    TokenKind::Quote => todo!(),
+                    TokenKind::Body => self.parse_body()?,
                     tk => todo!("{tk:?}"),
                 };
 
@@ -117,6 +114,31 @@ impl<'i> Parser<'i> {
                 _ => todo!(),
             },
         })
+    }
+
+    fn parse_body(&mut self) -> Result<Statement<'i>> {
+        let token = self.token();
+
+        let value = match token.kind {
+            TokenKind::Ident => Expression::Identifier(token.text),
+            TokenKind::StringLiteral => Expression::StringLiteral(token.text),
+            TokenKind::Quote => {
+                let token = self.token();
+
+                let value = match token.kind {
+                    TokenKind::StringLiteral => Expression::StringLiteral(token.text),
+                    _ => todo!(),
+                };
+
+                self.expect(TokenKind::Quote)?;
+                self.eat_token();
+
+                value
+            }
+            _ => todo!(),
+        };
+
+        Ok(Statement::BodyStatement { value })
     }
 
     fn expect(&mut self, expected_kind: TokenKind) -> Result<()> {
@@ -229,6 +251,32 @@ post http://localhost {
                         HeaderStatement {
                             name: "random",
                             value: StringLiteral("tokener Bear")
+                        }
+                    ])
+                })]
+            }
+        );
+    }
+
+    #[test]
+    fn parse_post_with_headers_and_body() {
+        assert_program!(
+            r#"
+post http://localhost { 
+    header Authorization = "Bearer token" 
+    body "{neet: 1337}" 
+}"#,
+            Program {
+                statements: vec![Request(RequestParams {
+                    method: POST,
+                    url: "http://localhost",
+                    params: (vec![
+                        HeaderStatement {
+                            name: "Authorization",
+                            value: StringLiteral("Bearer token")
+                        },
+                        BodyStatement {
+                            value: StringLiteral("{neet: 1337}")
                         }
                     ])
                 })]

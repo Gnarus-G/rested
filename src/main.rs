@@ -74,6 +74,8 @@ fn interpret(code: &str) -> Result<(), Box<dyn Error>> {
                     ast::RequestMethod::POST => ureq::post(request.url),
                 };
 
+                let mut body = None;
+
                 for statement in request.params {
                     match statement {
                         ast::Statement::Request(_) => todo!(),
@@ -84,13 +86,29 @@ fn interpret(code: &str) -> Result<(), Box<dyn Error>> {
                             };
                             req = req.set(name, evaluated);
                         }
+                        ast::Statement::BodyStatement { value } => {
+                            let evaluated = match value {
+                                ast::Expression::Identifier(_) => todo!(),
+                                ast::Expression::StringLiteral(v) => v,
+                            };
+
+                            if let None = body {
+                                body = Some(evaluated);
+                            }
+                        }
                     }
                 }
 
-                let res = req.call()?.into_string()?;
+                let res = if let Some(value) = body {
+                    req.send_string(value)?.into_string()?
+                } else {
+                    req.call()?.into_string()?
+                };
+
                 println!("{res}");
             }
             ast::Statement::HeaderStatement { .. } => todo!(),
+            ast::Statement::BodyStatement { .. } => todo!(),
         }
     }
 

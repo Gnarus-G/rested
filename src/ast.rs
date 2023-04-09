@@ -5,6 +5,9 @@ pub enum Statement<'i> {
         name: &'i str,
         value: Expression<'i>,
     },
+    BodyStatement {
+        value: Expression<'i>,
+    },
 }
 
 #[derive(Debug, PartialEq)]

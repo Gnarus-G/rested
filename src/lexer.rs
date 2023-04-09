@@ -6,6 +6,7 @@ pub enum TokenKind {
     Get,
     Post,
     Header,
+    Body,
 
     Ident,
 
@@ -144,6 +145,7 @@ impl<'i> Lexer<'i> {
         };
 
         let t = match ch {
+            _ if self.if_previous(b'"') => self.string_literal(),
             b'"' => Token {
                 kind: Quote,
                 location: self.cursor,
@@ -164,7 +166,6 @@ impl<'i> Lexer<'i> {
                 location: self.cursor,
                 text: "=",
             },
-            _ if self.if_previous(b'"') => self.string_literal(),
             c if c.is_ascii_alphabetic() => self.keyword_or_identifier(),
             &c => todo!("{}", c as char),
         };
@@ -206,6 +207,11 @@ impl<'i> Lexer<'i> {
             },
             "header" => Token {
                 kind: Header,
+                location,
+                text: string,
+            },
+            "body" => Token {
+                kind: Body,
                 location,
                 text: string,
             },
@@ -374,6 +380,89 @@ mod tests {
                     text: "}",
                     location: (3, 0).into(),
                 }
+            ]
+        );
+    }
+
+    #[test]
+    fn lex_get_url_with_header_and_body() {
+        assert_lexes!(
+            r#"
+post http://localhost { 
+    header Authorization = "Bearer token" 
+    body "{neet: 1337}" 
+}"#,
+            vec![
+                Token {
+                    kind: Post,
+                    location: (1, 0).into(),
+                    text: "post"
+                },
+                Token {
+                    kind: Url,
+                    location: (1, 5).into(),
+                    text: "http://localhost"
+                },
+                Token {
+                    kind: LBracket,
+                    location: (1, 22).into(),
+                    text: "{"
+                },
+                Token {
+                    kind: Header,
+                    location: (2, 4).into(),
+                    text: "header"
+                },
+                Token {
+                    kind: Ident,
+                    location: (2, 11).into(),
+                    text: "Authorization"
+                },
+                Token {
+                    kind: Assign,
+                    location: (2, 25).into(),
+                    text: "="
+                },
+                Token {
+                    kind: Quote,
+                    location: (2, 27).into(),
+                    text: "\""
+                },
+                Token {
+                    kind: StringLiteral,
+                    location: (2, 28).into(),
+                    text: "Bearer token"
+                },
+                Token {
+                    kind: Quote,
+                    location: (2, 40).into(),
+                    text: "\""
+                },
+                Token {
+                    kind: Body,
+                    location: (3, 4).into(),
+                    text: "body"
+                },
+                Token {
+                    kind: Quote,
+                    location: (3, 9).into(),
+                    text: "\""
+                },
+                Token {
+                    kind: StringLiteral,
+                    location: (3, 10).into(),
+                    text: "{neet: 1337}"
+                },
+                Token {
+                    kind: Quote,
+                    location: (3, 22).into(),
+                    text: "\""
+                },
+                Token {
+                    kind: RBracket,
+                    location: (4, 0).into(),
+                    text: "}"
+                },
             ]
         );
     }
