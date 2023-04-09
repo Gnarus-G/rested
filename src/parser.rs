@@ -103,6 +103,7 @@ impl<'i> Parser<'i> {
             value: match header_value.kind {
                 TokenKind::Ident => Expression::Identifier(header_value.text),
                 TokenKind::StringLiteral => Expression::StringLiteral(header_value.text),
+                TokenKind::MultiLineStringLiteral => Expression::StringLiteral(header_value.text),
                 _ => todo!(),
             },
         })
@@ -114,6 +115,7 @@ impl<'i> Parser<'i> {
         let value = match token.kind {
             TokenKind::Ident => Expression::Identifier(token.text),
             TokenKind::StringLiteral => Expression::StringLiteral(token.text),
+            TokenKind::MultiLineStringLiteral => Expression::StringLiteral(token.text),
             _ => todo!(),
         };
 
@@ -256,6 +258,34 @@ post http://localhost {
                         },
                         BodyStatement {
                             value: StringLiteral("{neet: 1337}")
+                        }
+                    ])
+                })]
+            }
+        );
+    }
+
+    #[test]
+    fn parse_post_with_headers_and_body_as_json_string() {
+        assert_program!(
+            r#"
+post http://localhost { 
+    header Authorization = "Bearer token" 
+    body `
+        {"neet": 1337}
+    `
+}"#,
+            Program {
+                statements: vec![Request(RequestParams {
+                    method: POST,
+                    url: "http://localhost",
+                    params: (vec![
+                        HeaderStatement {
+                            name: "Authorization",
+                            value: StringLiteral("Bearer token")
+                        },
+                        BodyStatement {
+                            value: StringLiteral("\n        {\"neet\": 1337}\n    ")
                         }
                     ])
                 })]

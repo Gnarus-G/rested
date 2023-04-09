@@ -12,6 +12,7 @@ pub enum TokenKind {
 
     // literals
     StringLiteral,
+    MultiLineStringLiteral,
     Url,
 
     // operators
@@ -160,6 +161,7 @@ impl<'i> Lexer<'i> {
 
         let t = match ch {
             b'"' => self.string_literal(),
+            b'`' => self.multiline_string_literal(),
             b'{' => Token {
                 kind: LBracket,
                 location: self.cursor,
@@ -182,6 +184,31 @@ impl<'i> Lexer<'i> {
         self.step();
 
         t
+    }
+
+    fn multiline_string_literal(&mut self) -> Token<'i> {
+        let location = self.cursor;
+
+        self.step(); //eat the opening quote
+
+        if let Some(b'`') = self.ch() {
+            return Token {
+                kind: TokenKind::StringLiteral,
+                location,
+                text: "",
+            };
+        }
+
+        let (s, e) = self.read_while(|&c| c != b'`');
+        let string = self.input_slice(s..e);
+
+        self.step(); //eat the closing quote
+
+        Token {
+            kind: TokenKind::MultiLineStringLiteral,
+            location,
+            text: string,
+        }
     }
 
     fn string_literal(&mut self) -> Token<'i> {
@@ -353,6 +380,18 @@ mod tests {
                     location: (0, 18).into()
                 }
             ]
+        );
+
+        assert_lexes!(
+            r#"`
+{
+    stuff
+}`"#,
+            [Token {
+                kind: MultiLineStringLiteral,
+                text: "\n{\n    stuff\n}",
+                location: (0, 0).into()
+            },]
         );
     }
 
