@@ -1,27 +1,31 @@
 #[derive(Debug, PartialEq)]
-pub enum Request<'i> {
-    Get(GetRequestParams<'i>),
+pub enum Statement<'i> {
+    Request(RequestParams<'i>),
+    HeaderStatement {
+        name: &'i str,
+        value: Expression<'i>,
+    },
 }
 
 #[derive(Debug, PartialEq)]
-pub struct GetRequestParams<'i> {
+pub enum Expression<'i> {
+    Identifier(&'i str),
+    StringLiteral(&'i str),
+}
+
+#[derive(Debug, PartialEq)]
+pub struct RequestParams<'i> {
     pub url: &'i str,
-    pub headers: Option<Vec<Header<'i>>>,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct Header<'i> {
-    pub name: &'i str,
-    pub value: &'i str,
+    pub params: Vec<Statement<'i>>,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct Program<'i> {
-    pub requests: Vec<Request<'i>>,
+    pub statements: Vec<Statement<'i>>,
 }
 
 impl<'i> Program<'i> {
     pub fn new() -> Self {
-        Self { requests: vec![] }
+        Self { statements: vec![] }
     }
 }

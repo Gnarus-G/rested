@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Header, Program, Request},
+    ast::{Expression, Program, Statement},
     error::{ParseError, ParseErrorConstructor},
     lexer::{Lexer, Token, TokenKind},
 };
@@ -44,25 +44,25 @@ impl<'i> Parser<'i> {
 
         while token.kind != End {
             let request = match token.kind {
-                Get => self.parse_get_request()?,
+                Get => self.parse_request()?,
                 tk => todo!("{tk:?}"),
             };
-            program.requests.push(request);
+            program.statements.push(request);
             token = self.token();
         }
 
         Ok(program)
     }
 
-    fn parse_get_request(&mut self) -> Result<Request<'i>> {
+    fn parse_request(&mut self) -> Result<Statement<'i>> {
         self.expect(TokenKind::Url)?;
-        Ok(Request::Get(crate::ast::GetRequestParams {
+        Ok(Statement::Request(crate::ast::RequestParams {
             url: self.token().text,
-            headers: self.parse_get_params()?,
+            params: self.parse_request_params()?,
         }))
     }
 
-    fn parse_get_params(&mut self) -> Result<Option<Vec<Header<'i>>>> {
+    fn parse_request_params(&mut self) -> Result<Vec<Statement<'i>>> {
         let mut token = self.token();
         if let crate::lexer::TokenKind::LBracket = token.kind {
             token = self.token();
@@ -80,13 +80,13 @@ impl<'i> Parser<'i> {
                 headers.push(h);
                 token = self.token();
             }
-            Ok(Some(headers))
-        } else {
-            Ok(None)
-        }
+            return Ok(headers);
+        };
+
+        Ok(vec![])
     }
 
-    fn parse_header(&mut self) -> Result<Header<'i>> {
+    fn parse_header(&mut self) -> Result<Statement<'i>> {
         let t = self.token();
 
         let header_name = t.text;
@@ -101,15 +101,19 @@ impl<'i> Parser<'i> {
 
         self.expect(TokenKind::StringLiteral)?;
 
-        let header_value = self.token().text;
+        let header_value = self.token();
 
         self.expect(TokenKind::Quote)?;
 
         self.eat_token();
 
-        Ok(Header {
+        Ok(Statement::HeaderStatement {
             name: header_name,
-            value: header_value,
+            value: match header_value.kind {
+                TokenKind::Ident => Expression::Identifier(header_value.text),
+                TokenKind::StringLiteral => Expression::StringLiteral(header_value.text),
+                _ => todo!(),
+            },
         })
     }
 
@@ -134,7 +138,10 @@ impl<'i> Parser<'i> {
 mod tests {
     use super::*;
 
-    use crate::ast::{GetRequestParams, Header, Program, Request};
+    use crate::ast::{Expression, Program, RequestParams, Statement};
+
+    use Expression::*;
+    use Statement::*;
 
     macro_rules! assert_program {
         ($input:literal, $program:expr) => {
@@ -149,9 +156,9 @@ mod tests {
         assert_program!(
             "get http://localhost",
             Program {
-                requests: vec![Request::Get(GetRequestParams {
+                statements: vec![Request(RequestParams {
                     url: "http://localhost",
-                    headers: None
+                    params: vec![]
                 })]
             }
         );
@@ -162,11 +169,11 @@ mod tests {
         assert_program!(
             "get http://localhost { header Authorization = \"Bearer token\" }",
             Program {
-                requests: vec![Request::Get(GetRequestParams {
+                statements: vec![Request(RequestParams {
                     url: "http://localhost",
-                    headers: Some(vec![Header {
+                    params: (vec![HeaderStatement {
                         name: "Authorization",
-                        value: "Bearer token"
+                        value: StringLiteral("Bearer token")
                     }])
                 })]
             }

@@ -66,20 +66,28 @@ fn interpret(code: &str) -> Result<(), Box<dyn Error>> {
 
     let ast = parser.parse().map_err(|e| e.to_string())?;
 
-    for s in ast.requests {
+    for s in ast.statements {
         match s {
-            ast::Request::Get(get) => {
+            ast::Statement::Request(get) => {
                 let mut req = ureq::get(get.url);
 
-                if let Some(headers) = get.headers {
-                    for h in headers {
-                        req = req.set(h.name, h.value);
+                for statement in get.params {
+                    match statement {
+                        ast::Statement::Request(_) => todo!(),
+                        ast::Statement::HeaderStatement { name, value } => {
+                            let evaluated = match value {
+                                ast::Expression::Identifier(_) => todo!(),
+                                ast::Expression::StringLiteral(v) => v,
+                            };
+                            req = req.set(name, evaluated);
+                        }
                     }
                 }
 
                 let res = req.call()?.into_string()?;
                 println!("{res}");
             }
+            ast::Statement::HeaderStatement { .. } => todo!(),
         }
     }
 
