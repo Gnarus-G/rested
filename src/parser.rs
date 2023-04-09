@@ -167,14 +167,24 @@ mod tests {
     #[test]
     fn parse_get_with_headers() {
         assert_program!(
-            "get http://localhost { header Authorization = \"Bearer token\" }",
+            r#"
+get http://localhost { 
+    header Authorization = "Bearer token" 
+    header random = "tokener Bear" 
+}"#,
             Program {
                 statements: vec![Request(RequestParams {
                     url: "http://localhost",
-                    params: (vec![HeaderStatement {
-                        name: "Authorization",
-                        value: StringLiteral("Bearer token")
-                    }])
+                    params: (vec![
+                        HeaderStatement {
+                            name: "Authorization",
+                            value: StringLiteral("Bearer token")
+                        },
+                        HeaderStatement {
+                            name: "random",
+                            value: StringLiteral("tokener Bear")
+                        }
+                    ])
                 })]
             }
         );
