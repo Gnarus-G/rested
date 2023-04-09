@@ -3,6 +3,8 @@ import express from "npm:express@4.18.2";
 
 const app = express();
 
+app.use(express.json());
+
 app.use((_, __, next) => {
   console.log("request at", new Date());
   next();
@@ -10,6 +12,13 @@ app.use((_, __, next) => {
 
 app.get("/", (req, res) => {
   res.send(`Welcome to the Dinosaur API! ${req.header("random")}`);
+});
+
+app.post("/", (req, res) => {
+  console.log("req body", req.body);
+  res.send({
+    message: `Welcome to the Dinosaur API! ${req.header("random")}`,
+  });
 });
 
 const PORT = 8080;

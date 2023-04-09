@@ -45,6 +45,7 @@ impl<'i> Parser<'i> {
         while token.kind != End {
             let request = match token.kind {
                 Get => self.parse_request(RequestMethod::GET)?,
+                Post => self.parse_request(RequestMethod::POST)?,
                 tk => todo!("{tk:?}"),
             };
             program.statements.push(request);
@@ -168,6 +169,20 @@ mod tests {
     }
 
     #[test]
+    fn parse_post_url() {
+        assert_program!(
+            "post http://localhost",
+            Program {
+                statements: vec![Request(RequestParams {
+                    method: POST,
+                    url: "http://localhost",
+                    params: vec![]
+                })]
+            }
+        );
+    }
+
+    #[test]
     fn parse_get_with_headers() {
         assert_program!(
             r#"
@@ -178,6 +193,33 @@ get http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: GET,
+                    url: "http://localhost",
+                    params: (vec![
+                        HeaderStatement {
+                            name: "Authorization",
+                            value: StringLiteral("Bearer token")
+                        },
+                        HeaderStatement {
+                            name: "random",
+                            value: StringLiteral("tokener Bear")
+                        }
+                    ])
+                })]
+            }
+        );
+    }
+
+    #[test]
+    fn parse_post_with_headers() {
+        assert_program!(
+            r#"
+post http://localhost { 
+    header Authorization = "Bearer token" 
+    header random = "tokener Bear" 
+}"#,
+            Program {
+                statements: vec![Request(RequestParams {
+                    method: POST,
                     url: "http://localhost",
                     params: (vec![
                         HeaderStatement {

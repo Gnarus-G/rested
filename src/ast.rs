@@ -23,6 +23,7 @@ pub struct RequestParams<'i> {
 #[derive(Debug, PartialEq)]
 pub enum RequestMethod {
     GET,
+    POST,
 }
 
 #[derive(Debug, PartialEq)]

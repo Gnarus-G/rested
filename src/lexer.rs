@@ -4,6 +4,7 @@ use std::ops::Range;
 pub enum TokenKind {
     // keywords
     Get,
+    Post,
     Header,
 
     Ident,
@@ -195,6 +196,11 @@ impl<'i> Lexer<'i> {
         match string {
             "get" => Token {
                 kind: Get,
+                location,
+                text: string,
+            },
+            "post" => Token {
+                kind: Post,
                 location,
                 text: string,
             },

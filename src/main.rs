@@ -68,10 +68,13 @@ fn interpret(code: &str) -> Result<(), Box<dyn Error>> {
 
     for s in ast.statements {
         match s {
-            ast::Statement::Request(get) => {
-                let mut req = ureq::get(get.url);
+            ast::Statement::Request(request) => {
+                let mut req = match request.method {
+                    ast::RequestMethod::GET => ureq::get(request.url),
+                    ast::RequestMethod::POST => ureq::post(request.url),
+                };
 
-                for statement in get.params {
+                for statement in request.params {
                     match statement {
                         ast::Statement::Request(_) => todo!(),
                         ast::Statement::HeaderStatement { name, value } => {
