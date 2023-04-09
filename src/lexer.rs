@@ -25,6 +25,7 @@ pub enum TokenKind {
 
     //edge cases
     UnfinishedStringLiteral,
+    UnfinishedMultiLineStringLiteral,
 }
 
 #[derive(PartialEq, Clone, Copy)]
@@ -204,6 +205,14 @@ impl<'i> Lexer<'i> {
 
         self.step(); //eat the closing quote
 
+        if let None = self.ch() {
+            return Token {
+                kind: TokenKind::UnfinishedMultiLineStringLiteral,
+                location,
+                text: string,
+            };
+        }
+
         Token {
             kind: TokenKind::MultiLineStringLiteral,
             location,
@@ -229,12 +238,15 @@ impl<'i> Lexer<'i> {
 
         self.step(); //eat the closing quote or newline character
 
-        if let Some(b'\n') = self.ch() {
-            return Token {
-                kind: TokenKind::UnfinishedStringLiteral,
-                location,
-                text: string,
-            };
+        match self.ch() {
+            Some(b'\n') | None => {
+                return Token {
+                    kind: TokenKind::UnfinishedStringLiteral,
+                    location,
+                    text: string,
+                };
+            }
+            _ => {}
         }
 
         Token {
@@ -327,6 +339,15 @@ mod tests {
         );
 
         assert_lexes!(
+            r#""hello"#,
+            [Token {
+                kind: UnfinishedStringLiteral,
+                text: "hello",
+                location: (0, 0).into()
+            },]
+        );
+
+        assert_lexes!(
             r#"
 "hello
 "world
@@ -386,12 +407,22 @@ mod tests {
             r#"`
 {
     stuff
-}`"#,
-            [Token {
-                kind: MultiLineStringLiteral,
-                text: "\n{\n    stuff\n}",
-                location: (0, 0).into()
-            },]
+}`
+
+`
+stuff"#,
+            [
+                Token {
+                    kind: MultiLineStringLiteral,
+                    text: "\n{\n    stuff\n}",
+                    location: (0, 0).into()
+                },
+                Token {
+                    kind: UnfinishedMultiLineStringLiteral,
+                    text: "\nstuff",
+                    location: (5, 0).into()
+                }
+            ]
         );
     }
 
