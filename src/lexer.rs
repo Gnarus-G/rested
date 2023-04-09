@@ -53,6 +53,22 @@ impl<'i> std::fmt::Debug for Token<'i> {
     }
 }
 
+trait CharaterTest {
+    fn passes<P: Fn(&u8) -> bool>(&self, predicate: P) -> bool;
+    fn is(&self, ch: u8) -> bool {
+        self.passes(|&c| ch == c)
+    }
+}
+
+impl CharaterTest for Option<&u8> {
+    fn passes<P: Fn(&u8) -> bool>(&self, predicate: P) -> bool {
+        match self {
+            Some(c) => predicate(c),
+            None => false,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Lexer<'i> {
     input: &'i [u8],
@@ -103,32 +119,12 @@ impl<'i> Lexer<'i> {
         self.char_at(self.position + 1)
     }
 
-    fn if_peek(&self, ch: u8) -> bool {
-        match self.peek_char() {
-            Some(c) => *c == ch,
-            None => false,
-        }
-    }
-
-    fn if_previous(&self, ch: u8) -> bool {
-        if self.position == 0 {
-            return false;
-        }
-        match self.char_at(self.position - 1) {
-            Some(c) => *c == ch,
-            None => false,
-        }
-    }
-
     /// Assumes that the character at the current position, immediately before calling
     /// this function is also true for the predicate function given.
     fn read_while<P: Fn(&u8) -> bool>(&mut self, predicate: P) -> (usize, usize) {
         let start_pos = self.position;
 
-        while match self.peek_char() {
-            Some(c) => predicate(c),
-            None => false,
-        } {
+        while self.peek_char().passes(&predicate) {
             self.step();
         }
 
@@ -136,10 +132,7 @@ impl<'i> Lexer<'i> {
     }
 
     fn skip_whitespace(&mut self) {
-        while match self.ch() {
-            Some(c) => c.is_ascii_whitespace(),
-            None => false,
-        } {
+        while self.ch().passes(|c| c.is_ascii_whitespace()) {
             self.step();
         }
     }
@@ -161,6 +154,7 @@ impl<'i> Lexer<'i> {
         };
 
         let t = match ch {
+            b'"' if self.peek_char().is(b'"') => self.empty_string_literal(),
             b'"' => self.string_literal(),
             b'`' => self.multiline_string_literal(),
             b'{' => Token {
@@ -192,14 +186,6 @@ impl<'i> Lexer<'i> {
 
         self.step(); //eat the opening quote
 
-        if let Some(b'`') = self.ch() {
-            return Token {
-                kind: TokenKind::StringLiteral,
-                location,
-                text: "",
-            };
-        }
-
         let (s, e) = self.read_while(|&c| c != b'`');
         let string = self.input_slice(s..e);
 
@@ -225,14 +211,6 @@ impl<'i> Lexer<'i> {
 
         self.step(); //eat the opening quote
 
-        if let Some(b'"') = self.ch() {
-            return Token {
-                kind: TokenKind::StringLiteral,
-                location,
-                text: "",
-            };
-        }
-
         let (s, e) = self.read_while(|&c| c != b'"' && c != b'\n');
         let string = self.input_slice(s..e);
 
@@ -253,6 +231,16 @@ impl<'i> Lexer<'i> {
             kind: TokenKind::StringLiteral,
             location,
             text: string,
+        }
+    }
+
+    fn empty_string_literal(&mut self) -> Token<'i> {
+        let location = self.cursor;
+        self.step();
+        Token {
+            kind: TokenKind::StringLiteral,
+            location,
+            text: "",
         }
     }
 
