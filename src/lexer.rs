@@ -156,6 +156,7 @@ impl<'i> Lexer<'i> {
         let t = match ch {
             b'"' if self.peek_char().is(b'"') => self.empty_string_literal(),
             b'"' => self.string_literal(),
+            b'`' if self.peek_char().is(b'`') => self.empty_string_literal(),
             b'`' => self.multiline_string_literal(),
             b'{' => Token {
                 kind: LBracket,
@@ -355,7 +356,7 @@ mod tests {
         );
 
         assert_lexes!(
-            r#" "" "" "#,
+            r#" "" "" ``"#,
             [
                 Token {
                     kind: StringLiteral,
@@ -366,6 +367,11 @@ mod tests {
                     kind: StringLiteral,
                     text: "",
                     location: (0, 4).into()
+                },
+                Token {
+                    kind: StringLiteral,
+                    text: "",
+                    location: (0, 7).into()
                 }
             ]
         );
