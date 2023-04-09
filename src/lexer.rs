@@ -442,7 +442,7 @@ stuff"#,
     #[test]
     fn lex_get_url_with_header() {
         assert_lexes!(
-            "get http://localhost { header Authorization = \"Bearer token\" }",
+            "get http://localhost { header \"Authorization\" \"Bearer token\" }",
             vec![
                 Token {
                     kind: Get,
@@ -465,14 +465,9 @@ stuff"#,
                     text: "header"
                 },
                 Token {
-                    kind: Ident,
+                    kind: StringLiteral,
                     location: (0, 30).into(),
                     text: "Authorization"
-                },
-                Token {
-                    kind: Assign,
-                    location: (0, 44).into(),
-                    text: "="
                 },
                 Token {
                     kind: StringLiteral,
@@ -541,7 +536,7 @@ stuff"#,
         assert_lexes!(
             r#"
 post http://localhost { 
-    header Authorization = "Bearer token" 
+    header "Authorization" "Bearer token" 
     body "{neet: 1337}" 
 }"#,
             vec![
@@ -566,14 +561,9 @@ post http://localhost {
                     text: "header"
                 },
                 Token {
-                    kind: Ident,
+                    kind: StringLiteral,
                     location: (2, 11).into(),
                     text: "Authorization"
-                },
-                Token {
-                    kind: Assign,
-                    location: (2, 25).into(),
-                    text: "="
                 },
                 Token {
                     kind: StringLiteral,

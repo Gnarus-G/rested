@@ -86,20 +86,16 @@ impl<'i> Parser<'i> {
     }
 
     fn parse_header(&mut self) -> Result<Statement<'i>> {
-        let t = self.token();
+        self.expect(TokenKind::StringLiteral)?;
 
-        let header_name = t.text;
-
-        self.expect(TokenKind::Assign)?;
-
-        self.eat_token();
+        let header_name = self.token();
 
         self.expect(TokenKind::StringLiteral)?;
 
         let header_value = self.token();
 
         Ok(Statement::HeaderStatement {
-            name: header_name,
+            name: header_name.text,
             value: match header_value.kind {
                 TokenKind::Ident => Expression::Identifier(header_value.text),
                 TokenKind::StringLiteral => Expression::StringLiteral(header_value.text),
@@ -190,8 +186,8 @@ mod tests {
         assert_program!(
             r#"
 get http://localhost { 
-    header Authorization = "Bearer token" 
-    header random = "tokener Bear" 
+    header "Authorization" "Bearer token" 
+    header "random" "tokener Bear" 
 }"#,
             Program {
                 statements: vec![Request(RequestParams {
@@ -217,8 +213,8 @@ get http://localhost {
         assert_program!(
             r#"
 post http://localhost { 
-    header Authorization = "Bearer token" 
-    header random = "tokener Bear" 
+    header "Authorization" "Bearer token" 
+    header "random" "tokener Bear" 
 }"#,
             Program {
                 statements: vec![Request(RequestParams {
@@ -244,7 +240,7 @@ post http://localhost {
         assert_program!(
             r#"
 post http://localhost { 
-    header Authorization = "Bearer token" 
+    header "Authorization" "Bearer token" 
     body "{neet: 1337}" 
 }"#,
             Program {
@@ -270,7 +266,7 @@ post http://localhost {
         assert_program!(
             r#"
 post http://localhost { 
-    header Authorization = "Bearer token" 
+    header "Authorization" "Bearer token" 
     body `
         {"neet": 1337}
     `
