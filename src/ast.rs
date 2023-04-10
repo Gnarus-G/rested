@@ -14,6 +14,10 @@ pub enum Statement<'i> {
 pub enum Expression<'i> {
     Identifier(&'i str),
     StringLiteral(&'i str),
+    Call {
+        identifier: &'i str,
+        arguments: Vec<Expression<'i>>,
+    },
 }
 
 #[derive(Debug, PartialEq)]

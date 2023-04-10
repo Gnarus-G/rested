@@ -90,13 +90,14 @@ impl<'i> Parser<'i> {
 
         let header_name = self.token();
 
-        self.expect(TokenKind::StringLiteral)?;
-
         let header_value = self.token();
 
         Ok(Statement::HeaderStatement {
             name: header_name.text,
             value: match header_value.kind {
+                TokenKind::Ident if self.peek_token().kind == TokenKind::LParen => {
+                    self.parse_call_expression(header_value)
+                }
                 TokenKind::Ident => Expression::Identifier(header_value.text),
                 TokenKind::StringLiteral => Expression::StringLiteral(header_value.text),
                 TokenKind::MultiLineStringLiteral => Expression::StringLiteral(header_value.text),
@@ -109,6 +110,9 @@ impl<'i> Parser<'i> {
         let token = self.token();
 
         let value = match token.kind {
+            TokenKind::Ident if self.peek_token().kind == TokenKind::LParen => {
+                self.parse_call_expression(token)
+            }
             TokenKind::Ident => Expression::Identifier(token.text),
             TokenKind::StringLiteral => Expression::StringLiteral(token.text),
             TokenKind::MultiLineStringLiteral => Expression::StringLiteral(token.text),
@@ -132,6 +136,27 @@ impl<'i> Parser<'i> {
 
     fn error(&self) -> ParseErrorConstructor<'i> {
         ParseErrorConstructor::new(self.lexer.input())
+    }
+
+    fn parse_call_expression(&mut self, identifier: Token<'i>) -> Expression<'i> {
+        self.eat_token();
+
+        let mut token = self.token();
+
+        let mut arguments = vec![];
+
+        while token.kind != TokenKind::RParen {
+            match token.kind {
+                TokenKind::StringLiteral => arguments.push(Expression::StringLiteral(token.text)),
+                _ => todo!(),
+            }
+            token = self.token();
+        }
+
+        Expression::Call {
+            identifier: identifier.text,
+            arguments,
+        }
     }
 }
 
@@ -284,6 +309,34 @@ post http://localhost {
                             value: StringLiteral("\n        {\"neet\": 1337}\n    ")
                         }
                     ])
+                })]
+            }
+        );
+    }
+
+    #[test]
+    fn parse_env_call_expression() {
+        assert_program!(
+            r#"post http://localhost { header "name" env("auth") body env("data") }"#,
+            Program {
+                statements: vec![Request(RequestParams {
+                    method: POST,
+                    url: "http://localhost",
+                    params: vec![
+                        HeaderStatement {
+                            name: "name",
+                            value: Call {
+                                identifier: "env",
+                                arguments: vec![StringLiteral("auth")]
+                            }
+                        },
+                        BodyStatement {
+                            value: Call {
+                                identifier: "env",
+                                arguments: vec![StringLiteral("data")]
+                            }
+                        }
+                    ]
                 })]
             }
         );

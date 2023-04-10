@@ -19,6 +19,8 @@ pub enum TokenKind {
     Assign,
 
     // special characters
+    LParen,
+    RParen,
     LBracket,
     RBracket,
     End,
@@ -158,6 +160,16 @@ impl<'i> Lexer<'i> {
             b'"' => self.string_literal(),
             b'`' if self.peek_char().is(b'`') => self.empty_string_literal(),
             b'`' => self.multiline_string_literal(),
+            b'(' => Token {
+                kind: LParen,
+                location: self.cursor,
+                text: "(",
+            },
+            b')' => Token {
+                kind: RParen,
+                location: self.cursor,
+                text: ")",
+            },
             b'{' => Token {
                 kind: LBracket,
                 location: self.cursor,
@@ -585,6 +597,50 @@ post http://localhost {
                     location: (4, 0).into(),
                     text: "}"
                 },
+            ]
+        );
+    }
+
+    #[test]
+    fn lex_call_expression() {
+        assert_lexes!(
+            r#"env() env("stuff")"#,
+            [
+                Token {
+                    kind: Ident,
+                    text: "env",
+                    location: (0, 0).into()
+                },
+                Token {
+                    kind: LParen,
+                    text: "(",
+                    location: (0, 3).into()
+                },
+                Token {
+                    kind: RParen,
+                    text: ")",
+                    location: (0, 4).into()
+                },
+                Token {
+                    kind: Ident,
+                    text: "env",
+                    location: (0, 6).into()
+                },
+                Token {
+                    kind: LParen,
+                    text: "(",
+                    location: (0, 9).into()
+                },
+                Token {
+                    kind: StringLiteral,
+                    text: "stuff",
+                    location: (0, 10).into()
+                },
+                Token {
+                    kind: RParen,
+                    text: ")",
+                    location: (0, 17).into()
+                }
             ]
         );
     }

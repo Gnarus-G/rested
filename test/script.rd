@@ -1,5 +1,5 @@
 get http://localhost:8080 {
-   header "random" "billy bob"
+   header "random" env("love")
 }
 
 post http://localhost:8080 {

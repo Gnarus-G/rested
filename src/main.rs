@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 
 use std::{
+    collections::HashMap,
     error::Error,
     fs,
     io::{stdin, stdout, Write},
@@ -21,7 +22,24 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
-    Run { file: PathBuf },
+    Run {
+        file: PathBuf,
+    },
+    Env {
+        #[command(subcommand)]
+        command: EnvCommand,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+enum EnvCommand {
+    Set {
+        /// of the environment variable
+        name: String,
+
+        /// of the environment variable
+        value: String,
+    },
 }
 
 fn main() {
@@ -33,15 +51,24 @@ fn main() {
 fn run() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
 
+    let mut env = Environment::new(PathBuf::from(".vars.rd.json"));
+
+    env.load_variables_from_file()?;
+
     match cli.command {
         Some(command) => match command {
             Command::Run { file } => {
                 let code = fs::read_to_string(file)?;
-                interpret(&code)
+                interpret(&code, &env)?
             }
+            Command::Env { command } => match command {
+                EnvCommand::Set { name, value } => env.set_variable(name, value)?,
+            },
         },
-        None => repl_loop(|code| interpret(&code)),
+        None => repl_loop(|code| interpret(&code, &env))?,
     }
+
+    Ok(())
 }
 
 fn repl_loop<F: Fn(String) -> Result<(), Box<dyn Error>>>(
@@ -60,7 +87,81 @@ fn repl_loop<F: Fn(String) -> Result<(), Box<dyn Error>>>(
     Ok(())
 }
 
-fn interpret(code: &str) -> Result<(), Box<dyn Error>> {
+struct Environment {
+    env_file_name: PathBuf,
+    variables: HashMap<String, String>,
+}
+
+impl Environment {
+    fn new(file_name: PathBuf) -> Self {
+        Self {
+            env_file_name: file_name,
+            variables: HashMap::new(),
+        }
+    }
+
+    fn load_variables_from_file(&mut self) -> Result<(), Box<dyn Error>> {
+        let file = std::fs::File::options()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open(&self.env_file_name)?;
+
+        let reader = std::io::BufReader::new(file);
+
+        self.variables = serde_json::from_reader(reader).unwrap_or(HashMap::new());
+
+        Ok(())
+    }
+
+    fn set_variable(&mut self, name: String, value: String) -> Result<(), Box<dyn Error>> {
+        self.variables.insert(name, value);
+
+        let file = std::fs::File::options()
+            .write(true)
+            .open(&self.env_file_name)?;
+        let writer = std::io::BufWriter::new(file);
+
+        serde_json::to_writer_pretty::<_, HashMap<_, _>>(writer, &self.variables)?;
+
+        Ok(())
+    }
+}
+
+impl<'i> ast::Expression<'i> {
+    fn evaluate(self, env: &Environment) -> Result<String, Box<dyn Error>> {
+        let value = match self {
+            ast::Expression::Identifier(_) => todo!(),
+            ast::Expression::StringLiteral(v) => v,
+            ast::Expression::Call {
+                identifier,
+                arguments,
+            } => match identifier {
+                "env" => {
+                    let arg = arguments
+                        .first()
+                        .ok_or("calls to env() must include a variable name argument")?;
+
+                    let value = match arg {
+                        ast::Expression::Identifier(_) => todo!(),
+                        ast::Expression::StringLiteral(n) => env
+                            .variables
+                            .get(n.to_owned())
+                            .ok_or(format!("no variable found by the name {:?}", n))?,
+                        ast::Expression::Call { .. } => todo!(),
+                    };
+
+                    value
+                }
+                _ => todo!("currently only env() identifier is allowed"),
+            },
+        };
+
+        Ok(value.to_string())
+    }
+}
+
+fn interpret(code: &str, env: &Environment) -> Result<(), Box<dyn Error>> {
     let lex = lexer::Lexer::new(&code);
     let mut parser = parser::Parser::new(lex);
 
@@ -80,27 +181,18 @@ fn interpret(code: &str) -> Result<(), Box<dyn Error>> {
                     match statement {
                         ast::Statement::Request(_) => todo!(),
                         ast::Statement::HeaderStatement { name, value } => {
-                            let evaluated = match value {
-                                ast::Expression::Identifier(_) => todo!(),
-                                ast::Expression::StringLiteral(v) => v,
-                            };
-                            req = req.set(name, evaluated);
+                            req = req.set(name, &value.evaluate(&env)?);
                         }
                         ast::Statement::BodyStatement { value } => {
-                            let evaluated = match value {
-                                ast::Expression::Identifier(_) => todo!(),
-                                ast::Expression::StringLiteral(v) => v,
-                            };
-
                             if let None = body {
-                                body = Some(evaluated);
+                                body = Some(value.evaluate(&env)?);
                             }
                         }
                     }
                 }
 
                 let res = if let Some(value) = body {
-                    req.send_string(value)?.into_string()?
+                    req.send_string(&value)?.into_string()?
                 } else {
                     req.call()?.into_string()?
                 };
