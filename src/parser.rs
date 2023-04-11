@@ -95,10 +95,10 @@ impl<'i> Parser<'i> {
 
     fn parse_request(&mut self, method: RequestMethod) -> Result<Statement<'i>> {
         self.expect(TokenKind::Url)?;
-        let url = self.token().text;
+        let url = self.token();
         Ok(Statement::Request(crate::ast::RequestParams {
             method,
-            url,
+            url: url.into(),
             params: self.parse_request_params()?,
         }))
     }
@@ -143,14 +143,14 @@ impl<'i> Parser<'i> {
         let header_value = self.token();
 
         Ok(Statement::HeaderStatement {
-            name: header_name.text,
+            name: header_name.into(),
             value: match header_value.kind {
                 TokenKind::Ident if self.peek_token().kind == TokenKind::LParen => {
                     self.parse_call_expression(header_value)?
                 }
-                TokenKind::Ident => Expression::Identifier(header_value.text),
-                TokenKind::StringLiteral => Expression::StringLiteral(header_value.text),
-                TokenKind::MultiLineStringLiteral => Expression::StringLiteral(header_value.text),
+                TokenKind::Ident => Expression::Identifier(header_value.into()),
+                TokenKind::StringLiteral => Expression::StringLiteral(header_value.into()),
+                TokenKind::MultiLineStringLiteral => Expression::StringLiteral(header_value.into()),
                 _ => unreachable!(),
             },
         })
@@ -169,9 +169,9 @@ impl<'i> Parser<'i> {
             TokenKind::Ident if self.peek_token().kind == TokenKind::LParen => {
                 self.parse_call_expression(token)?
             }
-            TokenKind::Ident => Expression::Identifier(token.text),
-            TokenKind::StringLiteral => Expression::StringLiteral(token.text),
-            TokenKind::MultiLineStringLiteral => Expression::StringLiteral(token.text),
+            TokenKind::Ident => Expression::Identifier(token.into()),
+            TokenKind::StringLiteral => Expression::StringLiteral(token.into()),
+            TokenKind::MultiLineStringLiteral => Expression::StringLiteral(token.into()),
             _ => unreachable!(),
         };
 
@@ -183,8 +183,8 @@ impl<'i> Parser<'i> {
 
         let exp = match start_token.kind {
             Ident if self.peek_token().kind == LParen => self.parse_call_expression(start_token)?,
-            Ident => Expression::Identifier(start_token.text),
-            StringLiteral | MultiLineStringLiteral => Expression::StringLiteral(start_token.text),
+            Ident => Expression::Identifier(start_token.into()),
+            StringLiteral | MultiLineStringLiteral => Expression::StringLiteral(start_token.into()),
             _ => return Err(self.error().unexpected_token(&start_token)),
         };
 
@@ -200,7 +200,7 @@ impl<'i> Parser<'i> {
 
         while token.kind != TokenKind::RParen {
             match token.kind {
-                TokenKind::StringLiteral => arguments.push(Expression::StringLiteral(token.text)),
+                TokenKind::StringLiteral => arguments.push(Expression::StringLiteral(token.into())),
                 _ => {
                     return Err(self
                         .error()
@@ -212,7 +212,7 @@ impl<'i> Parser<'i> {
         }
 
         Ok(Expression::Call {
-            identifier: identifier.text,
+            identifier: identifier.into(),
             arguments,
         })
     }
@@ -252,7 +252,7 @@ impl<'i> Parser<'i> {
 mod tests {
     use super::*;
 
-    use crate::ast::{Expression, Program, RequestMethod, RequestParams, Statement};
+    use crate::ast::{AbstractToken, Expression, Program, RequestMethod, RequestParams, Statement};
 
     use Expression::*;
     use RequestMethod::*;
@@ -275,12 +275,18 @@ get http://localhost:8080 {}"#,
                 statements: vec![
                     Request(RequestParams {
                         method: GET,
-                        url: "http://localhost:8080",
+                        url: AbstractToken {
+                            text: "http://localhost:8080",
+                            location: (0, 4).into()
+                        },
                         params: vec![]
                     }),
                     Request(RequestParams {
                         method: GET,
-                        url: "http://localhost:8080",
+                        url: AbstractToken {
+                            text: "http://localhost:8080",
+                            location: (1, 4).into()
+                        },
                         params: vec![]
                     })
                 ]
@@ -295,7 +301,10 @@ get http://localhost:8080 {}"#,
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    url: "http://localhost",
+                    url: AbstractToken {
+                        text: "http://localhost",
+                        location: (0, 5).into()
+                    },
                     params: vec![]
                 })]
             }
@@ -313,15 +322,30 @@ get http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: GET,
-                    url: "http://localhost",
+                    url: AbstractToken {
+                        text: "http://localhost",
+                        location: (1, 4).into()
+                    },
                     params: (vec![
                         HeaderStatement {
-                            name: "Authorization",
-                            value: StringLiteral("Bearer token")
+                            name: AbstractToken {
+                                text: "Authorization",
+                                location: (2, 11).into()
+                            },
+                            value: StringLiteral(AbstractToken {
+                                text: "Bearer token",
+                                location: (2, 27).into()
+                            })
                         },
                         HeaderStatement {
-                            name: "random",
-                            value: StringLiteral("tokener Bear")
+                            name: AbstractToken {
+                                text: "random",
+                                location: (3, 11).into()
+                            },
+                            value: StringLiteral(AbstractToken {
+                                text: "tokener Bear",
+                                location: (3, 20).into()
+                            })
                         }
                     ])
                 })]
@@ -340,15 +364,30 @@ post http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    url: "http://localhost",
+                    url: AbstractToken {
+                        text: "http://localhost",
+                        location: (1, 5).into()
+                    },
                     params: (vec![
                         HeaderStatement {
-                            name: "Authorization",
-                            value: StringLiteral("Bearer token")
+                            name: AbstractToken {
+                                text: "Authorization",
+                                location: (2, 11).into()
+                            },
+                            value: StringLiteral(AbstractToken {
+                                text: "Bearer token",
+                                location: (2, 27).into()
+                            })
                         },
                         HeaderStatement {
-                            name: "random",
-                            value: StringLiteral("tokener Bear")
+                            name: AbstractToken {
+                                text: "random",
+                                location: (3, 11).into()
+                            },
+                            value: StringLiteral(AbstractToken {
+                                text: "tokener Bear",
+                                location: (3, 20).into()
+                            })
                         }
                     ])
                 })]
@@ -367,14 +406,26 @@ post http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    url: "http://localhost",
+                    url: AbstractToken {
+                        text: "http://localhost",
+                        location: (1, 5).into()
+                    },
                     params: (vec![
                         HeaderStatement {
-                            name: "Authorization",
-                            value: StringLiteral("Bearer token")
+                            name: AbstractToken {
+                                text: "Authorization",
+                                location: (2, 11).into()
+                            },
+                            value: StringLiteral(AbstractToken {
+                                text: "Bearer token",
+                                location: (2, 27).into()
+                            })
                         },
                         BodyStatement {
-                            value: StringLiteral("{neet: 1337}")
+                            value: StringLiteral(AbstractToken {
+                                text: "{neet: 1337}",
+                                location: (3, 9).into()
+                            })
                         }
                     ])
                 })]
@@ -395,14 +446,26 @@ post http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    url: "http://localhost",
+                    url: AbstractToken {
+                        text: "http://localhost",
+                        location: (1, 5).into()
+                    },
                     params: (vec![
                         HeaderStatement {
-                            name: "Authorization",
-                            value: StringLiteral("Bearer token")
+                            name: AbstractToken {
+                                text: "Authorization",
+                                location: (2, 11).into()
+                            },
+                            value: StringLiteral(AbstractToken {
+                                text: "Bearer token",
+                                location: (2, 27).into()
+                            })
                         },
                         BodyStatement {
-                            value: StringLiteral("\n        {\"neet\": 1337}\n    ")
+                            value: StringLiteral(AbstractToken {
+                                text: "\n        {\"neet\": 1337}\n    ",
+                                location: (3, 9).into()
+                            })
                         }
                     ])
                 })]
@@ -417,19 +480,37 @@ post http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    url: "http://localhost",
+                    url: AbstractToken {
+                        text: "http://localhost",
+                        location: (0, 5).into()
+                    },
                     params: vec![
                         HeaderStatement {
-                            name: "name",
+                            name: AbstractToken {
+                                text: "name",
+                                location: (0, 31).into()
+                            },
                             value: Call {
-                                identifier: "env",
-                                arguments: vec![StringLiteral("auth")]
+                                identifier: AbstractToken {
+                                    text: "env",
+                                    location: (0, 38).into()
+                                },
+                                arguments: vec![StringLiteral(AbstractToken {
+                                    text: "auth",
+                                    location: (0, 42).into()
+                                })]
                             }
                         },
                         BodyStatement {
                             value: Call {
-                                identifier: "env",
-                                arguments: vec![StringLiteral("data")]
+                                identifier: AbstractToken {
+                                    text: "env",
+                                    location: (0, 55).into()
+                                },
+                                arguments: vec![StringLiteral(AbstractToken {
+                                    text: "data",
+                                    location: (0, 59).into()
+                                })]
                             }
                         }
                     ]
