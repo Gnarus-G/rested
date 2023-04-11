@@ -54,7 +54,6 @@ impl<'i> Parser<'i> {
                         "url only make sense after a method keyword, 'get', 'post', etc..",
                     ))
                 }
-                Assign => return Err(self.error().unexpected_token(&token)),
                 LParen | RParen => {
                     return Err(self
                         .error()

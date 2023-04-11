@@ -15,9 +15,6 @@ pub enum TokenKind {
     MultiLineStringLiteral,
     Url,
 
-    // operators
-    Assign,
-
     // special characters
     LParen,
     RParen,
@@ -180,11 +177,6 @@ impl<'i> Lexer<'i> {
                 kind: RBracket,
                 location: self.cursor,
                 text: "}",
-            },
-            b'=' => Token {
-                kind: Assign,
-                location: self.cursor,
-                text: "=",
             },
             c if c.is_ascii_alphabetic() => self.keyword_or_identifier(),
             _ => Token {

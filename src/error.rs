@@ -223,10 +223,10 @@ mod tests {
     #[test]
     fn reject_unsupported_tokens() {
         assert_errs!(
-            r#"="#,
+            r#"("#,
             UnexpectedToken {
-                kind: Assign,
-                text: "=".to_string()
+                kind: LParen,
+                text: "(".to_string()
             }
         );
     }
