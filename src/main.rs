@@ -188,6 +188,7 @@ fn interpret(code: &str, env: &Environment) -> Result<(), Box<dyn Error>> {
                                 body = Some(value.evaluate(&env)?);
                             }
                         }
+                        ast::Statement::ExpressionStatement(_) => todo!(),
                     }
                 }
 
@@ -201,6 +202,7 @@ fn interpret(code: &str, env: &Environment) -> Result<(), Box<dyn Error>> {
             }
             ast::Statement::HeaderStatement { .. } => todo!(),
             ast::Statement::BodyStatement { .. } => todo!(),
+            ast::Statement::ExpressionStatement(_) => todo!(),
         }
     }
 

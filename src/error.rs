@@ -2,9 +2,17 @@ use crate::lexer::{Location, Token, TokenKind};
 
 #[derive(Debug, PartialEq)]
 enum ParseErrorKind {
-    Unexpected {
+    ExpectedToken {
         found: TokenKind,
         expected: TokenKind,
+    },
+    ExpectedEitherOfTokens {
+        found: TokenKind,
+        expected: Vec<TokenKind>,
+    },
+    UnexpectedToken {
+        kind: TokenKind,
+        text: String,
     },
 }
 
@@ -41,11 +49,35 @@ impl<'i> ParseErrorConstructor<'i> {
         }
     }
 
-    pub fn unexpected_token(&self, token: &Token, expected: TokenKind) -> ParseError {
+    pub fn expected_token(&self, token: &Token, expected: TokenKind) -> ParseError {
         ParseError {
-            kind: ParseErrorKind::Unexpected {
+            kind: ParseErrorKind::ExpectedToken {
                 found: token.kind,
                 expected,
+            },
+            location: token.location,
+            message: None,
+            context: self.get_context_around(token),
+        }
+    }
+
+    pub fn expected_one_of_tokens(&self, token: &Token, expected: Vec<TokenKind>) -> ParseError {
+        ParseError {
+            kind: ParseErrorKind::ExpectedEitherOfTokens {
+                found: token.kind,
+                expected,
+            },
+            location: token.location,
+            message: None,
+            context: self.get_context_around(token),
+        }
+    }
+
+    pub fn unexpected_token(&self, token: &Token) -> ParseError {
+        ParseError {
+            kind: ParseErrorKind::UnexpectedToken {
+                kind: token.kind,
+                text: token.text.to_string(),
             },
             location: token.location,
             message: None,
@@ -63,7 +95,7 @@ pub struct ParseError {
 }
 
 impl ParseError {
-    pub fn with_message(mut self, msg: &String) -> Self {
+    pub fn with_message(mut self, msg: &str) -> Self {
         self.message = Some(msg.to_owned());
         self
     }
@@ -80,8 +112,17 @@ impl std::fmt::Display for Location {
 impl std::fmt::Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let formatted_error = match &self.kind {
-            ParseErrorKind::Unexpected { expected, found } => {
+            ParseErrorKind::ExpectedToken { expected, found } => {
                 format!("unexpected token: expected {:?}, got {:?}", expected, found)
+            }
+            ParseErrorKind::ExpectedEitherOfTokens { found, expected } => {
+                format!(
+                    "unexpected token: expected either one of {:?}, but got {:?}",
+                    expected, found
+                )
+            }
+            ParseErrorKind::UnexpectedToken { text, .. } => {
+                format!("illegal or unsupported token {:?}", text)
             }
         };
         let c = &self.context;
@@ -139,20 +180,74 @@ mod tests {
     use ParseErrorKind::*;
 
     #[test]
-    fn unexpected_token() {
+    fn expected_url_after_method() {
         assert_errs!(
             "get {}",
-            Unexpected {
+            ExpectedToken {
                 found: LBracket,
                 expected: Url,
             }
         );
 
         assert_errs!(
-            "get",
-            Unexpected {
+            "post",
+            ExpectedToken {
                 found: End,
                 expected: Url,
+            }
+        );
+    }
+
+    #[test]
+    fn expected_name_after_header_keyword() {
+        assert_errs!(
+            "post http:://localhost {header}",
+            ExpectedToken {
+                found: RBracket,
+                expected: StringLiteral,
+            }
+        );
+    }
+
+    #[test]
+    fn expecting_identifier_or_string_lit_after_header_name() {
+        assert_errs!(
+            r#"get http://localhost { header "name" }"#,
+            ExpectedEitherOfTokens {
+                found: RBracket,
+                expected: vec![StringLiteral, Ident, MultiLineStringLiteral],
+            }
+        );
+    }
+
+    #[test]
+    fn reject_unsupported_tokens() {
+        assert_errs!(
+            r#"="#,
+            UnexpectedToken {
+                kind: Assign,
+                text: "=".to_string()
+            }
+        );
+    }
+
+    #[test]
+    fn reject_unfinished_strings() {
+        assert_errs!(
+            r#""asdfasdf"#,
+            UnexpectedToken {
+                kind: UnfinishedStringLiteral,
+                text: "asdfasdf".to_string()
+            }
+        );
+        assert_errs!(
+            r#"`
+                     asdfa"#,
+            UnexpectedToken {
+                kind: UnfinishedMultiLineStringLiteral,
+                text: r#"
+                     asdfa"#
+                    .to_string()
             }
         );
     }

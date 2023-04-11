@@ -1,3 +1,4 @@
+get http://localhost:8080
 get http://localhost:8080 {
    header "random" env("love")
 }

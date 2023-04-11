@@ -43,12 +43,50 @@ impl<'i> Parser<'i> {
         let mut token = self.token();
 
         while token.kind != End {
-            let request = match token.kind {
+            let statement = match token.kind {
                 Get => self.parse_request(RequestMethod::GET)?,
                 Post => self.parse_request(RequestMethod::POST)?,
-                tk => todo!("{tk:?}"),
+                Header => self.parse_header()?,
+                Body => self.parse_body()?,
+                Ident | StringLiteral | MultiLineStringLiteral => self.parse_expression(token)?,
+                Url => {
+                    return Err(self.error().unexpected_token(&token).with_message(
+                        "url only make sense after a method keyword, 'get', 'post', etc..",
+                    ))
+                }
+                Assign => return Err(self.error().unexpected_token(&token)),
+                LParen | RParen => {
+                    return Err(self
+                        .error()
+                        .unexpected_token(&token)
+                        .with_message("parentheses only make sense within an env() call"))
+                }
+                LBracket | RBracket => {
+                    return Err(self.error().unexpected_token(&token).with_message(
+                        "brackets only make sense after the url of a request declaration",
+                    ))
+                }
+                End => {
+                    return Err(self
+                        .error()
+                        .unexpected_token(&token)
+                        .with_message("unexpected eof"))
+                }
+                UnfinishedStringLiteral => {
+                    return Err(self
+                        .error()
+                        .unexpected_token(&token)
+                        .with_message("terminate the string with a \""))
+                }
+                UnfinishedMultiLineStringLiteral => {
+                    return Err(self
+                        .error()
+                        .unexpected_token(&token)
+                        .with_message("terminate the string with a `"))
+                }
+                IllegalToken => return Err(self.error().unexpected_token(&token)),
             };
-            program.statements.push(request);
+            program.statements.push(statement);
             token = self.token();
         }
 
@@ -57,26 +95,32 @@ impl<'i> Parser<'i> {
 
     fn parse_request(&mut self, method: RequestMethod) -> Result<Statement<'i>> {
         self.expect(TokenKind::Url)?;
+        let url = self.token().text;
         Ok(Statement::Request(crate::ast::RequestParams {
             method,
-            url: self.token().text,
+            url,
             params: self.parse_request_params()?,
         }))
     }
 
     fn parse_request_params(&mut self) -> Result<Vec<Statement<'i>>> {
-        let mut token = self.token();
-        if let crate::lexer::TokenKind::LBracket = token.kind {
-            token = self.token();
+        if let TokenKind::LBracket = self.peek_token().kind {
+            self.eat_token();
+            let mut token = self.token();
             let mut headers = vec![];
             while token.kind != TokenKind::RBracket {
-                let h = match token.kind {
+                let header = match token.kind {
                     TokenKind::Header => self.parse_header()?,
                     TokenKind::Body => self.parse_body()?,
-                    tk => todo!("{tk:?}"),
+                    _ => {
+                        return Err(self
+                            .error()
+                            .unexpected_token(&token)
+                            .with_message("may only declare headers or a body statement here"))
+                    }
                 };
 
-                headers.push(h);
+                headers.push(header);
                 token = self.token();
             }
             return Ok(headers);
@@ -90,55 +134,64 @@ impl<'i> Parser<'i> {
 
         let header_name = self.token();
 
+        self.expect_one_of(vec![
+            TokenKind::StringLiteral,
+            TokenKind::Ident,
+            TokenKind::MultiLineStringLiteral,
+        ])?;
+
         let header_value = self.token();
 
         Ok(Statement::HeaderStatement {
             name: header_name.text,
             value: match header_value.kind {
                 TokenKind::Ident if self.peek_token().kind == TokenKind::LParen => {
-                    self.parse_call_expression(header_value)
+                    self.parse_call_expression(header_value)?
                 }
                 TokenKind::Ident => Expression::Identifier(header_value.text),
                 TokenKind::StringLiteral => Expression::StringLiteral(header_value.text),
                 TokenKind::MultiLineStringLiteral => Expression::StringLiteral(header_value.text),
-                _ => todo!(),
+                _ => unreachable!(),
             },
         })
     }
 
     fn parse_body(&mut self) -> Result<Statement<'i>> {
+        self.expect_one_of(vec![
+            TokenKind::StringLiteral,
+            TokenKind::Ident,
+            TokenKind::MultiLineStringLiteral,
+        ])?;
+
         let token = self.token();
 
         let value = match token.kind {
             TokenKind::Ident if self.peek_token().kind == TokenKind::LParen => {
-                self.parse_call_expression(token)
+                self.parse_call_expression(token)?
             }
             TokenKind::Ident => Expression::Identifier(token.text),
             TokenKind::StringLiteral => Expression::StringLiteral(token.text),
             TokenKind::MultiLineStringLiteral => Expression::StringLiteral(token.text),
-            _ => todo!(),
+            _ => unreachable!(),
         };
 
         Ok(Statement::BodyStatement { value })
     }
 
-    fn expect(&mut self, expected_kind: TokenKind) -> Result<()> {
-        let ahead = self.peek_token();
+    fn parse_expression(&mut self, start_token: Token<'i>) -> Result<Statement<'i>> {
+        use TokenKind::*;
 
-        if ahead.kind == expected_kind {
-            return Ok(());
-        }
+        let exp = match start_token.kind {
+            Ident if self.peek_token().kind == LParen => self.parse_call_expression(start_token)?,
+            Ident => Expression::Identifier(start_token.text),
+            StringLiteral | MultiLineStringLiteral => Expression::StringLiteral(start_token.text),
+            _ => return Err(self.error().unexpected_token(&start_token)),
+        };
 
-        let error = self.error().unexpected_token(&self.token(), expected_kind);
-
-        Err(error)
+        Ok(Statement::ExpressionStatement(exp))
     }
 
-    fn error(&self) -> ParseErrorConstructor<'i> {
-        ParseErrorConstructor::new(self.lexer.input())
-    }
-
-    fn parse_call_expression(&mut self, identifier: Token<'i>) -> Expression<'i> {
+    fn parse_call_expression(&mut self, identifier: Token<'i>) -> Result<Expression<'i>> {
         self.eat_token();
 
         let mut token = self.token();
@@ -148,15 +201,50 @@ impl<'i> Parser<'i> {
         while token.kind != TokenKind::RParen {
             match token.kind {
                 TokenKind::StringLiteral => arguments.push(Expression::StringLiteral(token.text)),
-                _ => todo!(),
+                _ => {
+                    return Err(self
+                        .error()
+                        .unexpected_token(&token)
+                        .with_message("only string literals are allowed in call expressions"))
+                }
             }
             token = self.token();
         }
 
-        Expression::Call {
+        Ok(Expression::Call {
             identifier: identifier.text,
             arguments,
+        })
+    }
+
+    fn expect_one_of(&mut self, expected_kinds: Vec<TokenKind>) -> Result<()> {
+        let ahead = self.peek_token();
+
+        if expected_kinds.contains(&ahead.kind) {
+            return Ok(());
         }
+
+        let error = self
+            .error()
+            .expected_one_of_tokens(&self.token(), expected_kinds);
+
+        Err(error)
+    }
+
+    fn expect(&mut self, expected_kind: TokenKind) -> Result<()> {
+        let ahead = self.peek_token();
+
+        if ahead.kind == expected_kind {
+            return Ok(());
+        }
+
+        let error = self.error().expected_token(&self.token(), expected_kind);
+
+        Err(error)
+    }
+
+    fn error(&self) -> ParseErrorConstructor<'i> {
+        ParseErrorConstructor::new(self.lexer.input())
     }
 }
 
@@ -179,15 +267,23 @@ mod tests {
     }
 
     #[test]
-    fn parse_get_url() {
+    fn parse_get_urls() {
         assert_program!(
-            "get http://localhost",
+            r#"get http://localhost:8080
+get http://localhost:8080 {}"#,
             Program {
-                statements: vec![Request(RequestParams {
-                    method: GET,
-                    url: "http://localhost",
-                    params: vec![]
-                })]
+                statements: vec![
+                    Request(RequestParams {
+                        method: GET,
+                        url: "http://localhost:8080",
+                        params: vec![]
+                    }),
+                    Request(RequestParams {
+                        method: GET,
+                        url: "http://localhost:8080",
+                        params: vec![]
+                    })
+                ]
             }
         );
     }

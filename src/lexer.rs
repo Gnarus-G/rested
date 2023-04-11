@@ -28,6 +28,7 @@ pub enum TokenKind {
     //edge cases
     UnfinishedStringLiteral,
     UnfinishedMultiLineStringLiteral,
+    IllegalToken,
 }
 
 #[derive(PartialEq, Clone, Copy)]
@@ -186,7 +187,11 @@ impl<'i> Lexer<'i> {
                 text: "=",
             },
             c if c.is_ascii_alphabetic() => self.keyword_or_identifier(),
-            &c => todo!("{}", c as char),
+            _ => Token {
+                kind: IllegalToken,
+                text: std::str::from_utf8(&self.input[self.position..self.position + 1]).unwrap(),
+                location: self.cursor,
+            },
         };
 
         self.step();
@@ -286,7 +291,7 @@ impl<'i> Lexer<'i> {
                 text: string,
             },
             "http" | "https" => {
-                let (.., e) = self.read_while(|&c| c != b' ');
+                let (.., e) = self.read_while(|&c| !c.is_ascii_whitespace());
                 let s = self.input_slice(s..e);
                 Token {
                     kind: Url,
