@@ -252,7 +252,7 @@ impl<'i> Parser<'i> {
 mod tests {
     use super::*;
 
-    use crate::ast::{AbstractToken, Expression, Program, RequestMethod, RequestParams, Statement};
+    use crate::ast::{Expression, Program, RequestMethod, RequestParams, Statement, TextSlice};
 
     use Expression::*;
     use RequestMethod::*;
@@ -275,16 +275,16 @@ get http://localhost:8080 {}"#,
                 statements: vec![
                     Request(RequestParams {
                         method: GET,
-                        url: AbstractToken {
-                            text: "http://localhost:8080",
+                        url: TextSlice {
+                            value: "http://localhost:8080",
                             location: (0, 4).into()
                         },
                         params: vec![]
                     }),
                     Request(RequestParams {
                         method: GET,
-                        url: AbstractToken {
-                            text: "http://localhost:8080",
+                        url: TextSlice {
+                            value: "http://localhost:8080",
                             location: (1, 4).into()
                         },
                         params: vec![]
@@ -301,8 +301,8 @@ get http://localhost:8080 {}"#,
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    url: AbstractToken {
-                        text: "http://localhost",
+                    url: TextSlice {
+                        value: "http://localhost",
                         location: (0, 5).into()
                     },
                     params: vec![]
@@ -322,28 +322,28 @@ get http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: GET,
-                    url: AbstractToken {
-                        text: "http://localhost",
+                    url: TextSlice {
+                        value: "http://localhost",
                         location: (1, 4).into()
                     },
                     params: (vec![
                         HeaderStatement {
-                            name: AbstractToken {
-                                text: "Authorization",
+                            name: TextSlice {
+                                value: "Authorization",
                                 location: (2, 11).into()
                             },
-                            value: StringLiteral(AbstractToken {
-                                text: "Bearer token",
+                            value: StringLiteral(TextSlice {
+                                value: "Bearer token",
                                 location: (2, 27).into()
                             })
                         },
                         HeaderStatement {
-                            name: AbstractToken {
-                                text: "random",
+                            name: TextSlice {
+                                value: "random",
                                 location: (3, 11).into()
                             },
-                            value: StringLiteral(AbstractToken {
-                                text: "tokener Bear",
+                            value: StringLiteral(TextSlice {
+                                value: "tokener Bear",
                                 location: (3, 20).into()
                             })
                         }
@@ -364,28 +364,28 @@ post http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    url: AbstractToken {
-                        text: "http://localhost",
+                    url: TextSlice {
+                        value: "http://localhost",
                         location: (1, 5).into()
                     },
                     params: (vec![
                         HeaderStatement {
-                            name: AbstractToken {
-                                text: "Authorization",
+                            name: TextSlice {
+                                value: "Authorization",
                                 location: (2, 11).into()
                             },
-                            value: StringLiteral(AbstractToken {
-                                text: "Bearer token",
+                            value: StringLiteral(TextSlice {
+                                value: "Bearer token",
                                 location: (2, 27).into()
                             })
                         },
                         HeaderStatement {
-                            name: AbstractToken {
-                                text: "random",
+                            name: TextSlice {
+                                value: "random",
                                 location: (3, 11).into()
                             },
-                            value: StringLiteral(AbstractToken {
-                                text: "tokener Bear",
+                            value: StringLiteral(TextSlice {
+                                value: "tokener Bear",
                                 location: (3, 20).into()
                             })
                         }
@@ -406,24 +406,24 @@ post http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    url: AbstractToken {
-                        text: "http://localhost",
+                    url: TextSlice {
+                        value: "http://localhost",
                         location: (1, 5).into()
                     },
                     params: (vec![
                         HeaderStatement {
-                            name: AbstractToken {
-                                text: "Authorization",
+                            name: TextSlice {
+                                value: "Authorization",
                                 location: (2, 11).into()
                             },
-                            value: StringLiteral(AbstractToken {
-                                text: "Bearer token",
+                            value: StringLiteral(TextSlice {
+                                value: "Bearer token",
                                 location: (2, 27).into()
                             })
                         },
                         BodyStatement {
-                            value: StringLiteral(AbstractToken {
-                                text: "{neet: 1337}",
+                            value: StringLiteral(TextSlice {
+                                value: "{neet: 1337}",
                                 location: (3, 9).into()
                             })
                         }
@@ -446,24 +446,24 @@ post http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    url: AbstractToken {
-                        text: "http://localhost",
+                    url: TextSlice {
+                        value: "http://localhost",
                         location: (1, 5).into()
                     },
                     params: (vec![
                         HeaderStatement {
-                            name: AbstractToken {
-                                text: "Authorization",
+                            name: TextSlice {
+                                value: "Authorization",
                                 location: (2, 11).into()
                             },
-                            value: StringLiteral(AbstractToken {
-                                text: "Bearer token",
+                            value: StringLiteral(TextSlice {
+                                value: "Bearer token",
                                 location: (2, 27).into()
                             })
                         },
                         BodyStatement {
-                            value: StringLiteral(AbstractToken {
-                                text: "\n        {\"neet\": 1337}\n    ",
+                            value: StringLiteral(TextSlice {
+                                value: "\n        {\"neet\": 1337}\n    ",
                                 location: (3, 9).into()
                             })
                         }
@@ -480,35 +480,35 @@ post http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    url: AbstractToken {
-                        text: "http://localhost",
+                    url: TextSlice {
+                        value: "http://localhost",
                         location: (0, 5).into()
                     },
                     params: vec![
                         HeaderStatement {
-                            name: AbstractToken {
-                                text: "name",
+                            name: TextSlice {
+                                value: "name",
                                 location: (0, 31).into()
                             },
                             value: Call {
-                                identifier: AbstractToken {
-                                    text: "env",
+                                identifier: TextSlice {
+                                    value: "env",
                                     location: (0, 38).into()
                                 },
-                                arguments: vec![StringLiteral(AbstractToken {
-                                    text: "auth",
+                                arguments: vec![StringLiteral(TextSlice {
+                                    value: "auth",
                                     location: (0, 42).into()
                                 })]
                             }
                         },
                         BodyStatement {
                             value: Call {
-                                identifier: AbstractToken {
-                                    text: "env",
+                                identifier: TextSlice {
+                                    value: "env",
                                     location: (0, 55).into()
                                 },
-                                arguments: vec![StringLiteral(AbstractToken {
-                                    text: "data",
+                                arguments: vec![StringLiteral(TextSlice {
+                                    value: "data",
                                     location: (0, 59).into()
                                 })]
                             }

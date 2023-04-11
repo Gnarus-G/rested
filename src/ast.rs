@@ -1,15 +1,15 @@
 use crate::lexer::{Location, Token};
 
 #[derive(Debug, PartialEq)]
-pub struct AbstractToken<'i> {
-    pub text: &'i str,
+pub struct TextSlice<'i> {
+    pub value: &'i str,
     pub location: Location,
 }
 
-impl<'i> From<Token<'i>> for AbstractToken<'i> {
+impl<'i> From<Token<'i>> for TextSlice<'i> {
     fn from(token: Token<'i>) -> Self {
         Self {
-            text: token.text,
+            value: token.text,
             location: token.location,
         }
     }
@@ -19,7 +19,7 @@ impl<'i> From<Token<'i>> for AbstractToken<'i> {
 pub enum Statement<'i> {
     Request(RequestParams<'i>),
     HeaderStatement {
-        name: AbstractToken<'i>,
+        name: TextSlice<'i>,
         value: Expression<'i>,
     },
     BodyStatement {
@@ -30,10 +30,10 @@ pub enum Statement<'i> {
 
 #[derive(Debug, PartialEq)]
 pub enum Expression<'i> {
-    Identifier(AbstractToken<'i>),
-    StringLiteral(AbstractToken<'i>),
+    Identifier(TextSlice<'i>),
+    StringLiteral(TextSlice<'i>),
     Call {
-        identifier: AbstractToken<'i>,
+        identifier: TextSlice<'i>,
         arguments: Vec<Expression<'i>>,
     },
 }
@@ -41,7 +41,7 @@ pub enum Expression<'i> {
 #[derive(Debug, PartialEq)]
 pub struct RequestParams<'i> {
     pub method: RequestMethod,
-    pub url: AbstractToken<'i>,
+    pub url: TextSlice<'i>,
     pub params: Vec<Statement<'i>>,
 }
 

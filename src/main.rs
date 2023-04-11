@@ -132,11 +132,11 @@ impl<'i> ast::Expression<'i> {
     fn evaluate(self, env: &Environment) -> Result<String, Box<dyn Error>> {
         let value = match self {
             ast::Expression::Identifier(_) => todo!(),
-            ast::Expression::StringLiteral(token) => token.text,
+            ast::Expression::StringLiteral(token) => token.value,
             ast::Expression::Call {
                 identifier,
                 arguments,
-            } => match identifier.text {
+            } => match identifier.value {
                 "env" => {
                     let arg = arguments
                         .first()
@@ -146,8 +146,8 @@ impl<'i> ast::Expression<'i> {
                         ast::Expression::Identifier(_) => todo!(),
                         ast::Expression::StringLiteral(n) => env
                             .variables
-                            .get(&n.text.to_string())
-                            .ok_or(format!("no variable found by the name {:?}", n.text))?,
+                            .get(&n.value.to_string())
+                            .ok_or(format!("no variable found by the name {:?}", n.value))?,
                         ast::Expression::Call { .. } => todo!(),
                     };
 
@@ -171,8 +171,8 @@ fn interpret(code: &str, env: &Environment) -> Result<(), Box<dyn Error>> {
         match s {
             ast::Statement::Request(request) => {
                 let mut req = match request.method {
-                    ast::RequestMethod::GET => ureq::get(request.url.text),
-                    ast::RequestMethod::POST => ureq::post(request.url.text),
+                    ast::RequestMethod::GET => ureq::get(request.url.value),
+                    ast::RequestMethod::POST => ureq::post(request.url.value),
                 };
 
                 let mut body = None;
@@ -181,7 +181,7 @@ fn interpret(code: &str, env: &Environment) -> Result<(), Box<dyn Error>> {
                     match statement {
                         ast::Statement::Request(_) => todo!(),
                         ast::Statement::HeaderStatement { name, value } => {
-                            req = req.set(&name.text, &value.evaluate(&env)?);
+                            req = req.set(&name.value, &value.evaluate(&env)?);
                         }
                         ast::Statement::BodyStatement { value } => {
                             if let None = body {
