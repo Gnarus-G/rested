@@ -23,6 +23,9 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Command {
     Run {
+        #[arg(short = 'n', long)]
+        namespace: Option<String>,
+
         file: PathBuf,
     },
     Env {
@@ -34,11 +37,31 @@ enum Command {
 #[derive(Debug, Subcommand)]
 enum EnvCommand {
     Set {
+        #[arg(short = 'n', long)]
+        namespace: Option<String>,
+
         /// of the environment variable
         name: String,
 
         /// of the environment variable
         value: String,
+    },
+    NS {
+        #[command(subcommand)]
+        command: EnvNamespaceCommand,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+enum EnvNamespaceCommand {
+    Add {
+        /// of the environment variables namespace
+        name: String,
+    },
+
+    Rm {
+        /// of the environment variables namespace
+        name: String,
     },
 }
 
@@ -57,12 +80,35 @@ fn run() -> Result<(), Box<dyn Error>> {
 
     match cli.command {
         Some(command) => match command {
-            Command::Run { file } => {
+            Command::Run { file, namespace } => {
+                if let Some(ns) = namespace {
+                    env.select_variables_namespace(ns);
+                }
+
                 let code = fs::read_to_string(file)?;
                 interpret(&code, &mut env)?
             }
             Command::Env { command } => match command {
-                EnvCommand::Set { name, value } => env.set_variable(name, value)?,
+                EnvCommand::Set {
+                    name,
+                    value,
+                    namespace,
+                } => {
+                    if let Some(ns) = namespace {
+                        env.select_variables_namespace(ns);
+                    }
+                    env.set_variable(name, value)?;
+                }
+                EnvCommand::NS { command } => match command {
+                    EnvNamespaceCommand::Add { name } => {
+                        env.namespaced_variables.insert(name, HashMap::new());
+                        env.save_to_file()?;
+                    }
+                    EnvNamespaceCommand::Rm { name } => {
+                        env.namespaced_variables.remove(&name);
+                        env.save_to_file()?;
+                    }
+                },
             },
         },
         None => repl_loop(|code| interpret(&code, &mut env))?,
@@ -89,7 +135,8 @@ fn repl_loop<F: FnMut(String) -> Result<(), Box<dyn Error>>>(
 
 struct Environment {
     env_file_name: PathBuf,
-    variables: HashMap<String, String>,
+    namespaced_variables: HashMap<String, HashMap<String, String>>,
+    selected_namespace: Option<String>,
     base_url: Option<String>,
 }
 
@@ -97,7 +144,8 @@ impl Environment {
     fn new(file_name: PathBuf) -> Self {
         Self {
             env_file_name: file_name,
-            variables: HashMap::new(),
+            namespaced_variables: HashMap::from([("default".to_string(), HashMap::new())]),
+            selected_namespace: None,
             base_url: None,
         }
     }
@@ -111,20 +159,52 @@ impl Environment {
 
         let reader = std::io::BufReader::new(file);
 
-        self.variables = serde_json::from_reader(reader).unwrap_or(HashMap::new());
+        self.namespaced_variables = serde_json::from_reader(reader)
+            .unwrap_or(HashMap::from([("default".to_string(), HashMap::new())]));
 
         Ok(())
     }
 
-    fn set_variable(&mut self, name: String, value: String) -> Result<(), Box<dyn Error>> {
-        self.variables.insert(name, value);
+    fn select_variables_namespace(&mut self, ns: String) {
+        self.selected_namespace = Some(ns);
+    }
 
+    fn selected_namespace(&self) -> String {
+        self.selected_namespace
+            .clone()
+            .unwrap_or("default".to_string())
+    }
+
+    fn get_variable_value(&self, name: String) -> Option<&String> {
+        let variables_map = self
+            .namespaced_variables
+            .get(&self.selected_namespace())
+            .unwrap();
+
+        variables_map.get(&name)
+    }
+
+    fn set_variable(&mut self, name: String, value: String) -> Result<(), Box<dyn Error>> {
+        let variables_map = self
+            .namespaced_variables
+            .get_mut(&self.selected_namespace())
+            .unwrap();
+
+        variables_map.insert(name, value);
+
+        self.save_to_file()?;
+
+        Ok(())
+    }
+
+    fn save_to_file(&self) -> Result<(), Box<dyn Error>> {
         let file = std::fs::File::options()
             .write(true)
+            .truncate(true)
             .open(&self.env_file_name)?;
         let writer = std::io::BufWriter::new(file);
 
-        serde_json::to_writer_pretty::<_, HashMap<_, _>>(writer, &self.variables)?;
+        serde_json::to_writer_pretty::<_, HashMap<_, _>>(writer, &self.namespaced_variables)?;
 
         Ok(())
     }
@@ -147,8 +227,7 @@ impl<'i> ast::Expression<'i> {
                     let value = match arg {
                         ast::Expression::Identifier(_) => todo!(),
                         ast::Expression::StringLiteral(n) => env
-                            .variables
-                            .get(&n.value.to_string())
+                            .get_variable_value(n.value.to_string())
                             .ok_or(format!("no variable found by the name {:?}", n.value))?,
                         ast::Expression::Call { .. } => todo!(),
                     };
