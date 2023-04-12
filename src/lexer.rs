@@ -14,6 +14,10 @@ pub enum TokenKind {
     StringLiteral,
     MultiLineStringLiteral,
     Url,
+    Pathname,
+
+    // operators
+    Set,
 
     // special characters
     LParen,
@@ -178,6 +182,7 @@ impl<'i> Lexer<'i> {
                 location: self.cursor,
                 text: "}",
             },
+            b'/' => self.pathname(),
             c if c.is_ascii_alphabetic() => self.keyword_or_identifier(),
             _ => Token {
                 kind: IllegalToken,
@@ -256,7 +261,7 @@ impl<'i> Lexer<'i> {
 
     fn keyword_or_identifier(&mut self) -> Token<'i> {
         let location = self.cursor;
-        let (s, e) = self.read_while(|c| c.is_ascii_alphabetic());
+        let (s, e) = self.read_while(|&c| c.is_ascii_alphabetic() || c == b'_');
         let string = self.input_slice(s..e);
 
         use TokenKind::*;
@@ -274,6 +279,11 @@ impl<'i> Lexer<'i> {
             },
             "header" => Token {
                 kind: Header,
+                location,
+                text: string,
+            },
+            "set" => Token {
+                kind: Set,
                 location,
                 text: string,
             },
@@ -296,6 +306,18 @@ impl<'i> Lexer<'i> {
                 location,
                 text: s,
             },
+        }
+    }
+
+    fn pathname(&mut self) -> Token<'i> {
+        let location = self.cursor;
+        let (s, e) = self.read_while(|&c| !c.is_ascii_whitespace());
+        let string = self.input_slice(s..e);
+
+        Token {
+            kind: TokenKind::Pathname,
+            location,
+            text: string,
         }
     }
 }

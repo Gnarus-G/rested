@@ -59,20 +59,20 @@ fn run() -> Result<(), Box<dyn Error>> {
         Some(command) => match command {
             Command::Run { file } => {
                 let code = fs::read_to_string(file)?;
-                interpret(&code, &env)?
+                interpret(&code, &mut env)?
             }
             Command::Env { command } => match command {
                 EnvCommand::Set { name, value } => env.set_variable(name, value)?,
             },
         },
-        None => repl_loop(|code| interpret(&code, &env))?,
+        None => repl_loop(|code| interpret(&code, &mut env))?,
     }
 
     Ok(())
 }
 
-fn repl_loop<F: Fn(String) -> Result<(), Box<dyn Error>>>(
-    on_each_line: F,
+fn repl_loop<F: FnMut(String) -> Result<(), Box<dyn Error>>>(
+    mut on_each_line: F,
 ) -> Result<(), Box<dyn Error>> {
     print!(":>> ");
     stdout().flush()?;
@@ -90,6 +90,7 @@ fn repl_loop<F: Fn(String) -> Result<(), Box<dyn Error>>>(
 struct Environment {
     env_file_name: PathBuf,
     variables: HashMap<String, String>,
+    base_url: Option<String>,
 }
 
 impl Environment {
@@ -97,6 +98,7 @@ impl Environment {
         Self {
             env_file_name: file_name,
             variables: HashMap::new(),
+            base_url: None,
         }
     }
 
@@ -161,7 +163,25 @@ impl<'i> ast::Expression<'i> {
     }
 }
 
-fn interpret(code: &str, env: &Environment) -> Result<(), Box<dyn Error>> {
+impl<'i> ast::UrlOrPathname<'i> {
+    fn evaluate(self, env: &Environment) -> Result<String, Box<dyn Error>> {
+        Ok(match self {
+            ast::UrlOrPathname::Url(url) => url.value.to_string(),
+            ast::UrlOrPathname::Pathname(pn) => {
+                if let Some(mut base_url) = env.base_url.clone() {
+                    base_url.push_str(pn.value);
+                    base_url
+                } else {
+                    panic!(
+                        "BASE_URL needs to be set first for requests to work with just pathnames",
+                    );
+                }
+            }
+        })
+    }
+}
+
+fn interpret(code: &str, env: &mut Environment) -> Result<(), Box<dyn Error>> {
     let lex = lexer::Lexer::new(&code);
     let mut parser = parser::Parser::new(lex);
 
@@ -171,8 +191,8 @@ fn interpret(code: &str, env: &Environment) -> Result<(), Box<dyn Error>> {
         match s {
             ast::Statement::Request(request) => {
                 let mut req = match request.method {
-                    ast::RequestMethod::GET => ureq::get(request.url.value),
-                    ast::RequestMethod::POST => ureq::post(request.url.value),
+                    ast::RequestMethod::GET => ureq::get(&request.endpoint.evaluate(&env)?),
+                    ast::RequestMethod::POST => ureq::post(&request.endpoint.evaluate(&env)?),
                 };
 
                 let mut body = None;
@@ -189,6 +209,9 @@ fn interpret(code: &str, env: &Environment) -> Result<(), Box<dyn Error>> {
                             }
                         }
                         ast::Statement::ExpressionStatement(_) => todo!(),
+                        ast::Statement::SetStatement { .. } => {
+                            panic!("set statements are not allowed inside requests")
+                        }
                     }
                 }
 
@@ -203,6 +226,13 @@ fn interpret(code: &str, env: &Environment) -> Result<(), Box<dyn Error>> {
             ast::Statement::HeaderStatement { .. } => todo!(),
             ast::Statement::BodyStatement { .. } => todo!(),
             ast::Statement::ExpressionStatement(_) => todo!(),
+            ast::Statement::SetStatement { identifier, value } => {
+                if identifier.value != "BASE_URL" {
+                    panic!("trying to set an unknown constant {}", identifier.value);
+                }
+
+                env.base_url = Some(value.evaluate(&env)?);
+            }
         }
     }
 

@@ -1,13 +1,28 @@
 use crate::lexer::{Location, Token, TokenKind};
 
 #[derive(Debug, PartialEq)]
+struct TokenOwned {
+    kind: TokenKind,
+    text: String,
+}
+
+impl<'i> From<&Token<'i>> for TokenOwned {
+    fn from(token: &Token<'i>) -> Self {
+        Self {
+            text: token.text.to_string(),
+            kind: token.kind,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
 enum ParseErrorKind {
     ExpectedToken {
-        found: TokenKind,
+        found: TokenOwned,
         expected: TokenKind,
     },
     ExpectedEitherOfTokens {
-        found: TokenKind,
+        found: TokenOwned,
         expected: Vec<TokenKind>,
     },
     UnexpectedToken {
@@ -52,7 +67,10 @@ impl<'i> ParseErrorConstructor<'i> {
     pub fn expected_token(&self, token: &Token, expected: TokenKind) -> ParseError {
         ParseError {
             kind: ParseErrorKind::ExpectedToken {
-                found: token.kind,
+                found: TokenOwned {
+                    text: token.text.to_string(),
+                    kind: token.kind,
+                },
                 expected,
             },
             location: token.location,
@@ -64,7 +82,7 @@ impl<'i> ParseErrorConstructor<'i> {
     pub fn expected_one_of_tokens(&self, token: &Token, expected: Vec<TokenKind>) -> ParseError {
         ParseError {
             kind: ParseErrorKind::ExpectedEitherOfTokens {
-                found: token.kind,
+                found: token.into(),
                 expected,
             },
             location: token.location,
@@ -183,17 +201,23 @@ mod tests {
     fn expected_url_after_method() {
         assert_errs!(
             "get {}",
-            ExpectedToken {
-                found: LBracket,
-                expected: Url,
+            ExpectedEitherOfTokens {
+                found: TokenOwned {
+                    kind: LBracket,
+                    text: "{".into(),
+                },
+                expected: vec![Url, Pathname],
             }
         );
 
         assert_errs!(
             "post",
-            ExpectedToken {
-                found: End,
-                expected: Url,
+            ExpectedEitherOfTokens {
+                found: TokenOwned {
+                    kind: End,
+                    text: "".into(),
+                },
+                expected: vec![Url, Pathname],
             }
         );
     }
@@ -201,9 +225,12 @@ mod tests {
     #[test]
     fn expected_name_after_header_keyword() {
         assert_errs!(
-            "post http:://localhost {header}",
+            "post http://localhost {header}",
             ExpectedToken {
-                found: RBracket,
+                found: TokenOwned {
+                    kind: RBracket,
+                    text: "}".into()
+                },
                 expected: StringLiteral,
             }
         );
@@ -214,7 +241,10 @@ mod tests {
         assert_errs!(
             r#"get http://localhost { header "name" }"#,
             ExpectedEitherOfTokens {
-                found: RBracket,
+                found: TokenOwned {
+                    kind: RBracket,
+                    text: "}".into()
+                },
                 expected: vec![StringLiteral, Ident, MultiLineStringLiteral],
             }
         );

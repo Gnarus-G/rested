@@ -1,5 +1,8 @@
+set BASE_URL env("b_url")
+
 get http://localhost:8080
-get http://localhost:8080 {
+
+get /love/craft {
    header "random" env("love")
 }
 

@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Expression, Program, RequestMethod, Statement},
+    ast::{Expression, Program, RequestMethod, Statement, UrlOrPathname},
     error::{ParseError, ParseErrorConstructor},
     lexer::{Lexer, Token, TokenKind},
 };
@@ -48,10 +48,13 @@ impl<'i> Parser<'i> {
                 Post => self.parse_request(RequestMethod::POST)?,
                 Header => self.parse_header()?,
                 Body => self.parse_body()?,
-                Ident | StringLiteral | MultiLineStringLiteral => self.parse_expression(token)?,
-                Url => {
+                Ident | StringLiteral | MultiLineStringLiteral => {
+                    Statement::ExpressionStatement(self.parse_expression(token)?)
+                }
+                Set => self.parse_set_statement()?,
+                Url | Pathname => {
                     return Err(self.error().unexpected_token(&token).with_message(
-                        "url only make sense after a method keyword, 'get', 'post', etc..",
+                        "url(s) or pathnames only make sense after a method keyword, 'get', 'post', etc..",
                     ))
                 }
                 LParen | RParen => {
@@ -93,13 +96,36 @@ impl<'i> Parser<'i> {
     }
 
     fn parse_request(&mut self, method: RequestMethod) -> Result<Statement<'i>> {
-        self.expect(TokenKind::Url)?;
+        self.expect_one_of(vec![TokenKind::Url, TokenKind::Pathname])?;
         let url = self.token();
         Ok(Statement::Request(crate::ast::RequestParams {
             method,
-            url: url.into(),
+            endpoint: match url.kind {
+                TokenKind::Url => UrlOrPathname::Url(url.into()),
+                TokenKind::Pathname => UrlOrPathname::Pathname(url.into()),
+                _ => unreachable!("we're properly expecting only url and pathname tokens here"),
+            },
             params: self.parse_request_params()?,
         }))
+    }
+
+    fn parse_set_statement(&mut self) -> Result<Statement<'i>> {
+        self.expect(TokenKind::Ident)?;
+
+        let identifier = self.token();
+
+        self.expect_one_of(vec![
+            TokenKind::Ident,
+            TokenKind::StringLiteral,
+            TokenKind::MultiLineStringLiteral,
+        ])?;
+
+        let value_token = self.token();
+
+        Ok(Statement::SetStatement {
+            identifier: identifier.into(),
+            value: self.parse_expression(value_token)?,
+        })
     }
 
     fn parse_request_params(&mut self) -> Result<Vec<Statement<'i>>> {
@@ -177,7 +203,7 @@ impl<'i> Parser<'i> {
         Ok(Statement::BodyStatement { value })
     }
 
-    fn parse_expression(&mut self, start_token: Token<'i>) -> Result<Statement<'i>> {
+    fn parse_expression(&mut self, start_token: Token<'i>) -> Result<Expression<'i>> {
         use TokenKind::*;
 
         let exp = match start_token.kind {
@@ -187,7 +213,7 @@ impl<'i> Parser<'i> {
             _ => return Err(self.error().unexpected_token(&start_token)),
         };
 
-        Ok(Statement::ExpressionStatement(exp))
+        Ok(exp)
     }
 
     fn parse_call_expression(&mut self, identifier: Token<'i>) -> Result<Expression<'i>> {
@@ -274,18 +300,18 @@ get http://localhost:8080 {}"#,
                 statements: vec![
                     Request(RequestParams {
                         method: GET,
-                        url: TextSlice {
+                        endpoint: UrlOrPathname::Url(TextSlice {
                             value: "http://localhost:8080",
                             location: (0, 4).into()
-                        },
+                        }),
                         params: vec![]
                     }),
                     Request(RequestParams {
                         method: GET,
-                        url: TextSlice {
+                        endpoint: UrlOrPathname::Url(TextSlice {
                             value: "http://localhost:8080",
                             location: (1, 4).into()
-                        },
+                        }),
                         params: vec![]
                     })
                 ]
@@ -300,10 +326,24 @@ get http://localhost:8080 {}"#,
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    url: TextSlice {
+                    endpoint: UrlOrPathname::Url(TextSlice {
                         value: "http://localhost",
                         location: (0, 5).into()
-                    },
+                    }),
+                    params: vec![]
+                })]
+            }
+        );
+
+        assert_program!(
+            "post /api/v2",
+            Program {
+                statements: vec![Request(RequestParams {
+                    method: POST,
+                    endpoint: UrlOrPathname::Pathname(TextSlice {
+                        value: "/api/v2",
+                        location: (0, 5).into()
+                    }),
                     params: vec![]
                 })]
             }
@@ -321,10 +361,10 @@ get http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: GET,
-                    url: TextSlice {
+                    endpoint: UrlOrPathname::Url(TextSlice {
                         value: "http://localhost",
                         location: (1, 4).into()
-                    },
+                    }),
                     params: (vec![
                         HeaderStatement {
                             name: TextSlice {
@@ -363,10 +403,10 @@ post http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    url: TextSlice {
+                    endpoint: UrlOrPathname::Url(TextSlice {
                         value: "http://localhost",
                         location: (1, 5).into()
-                    },
+                    }),
                     params: (vec![
                         HeaderStatement {
                             name: TextSlice {
@@ -405,10 +445,10 @@ post http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    url: TextSlice {
+                    endpoint: UrlOrPathname::Url(TextSlice {
                         value: "http://localhost",
                         location: (1, 5).into()
-                    },
+                    }),
                     params: (vec![
                         HeaderStatement {
                             name: TextSlice {
@@ -445,10 +485,10 @@ post http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    url: TextSlice {
+                    endpoint: UrlOrPathname::Url(TextSlice {
                         value: "http://localhost",
                         location: (1, 5).into()
-                    },
+                    }),
                     params: (vec![
                         HeaderStatement {
                             name: TextSlice {
@@ -479,10 +519,10 @@ post http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    url: TextSlice {
+                    endpoint: UrlOrPathname::Url(TextSlice {
                         value: "http://localhost",
                         location: (0, 5).into()
-                    },
+                    }),
                     params: vec![
                         HeaderStatement {
                             name: TextSlice {
@@ -514,6 +554,25 @@ post http://localhost {
                         }
                     ]
                 })]
+            }
+        );
+    }
+
+    #[test]
+    fn parse_global_constant_setting() {
+        assert_program!(
+            "set BASE_URL \"stuff\"",
+            Program {
+                statements: vec![SetStatement {
+                    identifier: TextSlice {
+                        value: "BASE_URL",
+                        location: (0, 4).into()
+                    },
+                    value: StringLiteral(TextSlice {
+                        value: "stuff",
+                        location: (0, 13).into()
+                    })
+                }]
             }
         );
     }

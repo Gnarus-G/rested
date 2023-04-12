@@ -26,6 +26,10 @@ pub enum Statement<'i> {
         value: Expression<'i>,
     },
     ExpressionStatement(Expression<'i>),
+    SetStatement {
+        identifier: TextSlice<'i>,
+        value: Expression<'i>,
+    },
 }
 
 #[derive(Debug, PartialEq)]
@@ -41,8 +45,14 @@ pub enum Expression<'i> {
 #[derive(Debug, PartialEq)]
 pub struct RequestParams<'i> {
     pub method: RequestMethod,
-    pub url: TextSlice<'i>,
+    pub endpoint: UrlOrPathname<'i>,
     pub params: Vec<Statement<'i>>,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum UrlOrPathname<'i> {
+    Url(TextSlice<'i>),
+    Pathname(TextSlice<'i>),
 }
 
 #[derive(Debug, PartialEq)]
