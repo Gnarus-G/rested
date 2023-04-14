@@ -1,5 +1,5 @@
 # rested
-Language/Interpreter for defining and running requests to an http server.
+Language/Interpreter for easily defining and running requests to an http server.
 
 # Why?
 To easily test apis during development, and the Postman experience is slow. As someone who edits text files professionally, it seems natural to have a DSL for this usecase as well. It's a much better workflow to use curl commands in shell scripts than clicking around a GUI.
