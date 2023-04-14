@@ -1,3 +1,5 @@
+use colored::Colorize;
+
 use crate::lexer::Location;
 use std::fmt::Display;
 
@@ -57,13 +59,14 @@ impl<Ek: Display + std::error::Error> std::error::Error for Error<Ek> {}
 
 impl std::fmt::Display for Location {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}:{}", self.line + 1, self.col + 1)
+        write!(f, "at {}:{}", self.line + 1, self.col + 1)
     }
 }
 
 impl<EK: Display + std::error::Error> std::fmt::Display for Error<EK> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let formatted_error = &self.inner_error;
+        let formatted_error = &self.inner_error.to_string().red();
+        let location = self.location.to_string().bold();
 
         let c = &self.context;
 
@@ -71,24 +74,24 @@ impl<EK: Display + std::error::Error> std::fmt::Display for Error<EK> {
             writeln!(f, "{line}")?
         }
 
-        writeln!(f, "{}", c.line)?;
+        writeln!(f, "{}", c.line.bold())?;
 
         let indent_to_error_location = " ".repeat(self.location.col);
 
         let result = match &self.message {
             Some(m) => writeln!(
                 f,
-                "{}\u{21B3} at {} {}\n{}   {}",
+                "{}\u{21B3} {} {}\n{}   {}",
                 indent_to_error_location,
-                self.location,
+                location,
                 formatted_error,
-                indent_to_error_location,
-                m
+                " ".repeat(self.location.col + location.len()),
+                m.bright_red()
             ),
             None => writeln!(
                 f,
                 "{}\u{21B3} at {} {}",
-                indent_to_error_location, self.location, formatted_error
+                indent_to_error_location, location, formatted_error
             ),
         };
 
