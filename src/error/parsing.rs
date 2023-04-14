@@ -1,7 +1,9 @@
-use crate::lexer::{Location, Token, TokenKind};
+use crate::lexer::{Token, TokenKind};
+
+use super::{Error, ErrorSourceContext};
 
 #[derive(Debug, PartialEq)]
-struct TokenOwned {
+pub struct TokenOwned {
     kind: TokenKind,
     text: String,
 }
@@ -15,8 +17,13 @@ impl<'i> From<&Token<'i>> for TokenOwned {
     }
 }
 
+#[derive(Debug)]
+pub struct ParseErrorConstructor<'i> {
+    source_code: &'i str,
+}
+
 #[derive(Debug, PartialEq)]
-enum ParseErrorKind {
+pub enum ParseError {
     ExpectedToken {
         found: TokenOwned,
         expected: TokenKind,
@@ -31,16 +38,24 @@ enum ParseErrorKind {
     },
 }
 
-#[derive(Debug)]
-struct ErrorSourceContext {
-    above: Option<String>,
-    line: String,
-    below: Option<String>,
-}
+impl std::error::Error for ParseError {}
 
-#[derive(Debug)]
-pub struct ParseErrorConstructor<'i> {
-    source_code: &'i str,
+impl std::fmt::Display for ParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let formatted_error = match self {
+            ParseError::ExpectedToken { expected, found } => {
+                format!("expected {:?}, got {:?}", expected, found)
+            }
+            ParseError::ExpectedEitherOfTokens { found, expected } => {
+                format!("expected either one of {:?}, but got {:?}", expected, found)
+            }
+            ParseError::UnexpectedToken { text, .. } => {
+                format!("unexpected token {:?}", text)
+            }
+        };
+
+        f.write_str(&formatted_error)
+    }
 }
 
 impl<'i> ParseErrorConstructor<'i> {
@@ -50,23 +65,9 @@ impl<'i> ParseErrorConstructor<'i> {
         }
     }
 
-    fn get_context_around(&self, token: &Token) -> ErrorSourceContext {
-        let line_of_token = token.location.line;
-        let line_before = line_of_token.checked_sub(1);
-        let line_after = line_of_token + 1;
-
-        let get_line = |lnum: usize| self.source_code.lines().nth(lnum).map(|s| s.to_string());
-
-        ErrorSourceContext {
-            above: line_before.map(|lnum| get_line(lnum).expect("code is not empty")),
-            line: get_line(line_of_token).expect("code is not empty"),
-            below: get_line(line_after),
-        }
-    }
-
-    pub fn expected_token(&self, token: &Token, expected: TokenKind) -> ParseError {
-        ParseError {
-            kind: ParseErrorKind::ExpectedToken {
+    pub fn expected_token(&self, token: &Token, expected: TokenKind) -> Error<ParseError> {
+        Error {
+            inner_error: ParseError::ExpectedToken {
                 found: TokenOwned {
                     text: token.text.to_string(),
                     kind: token.kind,
@@ -75,106 +76,36 @@ impl<'i> ParseErrorConstructor<'i> {
             },
             location: token.location,
             message: None,
-            context: self.get_context_around(token),
+            context: ErrorSourceContext::new(&token.location, self.source_code),
         }
     }
 
-    pub fn expected_one_of_tokens(&self, token: &Token, expected: Vec<TokenKind>) -> ParseError {
-        ParseError {
-            kind: ParseErrorKind::ExpectedEitherOfTokens {
+    pub fn expected_one_of_tokens(
+        &self,
+        token: &Token,
+        expected: Vec<TokenKind>,
+    ) -> Error<ParseError> {
+        Error {
+            inner_error: ParseError::ExpectedEitherOfTokens {
                 found: token.into(),
                 expected,
             },
             location: token.location,
             message: None,
-            context: self.get_context_around(token),
+            context: ErrorSourceContext::new(&token.location, self.source_code),
         }
     }
 
-    pub fn unexpected_token(&self, token: &Token) -> ParseError {
-        ParseError {
-            kind: ParseErrorKind::UnexpectedToken {
+    pub fn unexpected_token(&self, token: &Token) -> Error<ParseError> {
+        Error {
+            inner_error: ParseError::UnexpectedToken {
                 kind: token.kind,
                 text: token.text.to_string(),
             },
             location: token.location,
             message: None,
-            context: self.get_context_around(token),
+            context: ErrorSourceContext::new(&token.location, self.source_code),
         }
-    }
-}
-
-#[derive(Debug)]
-pub struct ParseError {
-    kind: ParseErrorKind,
-    location: Location,
-    message: Option<String>,
-    context: ErrorSourceContext,
-}
-
-impl ParseError {
-    pub fn with_message(mut self, msg: &str) -> Self {
-        self.message = Some(msg.to_owned());
-        self
-    }
-}
-
-impl std::error::Error for ParseError {}
-
-impl std::fmt::Display for Location {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}:{}", self.line + 1, self.col + 1)
-    }
-}
-
-impl std::fmt::Display for ParseError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let formatted_error = match &self.kind {
-            ParseErrorKind::ExpectedToken { expected, found } => {
-                format!("unexpected token: expected {:?}, got {:?}", expected, found)
-            }
-            ParseErrorKind::ExpectedEitherOfTokens { found, expected } => {
-                format!(
-                    "unexpected token: expected either one of {:?}, but got {:?}",
-                    expected, found
-                )
-            }
-            ParseErrorKind::UnexpectedToken { text, .. } => {
-                format!("illegal or unsupported token {:?}", text)
-            }
-        };
-        let c = &self.context;
-
-        if let Some(line) = &c.above {
-            writeln!(f, "{line}")?
-        }
-
-        writeln!(f, "{}", c.line)?;
-
-        let indent_to_error_location = " ".repeat(self.location.col);
-
-        let result = match &self.message {
-            Some(m) => writeln!(
-                f,
-                "{}\u{21B3} at {} {}\n{}   {}",
-                indent_to_error_location,
-                self.location,
-                formatted_error,
-                indent_to_error_location,
-                m
-            ),
-            None => writeln!(
-                f,
-                "{}\u{21B3} at {} {}",
-                indent_to_error_location, self.location, formatted_error
-            ),
-        };
-
-        if let Some(line) = &c.below {
-            writeln!(f, "{line}")?;
-        };
-
-        result
     }
 }
 
@@ -191,11 +122,11 @@ mod tests {
             let mut parser = Parser::new(lexer);
             let error = parser.parse().unwrap_err();
 
-            assert_eq!(error.kind, $kind)
+            assert_eq!(error.inner_error, $kind)
         };
     }
 
-    use ParseErrorKind::*;
+    use ParseError::*;
 
     #[test]
     fn expected_url_after_method() {

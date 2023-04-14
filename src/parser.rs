@@ -1,10 +1,13 @@
 use crate::{
     ast::{Expression, Program, RequestMethod, Statement, UrlOrPathname},
-    error::{ParseError, ParseErrorConstructor},
+    error::{
+        parsing::{ParseError, ParseErrorConstructor},
+        Error,
+    },
     lexer::{Lexer, Token, TokenKind},
 };
 
-pub type Result<T> = std::result::Result<T, ParseError>;
+pub type Result<T> = std::result::Result<T, Error<ParseError>>;
 
 #[derive(Debug)]
 pub struct Parser<'i> {
