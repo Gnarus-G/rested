@@ -1,4 +1,4 @@
-use crate::{ast::TextSlice, error::Error};
+use crate::{ast::ExactToken, error::Error};
 
 #[derive(Debug, PartialEq)]
 pub enum InterpError {
@@ -47,7 +47,7 @@ impl<'i> InterpErrorFactory<'i> {
             source_code: source,
         }
     }
-    pub fn unknown_constant(&self, token: &TextSlice) -> Error<InterpError> {
+    pub fn unknown_constant(&self, token: &ExactToken) -> Error<InterpError> {
         Error::new(
             InterpError::UnknownConstant {
                 constant: token.value.to_string(),
@@ -57,7 +57,7 @@ impl<'i> InterpErrorFactory<'i> {
         )
     }
 
-    pub fn variable_not_found(&self, token: &TextSlice) -> Error<InterpError> {
+    pub fn variable_not_found(&self, token: &ExactToken) -> Error<InterpError> {
         Error::new(
             InterpError::EnvVariableNotFound {
                 name: token.value.to_string(),
@@ -69,7 +69,7 @@ impl<'i> InterpErrorFactory<'i> {
 
     pub fn required_call_args(
         &self,
-        token: &TextSlice,
+        token: &ExactToken,
         required: usize,
         recieved: usize,
     ) -> Error<InterpError> {
@@ -80,7 +80,7 @@ impl<'i> InterpErrorFactory<'i> {
         )
     }
 
-    pub fn undefined_callable(&self, token: &TextSlice) -> Error<InterpError> {
+    pub fn undefined_callable(&self, token: &ExactToken) -> Error<InterpError> {
         Error::new(
             InterpError::UndefinedCallable {
                 name: token.value.to_string(),
@@ -90,7 +90,7 @@ impl<'i> InterpErrorFactory<'i> {
         )
     }
 
-    pub fn unset_base_url(&self, token: &TextSlice) -> Error<InterpError> {
+    pub fn unset_base_url(&self, token: &ExactToken) -> Error<InterpError> {
         Error::new(
             InterpError::RequestWithPathnameWithoutBaseUrl,
             token.location,
@@ -98,7 +98,7 @@ impl<'i> InterpErrorFactory<'i> {
         )
     }
 
-    pub fn inapropriate_statement(&self, token: &TextSlice) -> Error<InterpError> {
+    pub fn inapropriate_statement(&self, token: &ExactToken) -> Error<InterpError> {
         Error::new(
             InterpError::InapropriateStatementLocation,
             token.location,

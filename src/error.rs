@@ -42,6 +42,7 @@ impl<EK: Display + std::error::Error> Error<EK> {
         }
     }
 
+    #[cfg(test)]
     pub fn inner_error(&self) -> &EK {
         &self.inner_error
     }

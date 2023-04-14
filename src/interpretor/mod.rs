@@ -4,7 +4,7 @@ pub mod runtime;
 use crate::ast;
 
 use crate::error::Error;
-use crate::{lexer, parser};
+use crate::parser;
 
 use self::error::{InterpError, InterpErrorFactory};
 use self::runtime::Environment;
@@ -82,8 +82,7 @@ impl<'i> Interpreter<'i> {
 
     pub fn run(&mut self) -> std::result::Result<(), Box<dyn std::error::Error>> {
         let mut env = &mut self.env;
-        let lex = lexer::Lexer::new(&self.code);
-        let mut parser = parser::Parser::new(lex);
+        let mut parser = parser::Parser::new(self.code);
 
         let ast = parser.parse()?;
 

@@ -1,12 +1,12 @@
 use crate::lexer::{Location, Token};
 
 #[derive(Debug, PartialEq)]
-pub struct TextSlice<'i> {
+pub struct ExactToken<'i> {
     pub value: &'i str,
     pub location: Location,
 }
 
-impl<'i> From<Token<'i>> for TextSlice<'i> {
+impl<'i> From<Token<'i>> for ExactToken<'i> {
     fn from(token: Token<'i>) -> Self {
         Self {
             value: token.text,
@@ -19,7 +19,7 @@ impl<'i> From<Token<'i>> for TextSlice<'i> {
 pub enum Statement<'i> {
     Request(RequestParams<'i>),
     HeaderStatement {
-        name: TextSlice<'i>,
+        name: ExactToken<'i>,
         value: Expression<'i>,
     },
     BodyStatement {
@@ -27,17 +27,17 @@ pub enum Statement<'i> {
     },
     ExpressionStatement(Expression<'i>),
     SetStatement {
-        identifier: TextSlice<'i>,
+        identifier: ExactToken<'i>,
         value: Expression<'i>,
     },
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Expression<'i> {
-    Identifier(TextSlice<'i>),
-    StringLiteral(TextSlice<'i>),
+    Identifier(ExactToken<'i>),
+    StringLiteral(ExactToken<'i>),
     Call {
-        identifier: TextSlice<'i>,
+        identifier: ExactToken<'i>,
         arguments: Vec<Expression<'i>>,
     },
 }
@@ -51,8 +51,8 @@ pub struct RequestParams<'i> {
 
 #[derive(Debug, PartialEq)]
 pub enum UrlOrPathname<'i> {
-    Url(TextSlice<'i>),
-    Pathname(TextSlice<'i>),
+    Url(ExactToken<'i>),
+    Pathname(ExactToken<'i>),
 }
 
 #[derive(Debug, PartialEq)]

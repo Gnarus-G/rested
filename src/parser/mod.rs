@@ -17,10 +17,10 @@ pub struct Parser<'i> {
 }
 
 impl<'i> Parser<'i> {
-    pub fn new(lexer: Lexer<'i>) -> Self {
+    pub fn new(code: &'i str) -> Self {
         Self {
             peeked: None,
-            lexer,
+            lexer: Lexer::new(code),
         }
     }
 
@@ -281,7 +281,7 @@ impl<'i> Parser<'i> {
 mod tests {
     use super::*;
 
-    use crate::ast::{Expression, Program, RequestMethod, RequestParams, Statement, TextSlice};
+    use crate::ast::{ExactToken, Expression, Program, RequestMethod, RequestParams, Statement};
 
     use Expression::*;
     use RequestMethod::*;
@@ -289,8 +289,7 @@ mod tests {
 
     macro_rules! assert_program {
         ($input:literal, $program:expr) => {
-            let lexer = Lexer::new($input);
-            let mut parser = Parser::new(lexer);
+            let mut parser = Parser::new($input);
             assert_eq!(parser.parse().unwrap(), $program);
         };
     }
@@ -304,7 +303,7 @@ get http://localhost:8080 {}"#,
                 statements: vec![
                     Request(RequestParams {
                         method: GET,
-                        endpoint: UrlOrPathname::Url(TextSlice {
+                        endpoint: UrlOrPathname::Url(ExactToken {
                             value: "http://localhost:8080",
                             location: (0, 4).into()
                         }),
@@ -312,7 +311,7 @@ get http://localhost:8080 {}"#,
                     }),
                     Request(RequestParams {
                         method: GET,
-                        endpoint: UrlOrPathname::Url(TextSlice {
+                        endpoint: UrlOrPathname::Url(ExactToken {
                             value: "http://localhost:8080",
                             location: (1, 4).into()
                         }),
@@ -330,7 +329,7 @@ get http://localhost:8080 {}"#,
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    endpoint: UrlOrPathname::Url(TextSlice {
+                    endpoint: UrlOrPathname::Url(ExactToken {
                         value: "http://localhost",
                         location: (0, 5).into()
                     }),
@@ -344,7 +343,7 @@ get http://localhost:8080 {}"#,
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    endpoint: UrlOrPathname::Pathname(TextSlice {
+                    endpoint: UrlOrPathname::Pathname(ExactToken {
                         value: "/api/v2",
                         location: (0, 5).into()
                     }),
@@ -365,27 +364,27 @@ get http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: GET,
-                    endpoint: UrlOrPathname::Url(TextSlice {
+                    endpoint: UrlOrPathname::Url(ExactToken {
                         value: "http://localhost",
                         location: (1, 4).into()
                     }),
                     params: (vec![
                         HeaderStatement {
-                            name: TextSlice {
+                            name: ExactToken {
                                 value: "Authorization",
                                 location: (2, 11).into()
                             },
-                            value: StringLiteral(TextSlice {
+                            value: StringLiteral(ExactToken {
                                 value: "Bearer token",
                                 location: (2, 27).into()
                             })
                         },
                         HeaderStatement {
-                            name: TextSlice {
+                            name: ExactToken {
                                 value: "random",
                                 location: (3, 11).into()
                             },
-                            value: StringLiteral(TextSlice {
+                            value: StringLiteral(ExactToken {
                                 value: "tokener Bear",
                                 location: (3, 20).into()
                             })
@@ -407,27 +406,27 @@ post http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    endpoint: UrlOrPathname::Url(TextSlice {
+                    endpoint: UrlOrPathname::Url(ExactToken {
                         value: "http://localhost",
                         location: (1, 5).into()
                     }),
                     params: (vec![
                         HeaderStatement {
-                            name: TextSlice {
+                            name: ExactToken {
                                 value: "Authorization",
                                 location: (2, 11).into()
                             },
-                            value: StringLiteral(TextSlice {
+                            value: StringLiteral(ExactToken {
                                 value: "Bearer token",
                                 location: (2, 27).into()
                             })
                         },
                         HeaderStatement {
-                            name: TextSlice {
+                            name: ExactToken {
                                 value: "random",
                                 location: (3, 11).into()
                             },
-                            value: StringLiteral(TextSlice {
+                            value: StringLiteral(ExactToken {
                                 value: "tokener Bear",
                                 location: (3, 20).into()
                             })
@@ -449,23 +448,23 @@ post http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    endpoint: UrlOrPathname::Url(TextSlice {
+                    endpoint: UrlOrPathname::Url(ExactToken {
                         value: "http://localhost",
                         location: (1, 5).into()
                     }),
                     params: (vec![
                         HeaderStatement {
-                            name: TextSlice {
+                            name: ExactToken {
                                 value: "Authorization",
                                 location: (2, 11).into()
                             },
-                            value: StringLiteral(TextSlice {
+                            value: StringLiteral(ExactToken {
                                 value: "Bearer token",
                                 location: (2, 27).into()
                             })
                         },
                         BodyStatement {
-                            value: StringLiteral(TextSlice {
+                            value: StringLiteral(ExactToken {
                                 value: "{neet: 1337}",
                                 location: (3, 9).into()
                             })
@@ -489,23 +488,23 @@ post http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    endpoint: UrlOrPathname::Url(TextSlice {
+                    endpoint: UrlOrPathname::Url(ExactToken {
                         value: "http://localhost",
                         location: (1, 5).into()
                     }),
                     params: (vec![
                         HeaderStatement {
-                            name: TextSlice {
+                            name: ExactToken {
                                 value: "Authorization",
                                 location: (2, 11).into()
                             },
-                            value: StringLiteral(TextSlice {
+                            value: StringLiteral(ExactToken {
                                 value: "Bearer token",
                                 location: (2, 27).into()
                             })
                         },
                         BodyStatement {
-                            value: StringLiteral(TextSlice {
+                            value: StringLiteral(ExactToken {
                                 value: "\n        {\"neet\": 1337}\n    ",
                                 location: (3, 9).into()
                             })
@@ -523,22 +522,22 @@ post http://localhost {
             Program {
                 statements: vec![Request(RequestParams {
                     method: POST,
-                    endpoint: UrlOrPathname::Url(TextSlice {
+                    endpoint: UrlOrPathname::Url(ExactToken {
                         value: "http://localhost",
                         location: (0, 5).into()
                     }),
                     params: vec![
                         HeaderStatement {
-                            name: TextSlice {
+                            name: ExactToken {
                                 value: "name",
                                 location: (0, 31).into()
                             },
                             value: Call {
-                                identifier: TextSlice {
+                                identifier: ExactToken {
                                     value: "env",
                                     location: (0, 38).into()
                                 },
-                                arguments: vec![StringLiteral(TextSlice {
+                                arguments: vec![StringLiteral(ExactToken {
                                     value: "auth",
                                     location: (0, 42).into()
                                 })]
@@ -546,11 +545,11 @@ post http://localhost {
                         },
                         BodyStatement {
                             value: Call {
-                                identifier: TextSlice {
+                                identifier: ExactToken {
                                     value: "env",
                                     location: (0, 55).into()
                                 },
-                                arguments: vec![StringLiteral(TextSlice {
+                                arguments: vec![StringLiteral(ExactToken {
                                     value: "data",
                                     location: (0, 59).into()
                                 })]
@@ -568,11 +567,11 @@ post http://localhost {
             "set BASE_URL \"stuff\"",
             Program {
                 statements: vec![SetStatement {
-                    identifier: TextSlice {
+                    identifier: ExactToken {
                         value: "BASE_URL",
                         location: (0, 4).into()
                     },
-                    value: StringLiteral(TextSlice {
+                    value: StringLiteral(ExactToken {
                         value: "stuff",
                         location: (0, 13).into()
                     })

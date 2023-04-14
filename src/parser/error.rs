@@ -1,5 +1,5 @@
 use crate::{
-    error::{Error, ErrorSourceContext},
+    error::Error,
     lexer::{Token, TokenKind},
 };
 
@@ -15,6 +15,12 @@ impl<'i> From<&Token<'i>> for TokenOwned {
             text: token.text.to_string(),
             kind: token.kind,
         }
+    }
+}
+
+impl std::fmt::Display for TokenOwned {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}({:?})", self.kind, self.text)
     }
 }
 
@@ -45,10 +51,10 @@ impl std::fmt::Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let formatted_error = match self {
             ParseError::ExpectedToken { expected, found } => {
-                format!("expected {:?}, got {:?}", expected, found)
+                format!("expected {:?}, got {}", expected, found)
             }
             ParseError::ExpectedEitherOfTokens { found, expected } => {
-                format!("expected either one of {:?}, but got {:?}", expected, found)
+                format!("expected either one of {:?}, but got {}", expected, found)
             }
             ParseError::UnexpectedToken { text, .. } => {
                 format!("unexpected token {:?}", text)
@@ -110,14 +116,13 @@ impl<'i> ParseErrorConstructor<'i> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{lexer::Lexer, parser::Parser};
+    use crate::parser::Parser;
 
     use TokenKind::*;
 
     macro_rules! assert_errs {
         ($input:literal, $kind:expr) => {
-            let lexer = Lexer::new($input);
-            let mut parser = Parser::new(lexer);
+            let mut parser = Parser::new($input);
             let error = parser.parse().unwrap_err();
 
             assert_eq!(*error.inner_error(), $kind)
