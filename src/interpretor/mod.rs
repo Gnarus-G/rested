@@ -1,7 +1,7 @@
 mod error;
 pub mod runtime;
 
-use crate::ast;
+use crate::ast::{self, Expression, UrlOrPathname};
 
 use crate::error::Error;
 use crate::parser;
@@ -11,59 +11,7 @@ use self::runtime::Environment;
 
 type Result<T> = std::result::Result<T, Error<InterpError>>;
 
-impl<'i> ast::Expression<'i> {
-    fn evaluate(self, env: &Environment, error_factory: &InterpErrorFactory<'i>) -> Result<String> {
-        let value = match self {
-            ast::Expression::Identifier(_) => todo!(),
-            ast::Expression::StringLiteral(token) => token.value,
-            ast::Expression::Call {
-                identifier,
-                arguments,
-            } => match identifier.value {
-                "env" => {
-                    let arg = arguments.first().ok_or_else(|| {
-                        error_factory
-                            .required_call_args(&identifier, 1, 0)
-                            .with_message("calls to env() must include a variable name argument")
-                    })?;
-
-                    let value = match arg {
-                        ast::Expression::Identifier(_) => todo!(),
-                        ast::Expression::StringLiteral(n) => env
-                            .get_variable_value(n.value.to_string())
-                            .ok_or_else(|| error_factory.variable_not_found(n))?,
-                        ast::Expression::Call { .. } => todo!(),
-                    };
-
-                    value
-                }
-                _ => {
-                    return Err(error_factory
-                        .undefined_callable(&identifier)
-                        .with_message("currently only env() identifier is allowed"))
-                }
-            },
-        };
-
-        Ok(value.to_string())
-    }
-}
-
-impl<'i> ast::UrlOrPathname<'i> {
-    fn evaluate(self, env: &Environment, error_factory: &InterpErrorFactory) -> Result<String> {
-        Ok(match self {
-            ast::UrlOrPathname::Url(url) => url.value.to_string(),
-            ast::UrlOrPathname::Pathname(pn) => {
-                if let Some(mut base_url) = env.base_url.clone() {
-                    base_url.push_str(pn.value);
-                    base_url
-                } else {
-                    return Err(error_factory.unset_base_url(&pn));
-                }
-            }
-        })
-    }
-}
+impl<'i> ast::UrlOrPathname<'i> {}
 
 pub struct Interpreter<'i> {
     code: &'i str,
@@ -81,7 +29,6 @@ impl<'i> Interpreter<'i> {
     }
 
     pub fn run(&mut self) -> std::result::Result<(), Box<dyn std::error::Error>> {
-        let mut env = &mut self.env;
         let mut parser = parser::Parser::new(self.code);
 
         let ast = parser.parse()?;
@@ -91,10 +38,10 @@ impl<'i> Interpreter<'i> {
                 ast::Statement::Request(request) => {
                     let mut req = match request.method {
                         ast::RequestMethod::GET => {
-                            ureq::get(&request.endpoint.evaluate(&env, &self.error_factory)?)
+                            ureq::get(&self.evaluate_request_endpoint(request.endpoint)?)
                         }
                         ast::RequestMethod::POST => {
-                            ureq::post(&request.endpoint.evaluate(&env, &self.error_factory)?)
+                            ureq::post(&self.evaluate_request_endpoint(request.endpoint)?)
                         }
                     };
 
@@ -104,12 +51,11 @@ impl<'i> Interpreter<'i> {
                         match statement {
                             ast::Statement::Request(_) => todo!(),
                             ast::Statement::HeaderStatement { name, value } => {
-                                req = req
-                                    .set(&name.value, &value.evaluate(&env, &self.error_factory)?);
+                                req = req.set(&name.value, &self.evaluate_expression(value)?);
                             }
                             ast::Statement::BodyStatement { value } => {
                                 if let None = body {
-                                    body = Some(value.evaluate(&env, &self.error_factory)?);
+                                    body = Some(self.evaluate_expression(value)?);
                                 }
                             }
                             ast::Statement::ExpressionStatement(_) => todo!(),
@@ -143,19 +89,72 @@ impl<'i> Interpreter<'i> {
                 }
                 ast::Statement::BodyStatement { .. } => todo!(),
                 ast::Statement::ExpressionStatement(e) => {
-                    e.evaluate(env, &self.error_factory)?;
+                    self.evaluate_expression(e)?;
                 }
                 ast::Statement::SetStatement { identifier, value } => {
                     if identifier.value != "BASE_URL" {
                         return Err(Box::new(self.error_factory.unknown_constant(&identifier)));
                     }
 
-                    env.base_url = Some(value.evaluate(&env, &self.error_factory)?);
+                    self.env.base_url = Some(self.evaluate_expression(value)?);
                 }
                 ast::Statement::LineComment(_) => {}
             }
         }
 
         Ok(())
+    }
+
+    fn evaluate_expression(&self, exp: Expression<'i>) -> Result<String> {
+        use Expression::*;
+        let value = match exp {
+            Identifier(_) => todo!(),
+            StringLiteral(token) => token.value,
+            Call {
+                identifier,
+                arguments,
+            } => match identifier.value {
+                "env" => {
+                    let arg = arguments.first().ok_or_else(|| {
+                        self.error_factory
+                            .required_call_args(&identifier, 1, 0)
+                            .with_message("calls to env() must include a variable name argument")
+                    })?;
+
+                    let value = match arg {
+                        Identifier(_) => todo!(),
+                        StringLiteral(n) => self
+                            .env
+                            .get_variable_value(n.value.to_string())
+                            .ok_or_else(|| self.error_factory.variable_not_found(n))?,
+                        Call { .. } => todo!(),
+                    };
+
+                    value
+                }
+                _ => {
+                    return Err(self
+                        .error_factory
+                        .undefined_callable(&identifier)
+                        .with_message("currently only env() identifier is allowed"))
+                }
+            },
+        };
+
+        Ok(value.to_string())
+    }
+
+    fn evaluate_request_endpoint(&self, enpdpoint: UrlOrPathname) -> Result<String> {
+        Ok(match enpdpoint {
+            UrlOrPathname::Url(url) => url.value.to_string(),
+            UrlOrPathname::Pathname(pn) => {
+                if let Some(mut base_url) = self.env.base_url.clone() {
+                    base_url.push_str(pn.value);
+                    base_url
+                } else {
+                    return Err(self.error_factory.unset_base_url(&pn));
+                }
+            }
+        })
     }
 }
