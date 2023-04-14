@@ -1,12 +1,13 @@
+mod error;
+pub mod runtime;
+
 use crate::ast;
-use crate::{
-    error::{
-        interpreting::{InterpError, InterpErrorFactory},
-        Error,
-    },
-    lexer, parser,
-    runtime::Environment,
-};
+
+use crate::error::Error;
+use crate::{lexer, parser};
+
+use self::error::{InterpError, InterpErrorFactory};
+use self::runtime::Environment;
 
 type Result<T> = std::result::Result<T, Error<InterpError>>;
 

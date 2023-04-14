@@ -1,6 +1,4 @@
-use crate::ast::TextSlice;
-
-use super::{parsing::ParseError, Error, ErrorSourceContext};
+use crate::{ast::TextSlice, error::Error};
 
 #[derive(Debug, PartialEq)]
 pub enum InterpError {

@@ -1,11 +1,12 @@
+mod error;
+
 use crate::{
     ast::{Expression, Program, RequestMethod, Statement, UrlOrPathname},
-    error::{
-        parsing::{ParseError, ParseErrorConstructor},
-        Error,
-    },
+    error::Error,
     lexer::{Lexer, Token, TokenKind},
 };
+
+use self::error::{ParseError, ParseErrorConstructor};
 
 pub type Result<T> = std::result::Result<T, Error<ParseError>>;
 

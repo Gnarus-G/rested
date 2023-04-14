@@ -1,18 +1,15 @@
-pub mod interpreting;
-pub mod parsing;
-
 use crate::lexer::Location;
 use std::fmt::Display;
 
 #[derive(Debug)]
-struct ErrorSourceContext {
+pub struct ErrorSourceContext {
     above: Option<String>,
     line: String,
     below: Option<String>,
 }
 
 impl ErrorSourceContext {
-    fn new(location: &Location, code: &str) -> Self {
+    pub fn new(location: &Location, code: &str) -> Self {
         let line_of_token = location.line;
         let line_before = line_of_token.checked_sub(1);
         let line_after = line_of_token + 1;
@@ -43,6 +40,10 @@ impl<EK: Display + std::error::Error> Error<EK> {
             message: None,
             context: ErrorSourceContext::new(&location, source_code),
         }
+    }
+
+    pub fn inner_error(&self) -> &EK {
+        &self.inner_error
     }
 
     pub fn with_message(mut self, msg: &str) -> Self {

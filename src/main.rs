@@ -1,6 +1,5 @@
 use clap::{Parser, Subcommand};
-use interpretor::Interpreter;
-use runtime::Environment;
+use rested::interpretor::{runtime::Environment, Interpreter};
 
 use std::{
     collections::HashMap,
@@ -9,13 +8,6 @@ use std::{
     io::{stdin, stdout, Write},
     path::PathBuf,
 };
-
-mod ast;
-mod error;
-mod interpretor;
-mod lexer;
-mod parser;
-mod runtime;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about)]

@@ -1,6 +1,7 @@
-use crate::lexer::{Token, TokenKind};
-
-use super::{Error, ErrorSourceContext};
+use crate::{
+    error::{Error, ErrorSourceContext},
+    lexer::{Token, TokenKind},
+};
 
 #[derive(Debug, PartialEq)]
 pub struct TokenOwned {
@@ -66,18 +67,17 @@ impl<'i> ParseErrorConstructor<'i> {
     }
 
     pub fn expected_token(&self, token: &Token, expected: TokenKind) -> Error<ParseError> {
-        Error {
-            inner_error: ParseError::ExpectedToken {
+        Error::new(
+            ParseError::ExpectedToken {
                 found: TokenOwned {
                     text: token.text.to_string(),
                     kind: token.kind,
                 },
                 expected,
             },
-            location: token.location,
-            message: None,
-            context: ErrorSourceContext::new(&token.location, self.source_code),
-        }
+            token.location,
+            self.source_code,
+        )
     }
 
     pub fn expected_one_of_tokens(
@@ -85,27 +85,25 @@ impl<'i> ParseErrorConstructor<'i> {
         token: &Token,
         expected: Vec<TokenKind>,
     ) -> Error<ParseError> {
-        Error {
-            inner_error: ParseError::ExpectedEitherOfTokens {
+        Error::new(
+            ParseError::ExpectedEitherOfTokens {
                 found: token.into(),
                 expected,
             },
-            location: token.location,
-            message: None,
-            context: ErrorSourceContext::new(&token.location, self.source_code),
-        }
+            token.location,
+            self.source_code,
+        )
     }
 
     pub fn unexpected_token(&self, token: &Token) -> Error<ParseError> {
-        Error {
-            inner_error: ParseError::UnexpectedToken {
+        Error::new(
+            ParseError::UnexpectedToken {
                 kind: token.kind,
                 text: token.text.to_string(),
             },
-            location: token.location,
-            message: None,
-            context: ErrorSourceContext::new(&token.location, self.source_code),
-        }
+            token.location,
+            self.source_code,
+        )
     }
 }
 
@@ -122,7 +120,7 @@ mod tests {
             let mut parser = Parser::new(lexer);
             let error = parser.parse().unwrap_err();
 
-            assert_eq!(error.inner_error, $kind)
+            assert_eq!(*error.inner_error(), $kind)
         };
     }
 
