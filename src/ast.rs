@@ -30,6 +30,7 @@ pub enum Statement<'i> {
         identifier: ExactToken<'i>,
         value: Expression<'i>,
     },
+    LineComment(ExactToken<'i>),
 }
 
 #[derive(Debug, PartialEq)]

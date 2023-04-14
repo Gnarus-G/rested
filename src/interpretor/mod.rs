@@ -122,6 +122,7 @@ impl<'i> Interpreter<'i> {
                                         ),
                                 ))
                             }
+                            ast::Statement::LineComment(_) => {}
                         }
                     }
 
@@ -151,6 +152,7 @@ impl<'i> Interpreter<'i> {
 
                     env.base_url = Some(value.evaluate(&env, &self.error_factory)?);
                 }
+                ast::Statement::LineComment(_) => {}
             }
         }
 

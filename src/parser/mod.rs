@@ -55,6 +55,7 @@ impl<'i> Parser<'i> {
                 Ident | StringLiteral | MultiLineStringLiteral => {
                     Statement::ExpressionStatement(self.parse_expression(token)?)
                 }
+                Linecomment | Shebang => Statement::LineComment(token.into()),
                 Set => self.parse_set_statement()?,
                 Url | Pathname => {
                     return Err(self.error().unexpected_token(&token).with_message(
@@ -133,14 +134,16 @@ impl<'i> Parser<'i> {
     }
 
     fn parse_request_params(&mut self) -> Result<Vec<Statement<'i>>> {
-        if let TokenKind::LBracket = self.peek_token().kind {
+        use TokenKind::*;
+        if let LBracket = self.peek_token().kind {
             self.eat_token();
             let mut token = self.token();
             let mut headers = vec![];
             while token.kind != TokenKind::RBracket {
                 let header = match token.kind {
-                    TokenKind::Header => self.parse_header()?,
-                    TokenKind::Body => self.parse_body()?,
+                    Header => self.parse_header()?,
+                    Body => self.parse_body()?,
+                    Linecomment | Shebang => Statement::LineComment(token.into()),
                     _ => {
                         return Err(self
                             .error()

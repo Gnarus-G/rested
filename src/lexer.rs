@@ -16,6 +16,9 @@ pub enum TokenKind {
     Url,
     Pathname,
 
+    Linecomment,
+    Shebang,
+
     // operators
     Set,
 
@@ -182,7 +185,9 @@ impl<'i> Lexer<'i> {
                 location: self.cursor,
                 text: "}",
             },
+            b'/' if self.peek_char().is(b'/') => self.line_comment(),
             b'/' => self.pathname(),
+            b'#' if self.peek_char().is(b'!') => self.shebang(),
             c if c.is_ascii_alphabetic() => self.keyword_or_identifier(),
             _ => Token {
                 kind: IllegalToken,
@@ -318,6 +323,28 @@ impl<'i> Lexer<'i> {
             kind: TokenKind::Pathname,
             location,
             text: string,
+        }
+    }
+
+    fn shebang(&mut self) -> Token<'i> {
+        let location = self.cursor;
+        let (s, e) = self.read_while(|&c| c != b'\n');
+        let string = self.input_slice(s..e);
+        Token {
+            text: string,
+            location,
+            kind: TokenKind::Shebang,
+        }
+    }
+
+    fn line_comment(&mut self) -> Token<'i> {
+        let location = self.cursor;
+        let (s, e) = self.read_while(|&c| c != b'\n');
+        let string = self.input_slice(s..e);
+        Token {
+            kind: TokenKind::Linecomment,
+            text: string,
+            location,
         }
     }
 }
