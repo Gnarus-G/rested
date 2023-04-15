@@ -203,15 +203,8 @@ impl<'i> Parser<'i> {
         let mut arguments = vec![];
 
         while token.kind != TokenKind::RParen {
-            match token.kind {
-                TokenKind::StringLiteral => arguments.push(Expression::StringLiteral(token.into())),
-                _ => {
-                    return Err(self
-                        .error()
-                        .unexpected_token(&token)
-                        .with_message("only string literals are allowed in call expressions"))
-                }
-            }
+            let exp = self.parse_expression(token)?;
+            arguments.push(exp);
             token = self.token();
         }
 
@@ -265,17 +258,10 @@ impl<'i> Parser<'i> {
 
             let mut token = self.token();
             while token.kind != TokenKind::RParen {
-                match token.kind {
-                    TokenKind::StringLiteral => {
-                        params.push(Expression::StringLiteral(token.into()))
-                    }
-                    _ => {
-                        return Err(self
-                            .error()
-                            .unexpected_token(&token)
-                            .with_message("only string literals are allowed in call expressions"))
-                    }
-                }
+                let exp = self.parse_expression(token)?;
+
+                params.push(exp);
+
                 token = self.token();
             }
         }

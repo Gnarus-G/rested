@@ -7,7 +7,7 @@ use std::path::PathBuf;
 
 use colored::Colorize;
 
-use crate::ast::{self, Expression, UrlOrPathname};
+use crate::ast::{self, ExactToken, Expression, UrlOrPathname};
 
 use crate::error::Error;
 use crate::parser;
@@ -158,12 +158,15 @@ impl<'i> Interpreter<'i> {
 
                     let value = match arg {
                         Identifier(token) => self.evaluate_identifier(token)?,
-                        Call { .. } => self.evaluate_expression(&arg)?,
-                        StringLiteral(n) => self
-                            .env
-                            .get_variable_value(n.value.to_string())
-                            .ok_or_else(|| self.error_factory.variable_not_found(n))?
-                            .to_string(),
+                        Call { identifier, .. } => {
+                            let value = self.evaluate_expression(&arg)?;
+
+                            self.evaluate_env_variable(&ExactToken {
+                                value: &value,
+                                location: identifier.location,
+                            })?
+                        }
+                        StringLiteral(n) => self.evaluate_env_variable(&n)?,
                     };
 
                     value
@@ -177,18 +180,14 @@ impl<'i> Interpreter<'i> {
 
                     let value = match arg {
                         Identifier(token) => self.evaluate_identifier(token)?,
-                        Call { .. } => self.evaluate_expression(&arg)?,
-                        StringLiteral(n) => {
-                            let mut file =
-                                File::open(n.value).map_err(|e| self.error_factory.other(n, e))?;
-
-                            let mut string = String::new();
-
-                            file.read_to_string(&mut string)
-                                .map_err(|e| self.error_factory.other(n, e))?;
-
-                            string
+                        Call { identifier, .. } => {
+                            let value = self.evaluate_expression(&arg)?;
+                            self.read(&ExactToken {
+                                value: &value,
+                                location: identifier.location,
+                            })?
                         }
+                        StringLiteral(n) => self.read(n)?,
                     };
 
                     value
@@ -203,6 +202,24 @@ impl<'i> Interpreter<'i> {
         };
 
         Ok(value)
+    }
+
+    fn evaluate_env_variable(&self, token: &ExactToken<'i>) -> Result<String> {
+        self.env
+            .get_variable_value(token.value.to_string())
+            .ok_or_else(|| self.error_factory.variable_not_found(token))
+            .map(|s| s.to_owned())
+    }
+
+    fn read(&self, n: &ExactToken) -> Result<String> {
+        let mut file = File::open(n.value).map_err(|e| self.error_factory.other(n, e))?;
+
+        let mut string = String::new();
+
+        file.read_to_string(&mut string)
+            .map_err(|e| self.error_factory.other(n, e))?;
+
+        Ok(string)
     }
 
     fn evaluate_request_endpoint(&self, enpdpoint: UrlOrPathname) -> Result<String> {
