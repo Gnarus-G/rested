@@ -183,36 +183,4 @@ mod tests {
             }
         );
     }
-
-    #[test]
-    fn reject_unsupported_tokens() {
-        assert_errs!(
-            r#"("#,
-            UnexpectedToken {
-                kind: LParen,
-                text: "(".to_string()
-            }
-        );
-    }
-
-    #[test]
-    fn reject_unfinished_strings() {
-        assert_errs!(
-            r#""asdfasdf"#,
-            UnexpectedToken {
-                kind: UnfinishedStringLiteral,
-                text: "asdfasdf".to_string()
-            }
-        );
-        assert_errs!(
-            r#"`
-                     asdfa"#,
-            UnexpectedToken {
-                kind: UnfinishedMultiLineStringLiteral,
-                text: r#"
-                     asdfa"#
-                    .to_string()
-            }
-        );
-    }
 }

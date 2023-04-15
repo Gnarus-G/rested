@@ -33,9 +33,11 @@ impl<'i> Interpreter<'i> {
 
         let ast = parser.parse()?;
 
-        for statement in ast.statements {
-            match statement {
-                ast::Statement::Request {
+        use ast::Item::*;
+
+        for item in ast.items {
+            match item {
+                Request {
                     params: request, ..
                 } => {
                     let mut req = match request.method {
@@ -51,15 +53,6 @@ impl<'i> Interpreter<'i> {
 
                     for statement in request.params {
                         match statement {
-                            ast::Statement::Request { location, .. } => {
-                                return Err(Box::new(
-                                    self.error_factory
-                                        .inapropriate_statement(location)
-                                        .with_message(
-                                            "requests may not be defined inside other requests",
-                                        ),
-                                ))
-                            }
                             ast::Statement::HeaderStatement { name, value } => {
                                 req = req.set(&name.value, &self.evaluate_expression(&value)?);
                             }
@@ -67,18 +60,6 @@ impl<'i> Interpreter<'i> {
                                 if let None = body {
                                     body = Some(self.evaluate_expression(&value)?);
                                 }
-                            }
-                            ast::Statement::ExpressionStatement { exp, .. } => {
-                                self.evaluate_expression(&exp)?;
-                            }
-                            ast::Statement::SetStatement { identifier, .. } => {
-                                return Err(Box::new(
-                                    self.error_factory
-                                        .inapropriate_statement(identifier.location)
-                                        .with_message(
-                                            "set statements are not allowed inside requests",
-                                        ),
-                                ))
                             }
                             ast::Statement::LineComment(_) => {}
                         }
@@ -92,29 +73,14 @@ impl<'i> Interpreter<'i> {
 
                     println!("{res}");
                 }
-                ast::Statement::HeaderStatement { name, .. } => {
-                    return Err(Box::new(
-                        self.error_factory
-                            .inapropriate_statement(name.location)
-                            .with_message("header statements only allowed inside requests"),
-                    ));
-                }
-                ast::Statement::BodyStatement { location, .. } => {
-                    return Err(Box::new(
-                        self.error_factory.inapropriate_statement(location),
-                    ));
-                }
-                ast::Statement::ExpressionStatement { exp, .. } => {
-                    self.evaluate_expression(&exp)?;
-                }
-                ast::Statement::SetStatement { identifier, value } => {
+                Set { identifier, value } => {
                     if identifier.value != "BASE_URL" {
                         return Err(Box::new(self.error_factory.unknown_constant(&identifier)));
                     }
 
                     self.env.base_url = Some(self.evaluate_expression(&value)?);
                 }
-                ast::Statement::LineComment(_) => {}
+                LineComment(_) => {}
             }
         }
 

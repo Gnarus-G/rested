@@ -16,11 +16,20 @@ impl<'i> From<Token<'i>> for ExactToken<'i> {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum Statement<'i> {
+pub enum Item<'i> {
+    Set {
+        identifier: ExactToken<'i>,
+        value: Expression<'i>,
+    },
+    LineComment(ExactToken<'i>),
     Request {
         params: RequestParams<'i>,
         location: Location,
     },
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Statement<'i> {
     HeaderStatement {
         name: ExactToken<'i>,
         value: Expression<'i>,
@@ -28,14 +37,6 @@ pub enum Statement<'i> {
     BodyStatement {
         value: Expression<'i>,
         location: Location,
-    },
-    ExpressionStatement {
-        exp: Expression<'i>,
-        location: Location,
-    },
-    SetStatement {
-        identifier: ExactToken<'i>,
-        value: Expression<'i>,
     },
     LineComment(ExactToken<'i>),
 }
@@ -71,11 +72,11 @@ pub enum RequestMethod {
 
 #[derive(Debug, PartialEq)]
 pub struct Program<'i> {
-    pub statements: Vec<Statement<'i>>,
+    pub items: Vec<Item<'i>>,
 }
 
 impl<'i> Program<'i> {
     pub fn new() -> Self {
-        Self { statements: vec![] }
+        Self { items: vec![] }
     }
 }

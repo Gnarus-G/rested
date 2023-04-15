@@ -1,7 +1,7 @@
 mod error;
 
 use crate::{
-    ast::{Expression, Program, RequestMethod, Statement, UrlOrPathname},
+    ast::{Expression, Item, Program, RequestMethod, Statement, UrlOrPathname},
     error::Error,
     lexer::{Lexer, Token, TokenKind},
 };
@@ -44,66 +44,31 @@ impl<'i> Parser<'i> {
 
         use crate::lexer::TokenKind::*;
 
+        self.expect_one_of(vec![Set, Get, Post, Linecomment, Shebang])?;
+
         let mut token = self.token();
 
         while token.kind != End {
             let statement = match token.kind {
                 Get => self.parse_request(RequestMethod::GET, token)?,
                 Post => self.parse_request(RequestMethod::POST, token)?,
-                Header => self.parse_header()?,
-                Body => self.parse_body(token)?,
-                Ident | StringLiteral | MultiLineStringLiteral => {
-                    Statement::ExpressionStatement { location: token.location , exp:self.parse_expression(token)? }
-                }
-                Linecomment | Shebang => Statement::LineComment(token.into()),
+                Linecomment | Shebang => Item::LineComment(token.into()),
                 Set => self.parse_set_statement()?,
-                Url | Pathname => {
-                    return Err(self.error().unexpected_token(&token).with_message(
-                        "url(s) or pathnames only make sense after a method keyword, 'get', 'post', etc..",
-                    ))
+                _ => {
+                    unreachable!("we properly expect items at this level of the program structure")
                 }
-                LParen | RParen => {
-                    return Err(self
-                        .error()
-                        .unexpected_token(&token)
-                        .with_message("parentheses only make sense within an env() call"))
-                }
-                LBracket | RBracket => {
-                    return Err(self.error().unexpected_token(&token).with_message(
-                        "brackets only make sense after the url of a request declaration",
-                    ))
-                }
-                End => {
-                    return Err(self
-                        .error()
-                        .unexpected_token(&token)
-                        .with_message("unexpected eof"))
-                }
-                UnfinishedStringLiteral => {
-                    return Err(self
-                        .error()
-                        .unexpected_token(&token)
-                        .with_message("terminate the string with a \""))
-                }
-                UnfinishedMultiLineStringLiteral => {
-                    return Err(self
-                        .error()
-                        .unexpected_token(&token)
-                        .with_message("terminate the string with a `"))
-                }
-                IllegalToken => return Err(self.error().unexpected_token(&token)),
             };
-            program.statements.push(statement);
+            program.items.push(statement);
             token = self.token();
         }
 
         Ok(program)
     }
 
-    fn parse_request(&mut self, method: RequestMethod, token: Token<'i>) -> Result<Statement<'i>> {
+    fn parse_request(&mut self, method: RequestMethod, token: Token<'i>) -> Result<Item<'i>> {
         self.expect_one_of(vec![TokenKind::Url, TokenKind::Pathname])?;
         let url = self.token();
-        Ok(Statement::Request {
+        Ok(Item::Request {
             location: token.location,
             params: crate::ast::RequestParams {
                 method,
@@ -117,7 +82,7 @@ impl<'i> Parser<'i> {
         })
     }
 
-    fn parse_set_statement(&mut self) -> Result<Statement<'i>> {
+    fn parse_set_statement(&mut self) -> Result<Item<'i>> {
         self.expect(TokenKind::Ident)?;
 
         let identifier = self.token();
@@ -130,7 +95,7 @@ impl<'i> Parser<'i> {
 
         let value_token = self.token();
 
-        Ok(Statement::SetStatement {
+        Ok(Item::Set {
             identifier: identifier.into(),
             value: self.parse_expression(value_token)?,
         })
@@ -293,6 +258,7 @@ mod tests {
     use crate::ast::{ExactToken, Expression, Program, RequestMethod, RequestParams, Statement};
 
     use Expression::*;
+    use Item::*;
     use RequestMethod::*;
     use Statement::*;
 
@@ -309,8 +275,8 @@ mod tests {
             r#"get http://localhost:8080
 get http://localhost:8080 {}"#,
             Program {
-                statements: vec![
-                    Request {
+                items: vec![
+                    Item::Request {
                         location: (0, 0).into(),
                         params: RequestParams {
                             method: GET,
@@ -321,7 +287,7 @@ get http://localhost:8080 {}"#,
                             params: vec![]
                         }
                     },
-                    Request {
+                    Item::Request {
                         location: (1, 0).into(),
                         params: RequestParams {
                             method: GET,
@@ -342,7 +308,7 @@ get http://localhost:8080 {}"#,
         assert_program!(
             "post http://localhost",
             Program {
-                statements: vec![Request {
+                items: vec![Item::Request {
                     location: (0, 0).into(),
                     params: RequestParams {
                         method: POST,
@@ -359,7 +325,7 @@ get http://localhost:8080 {}"#,
         assert_program!(
             "post /api/v2",
             Program {
-                statements: vec![Request {
+                items: vec![Request {
                     location: (0, 0).into(),
                     params: RequestParams {
                         method: POST,
@@ -383,7 +349,7 @@ get http://localhost {
     header "random" "tokener Bear" 
 }"#,
             Program {
-                statements: vec![Request {
+                items: vec![Request {
                     location: (1, 0).into(),
                     params: RequestParams {
                         method: GET,
@@ -428,7 +394,7 @@ post http://localhost {
     header "random" "tokener Bear" 
 }"#,
             Program {
-                statements: vec![Request {
+                items: vec![Request {
                     location: (1, 0).into(),
                     params: RequestParams {
                         method: POST,
@@ -472,7 +438,7 @@ post http://localhost {
     body "{neet: 1337}" 
 }"#,
             Program {
-                statements: vec![Request {
+                items: vec![Request {
                     location: (1, 0).into(),
                     params: RequestParams {
                         method: POST,
@@ -516,7 +482,7 @@ post http://localhost {
     `
 }"#,
             Program {
-                statements: vec![Request {
+                items: vec![Request {
                     location: (1, 0).into(),
                     params: RequestParams {
                         method: POST,
@@ -554,7 +520,7 @@ post http://localhost {
         assert_program!(
             r#"post http://localhost { header "name" env("auth") body env("data") }"#,
             Program {
-                statements: vec![Request {
+                items: vec![Request {
                     location: (0, 0).into(),
                     params: RequestParams {
                         method: POST,
@@ -604,7 +570,7 @@ post http://localhost {
         assert_program!(
             "set BASE_URL \"stuff\"",
             Program {
-                statements: vec![SetStatement {
+                items: vec![Set {
                     identifier: ExactToken {
                         value: "BASE_URL",
                         location: (0, 4).into()
