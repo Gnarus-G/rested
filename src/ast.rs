@@ -17,15 +17,22 @@ impl<'i> From<Token<'i>> for ExactToken<'i> {
 
 #[derive(Debug, PartialEq)]
 pub enum Statement<'i> {
-    Request(RequestParams<'i>),
+    Request {
+        params: RequestParams<'i>,
+        location: Location,
+    },
     HeaderStatement {
         name: ExactToken<'i>,
         value: Expression<'i>,
     },
     BodyStatement {
         value: Expression<'i>,
+        location: Location,
     },
-    ExpressionStatement(Expression<'i>),
+    ExpressionStatement {
+        exp: Expression<'i>,
+        location: Location,
+    },
     SetStatement {
         identifier: ExactToken<'i>,
         value: Expression<'i>,

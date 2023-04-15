@@ -33,9 +33,11 @@ impl<'i> Interpreter<'i> {
 
         let ast = parser.parse()?;
 
-        for s in ast.statements {
-            match s {
-                ast::Statement::Request(request) => {
+        for statement in ast.statements {
+            match statement {
+                ast::Statement::Request {
+                    params: request, ..
+                } => {
                     let mut req = match request.method {
                         ast::RequestMethod::GET => {
                             ureq::get(&self.evaluate_request_endpoint(request.endpoint)?)
@@ -49,20 +51,30 @@ impl<'i> Interpreter<'i> {
 
                     for statement in request.params {
                         match statement {
-                            ast::Statement::Request(_) => todo!(),
-                            ast::Statement::HeaderStatement { name, value } => {
-                                req = req.set(&name.value, &self.evaluate_expression(value)?);
+                            ast::Statement::Request { location, .. } => {
+                                return Err(Box::new(
+                                    self.error_factory
+                                        .inapropriate_statement(location)
+                                        .with_message(
+                                            "requests may not be defined inside other requests",
+                                        ),
+                                ))
                             }
-                            ast::Statement::BodyStatement { value } => {
+                            ast::Statement::HeaderStatement { name, value } => {
+                                req = req.set(&name.value, &self.evaluate_expression(&value)?);
+                            }
+                            ast::Statement::BodyStatement { value, .. } => {
                                 if let None = body {
-                                    body = Some(self.evaluate_expression(value)?);
+                                    body = Some(self.evaluate_expression(&value)?);
                                 }
                             }
-                            ast::Statement::ExpressionStatement(_) => todo!(),
+                            ast::Statement::ExpressionStatement { exp, .. } => {
+                                self.evaluate_expression(&exp)?;
+                            }
                             ast::Statement::SetStatement { identifier, .. } => {
                                 return Err(Box::new(
                                     self.error_factory
-                                        .inapropriate_statement(&identifier)
+                                        .inapropriate_statement(identifier.location)
                                         .with_message(
                                             "set statements are not allowed inside requests",
                                         ),
@@ -83,20 +95,24 @@ impl<'i> Interpreter<'i> {
                 ast::Statement::HeaderStatement { name, .. } => {
                     return Err(Box::new(
                         self.error_factory
-                            .inapropriate_statement(&name)
+                            .inapropriate_statement(name.location)
                             .with_message("header statements only allowed inside requests"),
                     ));
                 }
-                ast::Statement::BodyStatement { .. } => todo!(),
-                ast::Statement::ExpressionStatement(e) => {
-                    self.evaluate_expression(e)?;
+                ast::Statement::BodyStatement { location, .. } => {
+                    return Err(Box::new(
+                        self.error_factory.inapropriate_statement(location),
+                    ));
+                }
+                ast::Statement::ExpressionStatement { exp, .. } => {
+                    self.evaluate_expression(&exp)?;
                 }
                 ast::Statement::SetStatement { identifier, value } => {
                     if identifier.value != "BASE_URL" {
                         return Err(Box::new(self.error_factory.unknown_constant(&identifier)));
                     }
 
-                    self.env.base_url = Some(self.evaluate_expression(value)?);
+                    self.env.base_url = Some(self.evaluate_expression(&value)?);
                 }
                 ast::Statement::LineComment(_) => {}
             }
@@ -105,11 +121,11 @@ impl<'i> Interpreter<'i> {
         Ok(())
     }
 
-    fn evaluate_expression(&self, exp: Expression<'i>) -> Result<String> {
+    fn evaluate_expression(&self, exp: &Expression<'i>) -> Result<String> {
         use Expression::*;
         let value = match exp {
-            Identifier(_) => todo!(),
-            StringLiteral(token) => token.value,
+            Identifier(token) => self.evaluate_identifier(&token)?,
+            StringLiteral(token) => token.value.to_string(),
             Call {
                 identifier,
                 arguments,
@@ -122,12 +138,13 @@ impl<'i> Interpreter<'i> {
                     })?;
 
                     let value = match arg {
-                        Identifier(_) => todo!(),
+                        Identifier(token) => self.evaluate_identifier(token)?,
                         StringLiteral(n) => self
                             .env
                             .get_variable_value(n.value.to_string())
-                            .ok_or_else(|| self.error_factory.variable_not_found(n))?,
-                        Call { .. } => todo!(),
+                            .ok_or_else(|| self.error_factory.variable_not_found(n))?
+                            .to_string(),
+                        Call { .. } => self.evaluate_expression(&arg)?,
                     };
 
                     value
@@ -141,7 +158,7 @@ impl<'i> Interpreter<'i> {
             },
         };
 
-        Ok(value.to_string())
+        Ok(value)
     }
 
     fn evaluate_request_endpoint(&self, enpdpoint: UrlOrPathname) -> Result<String> {
@@ -156,5 +173,12 @@ impl<'i> Interpreter<'i> {
                 }
             }
         })
+    }
+
+    fn evaluate_identifier(&self, token: &ast::ExactToken) -> Result<String> {
+        return Err(self
+            .error_factory
+            .undeclared_variable(token)
+            .with_message("variable identifiers are not supported"));
     }
 }

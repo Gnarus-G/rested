@@ -48,12 +48,12 @@ impl<'i> Parser<'i> {
 
         while token.kind != End {
             let statement = match token.kind {
-                Get => self.parse_request(RequestMethod::GET)?,
-                Post => self.parse_request(RequestMethod::POST)?,
+                Get => self.parse_request(RequestMethod::GET, token)?,
+                Post => self.parse_request(RequestMethod::POST, token)?,
                 Header => self.parse_header()?,
-                Body => self.parse_body()?,
+                Body => self.parse_body(token)?,
                 Ident | StringLiteral | MultiLineStringLiteral => {
-                    Statement::ExpressionStatement(self.parse_expression(token)?)
+                    Statement::ExpressionStatement { location: token.location , exp:self.parse_expression(token)? }
                 }
                 Linecomment | Shebang => Statement::LineComment(token.into()),
                 Set => self.parse_set_statement()?,
@@ -100,18 +100,21 @@ impl<'i> Parser<'i> {
         Ok(program)
     }
 
-    fn parse_request(&mut self, method: RequestMethod) -> Result<Statement<'i>> {
+    fn parse_request(&mut self, method: RequestMethod, token: Token<'i>) -> Result<Statement<'i>> {
         self.expect_one_of(vec![TokenKind::Url, TokenKind::Pathname])?;
         let url = self.token();
-        Ok(Statement::Request(crate::ast::RequestParams {
-            method,
-            endpoint: match url.kind {
-                TokenKind::Url => UrlOrPathname::Url(url.into()),
-                TokenKind::Pathname => UrlOrPathname::Pathname(url.into()),
-                _ => unreachable!("we're properly expecting only url and pathname tokens here"),
+        Ok(Statement::Request {
+            location: token.location,
+            params: crate::ast::RequestParams {
+                method,
+                endpoint: match url.kind {
+                    TokenKind::Url => UrlOrPathname::Url(url.into()),
+                    TokenKind::Pathname => UrlOrPathname::Pathname(url.into()),
+                    _ => unreachable!("we're properly expecting only url and pathname tokens here"),
+                },
+                params: self.parse_request_params()?,
             },
-            params: self.parse_request_params()?,
-        }))
+        })
     }
 
     fn parse_set_statement(&mut self) -> Result<Statement<'i>> {
@@ -142,7 +145,7 @@ impl<'i> Parser<'i> {
             while token.kind != TokenKind::RBracket {
                 let header = match token.kind {
                     Header => self.parse_header()?,
-                    Body => self.parse_body()?,
+                    Body => self.parse_body(token)?,
                     Linecomment | Shebang => Statement::LineComment(token.into()),
                     _ => {
                         return Err(self
@@ -188,7 +191,7 @@ impl<'i> Parser<'i> {
         })
     }
 
-    fn parse_body(&mut self) -> Result<Statement<'i>> {
+    fn parse_body(&mut self, t: Token) -> Result<Statement<'i>> {
         self.expect_one_of(vec![
             TokenKind::StringLiteral,
             TokenKind::Ident,
@@ -207,7 +210,10 @@ impl<'i> Parser<'i> {
             _ => unreachable!(),
         };
 
-        Ok(Statement::BodyStatement { value })
+        Ok(Statement::BodyStatement {
+            value,
+            location: t.location,
+        })
     }
 
     fn parse_expression(&mut self, start_token: Token<'i>) -> Result<Expression<'i>> {
@@ -304,22 +310,28 @@ mod tests {
 get http://localhost:8080 {}"#,
             Program {
                 statements: vec![
-                    Request(RequestParams {
-                        method: GET,
-                        endpoint: UrlOrPathname::Url(ExactToken {
-                            value: "http://localhost:8080",
-                            location: (0, 4).into()
-                        }),
-                        params: vec![]
-                    }),
-                    Request(RequestParams {
-                        method: GET,
-                        endpoint: UrlOrPathname::Url(ExactToken {
-                            value: "http://localhost:8080",
-                            location: (1, 4).into()
-                        }),
-                        params: vec![]
-                    })
+                    Request {
+                        location: (0, 0).into(),
+                        params: RequestParams {
+                            method: GET,
+                            endpoint: UrlOrPathname::Url(ExactToken {
+                                value: "http://localhost:8080",
+                                location: (0, 4).into()
+                            }),
+                            params: vec![]
+                        }
+                    },
+                    Request {
+                        location: (1, 0).into(),
+                        params: RequestParams {
+                            method: GET,
+                            endpoint: UrlOrPathname::Url(ExactToken {
+                                value: "http://localhost:8080",
+                                location: (1, 4).into()
+                            }),
+                            params: vec![]
+                        }
+                    }
                 ]
             }
         );
@@ -330,28 +342,34 @@ get http://localhost:8080 {}"#,
         assert_program!(
             "post http://localhost",
             Program {
-                statements: vec![Request(RequestParams {
-                    method: POST,
-                    endpoint: UrlOrPathname::Url(ExactToken {
-                        value: "http://localhost",
-                        location: (0, 5).into()
-                    }),
-                    params: vec![]
-                })]
+                statements: vec![Request {
+                    location: (0, 0).into(),
+                    params: RequestParams {
+                        method: POST,
+                        endpoint: UrlOrPathname::Url(ExactToken {
+                            value: "http://localhost",
+                            location: (0, 5).into()
+                        }),
+                        params: vec![]
+                    }
+                }]
             }
         );
 
         assert_program!(
             "post /api/v2",
             Program {
-                statements: vec![Request(RequestParams {
-                    method: POST,
-                    endpoint: UrlOrPathname::Pathname(ExactToken {
-                        value: "/api/v2",
-                        location: (0, 5).into()
-                    }),
-                    params: vec![]
-                })]
+                statements: vec![Request {
+                    location: (0, 0).into(),
+                    params: RequestParams {
+                        method: POST,
+                        endpoint: UrlOrPathname::Pathname(ExactToken {
+                            value: "/api/v2",
+                            location: (0, 5).into()
+                        }),
+                        params: vec![]
+                    }
+                }]
             }
         );
     }
@@ -365,35 +383,38 @@ get http://localhost {
     header "random" "tokener Bear" 
 }"#,
             Program {
-                statements: vec![Request(RequestParams {
-                    method: GET,
-                    endpoint: UrlOrPathname::Url(ExactToken {
-                        value: "http://localhost",
-                        location: (1, 4).into()
-                    }),
-                    params: (vec![
-                        HeaderStatement {
-                            name: ExactToken {
-                                value: "Authorization",
-                                location: (2, 11).into()
+                statements: vec![Request {
+                    location: (1, 0).into(),
+                    params: RequestParams {
+                        method: GET,
+                        endpoint: UrlOrPathname::Url(ExactToken {
+                            value: "http://localhost",
+                            location: (1, 4).into()
+                        }),
+                        params: (vec![
+                            HeaderStatement {
+                                name: ExactToken {
+                                    value: "Authorization",
+                                    location: (2, 11).into()
+                                },
+                                value: StringLiteral(ExactToken {
+                                    value: "Bearer token",
+                                    location: (2, 27).into()
+                                })
                             },
-                            value: StringLiteral(ExactToken {
-                                value: "Bearer token",
-                                location: (2, 27).into()
-                            })
-                        },
-                        HeaderStatement {
-                            name: ExactToken {
-                                value: "random",
-                                location: (3, 11).into()
-                            },
-                            value: StringLiteral(ExactToken {
-                                value: "tokener Bear",
-                                location: (3, 20).into()
-                            })
-                        }
-                    ])
-                })]
+                            HeaderStatement {
+                                name: ExactToken {
+                                    value: "random",
+                                    location: (3, 11).into()
+                                },
+                                value: StringLiteral(ExactToken {
+                                    value: "tokener Bear",
+                                    location: (3, 20).into()
+                                })
+                            }
+                        ])
+                    }
+                }]
             }
         );
     }
@@ -407,39 +428,41 @@ post http://localhost {
     header "random" "tokener Bear" 
 }"#,
             Program {
-                statements: vec![Request(RequestParams {
-                    method: POST,
-                    endpoint: UrlOrPathname::Url(ExactToken {
-                        value: "http://localhost",
-                        location: (1, 5).into()
-                    }),
-                    params: (vec![
-                        HeaderStatement {
-                            name: ExactToken {
-                                value: "Authorization",
-                                location: (2, 11).into()
+                statements: vec![Request {
+                    location: (1, 0).into(),
+                    params: RequestParams {
+                        method: POST,
+                        endpoint: UrlOrPathname::Url(ExactToken {
+                            value: "http://localhost",
+                            location: (1, 5).into()
+                        }),
+                        params: (vec![
+                            HeaderStatement {
+                                name: ExactToken {
+                                    value: "Authorization",
+                                    location: (2, 11).into()
+                                },
+                                value: StringLiteral(ExactToken {
+                                    value: "Bearer token",
+                                    location: (2, 27).into()
+                                })
                             },
-                            value: StringLiteral(ExactToken {
-                                value: "Bearer token",
-                                location: (2, 27).into()
-                            })
-                        },
-                        HeaderStatement {
-                            name: ExactToken {
-                                value: "random",
-                                location: (3, 11).into()
-                            },
-                            value: StringLiteral(ExactToken {
-                                value: "tokener Bear",
-                                location: (3, 20).into()
-                            })
-                        }
-                    ])
-                })]
+                            HeaderStatement {
+                                name: ExactToken {
+                                    value: "random",
+                                    location: (3, 11).into()
+                                },
+                                value: StringLiteral(ExactToken {
+                                    value: "tokener Bear",
+                                    location: (3, 20).into()
+                                })
+                            }
+                        ])
+                    }
+                }]
             }
         );
     }
-
     #[test]
     fn parse_post_with_headers_and_body() {
         assert_program!(
@@ -449,31 +472,35 @@ post http://localhost {
     body "{neet: 1337}" 
 }"#,
             Program {
-                statements: vec![Request(RequestParams {
-                    method: POST,
-                    endpoint: UrlOrPathname::Url(ExactToken {
-                        value: "http://localhost",
-                        location: (1, 5).into()
-                    }),
-                    params: (vec![
-                        HeaderStatement {
-                            name: ExactToken {
-                                value: "Authorization",
-                                location: (2, 11).into()
+                statements: vec![Request {
+                    location: (1, 0).into(),
+                    params: RequestParams {
+                        method: POST,
+                        endpoint: UrlOrPathname::Url(ExactToken {
+                            value: "http://localhost",
+                            location: (1, 5).into()
+                        }),
+                        params: (vec![
+                            HeaderStatement {
+                                name: ExactToken {
+                                    value: "Authorization",
+                                    location: (2, 11).into()
+                                },
+                                value: StringLiteral(ExactToken {
+                                    value: "Bearer token",
+                                    location: (2, 27).into()
+                                })
                             },
-                            value: StringLiteral(ExactToken {
-                                value: "Bearer token",
-                                location: (2, 27).into()
-                            })
-                        },
-                        BodyStatement {
-                            value: StringLiteral(ExactToken {
-                                value: "{neet: 1337}",
-                                location: (3, 9).into()
-                            })
-                        }
-                    ])
-                })]
+                            BodyStatement {
+                                value: StringLiteral(ExactToken {
+                                    value: "{neet: 1337}",
+                                    location: (3, 9).into()
+                                }),
+                                location: (3, 4).into()
+                            }
+                        ])
+                    }
+                }]
             }
         );
     }
@@ -489,31 +516,35 @@ post http://localhost {
     `
 }"#,
             Program {
-                statements: vec![Request(RequestParams {
-                    method: POST,
-                    endpoint: UrlOrPathname::Url(ExactToken {
-                        value: "http://localhost",
-                        location: (1, 5).into()
-                    }),
-                    params: (vec![
-                        HeaderStatement {
-                            name: ExactToken {
-                                value: "Authorization",
-                                location: (2, 11).into()
+                statements: vec![Request {
+                    location: (1, 0).into(),
+                    params: RequestParams {
+                        method: POST,
+                        endpoint: UrlOrPathname::Url(ExactToken {
+                            value: "http://localhost",
+                            location: (1, 5).into()
+                        }),
+                        params: (vec![
+                            HeaderStatement {
+                                name: ExactToken {
+                                    value: "Authorization",
+                                    location: (2, 11).into()
+                                },
+                                value: StringLiteral(ExactToken {
+                                    value: "Bearer token",
+                                    location: (2, 27).into()
+                                })
                             },
-                            value: StringLiteral(ExactToken {
-                                value: "Bearer token",
-                                location: (2, 27).into()
-                            })
-                        },
-                        BodyStatement {
-                            value: StringLiteral(ExactToken {
-                                value: "\n        {\"neet\": 1337}\n    ",
-                                location: (3, 9).into()
-                            })
-                        }
-                    ])
-                })]
+                            BodyStatement {
+                                value: StringLiteral(ExactToken {
+                                    value: "\n        {\"neet\": 1337}\n    ",
+                                    location: (3, 9).into()
+                                }),
+                                location: (3, 4).into()
+                            }
+                        ])
+                    }
+                }]
             }
         );
     }
@@ -523,43 +554,47 @@ post http://localhost {
         assert_program!(
             r#"post http://localhost { header "name" env("auth") body env("data") }"#,
             Program {
-                statements: vec![Request(RequestParams {
-                    method: POST,
-                    endpoint: UrlOrPathname::Url(ExactToken {
-                        value: "http://localhost",
-                        location: (0, 5).into()
-                    }),
-                    params: vec![
-                        HeaderStatement {
-                            name: ExactToken {
-                                value: "name",
-                                location: (0, 31).into()
+                statements: vec![Request {
+                    location: (0, 0).into(),
+                    params: RequestParams {
+                        method: POST,
+                        endpoint: UrlOrPathname::Url(ExactToken {
+                            value: "http://localhost",
+                            location: (0, 5).into()
+                        }),
+                        params: vec![
+                            HeaderStatement {
+                                name: ExactToken {
+                                    value: "name",
+                                    location: (0, 31).into()
+                                },
+                                value: Call {
+                                    identifier: ExactToken {
+                                        value: "env",
+                                        location: (0, 38).into()
+                                    },
+                                    arguments: vec![StringLiteral(ExactToken {
+                                        value: "auth",
+                                        location: (0, 42).into()
+                                    })]
+                                }
                             },
-                            value: Call {
-                                identifier: ExactToken {
-                                    value: "env",
-                                    location: (0, 38).into()
-                                },
-                                arguments: vec![StringLiteral(ExactToken {
-                                    value: "auth",
-                                    location: (0, 42).into()
-                                })]
+                            BodyStatement {
+                                location: (0, 50).into(),
+                                value: Call {
+                                    identifier: ExactToken {
+                                        value: "env",
+                                        location: (0, 55).into()
+                                    },
+                                    arguments: vec![StringLiteral(ExactToken {
+                                        value: "data",
+                                        location: (0, 59).into()
+                                    })]
+                                }
                             }
-                        },
-                        BodyStatement {
-                            value: Call {
-                                identifier: ExactToken {
-                                    value: "env",
-                                    location: (0, 55).into()
-                                },
-                                arguments: vec![StringLiteral(ExactToken {
-                                    value: "data",
-                                    location: (0, 59).into()
-                                })]
-                            }
-                        }
-                    ]
-                })]
+                        ]
+                    }
+                }]
             }
         );
     }

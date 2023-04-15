@@ -1,4 +1,4 @@
-use crate::{ast::ExactToken, error::Error};
+use crate::{ast::ExactToken, error::Error, lexer::Location};
 
 #[derive(Debug, PartialEq)]
 pub enum InterpError {
@@ -8,6 +8,7 @@ pub enum InterpError {
     RequestWithPathnameWithoutBaseUrl,
     InapropriateStatementLocation,
     UndefinedCallable { name: String },
+    UndeclaredIdentifier { name: String },
 }
 
 impl std::error::Error for InterpError {}
@@ -31,6 +32,7 @@ impl std::fmt::Display for InterpError {
             InterpError::UndefinedCallable { name } => {
                 format!("attempting to calling an undefined function: {}", name)
             }
+            InterpError::UndeclaredIdentifier { name } => format!("undeclared variable: {}", name),
         };
 
         f.write_str(&formatted_error)
@@ -80,6 +82,16 @@ impl<'i> InterpErrorFactory<'i> {
         )
     }
 
+    pub fn undeclared_variable(&self, token: &ExactToken) -> Error<InterpError> {
+        Error::new(
+            InterpError::UndeclaredIdentifier {
+                name: token.value.to_string(),
+            },
+            token.location,
+            self.source_code,
+        )
+    }
+
     pub fn undefined_callable(&self, token: &ExactToken) -> Error<InterpError> {
         Error::new(
             InterpError::UndefinedCallable {
@@ -98,10 +110,10 @@ impl<'i> InterpErrorFactory<'i> {
         )
     }
 
-    pub fn inapropriate_statement(&self, token: &ExactToken) -> Error<InterpError> {
+    pub fn inapropriate_statement(&self, location: Location) -> Error<InterpError> {
         Error::new(
             InterpError::InapropriateStatementLocation,
-            token.location,
+            location,
             self.source_code,
         )
     }
