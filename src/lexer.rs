@@ -27,6 +27,7 @@ pub enum TokenKind {
     RParen,
     LBracket,
     RBracket,
+    AttributePrefix,
     End,
 
     //edge cases
@@ -184,6 +185,11 @@ impl<'i> Lexer<'i> {
                 kind: RBracket,
                 location: self.cursor,
                 text: "}",
+            },
+            b'@' => Token {
+                kind: AttributePrefix,
+                text: "@",
+                location: self.cursor,
             },
             b'/' if self.peek_char().is(b'/') => self.line_comment(),
             b'/' => self.pathname(),

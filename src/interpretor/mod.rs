@@ -1,6 +1,12 @@
 mod error;
 pub mod runtime;
 
+use std::fs::{self, File};
+use std::io::{BufWriter, Write};
+use std::path::PathBuf;
+
+use colored::Colorize;
+
 use crate::ast::{self, Expression, UrlOrPathname};
 
 use crate::error::Error;
@@ -35,18 +41,17 @@ impl<'i> Interpreter<'i> {
 
         use ast::Item::*;
 
+        let mut attribute_items: Vec<(ast::ExactToken, Vec<Expression>)> = vec![];
+
         for item in ast.items {
             match item {
                 Request {
                     params: request, ..
                 } => {
+                    let path = &self.evaluate_request_endpoint(request.endpoint)?;
                     let mut req = match request.method {
-                        ast::RequestMethod::GET => {
-                            ureq::get(&self.evaluate_request_endpoint(request.endpoint)?)
-                        }
-                        ast::RequestMethod::POST => {
-                            ureq::post(&self.evaluate_request_endpoint(request.endpoint)?)
-                        }
+                        ast::RequestMethod::GET => ureq::get(path),
+                        ast::RequestMethod::POST => ureq::post(path),
                     };
 
                     let mut body = None;
@@ -65,13 +70,54 @@ impl<'i> Interpreter<'i> {
                         }
                     }
 
+                    println!(
+                        "{}",
+                        format!(
+                            "sending {} request to {}",
+                            request.method.to_string().yellow().bold(),
+                            path.bold()
+                        )
+                    );
+
                     let res = if let Some(value) = body {
-                        req.send_string(&value)?.into_string()?
+                        let res = req.send_string(&value)?;
+
+                        if res.content_type() == "application/json" {
+                            prettify_json_string(&res.into_string()?)?
+                        } else {
+                            res.into_string()?
+                        }
                     } else {
                         req.call()?.into_string()?
                     };
 
-                    println!("{res}");
+                    for (ident, params) in &attribute_items {
+                        match ident.value {
+                            "log" => {
+                                if let Some(arg_exp) = params.first() {
+                                    let file_path = self.evaluate_expression(arg_exp)?.into();
+
+                                    log(&res, &file_path)?;
+
+                                    println!(
+                                        "    \u{21B3} {}",
+                                        format!("saved response to {:?}", file_path).blue()
+                                    );
+                                } else {
+                                    println!("{}", indent_lines(&res, 4));
+                                }
+                            }
+                            _ => {
+                                return Err(self
+                                    .error_factory
+                                    .unsupported_attribute(ident)
+                                    .with_message("@log(..) is the only supported attribute")
+                                    .into())
+                            }
+                        }
+                    }
+
+                    attribute_items.clear();
                 }
                 Set { identifier, value } => {
                     if identifier.value != "BASE_URL" {
@@ -81,6 +127,13 @@ impl<'i> Interpreter<'i> {
                     self.env.base_url = Some(self.evaluate_expression(&value)?);
                 }
                 LineComment(_) => {}
+                Attribute {
+                    identifier,
+                    parameters,
+                    ..
+                } => {
+                    attribute_items.push((identifier, parameters));
+                }
             }
         }
 
@@ -132,7 +185,9 @@ impl<'i> Interpreter<'i> {
             UrlOrPathname::Url(url) => url.value.to_string(),
             UrlOrPathname::Pathname(pn) => {
                 if let Some(mut base_url) = self.env.base_url.clone() {
-                    base_url.push_str(pn.value);
+                    if pn.value.len() > 1 {
+                        base_url.push_str(pn.value);
+                    }
                     base_url
                 } else {
                     return Err(self.error_factory.unset_base_url(&pn));
@@ -147,4 +202,32 @@ impl<'i> Interpreter<'i> {
             .undeclared_variable(token)
             .with_message("variable identifiers are not supported"));
     }
+}
+
+fn log(content: &str, to_file: &PathBuf) -> std::io::Result<()> {
+    if let Some(dir_path) = to_file.parent() {
+        fs::create_dir_all(dir_path)?
+    };
+
+    let file = File::options()
+        .truncate(true)
+        .write(true)
+        .create(true)
+        .open(to_file)?;
+
+    let mut w = BufWriter::new(file);
+
+    write!(w, "{content}")
+}
+
+fn prettify_json_string(string: &str) -> serde_json::Result<String> {
+    serde_json::to_string_pretty(&serde_json::from_str::<serde_json::Value>(string)?)
+}
+
+fn indent_lines(string: &str, indent: u8) -> String {
+    string
+        .lines()
+        .map(|line| String::from(" ".repeat(indent as usize) + line))
+        .collect::<Vec<_>>()
+        .join("\n")
 }

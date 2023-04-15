@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::lexer::{Location, Token};
 
 #[derive(Debug, PartialEq)]
@@ -25,6 +27,11 @@ pub enum Item<'i> {
     Request {
         params: RequestParams<'i>,
         location: Location,
+    },
+    Attribute {
+        location: Location,
+        identifier: ExactToken<'i>,
+        parameters: Vec<Expression<'i>>,
     },
 }
 
@@ -68,6 +75,12 @@ pub enum UrlOrPathname<'i> {
 pub enum RequestMethod {
     GET,
     POST,
+}
+
+impl Display for RequestMethod {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 #[derive(Debug, PartialEq)]

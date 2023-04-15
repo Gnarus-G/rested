@@ -1,4 +1,4 @@
-use crate::{ast::ExactToken, error::Error, lexer::Location};
+use crate::{ast::ExactToken, error::Error};
 
 #[derive(Debug, PartialEq)]
 pub enum InterpError {
@@ -6,9 +6,9 @@ pub enum InterpError {
     RequiredArguments { required: usize, recieved: usize },
     EnvVariableNotFound { name: String },
     RequestWithPathnameWithoutBaseUrl,
-    InapropriateStatementLocation,
     UndefinedCallable { name: String },
     UndeclaredIdentifier { name: String },
+    UnsupportedAttribute { name: String },
 }
 
 impl std::error::Error for InterpError {}
@@ -20,7 +20,7 @@ impl std::fmt::Display for InterpError {
                 format!("trying to set an unknown constant {}", constant)
             }
             InterpError::RequiredArguments { required, recieved } => {
-                format!("{} arguments are required, recieved {}", required, recieved)
+                format!("{} argument(s) required, recieved {}", required, recieved)
             }
             InterpError::EnvVariableNotFound { name } => {
                 format!("no variable found by the name {:?}", name)
@@ -28,11 +28,13 @@ impl std::fmt::Display for InterpError {
             InterpError::RequestWithPathnameWithoutBaseUrl => {
                 format!("BASE_URL needs to be set first for requests to work with just pathnames")
             }
-            InterpError::InapropriateStatementLocation => format!("inapropriate statement"),
             InterpError::UndefinedCallable { name } => {
                 format!("attempting to calling an undefined function: {}", name)
             }
             InterpError::UndeclaredIdentifier { name } => format!("undeclared variable: {}", name),
+            InterpError::UnsupportedAttribute { name } => {
+                format!("unsupported attribute: {}", name)
+            }
         };
 
         f.write_str(&formatted_error)
@@ -92,6 +94,16 @@ impl<'i> InterpErrorFactory<'i> {
         )
     }
 
+    pub fn unsupported_attribute(&self, token: &ExactToken) -> Error<InterpError> {
+        Error::new(
+            InterpError::UnsupportedAttribute {
+                name: token.value.to_string(),
+            },
+            token.location,
+            self.source_code,
+        )
+    }
+
     pub fn undefined_callable(&self, token: &ExactToken) -> Error<InterpError> {
         Error::new(
             InterpError::UndefinedCallable {
@@ -106,14 +118,6 @@ impl<'i> InterpErrorFactory<'i> {
         Error::new(
             InterpError::RequestWithPathnameWithoutBaseUrl,
             token.location,
-            self.source_code,
-        )
-    }
-
-    pub fn inapropriate_statement(&self, location: Location) -> Error<InterpError> {
-        Error::new(
-            InterpError::InapropriateStatementLocation,
-            location,
             self.source_code,
         )
     }

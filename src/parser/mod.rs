@@ -44,7 +44,7 @@ impl<'i> Parser<'i> {
 
         use crate::lexer::TokenKind::*;
 
-        self.expect_one_of(vec![Set, Get, Post, Linecomment, Shebang])?;
+        self.expect_one_of(vec![Set, Get, Post, Linecomment, Shebang, AttributePrefix])?;
 
         let mut token = self.token();
 
@@ -54,6 +54,7 @@ impl<'i> Parser<'i> {
                 Post => self.parse_request(RequestMethod::POST, token)?,
                 Linecomment | Shebang => Item::LineComment(token.into()),
                 Set => self.parse_set_statement()?,
+                AttributePrefix => self.parse_attribute(token)?,
                 _ => {
                     unreachable!("we properly expect items at this level of the program structure")
                 }
@@ -249,6 +250,42 @@ impl<'i> Parser<'i> {
     fn error(&self) -> ParseErrorConstructor<'i> {
         ParseErrorConstructor::new(self.lexer.input())
     }
+
+    fn parse_attribute(&mut self, token: Token<'i>) -> Result<Item<'i>> {
+        let location = token.location;
+
+        self.expect(TokenKind::Ident)?;
+
+        let ident = self.token();
+
+        let mut params = vec![];
+
+        if let TokenKind::LParen = self.peek_token().kind {
+            self.eat_token();
+
+            let mut token = self.token();
+            while token.kind != TokenKind::RParen {
+                match token.kind {
+                    TokenKind::StringLiteral => {
+                        params.push(Expression::StringLiteral(token.into()))
+                    }
+                    _ => {
+                        return Err(self
+                            .error()
+                            .unexpected_token(&token)
+                            .with_message("only string literals are allowed in call expressions"))
+                    }
+                }
+                token = self.token();
+            }
+        }
+
+        Ok(Item::Attribute {
+            location,
+            identifier: ident.into(),
+            parameters: params,
+        })
+    }
 }
 
 #[cfg(test)]
@@ -335,6 +372,26 @@ get http://localhost:8080 {}"#,
                         }),
                         params: vec![]
                     }
+                }]
+            }
+        );
+    }
+
+    #[test]
+    fn parse_attributes() {
+        assert_program!(
+            r#"@log("path/to/file")"#,
+            Program {
+                items: vec![Attribute {
+                    location: (0, 0).into(),
+                    identifier: ExactToken {
+                        value: "log",
+                        location: (0, 1).into()
+                    },
+                    parameters: vec![StringLiteral(ExactToken {
+                        value: "path/to/file",
+                        location: (0, 5).into()
+                    })]
                 }]
             }
         );
