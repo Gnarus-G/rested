@@ -28,10 +28,10 @@ impl ErrorSourceContext {
 
 #[derive(Debug)]
 pub struct Error<EK: Display + std::error::Error> {
-    inner_error: EK,
-    location: Location,
-    message: Option<String>,
-    context: ErrorSourceContext,
+    pub inner_error: EK,
+    pub location: Location,
+    pub message: Option<String>,
+    pub context: ErrorSourceContext,
 }
 
 impl<EK: Display + std::error::Error> Error<EK> {
@@ -42,11 +42,6 @@ impl<EK: Display + std::error::Error> Error<EK> {
             message: None,
             context: ErrorSourceContext::new(&location, source_code),
         }
-    }
-
-    #[cfg(test)]
-    pub fn inner_error(&self) -> &EK {
-        &self.inner_error
     }
 
     pub fn with_message(mut self, msg: &str) -> Self {

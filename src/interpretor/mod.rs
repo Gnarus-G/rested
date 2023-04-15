@@ -34,7 +34,7 @@ impl<'i> Interpreter<'i> {
         }
     }
 
-    pub fn run(&mut self) -> std::result::Result<(), Box<dyn std::error::Error>> {
+    pub fn run(&mut self) -> Result<()> {
         let mut parser = parser::Parser::new(self.code);
 
         let ast = parser.parse()?;
@@ -46,7 +46,8 @@ impl<'i> Interpreter<'i> {
         for item in ast.items {
             match item {
                 Request {
-                    params: request, ..
+                    params: request,
+                    location,
                 } => {
                     let path = &self.evaluate_request_endpoint(request.endpoint)?;
                     let mut req = match request.method {
@@ -80,15 +81,25 @@ impl<'i> Interpreter<'i> {
                     );
 
                     let res = if let Some(value) = body {
-                        let res = req.send_string(&value)?;
+                        let res = req
+                            .send_string(&value)
+                            .map_err(|e| self.error_factory.other(location, e))?;
 
                         if res.content_type() == "application/json" {
-                            prettify_json_string(&res.into_string()?)?
+                            let string = &res
+                                .into_string()
+                                .map_err(|e| self.error_factory.other(location, e))?;
+                            prettify_json_string(string)
+                                .map_err(|e| self.error_factory.other(location, e))?
                         } else {
-                            res.into_string()?
+                            res.into_string()
+                                .map_err(|error| self.error_factory.other(location, error))?
                         }
                     } else {
-                        req.call()?.into_string()?
+                        req.call()
+                            .map_err(|error| self.error_factory.other(location, error))?
+                            .into_string()
+                            .map_err(|error| self.error_factory.other(location, error))?
                     };
 
                     for (ident, params) in &attribute_items {
@@ -97,7 +108,9 @@ impl<'i> Interpreter<'i> {
                                 if let Some(arg_exp) = params.first() {
                                     let file_path = self.evaluate_expression(arg_exp)?.into();
 
-                                    log(&res, &file_path)?;
+                                    log(&res, &file_path).map_err(|error| {
+                                        self.error_factory.other(location, error)
+                                    })?;
 
                                     println!(
                                         "    \u{21B3} {}",
@@ -121,7 +134,7 @@ impl<'i> Interpreter<'i> {
                 }
                 Set { identifier, value } => {
                     if identifier.value != "BASE_URL" {
-                        return Err(Box::new(self.error_factory.unknown_constant(&identifier)));
+                        return Err(self.error_factory.unknown_constant(&identifier));
                     }
 
                     self.env.base_url = Some(self.evaluate_expression(&value)?);
@@ -182,12 +195,12 @@ impl<'i> Interpreter<'i> {
                         Identifier(token) => self.evaluate_identifier(token)?,
                         Call { identifier, .. } => {
                             let value = self.evaluate_expression(&arg)?;
-                            self.read(&ExactToken {
+                            self.read_file(&ExactToken {
                                 value: &value,
                                 location: identifier.location,
                             })?
                         }
-                        StringLiteral(n) => self.read(n)?,
+                        StringLiteral(n) => self.read_file(n)?,
                     };
 
                     value
@@ -211,13 +224,14 @@ impl<'i> Interpreter<'i> {
             .map(|s| s.to_owned())
     }
 
-    fn read(&self, n: &ExactToken) -> Result<String> {
-        let mut file = File::open(n.value).map_err(|e| self.error_factory.other(n, e))?;
+    fn read_file(&self, file_path: &ExactToken) -> Result<String> {
+        let mut file = File::open(file_path.value)
+            .map_err(|e| self.error_factory.other(file_path.location, e))?;
 
         let mut string = String::new();
 
         file.read_to_string(&mut string)
-            .map_err(|e| self.error_factory.other(n, e))?;
+            .map_err(|e| self.error_factory.other(file_path.location, e))?;
 
         Ok(string)
     }

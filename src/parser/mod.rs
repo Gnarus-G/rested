@@ -1,4 +1,4 @@
-mod error;
+pub mod error;
 
 use crate::{
     ast::{Expression, Item, Program, RequestMethod, Statement, UrlOrPathname},

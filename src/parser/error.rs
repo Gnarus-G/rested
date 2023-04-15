@@ -125,7 +125,7 @@ mod tests {
             let mut parser = Parser::new($input);
             let error = parser.parse().unwrap_err();
 
-            assert_eq!(*error.inner_error(), $kind)
+            assert_eq!(error.inner_error, $kind)
         };
     }
 

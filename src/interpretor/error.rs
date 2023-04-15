@@ -1,4 +1,4 @@
-use crate::{ast::ExactToken, error::Error};
+use crate::{ast::ExactToken, error::Error, lexer::Location, parser::error::ParseError};
 
 #[derive(Debug, PartialEq)]
 pub enum InterpError {
@@ -40,6 +40,19 @@ impl std::fmt::Display for InterpError {
         };
 
         f.write_str(&formatted_error)
+    }
+}
+
+impl From<Error<ParseError>> for Error<InterpError> {
+    fn from(value: Error<ParseError>) -> Self {
+        Self {
+            inner_error: InterpError::Other {
+                error: value.inner_error.to_string(),
+            },
+            location: value.location,
+            message: value.message,
+            context: value.context,
+        }
     }
 }
 
@@ -126,14 +139,14 @@ impl<'i> InterpErrorFactory<'i> {
 
     pub fn other<E: std::fmt::Display + std::error::Error>(
         &self,
-        token: &ExactToken,
+        location: Location,
         error: E,
     ) -> Error<InterpError> {
         Error::new(
             InterpError::Other {
                 error: error.to_string(),
             },
-            token.location,
+            location,
             self.source_code,
         )
     }
