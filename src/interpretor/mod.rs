@@ -2,7 +2,7 @@ mod error;
 pub mod runtime;
 
 use std::fs::{self, File};
-use std::io::{BufWriter, Write};
+use std::io::{BufWriter, Read, Write};
 use std::path::PathBuf;
 
 use colored::Colorize;
@@ -153,17 +153,42 @@ impl<'i> Interpreter<'i> {
                     let arg = arguments.first().ok_or_else(|| {
                         self.error_factory
                             .required_call_args(&identifier, 1, 0)
-                            .with_message("calls to env() must include a variable name argument")
+                            .with_message("calls to env(..) must include a variable name argument")
                     })?;
 
                     let value = match arg {
                         Identifier(token) => self.evaluate_identifier(token)?,
+                        Call { .. } => self.evaluate_expression(&arg)?,
                         StringLiteral(n) => self
                             .env
                             .get_variable_value(n.value.to_string())
                             .ok_or_else(|| self.error_factory.variable_not_found(n))?
                             .to_string(),
+                    };
+
+                    value
+                }
+                "read" => {
+                    let arg = arguments.first().ok_or_else(|| {
+                        self.error_factory
+                            .required_call_args(&identifier, 1, 0)
+                            .with_message("calls to read(..) must include a file name argument")
+                    })?;
+
+                    let value = match arg {
+                        Identifier(token) => self.evaluate_identifier(token)?,
                         Call { .. } => self.evaluate_expression(&arg)?,
+                        StringLiteral(n) => {
+                            let mut file =
+                                File::open(n.value).map_err(|e| self.error_factory.other(n, e))?;
+
+                            let mut string = String::new();
+
+                            file.read_to_string(&mut string)
+                                .map_err(|e| self.error_factory.other(n, e))?;
+
+                            string
+                        }
                     };
 
                     value
@@ -172,7 +197,7 @@ impl<'i> Interpreter<'i> {
                     return Err(self
                         .error_factory
                         .undefined_callable(&identifier)
-                        .with_message("currently only env() identifier is allowed"))
+                        .with_message("env(..) and read(..) are the only calls supported"))
                 }
             },
         };

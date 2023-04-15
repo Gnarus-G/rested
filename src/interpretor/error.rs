@@ -9,6 +9,7 @@ pub enum InterpError {
     UndefinedCallable { name: String },
     UndeclaredIdentifier { name: String },
     UnsupportedAttribute { name: String },
+    Other { error: String },
 }
 
 impl std::error::Error for InterpError {}
@@ -35,6 +36,7 @@ impl std::fmt::Display for InterpError {
             InterpError::UnsupportedAttribute { name } => {
                 format!("unsupported attribute: {}", name)
             }
+            InterpError::Other { error } => error.clone(),
         };
 
         f.write_str(&formatted_error)
@@ -117,6 +119,20 @@ impl<'i> InterpErrorFactory<'i> {
     pub fn unset_base_url(&self, token: &ExactToken) -> Error<InterpError> {
         Error::new(
             InterpError::RequestWithPathnameWithoutBaseUrl,
+            token.location,
+            self.source_code,
+        )
+    }
+
+    pub fn other<E: std::fmt::Display + std::error::Error>(
+        &self,
+        token: &ExactToken,
+        error: E,
+    ) -> Error<InterpError> {
+        Error::new(
+            InterpError::Other {
+                error: error.to_string(),
+            },
             token.location,
             self.source_code,
         )
