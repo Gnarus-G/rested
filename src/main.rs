@@ -11,6 +11,7 @@ use std::{
 
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
+/// The CLI runtime for Rested, the language/interpreter for easily defining and running requests to an http server.
 struct Cli {
     #[command(subcommand)]
     command: Option<Command>,
@@ -18,12 +19,16 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Run a script written in the language
     Run {
+        /// namespace in which to look for environment variables
         #[arg(short = 'n', long)]
         namespace: Option<String>,
 
+        /// path to the script to run
         file: PathBuf,
     },
+    /// Operate on the environment variables available in the runtime
     Env {
         #[command(subcommand)]
         command: EnvCommand,
@@ -32,7 +37,9 @@ enum Command {
 
 #[derive(Debug, Subcommand)]
 enum EnvCommand {
+    /// Set environment variables available in the runtime
     Set {
+        /// namespace for which to set environment variable
         #[arg(short = 'n', long)]
         namespace: Option<String>,
 
@@ -42,6 +49,7 @@ enum EnvCommand {
         /// of the environment variable
         value: String,
     },
+    /// Operate on the variables namespaces available in the runtime
     NS {
         #[command(subcommand)]
         command: EnvNamespaceCommand,
@@ -50,13 +58,14 @@ enum EnvCommand {
 
 #[derive(Debug, Subcommand)]
 enum EnvNamespaceCommand {
+    /// Set a new variables namespace available in the runtime
     Add {
-        /// of the environment variables namespace
+        /// of the namespace
         name: String,
     },
-
+    /// Remove a namespace
     Rm {
-        /// of the environment variables namespace
+        /// of the namespace
         name: String,
     },
 }
