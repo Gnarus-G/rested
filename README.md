@@ -1,4 +1,4 @@
-# rested
+# rested (Experimental)
 
 Language/Interpreter for easily defining and running requests to an http server.
 
