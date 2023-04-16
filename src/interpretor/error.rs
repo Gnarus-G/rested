@@ -1,4 +1,9 @@
-use crate::{ast::ExactToken, error::Error, lexer::Location, parser::error::ParseError};
+use crate::{
+    ast::{Identifier, Literal},
+    error::Error,
+    lexer::Location,
+    parser::error::ParseError,
+};
 
 #[derive(Debug, PartialEq)]
 pub enum InterpError {
@@ -66,17 +71,17 @@ impl<'i> InterpErrorFactory<'i> {
             source_code: source,
         }
     }
-    pub fn unknown_constant(&self, token: &ExactToken) -> Error<InterpError> {
+    pub fn unknown_constant(&self, token: &Identifier) -> Error<InterpError> {
         Error::new(
             InterpError::UnknownConstant {
-                constant: token.value.to_string(),
+                constant: token.name.to_string(),
             },
             token.location,
             self.source_code,
         )
     }
 
-    pub fn variable_not_found(&self, token: &ExactToken) -> Error<InterpError> {
+    pub fn env_variable_not_found(&self, token: &Literal) -> Error<InterpError> {
         Error::new(
             InterpError::EnvVariableNotFound {
                 name: token.value.to_string(),
@@ -88,51 +93,51 @@ impl<'i> InterpErrorFactory<'i> {
 
     pub fn required_call_args(
         &self,
-        token: &ExactToken,
+        at: Location,
         required: usize,
         recieved: usize,
     ) -> Error<InterpError> {
         Error::new(
             InterpError::RequiredArguments { required, recieved },
-            token.location,
+            at,
             self.source_code,
         )
     }
 
-    pub fn undeclared_variable(&self, token: &ExactToken) -> Error<InterpError> {
+    pub fn undeclared_identifier(&self, token: &Identifier) -> Error<InterpError> {
         Error::new(
             InterpError::UndeclaredIdentifier {
-                name: token.value.to_string(),
+                name: token.name.to_string(),
             },
             token.location,
             self.source_code,
         )
     }
 
-    pub fn unsupported_attribute(&self, token: &ExactToken) -> Error<InterpError> {
+    pub fn unsupported_attribute(&self, token: &Identifier) -> Error<InterpError> {
         Error::new(
             InterpError::UnsupportedAttribute {
-                name: token.value.to_string(),
+                name: token.name.to_string(),
             },
             token.location,
             self.source_code,
         )
     }
 
-    pub fn undefined_callable(&self, token: &ExactToken) -> Error<InterpError> {
+    pub fn undefined_callable(&self, token: &Identifier) -> Error<InterpError> {
         Error::new(
             InterpError::UndefinedCallable {
-                name: token.value.to_string(),
+                name: token.name.to_string(),
             },
             token.location,
             self.source_code,
         )
     }
 
-    pub fn unset_base_url(&self, token: &ExactToken) -> Error<InterpError> {
+    pub fn unset_base_url(&self, at: Location) -> Error<InterpError> {
         Error::new(
             InterpError::RequestWithPathnameWithoutBaseUrl,
-            token.location,
+            at,
             self.source_code,
         )
     }

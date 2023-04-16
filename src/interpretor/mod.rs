@@ -7,7 +7,7 @@ use std::path::PathBuf;
 
 use colored::Colorize;
 
-use crate::ast::{self, ExactToken, Expression, UrlOrPathname};
+use crate::ast::{self, Expression, Literal, UrlOrPathname};
 
 use crate::error::Error;
 use crate::parser;
@@ -16,8 +16,6 @@ use self::error::{InterpError, InterpErrorFactory};
 use self::runtime::Environment;
 
 type Result<T> = std::result::Result<T, Error<InterpError>>;
-
-impl<'i> ast::UrlOrPathname<'i> {}
 
 pub struct Interpreter<'i> {
     code: &'i str,
@@ -41,28 +39,30 @@ impl<'i> Interpreter<'i> {
 
         use ast::Item::*;
 
-        let mut attribute_items: Vec<(ast::ExactToken, Vec<Expression>)> = vec![];
+        let mut attribute_items: Vec<(ast::Identifier, Vec<Expression>)> = vec![];
 
         for item in ast.items {
             match item {
                 Request {
-                    params: request,
                     location,
+                    method,
+                    endpoint,
+                    params,
                 } => {
-                    let path = &self.evaluate_request_endpoint(request.endpoint)?;
-                    let mut req = match request.method {
+                    let path = &self.evaluate_request_endpoint(endpoint)?;
+                    let mut req = match method {
                         ast::RequestMethod::GET => ureq::get(path),
                         ast::RequestMethod::POST => ureq::post(path),
                     };
 
                     let mut body = None;
 
-                    for statement in request.params {
+                    for statement in params {
                         match statement {
-                            ast::Statement::HeaderStatement { name, value } => {
+                            ast::Statement::Header { name, value } => {
                                 req = req.set(&name.value, &self.evaluate_expression(&value)?);
                             }
-                            ast::Statement::BodyStatement { value, .. } => {
+                            ast::Statement::Body { value, .. } => {
                                 if let None = body {
                                     body = Some(self.evaluate_expression(&value)?);
                                 }
@@ -75,7 +75,7 @@ impl<'i> Interpreter<'i> {
                         "{}",
                         format!(
                             "sending {} request to {}",
-                            request.method.to_string().yellow().bold(),
+                            method.to_string().yellow().bold(),
                             path.bold()
                         )
                     );
@@ -103,7 +103,7 @@ impl<'i> Interpreter<'i> {
                     };
 
                     for (ident, params) in &attribute_items {
-                        match ident.value {
+                        match ident.name {
                             "log" => {
                                 if let Some(arg_exp) = params.first() {
                                     let file_path = self.evaluate_expression(arg_exp)?.into();
@@ -133,7 +133,7 @@ impl<'i> Interpreter<'i> {
                     attribute_items.clear();
                 }
                 Set { identifier, value } => {
-                    if identifier.value != "BASE_URL" {
+                    if identifier.name != "BASE_URL" {
                         return Err(self.error_factory.unknown_constant(&identifier));
                     }
 
@@ -161,11 +161,11 @@ impl<'i> Interpreter<'i> {
             Call {
                 identifier,
                 arguments,
-            } => match identifier.value {
+            } => match identifier.name {
                 "env" => {
                     let arg = arguments.first().ok_or_else(|| {
                         self.error_factory
-                            .required_call_args(&identifier, 1, 0)
+                            .required_call_args(identifier.location, 1, 0)
                             .with_message("calls to env(..) must include a variable name argument")
                     })?;
 
@@ -174,7 +174,7 @@ impl<'i> Interpreter<'i> {
                         Call { identifier, .. } => {
                             let value = self.evaluate_expression(&arg)?;
 
-                            self.evaluate_env_variable(&ExactToken {
+                            self.evaluate_env_variable(&Literal {
                                 value: &value,
                                 location: identifier.location,
                             })?
@@ -187,7 +187,7 @@ impl<'i> Interpreter<'i> {
                 "read" => {
                     let arg = arguments.first().ok_or_else(|| {
                         self.error_factory
-                            .required_call_args(&identifier, 1, 0)
+                            .required_call_args(identifier.location, 1, 0)
                             .with_message("calls to read(..) must include a file name argument")
                     })?;
 
@@ -195,7 +195,7 @@ impl<'i> Interpreter<'i> {
                         Identifier(token) => self.evaluate_identifier(token)?,
                         Call { identifier, .. } => {
                             let value = self.evaluate_expression(&arg)?;
-                            self.read_file(&ExactToken {
+                            self.read_file(&Literal {
                                 value: &value,
                                 location: identifier.location,
                             })?
@@ -217,14 +217,14 @@ impl<'i> Interpreter<'i> {
         Ok(value)
     }
 
-    fn evaluate_env_variable(&self, token: &ExactToken<'i>) -> Result<String> {
+    fn evaluate_env_variable(&self, token: &Literal<'i>) -> Result<String> {
         self.env
             .get_variable_value(token.value.to_string())
-            .ok_or_else(|| self.error_factory.variable_not_found(token))
+            .ok_or_else(|| self.error_factory.env_variable_not_found(token))
             .map(|s| s.to_owned())
     }
 
-    fn read_file(&self, file_path: &ExactToken) -> Result<String> {
+    fn read_file(&self, file_path: &Literal) -> Result<String> {
         let mut file = File::open(file_path.value)
             .map_err(|e| self.error_factory.other(file_path.location, e))?;
 
@@ -246,16 +246,16 @@ impl<'i> Interpreter<'i> {
                     }
                     base_url
                 } else {
-                    return Err(self.error_factory.unset_base_url(&pn));
+                    return Err(self.error_factory.unset_base_url(pn.location));
                 }
             }
         })
     }
 
-    fn evaluate_identifier(&self, token: &ast::ExactToken) -> Result<String> {
+    fn evaluate_identifier(&self, token: &ast::Identifier) -> Result<String> {
         return Err(self
             .error_factory
-            .undeclared_variable(token)
+            .undeclared_identifier(token)
             .with_message("variable identifiers are not supported"));
     }
 }

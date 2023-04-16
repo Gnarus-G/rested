@@ -3,12 +3,27 @@ use std::fmt::Display;
 use crate::lexer::{Location, Token};
 
 #[derive(Debug, PartialEq)]
-pub struct ExactToken<'i> {
+pub struct Identifier<'i> {
+    pub name: &'i str,
+    pub location: Location,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct Literal<'i> {
     pub value: &'i str,
     pub location: Location,
 }
 
-impl<'i> From<Token<'i>> for ExactToken<'i> {
+impl<'i> From<Token<'i>> for Identifier<'i> {
+    fn from(token: Token<'i>) -> Self {
+        Self {
+            name: token.text,
+            location: token.location,
+        }
+    }
+}
+
+impl<'i> From<Token<'i>> for Literal<'i> {
     fn from(token: Token<'i>) -> Self {
         Self {
             value: token.text,
@@ -20,55 +35,50 @@ impl<'i> From<Token<'i>> for ExactToken<'i> {
 #[derive(Debug, PartialEq)]
 pub enum Item<'i> {
     Set {
-        identifier: ExactToken<'i>,
+        identifier: Identifier<'i>,
         value: Expression<'i>,
     },
-    LineComment(ExactToken<'i>),
+    LineComment(Literal<'i>),
     Request {
-        params: RequestParams<'i>,
+        method: RequestMethod,
+        endpoint: UrlOrPathname<'i>,
+        params: Vec<Statement<'i>>,
         location: Location,
     },
     Attribute {
         location: Location,
-        identifier: ExactToken<'i>,
+        identifier: Identifier<'i>,
         parameters: Vec<Expression<'i>>,
     },
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Statement<'i> {
-    HeaderStatement {
-        name: ExactToken<'i>,
+    Header {
+        name: Literal<'i>,
         value: Expression<'i>,
     },
-    BodyStatement {
+    Body {
         value: Expression<'i>,
         location: Location,
     },
-    LineComment(ExactToken<'i>),
+    LineComment(Literal<'i>),
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Expression<'i> {
-    Identifier(ExactToken<'i>),
-    StringLiteral(ExactToken<'i>),
+    Identifier(Identifier<'i>),
+    StringLiteral(Literal<'i>),
     Call {
-        identifier: ExactToken<'i>,
+        identifier: Identifier<'i>,
         arguments: Vec<Expression<'i>>,
     },
 }
 
 #[derive(Debug, PartialEq)]
-pub struct RequestParams<'i> {
-    pub method: RequestMethod,
-    pub endpoint: UrlOrPathname<'i>,
-    pub params: Vec<Statement<'i>>,
-}
-
-#[derive(Debug, PartialEq)]
 pub enum UrlOrPathname<'i> {
-    Url(ExactToken<'i>),
-    Pathname(ExactToken<'i>),
+    Url(Literal<'i>),
+    Pathname(Literal<'i>),
 }
 
 #[derive(Debug, PartialEq)]
