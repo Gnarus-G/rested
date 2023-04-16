@@ -11,7 +11,7 @@ jobs:
   build:
     strategy:
       matrix:
-        crate: [rn]
+        crate: [rstd]
         os: [ubuntu-latest, macos-latest]
 
     runs-on: ${{ matrix.os }}
