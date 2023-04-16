@@ -52,12 +52,6 @@ impl<EK: Display + std::error::Error> Error<EK> {
 
 impl<Ek: Display + std::error::Error> std::error::Error for Error<Ek> {}
 
-impl std::fmt::Display for Location {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "at {}:{}", self.line + 1, self.col + 1)
-    }
-}
-
 impl<EK: Display + std::error::Error> std::fmt::Display for Error<EK> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let formatted_error = &self.inner_error.to_string().red();

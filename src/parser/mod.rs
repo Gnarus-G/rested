@@ -276,7 +276,10 @@ impl<'i> Parser<'i> {
 mod tests {
     use super::*;
 
-    use crate::ast::{Expression, Identifier, Literal, Program, RequestMethod, Statement};
+    use crate::{
+        ast::{Expression, Identifier, Literal, Program, RequestMethod, Statement},
+        lexer::at,
+    };
 
     use Expression::*;
     use Item::*;
@@ -298,22 +301,22 @@ get http://localhost:8080 {}"#,
             Program {
                 items: vec![
                     Item::Request {
-                        location: (0, 0).into(),
+                        location: at(0, 0),
 
                         method: GET,
                         endpoint: UrlOrPathname::Url(Literal {
                             value: "http://localhost:8080",
-                            location: (0, 4).into()
+                            location: at(0, 4)
                         }),
                         params: vec![]
                     },
                     Item::Request {
-                        location: (1, 0).into(),
+                        location: at(1, 0),
 
                         method: GET,
                         endpoint: UrlOrPathname::Url(Literal {
                             value: "http://localhost:8080",
-                            location: (1, 4).into()
+                            location: at(1, 4)
                         }),
                         params: vec![]
                     }
@@ -328,11 +331,11 @@ get http://localhost:8080 {}"#,
             "post http://localhost",
             Program {
                 items: vec![Item::Request {
-                    location: (0, 0).into(),
+                    location: at(0, 0),
                     method: POST,
                     endpoint: UrlOrPathname::Url(Literal {
                         value: "http://localhost",
-                        location: (0, 5).into()
+                        location: at(0, 5)
                     }),
                     params: vec![]
                 }]
@@ -343,11 +346,11 @@ get http://localhost:8080 {}"#,
             "post /api/v2",
             Program {
                 items: vec![Request {
-                    location: (0, 0).into(),
+                    location: at(0, 0),
                     method: POST,
                     endpoint: UrlOrPathname::Pathname(Literal {
                         value: "/api/v2",
-                        location: (0, 5).into()
+                        location: at(0, 5)
                     }),
                     params: vec![]
                 }]
@@ -361,14 +364,14 @@ get http://localhost:8080 {}"#,
             r#"@log("path/to/file")"#,
             Program {
                 items: vec![Attribute {
-                    location: (0, 0).into(),
+                    location: at(0, 0),
                     identifier: Identifier {
                         name: "log",
-                        location: (0, 1).into()
+                        location: at(0, 1)
                     },
                     parameters: vec![StringLiteral(Literal {
                         value: "path/to/file",
-                        location: (0, 5).into()
+                        location: at(0, 5)
                     })]
                 }]
             }
@@ -385,31 +388,31 @@ get http://localhost {
 }"#,
             Program {
                 items: vec![Request {
-                    location: (1, 0).into(),
+                    location: at(1, 0),
                     method: GET,
                     endpoint: UrlOrPathname::Url(Literal {
                         value: "http://localhost",
-                        location: (1, 4).into()
+                        location: at(1, 4)
                     }),
                     params: (vec![
                         Header {
                             name: Literal {
                                 value: "Authorization",
-                                location: (2, 11).into()
+                                location: at(2, 11)
                             },
                             value: StringLiteral(Literal {
                                 value: "Bearer token",
-                                location: (2, 27).into()
+                                location: at(2, 27)
                             })
                         },
                         Header {
                             name: Literal {
                                 value: "random",
-                                location: (3, 11).into()
+                                location: at(3, 11)
                             },
                             value: StringLiteral(Literal {
                                 value: "tokener Bear",
-                                location: (3, 20).into()
+                                location: at(3, 20)
                             })
                         }
                     ])
@@ -428,31 +431,31 @@ post http://localhost {
 }"#,
             Program {
                 items: vec![Request {
-                    location: (1, 0).into(),
+                    location: at(1, 0),
                     method: POST,
                     endpoint: UrlOrPathname::Url(Literal {
                         value: "http://localhost",
-                        location: (1, 5).into()
+                        location: at(1, 5)
                     }),
                     params: (vec![
                         Header {
                             name: Literal {
                                 value: "Authorization",
-                                location: (2, 11).into()
+                                location: at(2, 11)
                             },
                             value: StringLiteral(Literal {
                                 value: "Bearer token",
-                                location: (2, 27).into()
+                                location: at(2, 27)
                             })
                         },
                         Header {
                             name: Literal {
                                 value: "random",
-                                location: (3, 11).into()
+                                location: at(3, 11)
                             },
                             value: StringLiteral(Literal {
                                 value: "tokener Bear",
-                                location: (3, 20).into()
+                                location: at(3, 20)
                             })
                         }
                     ])
@@ -470,29 +473,29 @@ post http://localhost {
 }"#,
             Program {
                 items: vec![Request {
-                    location: (1, 0).into(),
+                    location: at(1, 0),
                     method: POST,
                     endpoint: UrlOrPathname::Url(Literal {
                         value: "http://localhost",
-                        location: (1, 5).into()
+                        location: at(1, 5)
                     }),
                     params: (vec![
                         Header {
                             name: Literal {
                                 value: "Authorization",
-                                location: (2, 11).into()
+                                location: at(2, 11)
                             },
                             value: StringLiteral(Literal {
                                 value: "Bearer token",
-                                location: (2, 27).into()
+                                location: at(2, 27)
                             })
                         },
                         Body {
                             value: StringLiteral(Literal {
                                 value: "{neet: 1337}",
-                                location: (3, 9).into()
+                                location: at(3, 9)
                             }),
-                            location: (3, 4).into()
+                            location: at(3, 4)
                         }
                     ])
                 }]
@@ -512,29 +515,29 @@ post http://localhost {
 }"#,
             Program {
                 items: vec![Request {
-                    location: (1, 0).into(),
+                    location: at(1, 0),
                     method: POST,
                     endpoint: UrlOrPathname::Url(Literal {
                         value: "http://localhost",
-                        location: (1, 5).into()
+                        location: at(1, 5)
                     }),
                     params: (vec![
                         Header {
                             name: Literal {
                                 value: "Authorization",
-                                location: (2, 11).into()
+                                location: at(2, 11)
                             },
                             value: StringLiteral(Literal {
                                 value: "Bearer token",
-                                location: (2, 27).into()
+                                location: at(2, 27)
                             })
                         },
                         Body {
                             value: StringLiteral(Literal {
                                 value: "\n        {\"neet\": 1337}\n    ",
-                                location: (3, 9).into()
+                                location: at(3, 9)
                             }),
-                            location: (3, 4).into()
+                            location: at(3, 4)
                         }
                     ])
                 }]
@@ -548,39 +551,39 @@ post http://localhost {
             r#"post http://localhost { header "name" env("auth") body env("data") }"#,
             Program {
                 items: vec![Request {
-                    location: (0, 0).into(),
+                    location: at(0, 0),
                     method: POST,
                     endpoint: UrlOrPathname::Url(Literal {
                         value: "http://localhost",
-                        location: (0, 5).into()
+                        location: at(0, 5)
                     }),
                     params: vec![
                         Header {
                             name: Literal {
                                 value: "name",
-                                location: (0, 31).into()
+                                location: at(0, 31)
                             },
                             value: Call {
                                 identifier: Identifier {
                                     name: "env",
-                                    location: (0, 38).into()
+                                    location: at(0, 38)
                                 },
                                 arguments: vec![StringLiteral(Literal {
                                     value: "auth",
-                                    location: (0, 42).into()
+                                    location: at(0, 42)
                                 })]
                             }
                         },
                         Body {
-                            location: (0, 50).into(),
+                            location: at(0, 50),
                             value: Call {
                                 identifier: Identifier {
                                     name: "env",
-                                    location: (0, 55).into()
+                                    location: at(0, 55)
                                 },
                                 arguments: vec![StringLiteral(Literal {
                                     value: "data",
-                                    location: (0, 59).into()
+                                    location: at(0, 59)
                                 })]
                             }
                         }
@@ -598,11 +601,11 @@ post http://localhost {
                 items: vec![Set {
                     identifier: Identifier {
                         name: "BASE_URL",
-                        location: (0, 4).into()
+                        location: at(0, 4)
                     },
                     value: StringLiteral(Literal {
                         value: "stuff",
-                        location: (0, 13).into()
+                        location: at(0, 13)
                     })
                 }]
             }
