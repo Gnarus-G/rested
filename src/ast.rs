@@ -73,6 +73,9 @@ pub enum Expression<'i> {
         identifier: Identifier<'i>,
         arguments: Vec<Expression<'i>>,
     },
+    TemplateSringLiteral {
+        parts: Vec<Expression<'i>>,
+    },
 }
 
 #[derive(Debug, PartialEq)]

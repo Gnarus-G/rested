@@ -149,7 +149,9 @@ impl<'i> Parser<'i> {
                 }
                 TokenKind::Ident => Expression::Identifier(header_value.into()),
                 TokenKind::StringLiteral => Expression::StringLiteral(header_value.into()),
-                TokenKind::MultiLineStringLiteral => Expression::StringLiteral(header_value.into()),
+                TokenKind::MultiLineStringLiteral => {
+                    self.parse_multiline_string_literal(header_value)?
+                }
                 _ => unreachable!(),
             },
         })
@@ -170,7 +172,7 @@ impl<'i> Parser<'i> {
             }
             TokenKind::Ident => Expression::Identifier(token.into()),
             TokenKind::StringLiteral => Expression::StringLiteral(token.into()),
-            TokenKind::MultiLineStringLiteral => Expression::StringLiteral(token.into()),
+            TokenKind::MultiLineStringLiteral => self.parse_multiline_string_literal(token)?,
             _ => unreachable!(),
         };
 
@@ -186,7 +188,8 @@ impl<'i> Parser<'i> {
         let exp = match start_token.kind {
             Ident if self.peek_token().kind == LParen => self.parse_call_expression(start_token)?,
             Ident => Expression::Identifier(start_token.into()),
-            StringLiteral | MultiLineStringLiteral => Expression::StringLiteral(start_token.into()),
+            StringLiteral => Expression::StringLiteral(start_token.into()),
+            MultiLineStringLiteral => self.parse_multiline_string_literal(start_token)?,
             _ => return Err(self.error().unexpected_token(&start_token)),
         };
 
@@ -210,6 +213,45 @@ impl<'i> Parser<'i> {
             identifier: identifier.into(),
             arguments,
         })
+    }
+
+    fn parse_multiline_string_literal(&mut self, start_token: Token<'i>) -> Result<Expression<'i>> {
+        let mut parts = vec![];
+        let mut token = start_token;
+
+        loop {
+            match &token.kind {
+                TokenKind::MultiLineStringLiteral
+                    if self.peek_token().kind == TokenKind::DollarSignLBracket =>
+                {
+                    let s_literal = Expression::StringLiteral(token.into());
+
+                    parts.push(s_literal);
+
+                    self.eat_token();
+
+                    token = self.token();
+
+                    parts.push(self.parse_expression(token)?);
+
+                    token = self.token();
+                }
+                TokenKind::MultiLineStringLiteral if parts.is_empty() => {
+                    return Ok(Expression::StringLiteral(token.into()));
+                }
+                TokenKind::MultiLineStringLiteral => {
+                    parts.push(Expression::StringLiteral(token.into()));
+                    break;
+                }
+                tk => unreachable!(
+                    "expecting to start parsing multiline string literals only on the {:?} token, found: {:?}",
+                    TokenKind::MultiLineStringLiteral,
+                    tk
+                ),
+            };
+        }
+
+        Ok(Expression::TemplateSringLiteral { parts })
     }
 
     fn expect_one_of(&mut self, expected_kinds: Vec<TokenKind>) -> Result<()> {
@@ -607,6 +649,59 @@ post http://localhost {
                         value: "stuff",
                         location: at(0, 13)
                     })
+                }]
+            }
+        );
+    }
+
+    #[test]
+    fn parse_template_string_literal() {
+        assert_program!(
+            r#"
+post /api {
+    body `{"neet": ${env("love")}, 2: ${"two"}}`
+}"#,
+            Program {
+                items: vec![Request {
+                    method: POST,
+                    endpoint: UrlOrPathname::Pathname(Literal {
+                        value: "/api",
+                        location: at(1, 5)
+                    }),
+                    params: vec![Body {
+                        value: TemplateSringLiteral {
+                            parts: vec![
+                                StringLiteral(Literal {
+                                    value: r#"{"neet": "#,
+                                    location: at(2, 9)
+                                }),
+                                Call {
+                                    identifier: Identifier {
+                                        name: "env",
+                                        location: at(2, 21)
+                                    },
+                                    arguments: vec![StringLiteral(Literal {
+                                        value: "love",
+                                        location: at(2, 25)
+                                    })]
+                                },
+                                StringLiteral(Literal {
+                                    value: r#", 2: "#,
+                                    location: at(2, 32)
+                                }),
+                                StringLiteral(Literal {
+                                    value: r#"two"#,
+                                    location: at(2, 40)
+                                }),
+                                StringLiteral(Literal {
+                                    value: r#"}"#,
+                                    location: at(2, 45)
+                                }),
+                            ]
+                        },
+                        location: at(2, 4)
+                    }],
+                    location: at(1, 0)
                 }]
             }
         );

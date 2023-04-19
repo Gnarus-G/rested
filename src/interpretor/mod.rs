@@ -180,6 +180,9 @@ impl<'i> Interpreter<'i> {
                             })?
                         }
                         StringLiteral(n) => self.evaluate_env_variable(&n)?,
+                        TemplateSringLiteral { parts } => {
+                            self.evaluate_template_string_literal_parts(parts)?
+                        }
                     };
 
                     value
@@ -200,7 +203,10 @@ impl<'i> Interpreter<'i> {
                                 location: identifier.location,
                             })?
                         }
-                        StringLiteral(n) => self.read_file(n)?,
+                        StringLiteral(n) => self.read_file(n)?.escape_debug().to_string(),
+                        TemplateSringLiteral { parts } => {
+                            self.evaluate_template_string_literal_parts(parts)?
+                        }
                     };
 
                     value
@@ -212,6 +218,7 @@ impl<'i> Interpreter<'i> {
                         .with_message("env(..) and read(..) are the only calls supported"))
                 }
             },
+            TemplateSringLiteral { parts } => self.evaluate_template_string_literal_parts(parts)?,
         };
 
         Ok(value)
@@ -257,6 +264,17 @@ impl<'i> Interpreter<'i> {
             .error_factory
             .undeclared_identifier(token)
             .with_message("variable identifiers are not supported"));
+    }
+
+    fn evaluate_template_string_literal_parts(&self, parts: &[Expression]) -> Result<String> {
+        let mut strings = vec![];
+
+        for part in parts {
+            let s = self.evaluate_expression(part)?;
+            strings.push(s);
+        }
+
+        Ok(strings.join(""))
     }
 }
 
