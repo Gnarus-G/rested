@@ -1,6 +1,7 @@
 mod error;
 pub mod runtime;
 
+use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::{BufWriter, Read, Write};
 use std::path::PathBuf;
@@ -39,7 +40,7 @@ impl<'i> Interpreter<'i> {
 
         use ast::Item::*;
 
-        let mut attribute_items: Vec<(ast::Identifier, Vec<Expression>)> = vec![];
+        let mut attribute_items: HashMap<&'i str, Vec<Expression>> = HashMap::new();
 
         for item in ast.items {
             match item {
@@ -80,6 +81,19 @@ impl<'i> Interpreter<'i> {
                         )
                     );
 
+                    if let Some(_) = attribute_items.get("dbg") {
+                        println!("    \u{21B3} with request data:");
+                        println!("{}", indent_lines(&format!("{:#?}", req), 6));
+
+                        println!(
+                            "{}",
+                            indent_lines(
+                                &format!("Body: {:#?}", body.clone().unwrap_or_default()),
+                                6
+                            )
+                        );
+                    }
+
                     let res = if let Some(value) = body {
                         let res = req
                             .send_string(&value)
@@ -102,31 +116,19 @@ impl<'i> Interpreter<'i> {
                             .map_err(|error| self.error_factory.other(location, error))?
                     };
 
-                    for (ident, params) in &attribute_items {
-                        match ident.name {
-                            "log" => {
-                                if let Some(arg_exp) = params.first() {
-                                    let file_path = self.evaluate_expression(arg_exp)?.into();
+                    if let Some(att_params) = attribute_items.get("log") {
+                        if let Some(arg_exp) = att_params.first() {
+                            let file_path = self.evaluate_expression(arg_exp)?.into();
 
-                                    log(&res, &file_path).map_err(|error| {
-                                        self.error_factory.other(location, error)
-                                    })?;
+                            log(&res, &file_path)
+                                .map_err(|error| self.error_factory.other(location, error))?;
 
-                                    println!(
-                                        "    \u{21B3} {}",
-                                        format!("saved response to {:?}", file_path).blue()
-                                    );
-                                } else {
-                                    println!("{}", indent_lines(&res, 4));
-                                }
-                            }
-                            _ => {
-                                return Err(self
-                                    .error_factory
-                                    .unsupported_attribute(ident)
-                                    .with_message("@log(..) is the only supported attribute")
-                                    .into())
-                            }
+                            println!(
+                                "    \u{21B3} {}",
+                                format!("saved response to {:?}", file_path).blue()
+                            );
+                        } else {
+                            println!("{}", indent_lines(&res, 4));
                         }
                     }
 
@@ -144,9 +146,18 @@ impl<'i> Interpreter<'i> {
                     identifier,
                     parameters,
                     ..
-                } => {
-                    attribute_items.push((identifier, parameters));
-                }
+                } => match identifier.name {
+                    "log" | "dbg" => {
+                        attribute_items.insert(identifier.name, parameters);
+                    }
+                    _ => {
+                        return Err(self
+                            .error_factory
+                            .unsupported_attribute(&identifier)
+                            .with_message("@log(..) and @dbg are the only supported attributes")
+                            .into())
+                    }
+                },
             }
         }
 
