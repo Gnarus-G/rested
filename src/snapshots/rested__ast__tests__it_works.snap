@@ -1,0 +1,131 @@
+---
+source: src/ast.rs
+expression: p
+---
+Program(
+  items: [
+    Set(
+      identifier: Identifier(
+        name: "BASE_URL",
+        location: Location(
+          line: 1,
+          col: 4,
+        ),
+      ),
+      value: String(Literal(
+        value: "httas...",
+        location: Location(
+          line: 1,
+          col: 13,
+        ),
+      )),
+    ),
+    Request(
+      method: POST,
+      endpoint: Url(Literal(
+        value: "http://lasdf..",
+        location: Location(
+          line: 2,
+          col: 5,
+        ),
+      )),
+      params: [],
+      location: Location(
+        line: 2,
+        col: 0,
+      ),
+    ),
+    LineComment(Literal(
+      value: "// asdfasdf",
+      location: Location(
+        line: 3,
+        col: 0,
+      ),
+    )),
+    Attribute(
+      location: Location(
+        line: 4,
+        col: 0,
+      ),
+      identifier: Identifier(
+        name: "log",
+        location: Location(
+          line: 4,
+          col: 1,
+        ),
+      ),
+      parameters: [
+        String(Literal(
+          value: "output/file.json",
+          location: Location(
+            line: 4,
+            col: 5,
+          ),
+        )),
+      ],
+    ),
+    Request(
+      method: GET,
+      endpoint: Pathname(Literal(
+        value: "/asd",
+        location: Location(
+          line: 5,
+          col: 4,
+        ),
+      )),
+      params: [
+        LineComment(Literal(
+          value: "// asdfasd",
+          location: Location(
+            line: 6,
+            col: 2,
+          ),
+        )),
+        Header(
+          name: Literal(
+            value: "Authorization",
+            location: Location(
+              line: 7,
+              col: 9,
+            ),
+          ),
+          value: String(Literal(
+            value: "Bearer token",
+            location: Location(
+              line: 7,
+              col: 25,
+            ),
+          )),
+        ),
+        Body(
+          value: Call(
+            identifier: Identifier(
+              name: "env",
+              location: Location(
+                line: 8,
+                col: 7,
+              ),
+            ),
+            arguments: [
+              String(Literal(
+                value: "var",
+                location: Location(
+                  line: 8,
+                  col: 11,
+                ),
+              )),
+            ],
+          ),
+          location: Location(
+            line: 8,
+            col: 2,
+          ),
+        ),
+      ],
+      location: Location(
+        line: 5,
+        col: 0,
+      ),
+    ),
+  ],
+)

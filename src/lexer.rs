@@ -1,5 +1,7 @@
 use std::ops::Range;
 
+use serde::Serialize;
+
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum TokenKind {
     // keywords
@@ -36,7 +38,7 @@ pub enum TokenKind {
     IllegalToken,
 }
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy, Serialize)]
 pub struct Location {
     pub line: usize,
     pub col: usize,

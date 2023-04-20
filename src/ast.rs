@@ -1,14 +1,16 @@
 use std::fmt::Display;
 
+use serde::Serialize;
+
 use crate::lexer::{Location, Token};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct Identifier<'i> {
     pub name: &'i str,
     pub location: Location,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct Literal<'i> {
     pub value: &'i str,
     pub location: Location,
@@ -32,7 +34,7 @@ impl<'i> From<Token<'i>> for Literal<'i> {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub enum Item<'i> {
     Set {
         identifier: Identifier<'i>,
@@ -52,7 +54,7 @@ pub enum Item<'i> {
     },
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub enum Statement<'i> {
     Header {
         name: Literal<'i>,
@@ -65,23 +67,23 @@ pub enum Statement<'i> {
     LineComment(Literal<'i>),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub enum Expression<'i> {
     Identifier(Identifier<'i>),
-    StringLiteral(Literal<'i>),
+    String(Literal<'i>),
     Call {
         identifier: Identifier<'i>,
         arguments: Vec<Expression<'i>>,
     },
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub enum UrlOrPathname<'i> {
     Url(Literal<'i>),
     Pathname(Literal<'i>),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub enum RequestMethod {
     GET,
     POST,
@@ -93,7 +95,7 @@ impl Display for RequestMethod {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct Program<'i> {
     pub items: Vec<Item<'i>>,
 }
@@ -101,5 +103,33 @@ pub struct Program<'i> {
 impl<'i> Program<'i> {
     pub fn new() -> Self {
         Self { items: vec![] }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use insta::assert_ron_snapshot;
+
+    use crate::parser::Parser;
+
+    #[test]
+    fn it_works() {
+        let code = r#"
+set BASE_URL "httas..."
+post http://lasdf.. {}
+// asdfasdf
+@log("output/file.json")
+get /asd {
+  // asdfasd
+  header "Authorization" "Bearer token"
+  body env("var")
+}"#;
+
+        let p = Parser::new(code).parse().unwrap();
+        insta::with_settings!({
+             description => code
+        }, {
+            assert_ron_snapshot!(p);
+        })
     }
 }
