@@ -75,6 +75,9 @@ pub enum Expression<'i> {
         identifier: Identifier<'i>,
         arguments: Vec<Expression<'i>>,
     },
+    TemplateSringLiteral {
+        parts: Vec<Expression<'i>>,
+    },
 }
 
 #[derive(Debug, PartialEq, Serialize)]
@@ -122,7 +125,7 @@ post http://lasdf.. {}
 get /asd {
   // asdfasd
   header "Authorization" "Bearer token"
-  body env("var")
+  body `{"neet": "${env("var")}"}`
 }"#;
 
         let p = Parser::new(code).parse().unwrap();

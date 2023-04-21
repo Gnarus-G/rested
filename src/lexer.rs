@@ -25,6 +25,7 @@ pub enum TokenKind {
     Set,
 
     // special characters
+    DollarSignLBracket,
     LParen,
     RParen,
     LBracket,
@@ -95,6 +96,7 @@ pub struct Lexer<'i> {
     input: &'i [u8],
     position: usize,
     cursor: Location,
+    inside_multiline_string: bool,
 }
 
 impl<'i> Lexer<'i> {
@@ -103,6 +105,7 @@ impl<'i> Lexer<'i> {
             input: input.as_bytes(),
             position: 0,
             cursor: Location { line: 0, col: 0 },
+            inside_multiline_string: false,
         }
     }
 
@@ -136,8 +139,12 @@ impl<'i> Lexer<'i> {
         self.position += 1;
     }
 
+    fn peek_n_char(&self, n: usize) -> Option<&u8> {
+        self.char_at(self.position + n)
+    }
+
     fn peek_char(&self) -> Option<&u8> {
-        self.char_at(self.position + 1)
+        self.peek_n_char(1)
     }
 
     /// Assumes that the character at the current position, immediately before calling
@@ -179,6 +186,16 @@ impl<'i> Lexer<'i> {
             b'"' => self.string_literal(),
             b'`' if self.peek_char().is(b'`') => self.empty_string_literal(),
             b'`' => self.multiline_string_literal(),
+            b'$' if self.peek_char().is(b'{') => {
+                let token = Token {
+                    kind: DollarSignLBracket,
+                    text: "${",
+                    location: self.cursor,
+                };
+                self.step();
+                token
+            }
+            b'}' if self.inside_multiline_string => self.multiline_string_literal(),
             b'(' => Token {
                 kind: LParen,
                 location: self.cursor,
@@ -221,22 +238,45 @@ impl<'i> Lexer<'i> {
     }
 
     fn multiline_string_literal(&mut self) -> Token<'i> {
+        self.inside_multiline_string = true;
         let location = self.cursor;
 
         self.step(); //eat the opening quote
 
-        let (s, e) = self.read_while(|&c| c != b'`');
+        let start_pos = self.position;
+
+        let (s, e) = loop {
+            let end_ahead = self.peek_char().is(b'`');
+            let dollar_curly_ahead = self.peek_char().is(b'$') && self.peek_n_char(2).is(b'{');
+
+            if dollar_curly_ahead {
+                break (start_pos, self.position + 1);
+            }
+
+            if end_ahead {
+                self.inside_multiline_string = false;
+                let end_pos = self.position + 1;
+                self.step();
+                break (start_pos, end_pos);
+            }
+
+            if self.ch().is(b'`') {
+                self.inside_multiline_string = false;
+                break (start_pos, self.position);
+            }
+
+            if let None = self.ch() {
+                return Token {
+                    kind: TokenKind::UnfinishedMultiLineStringLiteral,
+                    location,
+                    text: self.input_slice(start_pos..self.position),
+                };
+            }
+
+            self.step();
+        };
+
         let string = self.input_slice(s..e);
-
-        self.step(); //eat the closing quote
-
-        if let None = self.ch() {
-            return Token {
-                kind: TokenKind::UnfinishedMultiLineStringLiteral,
-                location,
-                text: string,
-            };
-        }
 
         Token {
             kind: TokenKind::MultiLineStringLiteral,
@@ -697,6 +737,101 @@ post http://localhost {
                     text: ")",
                     location: at(0, 17)
                 }
+            ]
+        );
+    }
+
+    #[test]
+    fn lex_template_literals() {
+        assert_lexes!(
+            r#"`stuff${"interpolated"}(things${env("dead_night")}` `dohickeys`"#,
+            [
+                Token {
+                    kind: MultiLineStringLiteral,
+                    text: "stuff",
+                    location: at(0, 0)
+                },
+                Token {
+                    kind: DollarSignLBracket,
+                    text: "${",
+                    location: at(0, 6)
+                },
+                Token {
+                    kind: StringLiteral,
+                    text: "interpolated",
+                    location: at(0, 8)
+                },
+                Token {
+                    kind: MultiLineStringLiteral,
+                    text: "(things",
+                    location: at(0, 22)
+                },
+                Token {
+                    kind: DollarSignLBracket,
+                    text: "${",
+                    location: at(0, 30)
+                },
+                Token {
+                    kind: Ident,
+                    text: "env",
+                    location: at(0, 32)
+                },
+                Token {
+                    kind: LParen,
+                    text: "(",
+                    location: at(0, 35)
+                },
+                Token {
+                    kind: StringLiteral,
+                    text: "dead_night",
+                    location: at(0, 36)
+                },
+                Token {
+                    kind: RParen,
+                    text: ")",
+                    location: at(0, 48)
+                },
+                Token {
+                    kind: MultiLineStringLiteral,
+                    text: "",
+                    location: at(0, 49)
+                },
+                Token {
+                    kind: MultiLineStringLiteral,
+                    text: "dohickeys",
+                    location: at(0, 52)
+                },
+            ]
+        );
+
+        assert_lexes!(
+            r#"`a${"temp"}` }}"#,
+            [
+                Token {
+                    kind: MultiLineStringLiteral,
+                    text: "a",
+                    location: at(0, 0)
+                },
+                Token {
+                    kind: DollarSignLBracket,
+                    text: "${",
+                    location: at(0, 2)
+                },
+                Token {
+                    kind: StringLiteral,
+                    text: "temp",
+                    location: at(0, 4)
+                },
+                Token {
+                    kind: MultiLineStringLiteral,
+                    text: "",
+                    location: at(0, 10)
+                },
+                Token {
+                    kind: RBracket,
+                    text: "}",
+                    location: at(0, 13)
+                },
             ]
         );
     }

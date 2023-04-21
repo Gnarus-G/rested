@@ -1,9 +1,8 @@
-// @deno-types="npm:@types/express@4.17.15"
-import express from "npm:express@4.18.2";
+import express, { json } from "express";
 
 const app = express();
 
-app.use(express.json());
+app.use(json());
 
 app.use((_, __, next) => {
   console.log("request at", new Date());
@@ -14,10 +13,10 @@ app.get("/", (req, res) => {
   res.send(`Welcome to the Dinosaur API! ${req.header("random")}`);
 });
 
-app.post("/", (req, res) => {
+app.post("/echo", (req, res) => {
   console.log("req body", req.body);
   res.send({
-    message: `Welcome to the Dinosaur API! ${req.header("random")}`,
+    data: req.body,
   });
 });
 

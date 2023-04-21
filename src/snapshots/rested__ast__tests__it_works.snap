@@ -1,5 +1,6 @@
 ---
 source: src/ast.rs
+description: "\nset BASE_URL \"httas...\"\npost http://lasdf.. {}\n// asdfasdf\n@log(\"output/file.json\")\nget /asd {\n  // asdfasd\n  header \"Authorization\" \"Bearer token\"\n  body `{\"neet\": \"${env(\"var\")}\"}`\n}"
 expression: p
 ---
 Program(
@@ -98,20 +99,38 @@ Program(
           )),
         ),
         Body(
-          value: Call(
-            identifier: Identifier(
-              name: "env",
-              location: Location(
-                line: 8,
-                col: 7,
-              ),
-            ),
-            arguments: [
+          value: TemplateSringLiteral(
+            parts: [
               String(Literal(
-                value: "var",
+                value: "{\"neet\": \"",
                 location: Location(
                   line: 8,
-                  col: 11,
+                  col: 7,
+                ),
+              )),
+              Call(
+                identifier: Identifier(
+                  name: "env",
+                  location: Location(
+                    line: 8,
+                    col: 20,
+                  ),
+                ),
+                arguments: [
+                  String(Literal(
+                    value: "var",
+                    location: Location(
+                      line: 8,
+                      col: 24,
+                    ),
+                  )),
+                ],
+              ),
+              String(Literal(
+                value: "\"}",
+                location: Location(
+                  line: 8,
+                  col: 30,
                 ),
               )),
             ],

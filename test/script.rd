@@ -7,8 +7,10 @@ get / {
    header "random" env("love")
 }
 
+@dbg
 @log("output/billy.json")
-post http://localhost:8080 {
+post /echo {
    header "random" "billy bob"
-   body `{"neet": 1337}`
+   header "Content-Type" "application/json"
+   body `{"neet": "${read("test/text.txt")}"}`
 }
