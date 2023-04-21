@@ -50,6 +50,11 @@ impl<'i> Interpreter<'i> {
                     endpoint,
                     params,
                 } => {
+                    if let Some(_) = attribute_items.get("skip") {
+                        attribute_items.clear();
+                        continue;
+                    }
+
                     let path = &self.evaluate_request_endpoint(endpoint)?;
                     let mut req = match method {
                         ast::RequestMethod::GET => ureq::get(path),
@@ -88,7 +93,10 @@ impl<'i> Interpreter<'i> {
                         println!(
                             "{}",
                             indent_lines(
-                                &format!("Body: {:#?}", body.clone().unwrap_or_default()),
+                                &format!(
+                                    "Body: {}",
+                                    body.clone().unwrap_or("(no body)".to_string())
+                                ),
                                 6
                             )
                         );
@@ -147,14 +155,16 @@ impl<'i> Interpreter<'i> {
                     parameters,
                     ..
                 } => match identifier.name {
-                    "log" | "dbg" => {
+                    "log" | "dbg" | "skip" => {
                         attribute_items.insert(identifier.name, parameters);
                     }
                     _ => {
                         return Err(self
                             .error_factory
                             .unsupported_attribute(&identifier)
-                            .with_message("@log(..) and @dbg are the only supported attributes")
+                            .with_message(
+                                "@log(..), @skip, and @dbg are the only supported attributes",
+                            )
                             .into())
                     }
                 },
