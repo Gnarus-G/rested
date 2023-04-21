@@ -157,7 +157,7 @@ impl<'i> Interpreter<'i> {
         use Expression::*;
         let value = match exp {
             Identifier(token) => self.evaluate_identifier(&token)?,
-            StringLiteral(token) => token.value.to_string(),
+            String(token) => token.value.to_string(),
             Call {
                 identifier,
                 arguments,
@@ -179,7 +179,7 @@ impl<'i> Interpreter<'i> {
                                 location: identifier.location,
                             })?
                         }
-                        StringLiteral(n) => self.evaluate_env_variable(&n)?,
+                        String(n) => self.evaluate_env_variable(&n)?,
                     };
 
                     value
@@ -200,7 +200,7 @@ impl<'i> Interpreter<'i> {
                                 location: identifier.location,
                             })?
                         }
-                        StringLiteral(n) => self.read_file(n)?,
+                        String(n) => self.read_file(n)?,
                     };
 
                     value
