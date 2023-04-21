@@ -224,7 +224,7 @@ impl<'i> Interpreter<'i> {
                                 location: identifier.location,
                             })?
                         }
-                        String(n) => self.read_file(n)?.escape_debug().to_string(),
+                        String(n) => escaping_new_lines(&self.read_file(n)?),
                         TemplateSringLiteral { parts } => {
                             self.evaluate_template_string_literal_parts(parts)?
                         }
@@ -325,4 +325,13 @@ fn indent_lines(string: &str, indent: u8) -> String {
         .map(|line| String::from(" ".repeat(indent as usize) + line))
         .collect::<Vec<_>>()
         .join("\n")
+}
+
+fn escaping_new_lines(text: &str) -> String {
+    let mut s = String::new();
+    for line in text.lines() {
+        s.push_str(line);
+        s.push_str("\\n")
+    }
+    s
 }
