@@ -148,7 +148,7 @@ impl<'i> Parser<'i> {
                     self.parse_call_expression(header_value)?
                 }
                 TokenKind::Ident => Expression::Identifier(header_value.into()),
-                TokenKind::StringLiteral => Expression::StringLiteral(header_value.into()),
+                TokenKind::StringLiteral => Expression::String(header_value.into()),
                 TokenKind::MultiLineStringLiteral => {
                     self.parse_multiline_string_literal(header_value)?
                 }
@@ -171,7 +171,7 @@ impl<'i> Parser<'i> {
                 self.parse_call_expression(token)?
             }
             TokenKind::Ident => Expression::Identifier(token.into()),
-            TokenKind::StringLiteral => Expression::StringLiteral(token.into()),
+            TokenKind::StringLiteral => Expression::String(token.into()),
             TokenKind::MultiLineStringLiteral => self.parse_multiline_string_literal(token)?,
             _ => unreachable!(),
         };
@@ -188,7 +188,7 @@ impl<'i> Parser<'i> {
         let exp = match start_token.kind {
             Ident if self.peek_token().kind == LParen => self.parse_call_expression(start_token)?,
             Ident => Expression::Identifier(start_token.into()),
-            StringLiteral => Expression::StringLiteral(start_token.into()),
+            StringLiteral => Expression::String(start_token.into()),
             MultiLineStringLiteral => self.parse_multiline_string_literal(start_token)?,
             _ => return Err(self.error().unexpected_token(&start_token)),
         };
@@ -224,7 +224,7 @@ impl<'i> Parser<'i> {
                 TokenKind::MultiLineStringLiteral
                     if self.peek_token().kind == TokenKind::DollarSignLBracket =>
                 {
-                    let s_literal = Expression::StringLiteral(token.into());
+                    let s_literal = Expression::String(token.into());
 
                     parts.push(s_literal);
 
@@ -237,10 +237,10 @@ impl<'i> Parser<'i> {
                     token = self.token();
                 }
                 TokenKind::MultiLineStringLiteral if parts.is_empty() => {
-                    return Ok(Expression::StringLiteral(token.into()));
+                    return Ok(Expression::String(token.into()));
                 }
                 TokenKind::MultiLineStringLiteral => {
-                    parts.push(Expression::StringLiteral(token.into()));
+                    parts.push(Expression::String(token.into()));
                     break;
                 }
                 tk => unreachable!(
@@ -411,7 +411,7 @@ get http://localhost:8080 {}"#,
                         name: "log",
                         location: at(0, 1)
                     },
-                    parameters: vec![StringLiteral(Literal {
+                    parameters: vec![String(Literal {
                         value: "path/to/file",
                         location: at(0, 5)
                     })]
@@ -442,7 +442,7 @@ get http://localhost {
                                 value: "Authorization",
                                 location: at(2, 11)
                             },
-                            value: StringLiteral(Literal {
+                            value: String(Literal {
                                 value: "Bearer token",
                                 location: at(2, 27)
                             })
@@ -452,7 +452,7 @@ get http://localhost {
                                 value: "random",
                                 location: at(3, 11)
                             },
-                            value: StringLiteral(Literal {
+                            value: String(Literal {
                                 value: "tokener Bear",
                                 location: at(3, 20)
                             })
@@ -485,7 +485,7 @@ post http://localhost {
                                 value: "Authorization",
                                 location: at(2, 11)
                             },
-                            value: StringLiteral(Literal {
+                            value: String(Literal {
                                 value: "Bearer token",
                                 location: at(2, 27)
                             })
@@ -495,7 +495,7 @@ post http://localhost {
                                 value: "random",
                                 location: at(3, 11)
                             },
-                            value: StringLiteral(Literal {
+                            value: String(Literal {
                                 value: "tokener Bear",
                                 location: at(3, 20)
                             })
@@ -527,13 +527,13 @@ post http://localhost {
                                 value: "Authorization",
                                 location: at(2, 11)
                             },
-                            value: StringLiteral(Literal {
+                            value: String(Literal {
                                 value: "Bearer token",
                                 location: at(2, 27)
                             })
                         },
                         Body {
-                            value: StringLiteral(Literal {
+                            value: String(Literal {
                                 value: "{neet: 1337}",
                                 location: at(3, 9)
                             }),
@@ -569,13 +569,13 @@ post http://localhost {
                                 value: "Authorization",
                                 location: at(2, 11)
                             },
-                            value: StringLiteral(Literal {
+                            value: String(Literal {
                                 value: "Bearer token",
                                 location: at(2, 27)
                             })
                         },
                         Body {
-                            value: StringLiteral(Literal {
+                            value: String(Literal {
                                 value: "\n        {\"neet\": 1337}\n    ",
                                 location: at(3, 9)
                             }),
@@ -610,7 +610,7 @@ post http://localhost {
                                     name: "env",
                                     location: at(0, 38)
                                 },
-                                arguments: vec![StringLiteral(Literal {
+                                arguments: vec![String(Literal {
                                     value: "auth",
                                     location: at(0, 42)
                                 })]
@@ -623,7 +623,7 @@ post http://localhost {
                                     name: "env",
                                     location: at(0, 55)
                                 },
-                                arguments: vec![StringLiteral(Literal {
+                                arguments: vec![String(Literal {
                                     value: "data",
                                     location: at(0, 59)
                                 })]
@@ -645,7 +645,7 @@ post http://localhost {
                         name: "BASE_URL",
                         location: at(0, 4)
                     },
-                    value: StringLiteral(Literal {
+                    value: String(Literal {
                         value: "stuff",
                         location: at(0, 13)
                     })
@@ -671,7 +671,7 @@ post /api {
                     params: vec![Body {
                         value: TemplateSringLiteral {
                             parts: vec![
-                                StringLiteral(Literal {
+                                String(Literal {
                                     value: r#"{"neet": "#,
                                     location: at(2, 9)
                                 }),
@@ -680,20 +680,20 @@ post /api {
                                         name: "env",
                                         location: at(2, 21)
                                     },
-                                    arguments: vec![StringLiteral(Literal {
+                                    arguments: vec![String(Literal {
                                         value: "love",
                                         location: at(2, 25)
                                     })]
                                 },
-                                StringLiteral(Literal {
+                                String(Literal {
                                     value: r#", 2: "#,
                                     location: at(2, 32)
                                 }),
-                                StringLiteral(Literal {
+                                String(Literal {
                                     value: r#"two"#,
                                     location: at(2, 40)
                                 }),
-                                StringLiteral(Literal {
+                                String(Literal {
                                     value: r#"}"#,
                                     location: at(2, 45)
                                 }),

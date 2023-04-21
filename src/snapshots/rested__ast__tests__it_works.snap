@@ -1,0 +1,150 @@
+---
+source: src/ast.rs
+description: "\nset BASE_URL \"httas...\"\npost http://lasdf.. {}\n// asdfasdf\n@log(\"output/file.json\")\nget /asd {\n  // asdfasd\n  header \"Authorization\" \"Bearer token\"\n  body `{\"neet\": \"${env(\"var\")}\"}`\n}"
+expression: p
+---
+Program(
+  items: [
+    Set(
+      identifier: Identifier(
+        name: "BASE_URL",
+        location: Location(
+          line: 1,
+          col: 4,
+        ),
+      ),
+      value: String(Literal(
+        value: "httas...",
+        location: Location(
+          line: 1,
+          col: 13,
+        ),
+      )),
+    ),
+    Request(
+      method: POST,
+      endpoint: Url(Literal(
+        value: "http://lasdf..",
+        location: Location(
+          line: 2,
+          col: 5,
+        ),
+      )),
+      params: [],
+      location: Location(
+        line: 2,
+        col: 0,
+      ),
+    ),
+    LineComment(Literal(
+      value: "// asdfasdf",
+      location: Location(
+        line: 3,
+        col: 0,
+      ),
+    )),
+    Attribute(
+      location: Location(
+        line: 4,
+        col: 0,
+      ),
+      identifier: Identifier(
+        name: "log",
+        location: Location(
+          line: 4,
+          col: 1,
+        ),
+      ),
+      parameters: [
+        String(Literal(
+          value: "output/file.json",
+          location: Location(
+            line: 4,
+            col: 5,
+          ),
+        )),
+      ],
+    ),
+    Request(
+      method: GET,
+      endpoint: Pathname(Literal(
+        value: "/asd",
+        location: Location(
+          line: 5,
+          col: 4,
+        ),
+      )),
+      params: [
+        LineComment(Literal(
+          value: "// asdfasd",
+          location: Location(
+            line: 6,
+            col: 2,
+          ),
+        )),
+        Header(
+          name: Literal(
+            value: "Authorization",
+            location: Location(
+              line: 7,
+              col: 9,
+            ),
+          ),
+          value: String(Literal(
+            value: "Bearer token",
+            location: Location(
+              line: 7,
+              col: 25,
+            ),
+          )),
+        ),
+        Body(
+          value: TemplateSringLiteral(
+            parts: [
+              String(Literal(
+                value: "{\"neet\": \"",
+                location: Location(
+                  line: 8,
+                  col: 7,
+                ),
+              )),
+              Call(
+                identifier: Identifier(
+                  name: "env",
+                  location: Location(
+                    line: 8,
+                    col: 20,
+                  ),
+                ),
+                arguments: [
+                  String(Literal(
+                    value: "var",
+                    location: Location(
+                      line: 8,
+                      col: 24,
+                    ),
+                  )),
+                ],
+              ),
+              String(Literal(
+                value: "\"}",
+                location: Location(
+                  line: 8,
+                  col: 30,
+                ),
+              )),
+            ],
+          ),
+          location: Location(
+            line: 8,
+            col: 2,
+          ),
+        ),
+      ],
+      location: Location(
+        line: 5,
+        col: 0,
+      ),
+    ),
+  ],
+)
