@@ -191,23 +191,12 @@ impl<'i> Interpreter<'i> {
                             .with_message("calls to env(..) must include a variable name argument")
                     })?;
 
-                    let value = match arg {
-                        Identifier(token) => self.evaluate_identifier(token)?,
-                        Call { identifier, .. } => {
-                            let value = self.evaluate_expression(&arg)?;
+                    let value = self.evaluate_expression(arg)?;
 
-                            self.evaluate_env_variable(&Literal {
-                                value: &value,
-                                location: identifier.location,
-                            })?
-                        }
-                        String(n) => self.evaluate_env_variable(&n)?,
-                        TemplateSringLiteral { parts } => {
-                            self.evaluate_template_string_literal_parts(parts)?
-                        }
-                    };
-
-                    value
+                    self.evaluate_env_variable(&Literal {
+                        value: &value,
+                        location: identifier.location,
+                    })?
                 }
                 "read" => {
                     let arg = arguments.first().ok_or_else(|| {
@@ -216,30 +205,18 @@ impl<'i> Interpreter<'i> {
                             .with_message("calls to read(..) must include a file name argument")
                     })?;
 
-                    let value = match arg {
-                        Identifier(token) => self.evaluate_identifier(token)?,
-                        Call { identifier, .. } => {
-                            let value = self.evaluate_expression(&arg)?;
-                            self.read_file(&Literal {
-                                value: &value,
-                                location: identifier.location,
-                            })?
-                        }
-                        String(n) => self.read_file(n)?,
-                        TemplateSringLiteral { parts } => {
-                            self.evaluate_template_string_literal_parts(parts)?
-                        }
-                    };
+                    let file_name = self.evaluate_expression(arg)?;
 
-                    value
+                    self.read_file(&Literal {
+                        value: &file_name,
+                        location: identifier.location,
+                    })?
                 }
                 "escape_new_lines" => {
                     let arg = arguments.first().ok_or_else(|| {
                         self.error_factory
                             .required_call_args(identifier.location, 1, 0)
-                            .with_message(
-                                "calls to escape_new_lines(..) must include one string argument",
-                            )
+                            .with_message("calls to escape_new_lines(..) must include an argument")
                     })?;
 
                     let value = self.evaluate_expression(arg)?;
@@ -250,7 +227,9 @@ impl<'i> Interpreter<'i> {
                     return Err(self
                         .error_factory
                         .undefined_callable(&identifier)
-                        .with_message("env(..) and read(..) are the only calls supported"))
+                        .with_message(
+                            "env(..), read(..), escape_new_lines(..) are the only calls supported",
+                        ))
                 }
             },
         };

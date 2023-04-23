@@ -21,13 +21,14 @@ post /echo {
    // "12": "${read("test/text.txt")}" }`
 }
 
-@log @dbg @skip
+@log @dbg
 post /echo {
    header "random" "billy bob"
    header "Content-Type" "application/json"
-   body `{
-   "neet": "${escape_new_lines(read("data.txt"))}",
-   "34": "asdf\nasdf\n",
-   "12": "${escape_new_lines("yo\nbull\n")}" 
-   }`
+   // body `{
+   // "neet": "${escape_new_lines(read("data.txt"))}",
+   // "34": "asdf\nasdf\n",
+   // "12": "${escape_new_lines("yo\nbull\n")}" 
+   // }`
+body read(env(read("data.json")))
 }
