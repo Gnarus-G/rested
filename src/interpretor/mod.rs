@@ -269,8 +269,8 @@ impl<'i> Interpreter<'i> {
         Ok(string)
     }
 
-    fn evaluate_request_endpoint(&self, enpdpoint: Endpoint) -> Result<String> {
-        Ok(match enpdpoint {
+    fn evaluate_request_endpoint(&self, endpoint: Endpoint) -> Result<String> {
+        Ok(match endpoint {
             Endpoint::Url(url) => url.value.to_string(),
             Endpoint::Pathname(pn) => {
                 if let Some(mut base_url) = self.base_url.clone() {
