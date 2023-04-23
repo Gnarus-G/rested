@@ -183,4 +183,22 @@ mod tests {
             }
         );
     }
+
+    #[test]
+    fn expecting_request_or_other_attribute_after_attributes() {
+        assert_errs!(
+            r#"
+            @skip
+            @dbg
+            let k = "v"
+            get http://localhost { header "name" k }"#,
+            ExpectedEitherOfTokens {
+                found: TokenOwned {
+                    kind: Let,
+                    text: "let".into()
+                },
+                expected: vec![Get, Post, AttributePrefix],
+            }
+        );
+    }
 }

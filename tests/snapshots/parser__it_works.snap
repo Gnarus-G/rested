@@ -1,6 +1,6 @@
 ---
 source: tests/parser.rs
-description: "\nset BASE_URL \"httas...\"\npost http://lasdf.. {}\n// asdfasdf\n@log(\"output/file.json\")\nget /asd {\n  // asdfasd\n  header \"Authorization\" \"Bearer token\"\n  body `{\"neet\": \"${env(\"var\")}\"}`\n}"
+description: "\nset BASE_URL \"httas...\"\npost http://lasdf.. {}\n// asdfasdf\n\nlet output_file = \"output/file.json\"\nlet token = env(\"auth-token\")\n\n@log(output_file)\nget /asd {\n  // asdfasd\n  header \"Authorization\" token\n  body `{\n      \"neet\": \"${env(\"var\")}\",\n      \"nerd\": \"${output_file}\",\n  }`\n}"
 expression: p
 ---
 Program(
@@ -43,23 +43,66 @@ Program(
         col: 0,
       ),
     )),
+    Let(
+      identifier: Identifier(
+        name: "output_file",
+        location: Location(
+          line: 5,
+          col: 4,
+        ),
+      ),
+      value: String(Literal(
+        value: "output/file.json",
+        location: Location(
+          line: 5,
+          col: 18,
+        ),
+      )),
+    ),
+    Let(
+      identifier: Identifier(
+        name: "token",
+        location: Location(
+          line: 6,
+          col: 4,
+        ),
+      ),
+      value: Call(
+        identifier: Identifier(
+          name: "env",
+          location: Location(
+            line: 6,
+            col: 12,
+          ),
+        ),
+        arguments: [
+          String(Literal(
+            value: "auth-token",
+            location: Location(
+              line: 6,
+              col: 16,
+            ),
+          )),
+        ],
+      ),
+    ),
     Attribute(
       location: Location(
-        line: 4,
+        line: 8,
         col: 0,
       ),
       identifier: Identifier(
         name: "log",
         location: Location(
-          line: 4,
+          line: 8,
           col: 1,
         ),
       ),
       parameters: [
-        String(Literal(
-          value: "output/file.json",
+        Identifier(Identifier(
+          name: "output_file",
           location: Location(
-            line: 4,
+            line: 8,
             col: 5,
           ),
         )),
@@ -70,7 +113,7 @@ Program(
       endpoint: Pathname(Literal(
         value: "/asd",
         location: Location(
-          line: 5,
+          line: 9,
           col: 4,
         ),
       )),
@@ -78,7 +121,7 @@ Program(
         LineComment(Literal(
           value: "// asdfasd",
           location: Location(
-            line: 6,
+            line: 10,
             col: 2,
           ),
         )),
@@ -86,14 +129,14 @@ Program(
           name: Literal(
             value: "Authorization",
             location: Location(
-              line: 7,
+              line: 11,
               col: 9,
             ),
           ),
-          value: String(Literal(
-            value: "Bearer token",
+          value: Identifier(Identifier(
+            name: "token",
             location: Location(
-              line: 7,
+              line: 11,
               col: 25,
             ),
           )),
@@ -102,9 +145,9 @@ Program(
           value: TemplateSringLiteral(
             parts: [
               String(Literal(
-                value: "{\"neet\": \"",
+                value: "{\n      \"neet\": \"",
                 location: Location(
-                  line: 8,
+                  line: 12,
                   col: 7,
                 ),
               )),
@@ -112,37 +155,51 @@ Program(
                 identifier: Identifier(
                   name: "env",
                   location: Location(
-                    line: 8,
-                    col: 20,
+                    line: 13,
+                    col: 17,
                   ),
                 ),
                 arguments: [
                   String(Literal(
                     value: "var",
                     location: Location(
-                      line: 8,
-                      col: 24,
+                      line: 13,
+                      col: 21,
                     ),
                   )),
                 ],
               ),
               String(Literal(
-                value: "\"}",
+                value: "\",\n      \"nerd\": \"",
                 location: Location(
-                  line: 8,
-                  col: 30,
+                  line: 13,
+                  col: 27,
+                ),
+              )),
+              Identifier(Identifier(
+                name: "output_file",
+                location: Location(
+                  line: 14,
+                  col: 17,
+                ),
+              )),
+              String(Literal(
+                value: "\",\n  }",
+                location: Location(
+                  line: 14,
+                  col: 28,
                 ),
               )),
             ],
           ),
           location: Location(
-            line: 8,
+            line: 12,
             col: 2,
           ),
         ),
       ],
       location: Location(
-        line: 5,
+        line: 9,
         col: 0,
       ),
     ),

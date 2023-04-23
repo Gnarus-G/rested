@@ -8,7 +8,7 @@ use std::path::PathBuf;
 
 use colored::Colorize;
 
-use crate::ast::{self, Expression, Literal, UrlOrPathname};
+use crate::ast::{self, Endpoint, Expression, Literal};
 
 use crate::error::Error;
 use crate::parser;
@@ -22,6 +22,8 @@ pub struct Interpreter<'i> {
     code: &'i str,
     error_factory: InterpErrorFactory<'i>,
     env: Environment,
+    base_url: Option<String>,
+    let_bindings: HashMap<&'i str, String>,
 }
 
 impl<'i> Interpreter<'i> {
@@ -30,6 +32,8 @@ impl<'i> Interpreter<'i> {
             error_factory: InterpErrorFactory::new(code),
             code,
             env,
+            base_url: None,
+            let_bindings: HashMap::new(),
         }
     }
 
@@ -147,7 +151,7 @@ impl<'i> Interpreter<'i> {
                         return Err(self.error_factory.unknown_constant(&identifier));
                     }
 
-                    self.env.base_url = Some(self.evaluate_expression(&value)?);
+                    self.base_url = Some(self.evaluate_expression(&value)?);
                 }
                 LineComment(_) => {}
                 Attribute {
@@ -168,6 +172,10 @@ impl<'i> Interpreter<'i> {
                             .into())
                     }
                 },
+                Let { identifier, value } => {
+                    let value = self.evaluate_expression(&value)?;
+                    self.let_bindings.insert(identifier.name, value);
+                }
             }
         }
 
@@ -261,11 +269,11 @@ impl<'i> Interpreter<'i> {
         Ok(string)
     }
 
-    fn evaluate_request_endpoint(&self, enpdpoint: UrlOrPathname) -> Result<String> {
-        Ok(match enpdpoint {
-            UrlOrPathname::Url(url) => url.value.to_string(),
-            UrlOrPathname::Pathname(pn) => {
-                if let Some(mut base_url) = self.env.base_url.clone() {
+    fn evaluate_request_endpoint(&self, endpoint: Endpoint) -> Result<String> {
+        Ok(match endpoint {
+            Endpoint::Url(url) => url.value.to_string(),
+            Endpoint::Pathname(pn) => {
+                if let Some(mut base_url) = self.base_url.clone() {
                     if pn.value.len() > 1 {
                         base_url.push_str(pn.value);
                     }
@@ -278,10 +286,14 @@ impl<'i> Interpreter<'i> {
     }
 
     fn evaluate_identifier(&self, token: &ast::Identifier) -> Result<String> {
-        return Err(self
-            .error_factory
-            .undeclared_identifier(token)
-            .with_message("variable identifiers are not supported"));
+        self.let_bindings
+            .get(token.name)
+            .map(|value| value.to_string())
+            .ok_or_else(|| {
+                self.error_factory
+                    .undeclared_identifier(token)
+                    .with_message("variable identifiers are not supported")
+            })
     }
 
     fn evaluate_template_string_literal_parts(&self, parts: &[Expression]) -> Result<String> {

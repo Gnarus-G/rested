@@ -4,7 +4,6 @@ pub struct Environment {
     env_file_name: PathBuf,
     pub namespaced_variables: HashMap<String, HashMap<String, String>>,
     selected_namespace: Option<String>,
-    pub base_url: Option<String>,
 }
 
 impl Environment {
@@ -13,7 +12,6 @@ impl Environment {
             env_file_name: file_name,
             namespaced_variables: HashMap::from([("default".to_string(), HashMap::new())]),
             selected_namespace: None,
-            base_url: None,
         }
     }
 
