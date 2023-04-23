@@ -22,6 +22,7 @@ pub struct Interpreter<'i> {
     code: &'i str,
     error_factory: InterpErrorFactory<'i>,
     env: Environment,
+    base_url: Option<String>,
     let_bindings: HashMap<&'i str, String>,
 }
 
@@ -31,6 +32,7 @@ impl<'i> Interpreter<'i> {
             error_factory: InterpErrorFactory::new(code),
             code,
             env,
+            base_url: None,
             let_bindings: HashMap::new(),
         }
     }
@@ -149,7 +151,7 @@ impl<'i> Interpreter<'i> {
                         return Err(self.error_factory.unknown_constant(&identifier));
                     }
 
-                    self.env.base_url = Some(self.evaluate_expression(&value)?);
+                    self.base_url = Some(self.evaluate_expression(&value)?);
                 }
                 LineComment(_) => {}
                 Attribute {
@@ -271,7 +273,7 @@ impl<'i> Interpreter<'i> {
         Ok(match enpdpoint {
             Endpoint::Url(url) => url.value.to_string(),
             Endpoint::Pathname(pn) => {
-                if let Some(mut base_url) = self.env.base_url.clone() {
+                if let Some(mut base_url) = self.base_url.clone() {
                     if pn.value.len() > 1 {
                         base_url.push_str(pn.value);
                     }
