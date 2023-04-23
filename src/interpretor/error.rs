@@ -142,11 +142,7 @@ impl<'i> InterpErrorFactory<'i> {
         )
     }
 
-    pub fn other<E: std::fmt::Display + std::error::Error>(
-        &self,
-        location: Location,
-        error: E,
-    ) -> Error<InterpError> {
+    pub fn other<E: std::fmt::Display>(&self, location: Location, error: E) -> Error<InterpError> {
         Error::new(
             InterpError::Other {
                 error: error.to_string(),

@@ -14,8 +14,20 @@ get / {
 post /echo {
    header "random" "billy bob"
    header "Content-Type" "application/json"
+   body read("data.json")
+
+   // body `{
+   // "neet": "${read("test/text.txt")}",
+   // "12": "${read("test/text.txt")}" }`
+}
+
+@log @dbg @skip
+post /echo {
+   header "random" "billy bob"
+   header "Content-Type" "application/json"
    body `{
-   "neet": "${read("test/text.txt")}",
-   "12": "${read("test/text.txt")}"
+   "neet": "${escape_new_lines(read("data.txt"))}",
+   "34": "asdf\nasdf\n",
+   "12": "${escape_new_lines("yo\nbull\n")}" 
    }`
 }

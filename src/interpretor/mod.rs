@@ -179,6 +179,7 @@ impl<'i> Interpreter<'i> {
         let value = match exp {
             Identifier(token) => self.evaluate_identifier(&token)?,
             String(token) => token.value.to_string(),
+            TemplateSringLiteral { parts } => self.evaluate_template_string_literal_parts(parts)?,
             Call {
                 identifier,
                 arguments,
@@ -224,13 +225,26 @@ impl<'i> Interpreter<'i> {
                                 location: identifier.location,
                             })?
                         }
-                        String(n) => escaping_new_lines(&self.read_file(n)?),
+                        String(n) => self.read_file(n)?,
                         TemplateSringLiteral { parts } => {
                             self.evaluate_template_string_literal_parts(parts)?
                         }
                     };
 
                     value
+                }
+                "escape_new_lines" => {
+                    let arg = arguments.first().ok_or_else(|| {
+                        self.error_factory
+                            .required_call_args(identifier.location, 1, 0)
+                            .with_message(
+                                "calls to escape_new_lines(..) must include one string argument",
+                            )
+                    })?;
+
+                    let value = self.evaluate_expression(arg)?;
+
+                    escaping_new_lines(&value)
                 }
                 _ => {
                     return Err(self
@@ -239,7 +253,6 @@ impl<'i> Interpreter<'i> {
                         .with_message("env(..) and read(..) are the only calls supported"))
                 }
             },
-            TemplateSringLiteral { parts } => self.evaluate_template_string_literal_parts(parts)?,
         };
 
         Ok(value)
@@ -253,13 +266,18 @@ impl<'i> Interpreter<'i> {
     }
 
     fn read_file(&self, file_path: &Literal) -> Result<String> {
-        let mut file = File::open(file_path.value)
-            .map_err(|e| self.error_factory.other(file_path.location, e))?;
+        let handle_error = |e| {
+            self.error_factory.other(
+                file_path.location,
+                &format!("Error reading file '{}': {e}", file_path.value),
+            )
+        };
+
+        let mut file = File::open(file_path.value).map_err(handle_error)?;
 
         let mut string = String::new();
 
-        file.read_to_string(&mut string)
-            .map_err(|e| self.error_factory.other(file_path.location, e))?;
+        file.read_to_string(&mut string).map_err(handle_error)?;
 
         Ok(string)
     }
