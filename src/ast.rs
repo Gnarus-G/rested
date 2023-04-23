@@ -5,6 +5,17 @@ use serde::Serialize;
 use crate::lexer::{Location, Token};
 
 #[derive(Debug, PartialEq, Serialize)]
+pub struct Program<'i> {
+    pub items: Vec<Item<'i>>,
+}
+
+impl<'i> Program<'i> {
+    pub fn new() -> Self {
+        Self { items: vec![] }
+    }
+}
+
+#[derive(Debug, PartialEq, Serialize)]
 pub struct Identifier<'i> {
     pub name: &'i str,
     pub location: Location,
@@ -43,7 +54,7 @@ pub enum Item<'i> {
     LineComment(Literal<'i>),
     Request {
         method: RequestMethod,
-        endpoint: UrlOrPathname<'i>,
+        endpoint: Endpoint<'i>,
         params: Vec<Statement<'i>>,
         location: Location,
     },
@@ -52,6 +63,18 @@ pub enum Item<'i> {
         identifier: Identifier<'i>,
         parameters: Vec<Expression<'i>>,
     },
+}
+
+#[derive(Debug, PartialEq, Serialize)]
+pub enum RequestMethod {
+    GET,
+    POST,
+}
+
+impl Display for RequestMethod {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 #[derive(Debug, PartialEq, Serialize)]
@@ -81,30 +104,7 @@ pub enum Expression<'i> {
 }
 
 #[derive(Debug, PartialEq, Serialize)]
-pub enum UrlOrPathname<'i> {
+pub enum Endpoint<'i> {
     Url(Literal<'i>),
     Pathname(Literal<'i>),
-}
-
-#[derive(Debug, PartialEq, Serialize)]
-pub enum RequestMethod {
-    GET,
-    POST,
-}
-
-impl Display for RequestMethod {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-#[derive(Debug, PartialEq, Serialize)]
-pub struct Program<'i> {
-    pub items: Vec<Item<'i>>,
-}
-
-impl<'i> Program<'i> {
-    pub fn new() -> Self {
-        Self { items: vec![] }
-    }
 }

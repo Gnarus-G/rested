@@ -8,7 +8,7 @@ use std::path::PathBuf;
 
 use colored::Colorize;
 
-use crate::ast::{self, Expression, Literal, UrlOrPathname};
+use crate::ast::{self, Endpoint, Expression, Literal};
 
 use crate::error::Error;
 use crate::parser;
@@ -261,10 +261,10 @@ impl<'i> Interpreter<'i> {
         Ok(string)
     }
 
-    fn evaluate_request_endpoint(&self, enpdpoint: UrlOrPathname) -> Result<String> {
+    fn evaluate_request_endpoint(&self, enpdpoint: Endpoint) -> Result<String> {
         Ok(match enpdpoint {
-            UrlOrPathname::Url(url) => url.value.to_string(),
-            UrlOrPathname::Pathname(pn) => {
+            Endpoint::Url(url) => url.value.to_string(),
+            Endpoint::Pathname(pn) => {
                 if let Some(mut base_url) = self.env.base_url.clone() {
                     if pn.value.len() > 1 {
                         base_url.push_str(pn.value);

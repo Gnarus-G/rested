@@ -1,7 +1,7 @@
 pub mod error;
 
 use crate::{
-    ast::{Expression, Item, Program, RequestMethod, Statement, UrlOrPathname},
+    ast::{Endpoint, Expression, Item, Program, RequestMethod, Statement},
     error::Error,
     lexer::{Lexer, Token, TokenKind},
 };
@@ -73,8 +73,8 @@ impl<'i> Parser<'i> {
             location: token.location,
             method,
             endpoint: match url.kind {
-                TokenKind::Url => UrlOrPathname::Url(url.into()),
-                TokenKind::Pathname => UrlOrPathname::Pathname(url.into()),
+                TokenKind::Url => Endpoint::Url(url.into()),
+                TokenKind::Pathname => Endpoint::Pathname(url.into()),
                 _ => unreachable!("we're properly expecting only url and pathname tokens here"),
             },
             params: self.parse_request_params()?,
@@ -346,7 +346,7 @@ get http://localhost:8080 {}"#,
                         location: at(0, 0),
 
                         method: GET,
-                        endpoint: UrlOrPathname::Url(Literal {
+                        endpoint: Endpoint::Url(Literal {
                             value: "http://localhost:8080",
                             location: at(0, 4)
                         }),
@@ -356,7 +356,7 @@ get http://localhost:8080 {}"#,
                         location: at(1, 0),
 
                         method: GET,
-                        endpoint: UrlOrPathname::Url(Literal {
+                        endpoint: Endpoint::Url(Literal {
                             value: "http://localhost:8080",
                             location: at(1, 4)
                         }),
@@ -375,7 +375,7 @@ get http://localhost:8080 {}"#,
                 items: vec![Item::Request {
                     location: at(0, 0),
                     method: POST,
-                    endpoint: UrlOrPathname::Url(Literal {
+                    endpoint: Endpoint::Url(Literal {
                         value: "http://localhost",
                         location: at(0, 5)
                     }),
@@ -390,7 +390,7 @@ get http://localhost:8080 {}"#,
                 items: vec![Request {
                     location: at(0, 0),
                     method: POST,
-                    endpoint: UrlOrPathname::Pathname(Literal {
+                    endpoint: Endpoint::Pathname(Literal {
                         value: "/api/v2",
                         location: at(0, 5)
                     }),
@@ -432,7 +432,7 @@ get http://localhost {
                 items: vec![Request {
                     location: at(1, 0),
                     method: GET,
-                    endpoint: UrlOrPathname::Url(Literal {
+                    endpoint: Endpoint::Url(Literal {
                         value: "http://localhost",
                         location: at(1, 4)
                     }),
@@ -475,7 +475,7 @@ post http://localhost {
                 items: vec![Request {
                     location: at(1, 0),
                     method: POST,
-                    endpoint: UrlOrPathname::Url(Literal {
+                    endpoint: Endpoint::Url(Literal {
                         value: "http://localhost",
                         location: at(1, 5)
                     }),
@@ -517,7 +517,7 @@ post http://localhost {
                 items: vec![Request {
                     location: at(1, 0),
                     method: POST,
-                    endpoint: UrlOrPathname::Url(Literal {
+                    endpoint: Endpoint::Url(Literal {
                         value: "http://localhost",
                         location: at(1, 5)
                     }),
@@ -559,7 +559,7 @@ post http://localhost {
                 items: vec![Request {
                     location: at(1, 0),
                     method: POST,
-                    endpoint: UrlOrPathname::Url(Literal {
+                    endpoint: Endpoint::Url(Literal {
                         value: "http://localhost",
                         location: at(1, 5)
                     }),
@@ -595,7 +595,7 @@ post http://localhost {
                 items: vec![Request {
                     location: at(0, 0),
                     method: POST,
-                    endpoint: UrlOrPathname::Url(Literal {
+                    endpoint: Endpoint::Url(Literal {
                         value: "http://localhost",
                         location: at(0, 5)
                     }),
@@ -664,7 +664,7 @@ post /api {
             Program {
                 items: vec![Request {
                     method: POST,
-                    endpoint: UrlOrPathname::Pathname(Literal {
+                    endpoint: Endpoint::Pathname(Literal {
                         value: "/api",
                         location: at(1, 5)
                     }),
