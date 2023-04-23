@@ -1,5 +1,5 @@
 ---
-source: src/ast.rs
+source: tests/parser.rs
 description: "\nset BASE_URL \"httas...\"\npost http://lasdf.. {}\n// asdfasdf\n@log(\"output/file.json\")\nget /asd {\n  // asdfasd\n  header \"Authorization\" \"Bearer token\"\n  body `{\"neet\": \"${env(\"var\")}\"}`\n}"
 expression: p
 ---
