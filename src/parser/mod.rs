@@ -62,7 +62,16 @@ impl<'i> Parser<'i> {
                 Post => self.parse_request(RequestMethod::POST, token)?,
                 Linecomment | Shebang => Item::LineComment(token.into()),
                 Set => self.parse_set_statement()?,
-                AttributePrefix => self.parse_attribute(token)?,
+                AttributePrefix => {
+                    let item = self.parse_attribute(token)?;
+                    self.expect_one_of(vec![Get, Post, AttributePrefix])
+                        .map_err(|e| {
+                            e.with_message(
+                                "after attributes should come requests or more attributes",
+                            )
+                        })?;
+                    item
+                }
                 Let => self.parse_let_statement()?,
                 _ => {
                     unreachable!("we properly expect items at this level of the program structure")
@@ -426,19 +435,30 @@ get http://localhost:8080 {}"#,
     #[test]
     fn parse_attributes() {
         assert_program!(
-            r#"@log("path/to/file")"#,
+            r#"@log("path/to/file") get /api"#,
             Program {
-                items: vec![Attribute {
-                    location: at(0, 0),
-                    identifier: Identifier {
-                        name: "log",
-                        location: at(0, 1)
+                items: vec![
+                    Attribute {
+                        location: at(0, 0),
+                        identifier: Identifier {
+                            name: "log",
+                            location: at(0, 1)
+                        },
+                        parameters: vec![String(Literal {
+                            value: "path/to/file",
+                            location: at(0, 5)
+                        })]
                     },
-                    parameters: vec![String(Literal {
-                        value: "path/to/file",
-                        location: at(0, 5)
-                    })]
-                }]
+                    Request {
+                        method: GET,
+                        endpoint: Endpoint::Pathname(Literal {
+                            value: "/api",
+                            location: at(0, 25)
+                        }),
+                        params: vec![],
+                        location: at(0, 21)
+                    }
+                ]
             }
         );
     }

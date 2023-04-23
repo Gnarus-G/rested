@@ -3,12 +3,10 @@ set BASE_URL env("b_url")
 @skip
 get http://localhost:8080
 
+let random = env("love")
 
 @log
 @dbg
-
-let random = env("love")
-
 get / {
    header "random" random
 }
