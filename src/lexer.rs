@@ -9,6 +9,8 @@ pub enum TokenKind {
     Post,
     Header,
     Body,
+    Set,
+    Let,
 
     Ident,
 
@@ -22,7 +24,7 @@ pub enum TokenKind {
     Shebang,
 
     // operators
-    Set,
+    Assign,
 
     // special characters
     DollarSignLBracket,
@@ -216,6 +218,11 @@ impl<'i> Lexer<'i> {
                 location: self.cursor,
                 text: "}",
             },
+            b'=' => Token {
+                kind: Assign,
+                text: "=",
+                location: self.cursor,
+            },
             b'@' => Token {
                 kind: AttributePrefix,
                 text: "@",
@@ -331,6 +338,11 @@ impl<'i> Lexer<'i> {
         use TokenKind::*;
 
         match string {
+            "let" => Token {
+                kind: Let,
+                location,
+                text: string,
+            },
             "get" => Token {
                 kind: Get,
                 location,

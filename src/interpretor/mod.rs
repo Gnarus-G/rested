@@ -22,6 +22,7 @@ pub struct Interpreter<'i> {
     code: &'i str,
     error_factory: InterpErrorFactory<'i>,
     env: Environment,
+    let_bindings: HashMap<&'i str, String>,
 }
 
 impl<'i> Interpreter<'i> {
@@ -30,6 +31,7 @@ impl<'i> Interpreter<'i> {
             error_factory: InterpErrorFactory::new(code),
             code,
             env,
+            let_bindings: HashMap::new(),
         }
     }
 
@@ -168,6 +170,10 @@ impl<'i> Interpreter<'i> {
                             .into())
                     }
                 },
+                Let { identifier, value } => {
+                    let value = self.evaluate_expression(&value)?;
+                    self.let_bindings.insert(identifier.name, value);
+                }
             }
         }
 
@@ -278,10 +284,14 @@ impl<'i> Interpreter<'i> {
     }
 
     fn evaluate_identifier(&self, token: &ast::Identifier) -> Result<String> {
-        return Err(self
-            .error_factory
-            .undeclared_identifier(token)
-            .with_message("variable identifiers are not supported"));
+        self.let_bindings
+            .get(token.name)
+            .map(|value| value.to_string())
+            .ok_or_else(|| {
+                self.error_factory
+                    .undeclared_identifier(token)
+                    .with_message("variable identifiers are not supported")
+            })
     }
 
     fn evaluate_template_string_literal_parts(&self, parts: &[Expression]) -> Result<String> {

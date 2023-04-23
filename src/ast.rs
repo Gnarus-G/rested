@@ -51,6 +51,10 @@ pub enum Item<'i> {
         identifier: Identifier<'i>,
         value: Expression<'i>,
     },
+    Let {
+        identifier: Identifier<'i>,
+        value: Expression<'i>,
+    },
     LineComment(Literal<'i>),
     Request {
         method: RequestMethod,

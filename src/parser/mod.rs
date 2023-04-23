@@ -44,7 +44,15 @@ impl<'i> Parser<'i> {
 
         use crate::lexer::TokenKind::*;
 
-        self.expect_one_of(vec![Set, Get, Post, Linecomment, Shebang, AttributePrefix])?;
+        self.expect_one_of(vec![
+            Set,
+            Get,
+            Post,
+            Linecomment,
+            Shebang,
+            AttributePrefix,
+            Let,
+        ])?;
 
         let mut token = self.token();
 
@@ -55,6 +63,7 @@ impl<'i> Parser<'i> {
                 Linecomment | Shebang => Item::LineComment(token.into()),
                 Set => self.parse_set_statement()?,
                 AttributePrefix => self.parse_attribute(token)?,
+                Let => self.parse_let_statement()?,
                 _ => {
                     unreachable!("we properly expect items at this level of the program structure")
                 }
@@ -310,6 +319,20 @@ impl<'i> Parser<'i> {
             location,
             identifier: ident.into(),
             parameters: params,
+        })
+    }
+
+    fn parse_let_statement(&mut self) -> Result<Item<'i>> {
+        let ident = self.token();
+
+        self.expect(TokenKind::Assign)?;
+        self.eat_token();
+
+        let token = self.token();
+
+        Ok(Item::Let {
+            identifier: ident.into(),
+            value: self.parse_expression(token)?,
         })
     }
 }
