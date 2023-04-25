@@ -11,6 +11,7 @@ use colored::Colorize;
 use crate::ast::{self, Endpoint, Expression, Literal};
 
 use crate::error::Error;
+use crate::lexer::Location;
 use crate::parser;
 
 use self::error::{InterpError, InterpErrorFactory};
@@ -109,7 +110,7 @@ impl<'i> Interpreter<'i> {
                     let res = if let Some(value) = body {
                         let res = req
                             .send_string(&value)
-                            .map_err(|e| self.error_factory.other(location, e))?;
+                            .wrap_error_with(&self.error_factory, location)?;
 
                         if res.content_type() == "application/json" {
                             let string = &res
@@ -343,4 +344,42 @@ fn escaping_new_lines(text: &str) -> String {
         s.push_str("\\n")
     }
     s
+}
+
+trait ErrorWrapper {
+    fn wrap_error_with(
+        self,
+        error_factory: &InterpErrorFactory,
+        location: Location,
+    ) -> Result<ureq::Response>;
+}
+
+impl ErrorWrapper for std::result::Result<ureq::Response, ureq::Error> {
+    fn wrap_error_with(
+        self,
+        error_factory: &InterpErrorFactory,
+        location: Location,
+    ) -> Result<ureq::Response> {
+        match self {
+            Ok(res) => Ok(res),
+            Err(err) => {
+                let err_string = match err {
+                    ureq::Error::Status(status, response) => {
+                        format!(
+                            "{}: status code {}: {} {:#}",
+                            response.get_url().to_owned(),
+                            status,
+                            response.status_text().to_owned(),
+                            response
+                                .into_string()
+                                .map_err(|e| error_factory.other(location, e))?
+                        )
+                    }
+                    ureq::Error::Transport(_) => err.to_string(),
+                };
+
+                Err(error_factory.other(location, err_string))
+            }
+        }
+    }
 }
