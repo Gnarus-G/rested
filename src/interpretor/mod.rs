@@ -64,6 +64,9 @@ impl<'i> Interpreter<'i> {
                     let mut req = match method {
                         ast::RequestMethod::GET => ureq::get(path),
                         ast::RequestMethod::POST => ureq::post(path),
+                        ast::RequestMethod::PUT => ureq::put(path),
+                        ast::RequestMethod::PATCH => ureq::patch(path),
+                        ast::RequestMethod::DELETE => ureq::delete(path),
                     };
 
                     let mut body = None;

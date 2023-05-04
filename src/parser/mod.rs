@@ -48,6 +48,9 @@ impl<'i> Parser<'i> {
             Set,
             Get,
             Post,
+            Put,
+            Patch,
+            Delete,
             Linecomment,
             Shebang,
             AttributePrefix,
@@ -60,6 +63,9 @@ impl<'i> Parser<'i> {
             let statement = match token.kind {
                 Get => self.parse_request(RequestMethod::GET, token)?,
                 Post => self.parse_request(RequestMethod::POST, token)?,
+                Put => self.parse_request(RequestMethod::PUT, token)?,
+                Patch => self.parse_request(RequestMethod::PATCH, token)?,
+                Delete => self.parse_request(RequestMethod::DELETE, token)?,
                 Linecomment | Shebang => Item::LineComment(token.into()),
                 Set => self.parse_set_statement()?,
                 AttributePrefix => {

@@ -73,6 +73,9 @@ pub enum Item<'i> {
 pub enum RequestMethod {
     GET,
     POST,
+    DELETE,
+    PATCH,
+    PUT,
 }
 
 impl Display for RequestMethod {

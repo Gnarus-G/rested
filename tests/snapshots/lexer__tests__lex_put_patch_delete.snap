@@ -1,0 +1,18 @@
+---
+source: tests/lexer.rs
+expression: tokens
+---
+[
+    Put("put") at 1:0,
+    Pathname("/api") at 1:4,
+    LBracket("{") at 1:9,
+    RBracket("}") at 1:10,
+    Patch("patch") at 2:0,
+    Pathname("/api") at 2:6,
+    LBracket("{") at 2:11,
+    RBracket("}") at 2:12,
+    Delete("delete") at 3:0,
+    Pathname("/api") at 3:7,
+    LBracket("{") at 3:12,
+    RBracket("}") at 3:13,
+]

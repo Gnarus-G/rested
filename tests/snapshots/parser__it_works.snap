@@ -1,6 +1,6 @@
 ---
 source: tests/parser.rs
-description: "\nset BASE_URL \"httas...\"\npost http://lasdf.. {}\n// asdfasdf\n\nlet output_file = \"output/file.json\"\nlet token = env(\"auth-token\")\n\n@log(output_file)\nget /asd {\n  // asdfasd\n  header \"Authorization\" token\n  body `{\n      \"neet\": \"${env(\"var\")}\",\n      \"nerd\": \"${output_file}\",\n  }`\n}"
+description: "\nset BASE_URL \"httas...\"\npost http://lasdf.. {}\n// asdfasdf\n\nlet output_file = \"output/file.json\"\nlet token = env(\"auth-token\")\n\n@log(output_file)\npost /asd {\n  // asdfasd\n  header \"Authorization\" token\n  body `{\n      \"neet\": \"${env(\"var\")}\",\n      \"nerd\": \"${output_file}\",\n  }`\n}\n\n@skip\nget /api {}\n\nput /api {}\npatch /api {}\ndelete /api {}\n"
 expression: p
 ---
 Program(
@@ -109,12 +109,12 @@ Program(
       ],
     ),
     Request(
-      method: GET,
+      method: POST,
       endpoint: Pathname(Literal(
         value: "/asd",
         location: Location(
           line: 9,
-          col: 4,
+          col: 5,
         ),
       )),
       params: [
@@ -200,6 +200,80 @@ Program(
       ],
       location: Location(
         line: 9,
+        col: 0,
+      ),
+    ),
+    Attribute(
+      location: Location(
+        line: 18,
+        col: 0,
+      ),
+      identifier: Identifier(
+        name: "skip",
+        location: Location(
+          line: 18,
+          col: 1,
+        ),
+      ),
+      parameters: [],
+    ),
+    Request(
+      method: GET,
+      endpoint: Pathname(Literal(
+        value: "/api",
+        location: Location(
+          line: 19,
+          col: 4,
+        ),
+      )),
+      params: [],
+      location: Location(
+        line: 19,
+        col: 0,
+      ),
+    ),
+    Request(
+      method: PUT,
+      endpoint: Pathname(Literal(
+        value: "/api",
+        location: Location(
+          line: 21,
+          col: 4,
+        ),
+      )),
+      params: [],
+      location: Location(
+        line: 21,
+        col: 0,
+      ),
+    ),
+    Request(
+      method: PATCH,
+      endpoint: Pathname(Literal(
+        value: "/api",
+        location: Location(
+          line: 22,
+          col: 6,
+        ),
+      )),
+      params: [],
+      location: Location(
+        line: 22,
+        col: 0,
+      ),
+    ),
+    Request(
+      method: DELETE,
+      endpoint: Pathname(Literal(
+        value: "/api",
+        location: Location(
+          line: 23,
+          col: 7,
+        ),
+      )),
+      params: [],
+      location: Location(
+        line: 23,
         col: 0,
       ),
     ),

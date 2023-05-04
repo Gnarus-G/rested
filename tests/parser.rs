@@ -13,14 +13,22 @@ let output_file = "output/file.json"
 let token = env("auth-token")
 
 @log(output_file)
-get /asd {
+post /asd {
   // asdfasd
   header "Authorization" token
   body `{
       "neet": "${env("var")}",
       "nerd": "${output_file}",
   }`
-}"#;
+}
+
+@skip
+get /api {}
+
+put /api {}
+patch /api {}
+delete /api {}
+"#;
 
     let p = Parser::new(code).parse().unwrap();
     insta::with_settings!({

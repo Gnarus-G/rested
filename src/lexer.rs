@@ -7,6 +7,9 @@ pub enum TokenKind {
     // keywords
     Get,
     Post,
+    Put,
+    Patch,
+    Delete,
     Header,
     Body,
     Set,
@@ -350,6 +353,21 @@ impl<'i> Lexer<'i> {
             },
             "post" => Token {
                 kind: Post,
+                location,
+                text: string,
+            },
+            "put" => Token {
+                kind: Put,
+                location,
+                text: string,
+            },
+            "patch" => Token {
+                kind: Patch,
+                location,
+                text: string,
+            },
+            "delete" => Token {
+                kind: Delete,
                 location,
                 text: string,
             },
