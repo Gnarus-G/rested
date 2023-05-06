@@ -70,7 +70,7 @@ impl<'i> Parser<'i> {
                 Set => self.parse_set_statement()?,
                 AttributePrefix => {
                     let item = self.parse_attribute(token)?;
-                    self.expect_one_of(vec![Get, Post, AttributePrefix])
+                    self.expect_one_of(vec![Get, Post, Put, Patch, Delete, AttributePrefix])
                         .map_err(|e| {
                             e.with_message(
                                 "after attributes should come requests or more attributes",

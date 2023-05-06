@@ -197,7 +197,7 @@ mod tests {
                     kind: Let,
                     text: "let".into()
                 },
-                expected: vec![Get, Post, AttributePrefix],
+                expected: vec![Get, Post, Put, Patch, Delete, AttributePrefix],
             }
         );
     }
