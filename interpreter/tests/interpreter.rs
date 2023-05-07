@@ -313,10 +313,41 @@ fn name_attribute_requires_value() {
         get /api {}
     "#;
 
-    let env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();
     let mut program = Interpreter::new(&code, env);
 
     let name_att_without_arg_err = program.run(Some(vec!["test".to_string()])).unwrap_err();
 
     assert_debug_snapshot!(name_att_without_arg_err);
+}
+
+#[test]
+fn prevents_duplicate_attributes() {
+    let mut env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();
+    env.set_variable("b_url".to_string(), "asdfasdf".to_string())
+        .unwrap();
+
+    let code = r#"
+        set BASE_URL env("b_url")
+        @log
+        @log
+        get /api {}
+    "#;
+
+    let mut program = Interpreter::new(&code, env);
+
+    let duped_att_err = program.run(Some(vec!["test".to_string()])).unwrap_err();
+    assert_debug_snapshot!(duped_att_err);
+
+    let code = r#"
+        set BASE_URL env("b_url")
+        @name("a")
+        @name("b")
+        get /api {}
+    "#;
+
+    let env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();
+    let mut program = Interpreter::new(&code, env);
+
+    let duped_att_err = program.run(Some(vec!["test".to_string()])).unwrap_err();
+    assert_debug_snapshot!(duped_att_err);
 }

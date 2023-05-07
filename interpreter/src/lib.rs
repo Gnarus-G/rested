@@ -22,16 +22,16 @@ use self::runtime::Environment;
 
 type Result<T> = std::result::Result<T, Error<InterpError>>;
 
-pub struct Interpreter<'i> {
-    code: &'i str,
-    error_factory: InterpErrorFactory<'i>,
+pub struct Interpreter<'source> {
+    code: &'source str,
+    error_factory: InterpErrorFactory<'source>,
     env: Environment,
     base_url: Option<String>,
-    let_bindings: HashMap<&'i str, String>,
+    let_bindings: HashMap<&'source str, String>,
 }
 
-impl<'i> Interpreter<'i> {
-    pub fn new(code: &'i str, env: Environment) -> Self {
+impl<'source> Interpreter<'source> {
+    pub fn new(code: &'source str, env: Environment) -> Self {
         Self {
             error_factory: InterpErrorFactory::new(code),
             code,
@@ -198,6 +198,9 @@ impl<'i> Interpreter<'i> {
                     ..
                 } => match identifier.name {
                     "name" | "log" | "dbg" | "skip" => {
+                        if attributes.has(identifier.name) {
+                            return Err(self.error_factory.duplicate_attribute(&identifier));
+                        }
                         attributes.add(identifier, parameters);
                     }
                     _ => {
@@ -220,7 +223,7 @@ impl<'i> Interpreter<'i> {
         Ok(())
     }
 
-    fn evaluate_expression(&self, exp: &Expression<'i>) -> Result<String> {
+    fn evaluate_expression(&self, exp: &Expression<'source>) -> Result<String> {
         use Expression::*;
         let value = match exp {
             Identifier(token) => self.evaluate_identifier(&token)?,
@@ -283,7 +286,7 @@ impl<'i> Interpreter<'i> {
         Ok(value)
     }
 
-    fn evaluate_env_variable(&self, token: &Literal<'i>) -> Result<String> {
+    fn evaluate_env_variable(&self, token: &Literal<'source>) -> Result<String> {
         self.env
             .get_variable_value(token.value.to_string())
             .ok_or_else(|| self.error_factory.env_variable_not_found(token))
