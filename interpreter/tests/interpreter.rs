@@ -215,3 +215,43 @@ fn responses_can_be_logged() {
         mock.assert();
     }
 }
+
+#[test]
+fn let_bindings_work() {
+    let mut server = mockito::Server::new();
+    let url = server.url();
+    let mut env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();
+
+    env.set_variable("test".to_string(), "12345".to_string())
+        .unwrap();
+    env.set_variable("b_url".to_string(), url).unwrap();
+
+    let mocks = ["POST"].map(|method| {
+        server
+            .mock(method, "/api")
+            .with_status(200)
+            .with_header("test", env.get_variable_value("test".to_string()).unwrap())
+            .with_header("test1", "asdf")
+            .create()
+    });
+
+    let code = r#"
+        set BASE_URL env("b_url")
+
+        let variable = env("test")
+        let o_variable = "asdf"
+
+        post /api {
+            header "test" variable
+            header "test1" o_variable
+        }
+    "#;
+
+    let mut program = Interpreter::new(&code, env);
+
+    program.run().unwrap();
+
+    for mock in mocks {
+        mock.assert();
+    }
+}
