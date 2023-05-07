@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{CommandFactory, Parser, Subcommand};
 use interpreter::{runtime::Environment, Interpreter};
 
 use std::{
@@ -36,6 +36,11 @@ enum Command {
     Env {
         #[command(subcommand)]
         command: EnvCommand,
+    },
+    /// Generate a completions file for a specified shell
+    Completion {
+        // The shell for which to generate completions
+        shell: clap_complete::Shell,
     },
 }
 
@@ -122,6 +127,9 @@ fn run() -> Result<(), Box<dyn Error>> {
                     }
                 },
             },
+            Command::Completion { shell } => {
+                clap_complete::generate(shell, &mut Cli::command(), "rstd", &mut std::io::stdout())
+            }
         },
         None => {
             print!(":>> ");
