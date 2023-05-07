@@ -13,9 +13,3 @@ error_meta = { path = "../error_meta" }
 
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["ron"] }
-
-[profile.dev.package.insta]
-opt-level = 3
-
-[profile.dev.package.similar]
-opt-level = 3

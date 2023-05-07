@@ -16,3 +16,9 @@ members = ["lexer", "interpreter", "parser"]
 clap = { version = "4.2.1", features = ["derive"] }
 clap_complete = "4.2.1"
 interpreter = { path = "./interpreter" }
+
+[profile.dev.package.insta]
+opt-level = 3
+
+[profile.dev.package.similar]
+opt-level = 3
