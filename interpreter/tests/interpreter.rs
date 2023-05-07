@@ -1,9 +1,6 @@
-use std::{
-    fs::{self, File},
-    io::Read,
-    path::PathBuf,
-};
+use std::{fs::File, io::Read, path::PathBuf};
 
+use insta::assert_debug_snapshot;
 use interpreter::{runtime::Environment, Interpreter};
 
 #[test]
@@ -85,7 +82,7 @@ fn requests_work() {
 
     let mut program = Interpreter::new(&code, env);
 
-    program.run().unwrap();
+    program.run(None).unwrap();
 
     get_api.assert();
     get_api_v2.assert();
@@ -124,7 +121,7 @@ fn comments_are_ignored() {
 
     let mut program = Interpreter::new(&code, env);
 
-    program.run().unwrap();
+    program.run(None).unwrap();
 
     get_api.assert();
     get_api_v2.assert();
@@ -166,7 +163,7 @@ fn requests_are_skippable() {
 
     let mut program = Interpreter::new(&code, env);
 
-    program.run().unwrap();
+    program.run(None).unwrap();
 
     for mock in mocks {
         mock.assert();
@@ -198,7 +195,7 @@ fn responses_can_be_logged() {
 
     let mut program = Interpreter::new(&code, env);
 
-    program.run().unwrap();
+    program.run(None).unwrap();
 
     let mut input_file = File::open("tests/files/test_data.json").unwrap();
     let mut output_file = File::open("tests/output/test_data_echo.json").unwrap();
@@ -249,9 +246,77 @@ fn let_bindings_work() {
 
     let mut program = Interpreter::new(&code, env);
 
-    program.run().unwrap();
+    program.run(None).unwrap();
 
     for mock in mocks {
         mock.assert();
     }
+}
+
+#[test]
+fn running_specific_requests_by_name() {
+    let mut server = mockito::Server::new();
+    let url = server.url();
+    let mut env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();
+
+    env.set_variable("b_url".to_string(), url).unwrap();
+
+    let mocks =
+        ["GET", "POST", "PUT"].map(|method| server.mock(method, "/api").with_status(200).create());
+
+    let del = server
+        .mock("DELETE", "/api")
+        .with_status(200)
+        .expect(0)
+        .create();
+
+    let code = r#"
+        set BASE_URL env("b_url")
+
+        get /api 
+        post /api 
+        put /api 
+
+        @name("test")
+        get /api 
+
+        @name("test")
+        post /api 
+
+        @name("test")
+        put /api 
+
+        @name("nope")
+        delete /api
+    "#;
+
+    let mut program = Interpreter::new(&code, env);
+
+    program.run(Some(vec!["test".to_string()])).unwrap();
+
+    for mock in mocks {
+        mock.assert();
+    }
+    del.assert();
+}
+
+#[test]
+fn name_attribute_requires_value() {
+    let mut env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();
+
+    env.set_variable("b_url".to_string(), "asdfasdf".to_string())
+        .unwrap();
+
+    let code = r#"
+        set BASE_URL env("b_url")
+        @name
+        get /api {}
+    "#;
+
+    let env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();
+    let mut program = Interpreter::new(&code, env);
+
+    let name_att_without_arg_err = program.run(Some(vec!["test".to_string()])).unwrap_err();
+
+    assert_debug_snapshot!(name_att_without_arg_err);
 }

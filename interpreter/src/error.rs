@@ -93,7 +93,7 @@ impl<'i> InterpErrorFactory<'i> {
         )
     }
 
-    pub fn required_call_args(
+    pub fn required_args(
         &self,
         at: Location,
         required: usize,

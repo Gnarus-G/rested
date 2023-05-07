@@ -15,6 +15,7 @@ use error_meta::Error;
 use lexer::Location;
 
 use crate::error::IntoInterpError;
+use crate::runtime::AttributeStore;
 
 use self::error::{InterpError, InterpErrorFactory};
 use self::runtime::Environment;
@@ -40,14 +41,14 @@ impl<'i> Interpreter<'i> {
         }
     }
 
-    pub fn run(&mut self) -> Result<()> {
+    pub fn run(&mut self, request_names: Option<Vec<String>>) -> Result<()> {
         let mut parser = parser::Parser::new(self.code);
 
         let ast = parser.parse().map_err(|err| err.into_interp_error())?;
 
         use ast::Item::*;
 
-        let mut attribute_items: HashMap<&'i str, Vec<Expression>> = HashMap::new();
+        let mut attributes = AttributeStore::new();
 
         for item in ast.items {
             match item {
@@ -57,9 +58,38 @@ impl<'i> Interpreter<'i> {
                     endpoint,
                     params,
                 } => {
-                    if let Some(_) = attribute_items.get("skip") {
-                        attribute_items.clear();
+                    // Handle @skip
+                    if let Some(_) = attributes.get("skip") {
+                        attributes.clear();
                         continue;
+                    }
+
+                    // Handle @name
+                    match attributes.get("name") {
+                        Some(att) => {
+                            let exp = att.first_params().ok_or_else(|| {
+                                self.error_factory
+                                    .required_args(att.location, 1, 0)
+                                    .with_message(
+                                    "@name(..) must be given an argument, like @name(\"req_1\")",
+                                )
+                            })?;
+
+                            let name = self.evaluate_expression(exp)?;
+
+                            if let Some(names) = &request_names {
+                                if !names.contains(&name) {
+                                    attributes.clear();
+                                    continue;
+                                }
+                            }
+                        }
+                        None => {
+                            if let Some(_) = &request_names {
+                                attributes.clear();
+                                continue;
+                            }
+                        }
                     }
 
                     let path = &self.evaluate_request_endpoint(endpoint)?;
@@ -96,7 +126,8 @@ impl<'i> Interpreter<'i> {
                         )
                     );
 
-                    if let Some(_) = attribute_items.get("dbg") {
+                    // Handle @dbg
+                    if let Some(_) = attributes.get("dbg") {
                         println!("    \u{21B3} with request data:");
                         println!("{}", indent_lines(&format!("{:#?}", req), 6));
 
@@ -134,8 +165,9 @@ impl<'i> Interpreter<'i> {
                             .map_err(|error| self.error_factory.other(location, error))?
                     };
 
-                    if let Some(att_params) = attribute_items.get("log") {
-                        if let Some(arg_exp) = att_params.first() {
+                    // Handle @log
+                    if let Some(att) = attributes.get("log") {
+                        if let Some(arg_exp) = att.first_params() {
                             let file_path = self.evaluate_expression(arg_exp)?.into();
 
                             log(&res, &file_path)
@@ -150,7 +182,7 @@ impl<'i> Interpreter<'i> {
                         }
                     }
 
-                    attribute_items.clear();
+                    attributes.clear();
                 }
                 Set { identifier, value } => {
                     if identifier.name != "BASE_URL" {
@@ -165,17 +197,17 @@ impl<'i> Interpreter<'i> {
                     parameters,
                     ..
                 } => match identifier.name {
-                    "log" | "dbg" | "skip" => {
-                        attribute_items.insert(identifier.name, parameters);
+                    "name" | "log" | "dbg" | "skip" => {
+                        attributes.add(identifier, parameters);
                     }
                     _ => {
                         return Err(self
                             .error_factory
                             .unsupported_attribute(&identifier)
                             .with_message(
-                                "@log(..), @skip, and @dbg are the only supported attributes",
+                                "@name, @log, @skip and @dbg are the only supported attributes",
                             )
-                            .into())
+                            .into());
                     }
                 },
                 Let { identifier, value } => {
@@ -201,7 +233,7 @@ impl<'i> Interpreter<'i> {
                 "env" => {
                     let arg = arguments.first().ok_or_else(|| {
                         self.error_factory
-                            .required_call_args(identifier.location, 1, 0)
+                            .required_args(identifier.location, 1, 0)
                             .with_message("calls to env(..) must include a variable name argument")
                     })?;
 
@@ -215,7 +247,7 @@ impl<'i> Interpreter<'i> {
                 "read" => {
                     let arg = arguments.first().ok_or_else(|| {
                         self.error_factory
-                            .required_call_args(identifier.location, 1, 0)
+                            .required_args(identifier.location, 1, 0)
                             .with_message("calls to read(..) must include a file name argument")
                     })?;
 
@@ -229,7 +261,7 @@ impl<'i> Interpreter<'i> {
                 "escape_new_lines" => {
                     let arg = arguments.first().ok_or_else(|| {
                         self.error_factory
-                            .required_call_args(identifier.location, 1, 0)
+                            .required_args(identifier.location, 1, 0)
                             .with_message("calls to escape_new_lines(..) must include an argument")
                     })?;
 

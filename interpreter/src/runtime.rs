@@ -1,5 +1,8 @@
 use std::{collections::HashMap, error::Error, path::PathBuf};
 
+use lexer::Location;
+use parser::ast::{Expression, Identifier};
+
 pub struct Environment {
     env_file_name: PathBuf,
     pub namespaced_variables: HashMap<String, HashMap<String, String>>,
@@ -76,5 +79,51 @@ impl Environment {
         serde_json::to_writer_pretty::<_, HashMap<_, _>>(writer, &self.namespaced_variables)?;
 
         Ok(())
+    }
+}
+
+pub struct Attribute<'source> {
+    pub name: &'source str,
+    pub location: Location,
+    pub params: Vec<Expression<'source>>,
+}
+
+impl<'source> Attribute<'source> {
+    pub fn first_params(&self) -> Option<&Expression<'source>> {
+        self.params.first()
+    }
+}
+
+pub struct AttributeStore<'source> {
+    inner: Vec<Attribute<'source>>,
+}
+
+impl<'source> AttributeStore<'source> {
+    pub fn new() -> Self {
+        Self { inner: vec![] }
+    }
+
+    pub fn add(&mut self, id: Identifier<'source>, params: Vec<Expression<'source>>) {
+        if self.has(id.name) {
+            return;
+        }
+
+        self.inner.push(Attribute {
+            name: id.name,
+            location: id.location,
+            params,
+        })
+    }
+
+    pub fn get(&self, name: &str) -> Option<&Attribute<'source>> {
+        self.inner.iter().find(|att| att.name == name)
+    }
+
+    pub fn has(&self, name: &str) -> bool {
+        self.get(name).is_some()
+    }
+
+    pub fn clear(&mut self) {
+        self.inner.clear();
     }
 }
