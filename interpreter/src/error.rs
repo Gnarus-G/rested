@@ -1,9 +1,7 @@
-use crate::{
-    ast::{Identifier, Literal},
-    error::Error,
-    lexer::Location,
-    parser::error::ParseError,
-};
+use lexer::Location;
+use parser::ast::{Identifier, Literal};
+use parser::error::ParseError;
+use parser::error_meta::Error;
 
 #[derive(Debug, PartialEq)]
 pub enum InterpError {
@@ -48,15 +46,19 @@ impl std::fmt::Display for InterpError {
     }
 }
 
-impl From<Error<ParseError>> for Error<InterpError> {
-    fn from(value: Error<ParseError>) -> Self {
-        Self {
+pub trait IntoInterpError {
+    fn into_interp_error(self) -> Error<InterpError>;
+}
+
+impl IntoInterpError for Error<ParseError> {
+    fn into_interp_error(self) -> Error<InterpError> {
+        Error {
             inner_error: InterpError::Other {
-                error: value.inner_error.to_string(),
+                error: self.inner_error.to_string(),
             },
-            location: value.location,
-            message: value.message,
-            context: value.context,
+            location: self.location,
+            message: self.message,
+            context: self.context,
         }
     }
 }

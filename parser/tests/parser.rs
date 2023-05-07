@@ -1,6 +1,6 @@
 use insta::assert_ron_snapshot;
 
-use rested::parser::Parser;
+use parser::Parser;
 
 #[test]
 fn it_works() {

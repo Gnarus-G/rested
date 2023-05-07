@@ -7,20 +7,11 @@ edition = "2021"
 name = "rstd"
 path = "src/main.rs"
 
+[workspace]
+members = ["lexer", "interpreter", "parser"]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 clap = { version = "4.2.1", features = ["derive"] }
-colored = "2.0.0"
-serde = { version = "1.0.159", features = ["derive"] }
-serde_json = "1.0.95"
-ureq = "2.6.2"
-
-[dev-dependencies]
-insta = { version = "1.29.0", features = ["ron"] }
-
-[profile.dev.package.insta]
-opt-level = 3
-
-[profile.dev.package.similar]
-opt-level = 3
+interpreter = { path = "./interpreter" }

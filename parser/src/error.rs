@@ -1,7 +1,6 @@
-use crate::{
-    error::Error,
-    lexer::{Token, TokenKind},
-};
+use lexer::{Token, TokenKind};
+
+use crate::error_meta::Error;
 
 #[derive(Debug, PartialEq)]
 pub struct TokenOwned {
@@ -116,7 +115,7 @@ impl<'i> ParseErrorConstructor<'i> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parser::Parser;
+    use crate::Parser;
 
     use TokenKind::*;
 

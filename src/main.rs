@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use rested::interpretor::{runtime::Environment, Interpreter};
+use interpreter::{runtime::Environment, Interpreter};
 
 use std::{
     collections::HashMap,

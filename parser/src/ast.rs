@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use serde::Serialize;
 
-use crate::lexer::{Location, Token};
+use lexer::{Location, Token};
 
 #[derive(Debug, PartialEq, Serialize)]
 pub struct Program<'i> {

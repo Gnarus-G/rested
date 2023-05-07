@@ -271,6 +271,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "interpreter"
+version = "0.1.0"
+dependencies = [
+ "colored",
+ "lexer",
+ "parser",
+ "serde",
+ "serde_json",
+ "ureq",
+]
+
+[[package]]
 name = "io-lifetimes"
 version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -315,6 +327,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
+name = "lexer"
+version = "0.1.0"
+dependencies = [
+ "insta",
+ "serde",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.140"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -357,6 +377,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b7e5500299e16ebb147ae15a00a942af264cf3688f47923b8fc2cd5858f23ad3"
 
 [[package]]
+name = "parser"
+version = "0.1.0"
+dependencies = [
+ "colored",
+ "insta",
+ "lexer",
+ "serde",
+]
+
+[[package]]
 name = "percent-encoding"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -385,11 +415,7 @@ name = "rested"
 version = "0.2.0"
 dependencies = [
  "clap",
- "colored",
- "insta",
- "serde",
- "serde_json",
- "ureq",
+ "interpreter",
 ]
 
 [[package]]

@@ -1,10 +1,10 @@
+pub mod ast;
 pub mod error;
+pub mod error_meta;
 
-use crate::{
-    ast::{Endpoint, Expression, Item, Program, RequestMethod, Statement},
-    error::Error,
-    lexer::{Lexer, Token, TokenKind},
-};
+use crate::ast::{Endpoint, Expression, Item, Program, RequestMethod, Statement};
+use error_meta::Error;
+use lexer::{Lexer, Token, TokenKind};
 
 use self::error::{ParseError, ParseErrorConstructor};
 
@@ -42,7 +42,7 @@ impl<'i> Parser<'i> {
     pub fn parse(&mut self) -> Result<Program<'i>> {
         let mut program = Program::new();
 
-        use crate::lexer::TokenKind::*;
+        use lexer::TokenKind::*;
 
         self.expect_one_of(vec![
             Set,
@@ -356,11 +356,9 @@ impl<'i> Parser<'i> {
 mod tests {
     use super::*;
 
-    use crate::{
-        ast::{Expression, Identifier, Literal, Program, RequestMethod, Statement},
-        lexer::at,
-    };
+    use crate::ast::{Expression, Identifier, Literal, Program, RequestMethod, Statement};
 
+    use lexer::Location;
     use Expression::*;
     use Item::*;
     use RequestMethod::*;
@@ -371,6 +369,10 @@ mod tests {
             let mut parser = Parser::new($input);
             assert_eq!(parser.parse().unwrap(), $program);
         };
+    }
+
+    pub fn at(line: usize, col: usize) -> Location {
+        Location { line, col }
     }
 
     #[test]

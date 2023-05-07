@@ -1,6 +1,6 @@
 use colored::Colorize;
 
-use crate::lexer::Location;
+use lexer::Location;
 use std::fmt::Display;
 
 #[derive(Debug)]

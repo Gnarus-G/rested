@@ -1,6 +1,5 @@
 mod tests {
     use insta::assert_debug_snapshot;
-    use rested::lexer;
 
     macro_rules! assert_lexer_snapshot {
         ($input:literal) => {

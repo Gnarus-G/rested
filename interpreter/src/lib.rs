@@ -8,11 +8,13 @@ use std::path::PathBuf;
 
 use colored::Colorize;
 
-use crate::ast::{self, Endpoint, Expression, Literal};
+use parser;
+use parser::ast::{self, Endpoint, Expression, Literal};
 
-use crate::error::Error;
-use crate::lexer::Location;
-use crate::parser;
+use lexer::Location;
+use parser::error_meta::Error;
+
+use crate::error::IntoInterpError;
 
 use self::error::{InterpError, InterpErrorFactory};
 use self::runtime::Environment;
@@ -41,7 +43,7 @@ impl<'i> Interpreter<'i> {
     pub fn run(&mut self) -> Result<()> {
         let mut parser = parser::Parser::new(self.code);
 
-        let ast = parser.parse()?;
+        let ast = parser.parse().map_err(|err| err.into_interp_error())?;
 
         use ast::Item::*;
 
@@ -386,3 +388,4 @@ impl ErrorWrapper for std::result::Result<ureq::Response, ureq::Error> {
         }
     }
 }
+
