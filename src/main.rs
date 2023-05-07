@@ -79,9 +79,7 @@ fn main() {
 fn run() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
 
-    let mut env = Environment::new(PathBuf::from(".vars.rd.json"));
-
-    env.load_variables_from_file()?;
+    let mut env = Environment::new(PathBuf::from(".vars.rd.json"))?;
 
     match cli.command {
         Some(command) => match command {
@@ -124,9 +122,7 @@ fn run() -> Result<(), Box<dyn Error>> {
             for line in stdin().lines() {
                 let code = line?;
 
-                let mut env = Environment::new(PathBuf::from(".vars.rd.json"));
-
-                env.load_variables_from_file()?;
+                let env = Environment::new(PathBuf::from(".vars.rd.json"))?;
 
                 Interpreter::new(&code, env).run()?;
 

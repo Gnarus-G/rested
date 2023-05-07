@@ -13,3 +13,6 @@ ureq = "2.6.2"
 lexer = { path = "../lexer" }
 parser = { path = "../parser" }
 error_meta = { path = "../error_meta" }
+
+[dev-dependencies]
+mockito = "1.0.2"

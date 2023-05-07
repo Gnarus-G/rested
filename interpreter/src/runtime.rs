@@ -7,15 +7,19 @@ pub struct Environment {
 }
 
 impl Environment {
-    pub fn new(file_name: PathBuf) -> Self {
-        Self {
+    pub fn new(file_name: PathBuf) -> Result<Self, std::io::Error> {
+        let mut env = Self {
             env_file_name: file_name,
             namespaced_variables: HashMap::from([("default".to_string(), HashMap::new())]),
             selected_namespace: None,
-        }
+        };
+
+        env.load_variables_from_file()?;
+
+        Ok(env)
     }
 
-    pub fn load_variables_from_file(&mut self) -> Result<(), std::io::Error> {
+    fn load_variables_from_file(&mut self) -> Result<(), std::io::Error> {
         let file = std::fs::File::options()
             .read(true)
             .write(true)
