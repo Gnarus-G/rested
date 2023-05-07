@@ -21,11 +21,15 @@ struct Cli {
 enum Command {
     /// Run a script written in the language
     Run {
-        /// namespace in which to look for environment variables
+        /// Namespace in which to look for environment variables
         #[arg(short = 'n', long)]
         namespace: Option<String>,
 
-        /// path to the script to run
+        /// One or more names of the specific request(s) to run
+        #[arg(short = 'r', long, num_args(1..))]
+        request: Option<Vec<String>>,
+
+        /// Path to the script to run
         file: PathBuf,
     },
     /// Operate on the environment variables available in the runtime
@@ -39,14 +43,14 @@ enum Command {
 enum EnvCommand {
     /// Set environment variables available in the runtime
     Set {
-        /// namespace for which to set environment variable
+        /// Namespace for which to set environment variable
         #[arg(short = 'n', long)]
         namespace: Option<String>,
 
-        /// of the environment variable
+        /// Of the environment variable
         name: String,
 
-        /// of the environment variable
+        /// Of the environment variable
         value: String,
     },
     /// Operate on the variables namespaces available in the runtime
@@ -60,12 +64,12 @@ enum EnvCommand {
 enum EnvNamespaceCommand {
     /// Set a new variables namespace available in the runtime
     Add {
-        /// of the namespace
+        /// Of the namespace
         name: String,
     },
     /// Remove a namespace
     Rm {
-        /// of the namespace
+        /// Of the namespace
         name: String,
     },
 }
@@ -79,20 +83,22 @@ fn main() {
 fn run() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
 
-    let mut env = Environment::new(PathBuf::from(".vars.rd.json"));
-
-    env.load_variables_from_file()?;
+    let mut env = Environment::new(PathBuf::from(".vars.rd.json"))?;
 
     match cli.command {
         Some(command) => match command {
-            Command::Run { file, namespace } => {
+            Command::Run {
+                file,
+                namespace,
+                request,
+            } => {
                 if let Some(ns) = namespace {
                     env.select_variables_namespace(ns);
                 }
 
                 let code = fs::read_to_string(file)?;
 
-                Interpreter::new(&code, env).run()?;
+                Interpreter::new(&code, env).run(request)?;
             }
             Command::Env { command } => match command {
                 EnvCommand::Set {
@@ -124,11 +130,9 @@ fn run() -> Result<(), Box<dyn Error>> {
             for line in stdin().lines() {
                 let code = line?;
 
-                let mut env = Environment::new(PathBuf::from(".vars.rd.json"));
+                let env = Environment::new(PathBuf::from(".vars.rd.json"))?;
 
-                env.load_variables_from_file()?;
-
-                Interpreter::new(&code, env).run()?;
+                Interpreter::new(&code, env).run(None)?;
 
                 print!(":>> ");
                 stdout().flush()?;

@@ -13,3 +13,13 @@ ureq = "2.6.2"
 lexer = { path = "../lexer" }
 parser = { path = "../parser" }
 error_meta = { path = "../error_meta" }
+
+[dev-dependencies]
+mockito = "1.0.2"
+insta = { version = "1.29.0", features = ["ron"] }
+
+[profile.dev.package.insta]
+opt-level = 3
+
+[profile.dev.package.similar]
+opt-level = 3

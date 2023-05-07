@@ -1,0 +1,23 @@
+---
+source: interpreter/tests/interpreter.rs
+expression: name_att_without_arg_err
+---
+Error {
+    inner_error: RequiredArguments {
+        required: 1,
+        recieved: 0,
+    },
+    location: 2:9,
+    message: Some(
+        "@name(..) must be given an argument, like @name(\"req_1\")",
+    ),
+    context: ErrorSourceContext {
+        above: Some(
+            "        set BASE_URL env(\"b_url\")",
+        ),
+        line: "        @name",
+        below: Some(
+            "        get /api {}",
+        ),
+    },
+}

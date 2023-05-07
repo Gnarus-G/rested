@@ -12,6 +12,7 @@ pub enum InterpError {
     UndefinedCallable { name: String },
     UndeclaredIdentifier { name: String },
     UnsupportedAttribute { name: String },
+    DuplicateAttribute { name: String },
     Other { error: String },
 }
 
@@ -38,6 +39,12 @@ impl std::fmt::Display for InterpError {
             InterpError::UndeclaredIdentifier { name } => format!("undeclared variable: {}", name),
             InterpError::UnsupportedAttribute { name } => {
                 format!("unsupported attribute: {}", name)
+            }
+            InterpError::DuplicateAttribute { name } => {
+                format!(
+                    "duplicate attribute: @{} is already set for this request",
+                    name
+                )
             }
             InterpError::Other { error } => error.clone(),
         };
@@ -93,7 +100,7 @@ impl<'i> InterpErrorFactory<'i> {
         )
     }
 
-    pub fn required_call_args(
+    pub fn required_args(
         &self,
         at: Location,
         required: usize,
@@ -119,6 +126,16 @@ impl<'i> InterpErrorFactory<'i> {
     pub fn unsupported_attribute(&self, token: &Identifier) -> Error<InterpError> {
         Error::new(
             InterpError::UnsupportedAttribute {
+                name: token.name.to_string(),
+            },
+            token.location,
+            self.source_code,
+        )
+    }
+
+    pub fn duplicate_attribute(&self, token: &Identifier) -> Error<InterpError> {
+        Error::new(
+            InterpError::DuplicateAttribute {
                 name: token.name.to_string(),
             },
             token.location,

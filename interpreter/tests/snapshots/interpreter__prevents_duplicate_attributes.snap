@@ -1,0 +1,20 @@
+---
+source: interpreter/tests/interpreter.rs
+expression: duped_att_err
+---
+Error {
+    inner_error: DuplicateAttribute {
+        name: "log",
+    },
+    location: 3:9,
+    message: None,
+    context: ErrorSourceContext {
+        above: Some(
+            "        @log",
+        ),
+        line: "        @log",
+        below: Some(
+            "        get /api {}",
+        ),
+    },
+}
