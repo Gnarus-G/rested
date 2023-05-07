@@ -1,6 +1,6 @@
 use lexer::{Token, TokenKind};
 
-use crate::error_meta::Error;
+use error_meta::Error;
 
 #[derive(Debug, PartialEq)]
 pub struct TokenOwned {

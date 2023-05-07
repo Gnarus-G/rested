@@ -9,6 +9,7 @@ edition = "2021"
 colored = "2.0.0"
 serde = { version = "1.0.159", features = ["derive"] }
 lexer = { path = "../lexer" }
+error_meta = { path = "../error_meta" }
 
 [dev-dependencies]
 insta = { version = "1.29.0", features = ["ron"] }

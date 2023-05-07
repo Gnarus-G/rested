@@ -1,7 +1,7 @@
+use error_meta::Error;
 use lexer::Location;
 use parser::ast::{Identifier, Literal};
 use parser::error::ParseError;
-use parser::error_meta::Error;
 
 #[derive(Debug, PartialEq)]
 pub enum InterpError {

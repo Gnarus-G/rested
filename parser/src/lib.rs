@@ -1,6 +1,5 @@
 pub mod ast;
 pub mod error;
-pub mod error_meta;
 
 use crate::ast::{Endpoint, Expression, Item, Program, RequestMethod, Statement};
 use error_meta::Error;

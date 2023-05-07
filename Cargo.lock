@@ -206,6 +206,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "error_meta"
+version = "0.1.0"
+dependencies = [
+ "colored",
+ "lexer",
+]
+
+[[package]]
 name = "flate2"
 version = "1.0.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -275,6 +283,7 @@ name = "interpreter"
 version = "0.1.0"
 dependencies = [
  "colored",
+ "error_meta",
  "lexer",
  "parser",
  "serde",
@@ -381,6 +390,7 @@ name = "parser"
 version = "0.1.0"
 dependencies = [
  "colored",
+ "error_meta",
  "insta",
  "lexer",
  "serde",

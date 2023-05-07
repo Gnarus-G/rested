@@ -11,8 +11,8 @@ use colored::Colorize;
 use parser;
 use parser::ast::{self, Endpoint, Expression, Literal};
 
+use error_meta::Error;
 use lexer::Location;
-use parser::error_meta::Error;
 
 use crate::error::IntoInterpError;
 
@@ -388,4 +388,3 @@ impl ErrorWrapper for std::result::Result<ureq::Response, ureq::Error> {
         }
     }
 }
-

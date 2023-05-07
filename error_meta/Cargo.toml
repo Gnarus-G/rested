@@ -1,5 +1,5 @@
 [package]
-name = "interpreter"
+name = "error_meta"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,9 +7,4 @@ edition = "2021"
 
 [dependencies]
 colored = "2.0.0"
-serde = { version = "1.0.159", features = ["derive"] }
-serde_json = "1.0.95"
-ureq = "2.6.2"
 lexer = { path = "../lexer" }
-parser = { path = "../parser" }
-error_meta = { path = "../error_meta" }
