@@ -42,6 +42,8 @@ enum Command {
         // The shell for which to generate completions
         shell: clap_complete::Shell,
     },
+    /// Start the rested language server
+    Lsp,
 }
 
 #[derive(Debug, Subcommand)]
@@ -130,6 +132,7 @@ fn run() -> Result<(), Box<dyn Error>> {
             Command::Completion { shell } => {
                 clap_complete::generate(shell, &mut Cli::command(), "rstd", &mut std::io::stdout())
             }
+            Command::Lsp => language_server::start(),
         },
         None => {
             print!(":>> ");

@@ -8,7 +8,7 @@ name = "rstd"
 path = "src/main.rs"
 
 [workspace]
-members = ["lexer", "interpreter", "parser"]
+members = ["lexer", "interpreter", "parser", "error_meta", "language_server"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -16,6 +16,7 @@ members = ["lexer", "interpreter", "parser"]
 clap = { version = "4.2.1", features = ["derive"] }
 clap_complete = "4.2.1"
 interpreter = { path = "./interpreter" }
+language_server = { path = "./language_server" }
 
 [profile.dev.package.insta]
 opt-level = 3
