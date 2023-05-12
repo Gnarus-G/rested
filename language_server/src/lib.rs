@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+use std::sync::Mutex;
+
 use lexer::locations::Location;
 use parser::Parser;
 use tower_lsp::jsonrpc::Result;
@@ -18,8 +21,35 @@ impl IntoPosition for Location {
 }
 
 #[derive(Debug)]
-pub struct Backend {
+struct Backend {
     pub client: Client,
+    pub documents: TextDocuments,
+}
+
+#[derive(Debug)]
+struct TextDocuments {
+    pub inner: Mutex<HashMap<Url, String>>,
+}
+
+impl TextDocuments {
+    fn new() -> Self {
+        Self {
+            inner: Mutex::new(HashMap::new()),
+        }
+    }
+
+    fn get(&self, uri: Url) -> Option<String> {
+        match self.inner.lock() {
+            Ok(map) => map.get(&uri).map(|s| s.clone()),
+            Err(_) => None,
+        }
+    }
+
+    fn put(&self, url: Url, text: String) {
+        if let Ok(mut map) = self.inner.lock() {
+            map.insert(url, text);
+        }
+    }
 }
 
 struct ChangedDocumentItem {
@@ -52,6 +82,8 @@ impl Backend {
             }
         };
 
+        self.documents.put(params.uri.clone(), params.text);
+
         self.client
             .publish_diagnostics(params.uri, diagnostics, Some(params.version))
             .await;
@@ -67,6 +99,7 @@ impl LanguageServer for Backend {
                 text_document_sync: Some(TextDocumentSyncCapability::Kind(
                     TextDocumentSyncKind::FULL,
                 )),
+                hover_provider: Some(HoverProviderCapability::Simple(true)),
                 ..ServerCapabilities::default()
             },
         })
@@ -76,6 +109,45 @@ impl LanguageServer for Backend {
         self.client
             .log_message(MessageType::INFO, "server initialized!")
             .await;
+    }
+
+    async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
+        let text = self
+            .documents
+            .get(params.text_document_position_params.text_document.uri)
+            .unwrap();
+
+        let mut content = vec![];
+
+        let lexer = lexer::Lexer::new(&text);
+
+        for token in lexer.into_iter() {
+            let hover_position = params.text_document_position_params.position;
+
+            if token.start.line != hover_position.line as usize {
+                continue;
+            }
+
+            let hover_is_on_token = (token.start.col..token.end_location().col)
+                .contains(&(hover_position.character as usize));
+
+            if hover_is_on_token {
+                content.push(MarkedString::String(format!(
+                    "{} {}",
+                    token.text, token.start,
+                )));
+                break;
+            }
+        }
+
+        if !content.is_empty() {
+            return Ok(Some(Hover {
+                contents: HoverContents::Array(content),
+                range: None,
+            }));
+        }
+
+        Ok(None)
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
@@ -110,7 +182,10 @@ pub fn start() {
             let stdin = tokio::io::stdin();
             let stdout = tokio::io::stdout();
 
-            let (service, socket) = LspService::new(|client| Backend { client });
+            let (service, socket) = LspService::new(|client| Backend {
+                client,
+                documents: TextDocuments::new(),
+            });
             Server::new(stdin, stdout, socket).serve(service).await;
         });
 }

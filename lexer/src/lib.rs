@@ -425,6 +425,20 @@ impl<'i> Lexer<'i> {
     }
 }
 
+impl<'source> Iterator for Lexer<'source> {
+    type Item = Token<'source>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let token = self.next();
+
+        if let TokenKind::End = token.kind {
+            return None;
+        }
+
+        Some(token)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
