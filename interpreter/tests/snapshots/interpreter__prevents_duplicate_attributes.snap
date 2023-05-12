@@ -6,7 +6,10 @@ Error {
     inner_error: DuplicateAttribute {
         name: "log",
     },
-    location: 3:9,
+    span: Span {
+        start: 3:9,
+        end: 3:12,
+    },
     message: None,
     context: ErrorSourceContext {
         above: Some(

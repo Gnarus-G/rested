@@ -21,12 +21,12 @@ let billy = "Billy bob"
 @log @dbg
 post / {
    header "random" billy
-   header "Content-Type" content_type
-   body read("data.json")
+   header "Content-Type"   content_type 
+   body read("data.json") 
 }
 
 @log @dbg
-post /echo {
+post /echo {  
    header "random" "billy bob"
    header "Content-Type" "application/json"
    body `{

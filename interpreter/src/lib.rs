@@ -12,7 +12,7 @@ use parser;
 use parser::ast::{self, Endpoint, Expression, Literal};
 
 use error_meta::Error;
-use lexer::Location;
+use lexer::locations::Span;
 
 use crate::error::IntoInterpError;
 use crate::runtime::AttributeStore;
@@ -53,7 +53,7 @@ impl<'source> Interpreter<'source> {
         for item in ast.items {
             match item {
                 Request {
-                    location,
+                    span,
                     method,
                     endpoint,
                     params,
@@ -69,7 +69,7 @@ impl<'source> Interpreter<'source> {
                         Some(att) => {
                             let exp = att.first_params().ok_or_else(|| {
                                 self.error_factory
-                                    .required_args(att.location, 1, 0)
+                                    .required_args(att.span, 1, 0)
                                     .with_message(
                                     "@name(..) must be given an argument, like @name(\"req_1\")",
                                 )
@@ -146,23 +146,23 @@ impl<'source> Interpreter<'source> {
                     let res = if let Some(value) = body {
                         let res = req
                             .send_string(&value)
-                            .wrap_error_with(&self.error_factory, location)?;
+                            .wrap_error_with(&self.error_factory, span)?;
 
                         if res.content_type() == "application/json" {
                             let string = &res
                                 .into_string()
-                                .map_err(|e| self.error_factory.other(location, e))?;
+                                .map_err(|e| self.error_factory.other(span, e))?;
                             prettify_json_string(string)
-                                .map_err(|e| self.error_factory.other(location, e))?
+                                .map_err(|e| self.error_factory.other(span, e))?
                         } else {
                             res.into_string()
-                                .map_err(|error| self.error_factory.other(location, error))?
+                                .map_err(|error| self.error_factory.other(span, error))?
                         }
                     } else {
                         req.call()
-                            .map_err(|error| self.error_factory.other(location, error))?
+                            .map_err(|error| self.error_factory.other(span, error))?
                             .into_string()
-                            .map_err(|error| self.error_factory.other(location, error))?
+                            .map_err(|error| self.error_factory.other(span, error))?
                     };
 
                     // Handle @log
@@ -171,7 +171,7 @@ impl<'source> Interpreter<'source> {
                             let file_path = self.evaluate_expression(arg_exp)?.into();
 
                             log(&res, &file_path)
-                                .map_err(|error| self.error_factory.other(location, error))?;
+                                .map_err(|error| self.error_factory.other(span, error))?;
 
                             println!(
                                 "    \u{21B3} {}",
@@ -228,7 +228,9 @@ impl<'source> Interpreter<'source> {
         let value = match exp {
             Identifier(token) => self.evaluate_identifier(&token)?,
             String(token) => token.value.to_string(),
-            TemplateSringLiteral { parts } => self.evaluate_template_string_literal_parts(parts)?,
+            TemplateSringLiteral { parts, .. } => {
+                self.evaluate_template_string_literal_parts(parts)?
+            }
             Call {
                 identifier,
                 arguments,
@@ -236,7 +238,7 @@ impl<'source> Interpreter<'source> {
                 "env" => {
                     let arg = arguments.first().ok_or_else(|| {
                         self.error_factory
-                            .required_args(identifier.location, 1, 0)
+                            .required_args(identifier.span, 1, 0)
                             .with_message("calls to env(..) must include a variable name argument")
                     })?;
 
@@ -244,13 +246,13 @@ impl<'source> Interpreter<'source> {
 
                     self.evaluate_env_variable(&Literal {
                         value: &value,
-                        location: identifier.location,
+                        span: identifier.span,
                     })?
                 }
                 "read" => {
                     let arg = arguments.first().ok_or_else(|| {
                         self.error_factory
-                            .required_args(identifier.location, 1, 0)
+                            .required_args(identifier.span, 1, 0)
                             .with_message("calls to read(..) must include a file name argument")
                     })?;
 
@@ -258,13 +260,13 @@ impl<'source> Interpreter<'source> {
 
                     self.read_file(&Literal {
                         value: &file_name,
-                        location: identifier.location,
+                        span: identifier.span,
                     })?
                 }
                 "escape_new_lines" => {
                     let arg = arguments.first().ok_or_else(|| {
                         self.error_factory
-                            .required_args(identifier.location, 1, 0)
+                            .required_args(identifier.span, 1, 0)
                             .with_message("calls to escape_new_lines(..) must include an argument")
                     })?;
 
@@ -296,7 +298,7 @@ impl<'source> Interpreter<'source> {
     fn read_file(&self, file_path: &Literal) -> Result<String> {
         let handle_error = |e| {
             self.error_factory.other(
-                file_path.location,
+                file_path.span,
                 &format!("Error reading file '{}': {e}", file_path.value),
             )
         };
@@ -320,7 +322,7 @@ impl<'source> Interpreter<'source> {
                     }
                     base_url
                 } else {
-                    return Err(self.error_factory.unset_base_url(pn.location));
+                    return Err(self.error_factory.unset_base_url(pn.span));
                 }
             }
         })
@@ -390,7 +392,7 @@ trait ErrorWrapper {
     fn wrap_error_with(
         self,
         error_factory: &InterpErrorFactory,
-        location: Location,
+        location: Span,
     ) -> Result<ureq::Response>;
 }
 
@@ -398,7 +400,7 @@ impl ErrorWrapper for std::result::Result<ureq::Response, ureq::Error> {
     fn wrap_error_with(
         self,
         error_factory: &InterpErrorFactory,
-        location: Location,
+        location: Span,
     ) -> Result<ureq::Response> {
         match self {
             Ok(res) => Ok(res),

@@ -1,6 +1,7 @@
+pub mod locations;
 use std::ops::Range;
 
-use serde::Serialize;
+use locations::Location;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum TokenKind {
@@ -44,39 +45,25 @@ pub enum TokenKind {
     IllegalToken,
 }
 
-#[derive(PartialEq, Clone, Copy, Serialize)]
-pub struct Location {
-    pub line: usize,
-    pub col: usize,
-}
-
-#[cfg(test)]
-pub fn at(line: usize, col: usize) -> Location {
-    Location { line, col }
-}
-
-impl std::fmt::Display for Location {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "at {}:{}", self.line + 1, self.col + 1)
-    }
-}
-
-impl std::fmt::Debug for Location {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}:{}", self.line, self.col)
-    }
-}
-
 #[derive(PartialEq)]
 pub struct Token<'t> {
     pub kind: TokenKind,
     pub text: &'t str,
-    pub location: Location,
+    pub start: Location,
+}
+
+impl<'source> Token<'source> {
+    pub fn end_location(&self) -> Location {
+        Location {
+            line: self.start.line,
+            col: self.start.col + self.text.len(),
+        }
+    }
 }
 
 impl<'i> std::fmt::Debug for Token<'i> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}({:?}) at {:?}", self.kind, self.text, self.location)
+        write!(f, "{:?}({:?}) at {:?}", self.kind, self.text, self.start)
     }
 }
 
@@ -180,7 +167,7 @@ impl<'i> Lexer<'i> {
             None => {
                 return Token {
                     kind: TokenKind::End,
-                    location: self.cursor,
+                    start: self.cursor,
                     text: "",
                 }
             }
@@ -195,7 +182,7 @@ impl<'i> Lexer<'i> {
                 let token = Token {
                     kind: DollarSignLBracket,
                     text: "${",
-                    location: self.cursor,
+                    start: self.cursor,
                 };
                 self.step();
                 token
@@ -203,33 +190,33 @@ impl<'i> Lexer<'i> {
             b'}' if self.inside_multiline_string => self.multiline_string_literal(),
             b'(' => Token {
                 kind: LParen,
-                location: self.cursor,
+                start: self.cursor,
                 text: "(",
             },
             b')' => Token {
                 kind: RParen,
-                location: self.cursor,
+                start: self.cursor,
                 text: ")",
             },
             b'{' => Token {
                 kind: LBracket,
-                location: self.cursor,
+                start: self.cursor,
                 text: "{",
             },
             b'}' => Token {
                 kind: RBracket,
-                location: self.cursor,
+                start: self.cursor,
                 text: "}",
             },
             b'=' => Token {
                 kind: Assign,
                 text: "=",
-                location: self.cursor,
+                start: self.cursor,
             },
             b'@' => Token {
                 kind: AttributePrefix,
                 text: "@",
-                location: self.cursor,
+                start: self.cursor,
             },
             b'/' if self.peek_char().is(b'/') => self.line_comment(),
             b'/' => self.pathname(),
@@ -238,7 +225,7 @@ impl<'i> Lexer<'i> {
             _ => Token {
                 kind: IllegalToken,
                 text: std::str::from_utf8(&self.input[self.position..self.position + 1]).unwrap(),
-                location: self.cursor,
+                start: self.cursor,
             },
         };
 
@@ -278,7 +265,7 @@ impl<'i> Lexer<'i> {
             if let None = self.ch() {
                 return Token {
                     kind: TokenKind::UnfinishedMultiLineStringLiteral,
-                    location,
+                    start: location,
                     text: self.input_slice(start_pos..self.position),
                 };
             }
@@ -290,7 +277,7 @@ impl<'i> Lexer<'i> {
 
         Token {
             kind: TokenKind::MultiLineStringLiteral,
-            location,
+            start: location,
             text: string,
         }
     }
@@ -309,7 +296,7 @@ impl<'i> Lexer<'i> {
             Some(b'\n') | None => {
                 return Token {
                     kind: TokenKind::UnfinishedStringLiteral,
-                    location,
+                    start: location,
                     text: string,
                 };
             }
@@ -318,7 +305,7 @@ impl<'i> Lexer<'i> {
 
         Token {
             kind: TokenKind::StringLiteral,
-            location,
+            start: location,
             text: string,
         }
     }
@@ -328,7 +315,7 @@ impl<'i> Lexer<'i> {
         self.step();
         Token {
             kind: TokenKind::StringLiteral,
-            location,
+            start: location,
             text: "",
         }
     }
@@ -343,47 +330,47 @@ impl<'i> Lexer<'i> {
         match string {
             "let" => Token {
                 kind: Let,
-                location,
+                start: location,
                 text: string,
             },
             "get" => Token {
                 kind: Get,
-                location,
+                start: location,
                 text: string,
             },
             "post" => Token {
                 kind: Post,
-                location,
+                start: location,
                 text: string,
             },
             "put" => Token {
                 kind: Put,
-                location,
+                start: location,
                 text: string,
             },
             "patch" => Token {
                 kind: Patch,
-                location,
+                start: location,
                 text: string,
             },
             "delete" => Token {
                 kind: Delete,
-                location,
+                start: location,
                 text: string,
             },
             "header" => Token {
                 kind: Header,
-                location,
+                start: location,
                 text: string,
             },
             "set" => Token {
                 kind: Set,
-                location,
+                start: location,
                 text: string,
             },
             "body" => Token {
                 kind: Body,
-                location,
+                start: location,
                 text: string,
             },
             "http" | "https" => {
@@ -391,13 +378,13 @@ impl<'i> Lexer<'i> {
                 let s = self.input_slice(s..e);
                 Token {
                     kind: Url,
-                    location,
+                    start: location,
                     text: s,
                 }
             }
             s => Token {
                 kind: Ident,
-                location,
+                start: location,
                 text: s,
             },
         }
@@ -410,7 +397,7 @@ impl<'i> Lexer<'i> {
 
         Token {
             kind: TokenKind::Pathname,
-            location,
+            start: location,
             text: string,
         }
     }
@@ -421,7 +408,7 @@ impl<'i> Lexer<'i> {
         let string = self.input_slice(s..e);
         Token {
             text: string,
-            location,
+            start: location,
             kind: TokenKind::Shebang,
         }
     }
@@ -433,7 +420,7 @@ impl<'i> Lexer<'i> {
         Token {
             kind: TokenKind::Linecomment,
             text: string,
-            location,
+            start: location,
         }
     }
 }
@@ -454,6 +441,10 @@ mod tests {
         };
     }
 
+    pub fn at(line: usize, col: usize) -> Location {
+        Location { line, col }
+    }
+
     #[test]
     fn lex_string_literals() {
         assert_lexes!(
@@ -461,7 +452,7 @@ mod tests {
             [Token {
                 kind: StringLiteral,
                 text: "hello",
-                location: at(0, 0)
+                start: at(0, 0)
             },]
         );
 
@@ -470,7 +461,7 @@ mod tests {
             [Token {
                 kind: UnfinishedStringLiteral,
                 text: "hello",
-                location: at(0, 0)
+                start: at(0, 0)
             },]
         );
 
@@ -483,12 +474,12 @@ mod tests {
                 Token {
                     kind: UnfinishedStringLiteral,
                     text: "hello",
-                    location: at(1, 0)
+                    start: at(1, 0)
                 },
                 Token {
                     kind: UnfinishedStringLiteral,
                     text: "world",
-                    location: at(2, 0)
+                    start: at(2, 0)
                 }
             ]
         );
@@ -499,17 +490,17 @@ mod tests {
                 Token {
                     kind: StringLiteral,
                     text: "",
-                    location: at(0, 1)
+                    start: at(0, 1)
                 },
                 Token {
                     kind: StringLiteral,
                     text: "",
-                    location: at(0, 4)
+                    start: at(0, 4)
                 },
                 Token {
                     kind: StringLiteral,
                     text: "",
-                    location: at(0, 7)
+                    start: at(0, 7)
                 }
             ]
         );
@@ -520,17 +511,17 @@ mod tests {
                 Token {
                     kind: LBracket,
                     text: "{",
-                    location: at(0, 1)
+                    start: at(0, 1)
                 },
                 Token {
                     kind: StringLiteral,
                     text: "Bearer token",
-                    location: at(0, 3)
+                    start: at(0, 3)
                 },
                 Token {
                     kind: RBracket,
                     text: "}",
-                    location: at(0, 18)
+                    start: at(0, 18)
                 }
             ]
         );
@@ -547,12 +538,12 @@ stuff"#,
                 Token {
                     kind: MultiLineStringLiteral,
                     text: "\n{\n    stuff\n}",
-                    location: at(0, 0)
+                    start: at(0, 0)
                 },
                 Token {
                     kind: UnfinishedMultiLineStringLiteral,
                     text: "\nstuff",
-                    location: at(5, 0)
+                    start: at(5, 0)
                 }
             ]
         );
@@ -566,12 +557,12 @@ stuff"#,
                 Token {
                     kind: Get,
                     text: "get",
-                    location: at(0, 0)
+                    start: at(0, 0)
                 },
                 Token {
                     kind: Url,
                     text: "http://localhost",
-                    location: at(0, 4),
+                    start: at(0, 4),
                 }
             ]
         );
@@ -584,37 +575,37 @@ stuff"#,
             vec![
                 Token {
                     kind: Get,
-                    location: at(0, 0),
+                    start: at(0, 0),
                     text: "get"
                 },
                 Token {
                     kind: Url,
-                    location: at(0, 4),
+                    start: at(0, 4),
                     text: "http://localhost"
                 },
                 Token {
                     kind: LBracket,
-                    location: at(0, 21),
+                    start: at(0, 21),
                     text: "{"
                 },
                 Token {
                     kind: Header,
-                    location: at(0, 23),
+                    start: at(0, 23),
                     text: "header"
                 },
                 Token {
                     kind: StringLiteral,
-                    location: at(0, 30),
+                    start: at(0, 30),
                     text: "Authorization"
                 },
                 Token {
                     kind: StringLiteral,
-                    location: at(0, 46),
+                    start: at(0, 46),
                     text: "Bearer token"
                 },
                 Token {
                     kind: RBracket,
-                    location: at(0, 61),
+                    start: at(0, 61),
                     text: "}"
                 },
             ]
@@ -629,12 +620,12 @@ stuff"#,
                 Token {
                     kind: Get,
                     text: "get",
-                    location: at(0, 0)
+                    start: at(0, 0)
                 },
                 Token {
                     kind: Url,
                     text: "http://localhost",
-                    location: at(1, 0),
+                    start: at(1, 0),
                 }
             ]
         );
@@ -648,22 +639,22 @@ stuff"#,
                 Token {
                     kind: Get,
                     text: "get",
-                    location: at(0, 0)
+                    start: at(0, 0)
                 },
                 Token {
                     kind: Url,
                     text: "http://localhost",
-                    location: at(1, 4),
+                    start: at(1, 4),
                 },
                 Token {
                     kind: LBracket,
                     text: "{",
-                    location: at(2, 0),
+                    start: at(2, 0),
                 },
                 Token {
                     kind: RBracket,
                     text: "}",
-                    location: at(3, 0),
+                    start: at(3, 0),
                 }
             ]
         );
@@ -680,47 +671,47 @@ post http://localhost {
             vec![
                 Token {
                     kind: Post,
-                    location: at(1, 0),
+                    start: at(1, 0),
                     text: "post"
                 },
                 Token {
                     kind: Url,
-                    location: at(1, 5),
+                    start: at(1, 5),
                     text: "http://localhost"
                 },
                 Token {
                     kind: LBracket,
-                    location: at(1, 22),
+                    start: at(1, 22),
                     text: "{"
                 },
                 Token {
                     kind: Header,
-                    location: at(2, 4),
+                    start: at(2, 4),
                     text: "header"
                 },
                 Token {
                     kind: StringLiteral,
-                    location: at(2, 11),
+                    start: at(2, 11),
                     text: "Authorization"
                 },
                 Token {
                     kind: StringLiteral,
-                    location: at(2, 27),
+                    start: at(2, 27),
                     text: "Bearer token"
                 },
                 Token {
                     kind: Body,
-                    location: at(3, 4),
+                    start: at(3, 4),
                     text: "body"
                 },
                 Token {
                     kind: StringLiteral,
-                    location: at(3, 9),
+                    start: at(3, 9),
                     text: "{neet: 1337}"
                 },
                 Token {
                     kind: RBracket,
-                    location: at(4, 0),
+                    start: at(4, 0),
                     text: "}"
                 },
             ]
@@ -735,37 +726,37 @@ post http://localhost {
                 Token {
                     kind: Ident,
                     text: "env",
-                    location: at(0, 0)
+                    start: at(0, 0)
                 },
                 Token {
                     kind: LParen,
                     text: "(",
-                    location: at(0, 3)
+                    start: at(0, 3)
                 },
                 Token {
                     kind: RParen,
                     text: ")",
-                    location: at(0, 4)
+                    start: at(0, 4)
                 },
                 Token {
                     kind: Ident,
                     text: "env",
-                    location: at(0, 6)
+                    start: at(0, 6)
                 },
                 Token {
                     kind: LParen,
                     text: "(",
-                    location: at(0, 9)
+                    start: at(0, 9)
                 },
                 Token {
                     kind: StringLiteral,
                     text: "stuff",
-                    location: at(0, 10)
+                    start: at(0, 10)
                 },
                 Token {
                     kind: RParen,
                     text: ")",
-                    location: at(0, 17)
+                    start: at(0, 17)
                 }
             ]
         );
@@ -779,57 +770,57 @@ post http://localhost {
                 Token {
                     kind: MultiLineStringLiteral,
                     text: "stuff",
-                    location: at(0, 0)
+                    start: at(0, 0)
                 },
                 Token {
                     kind: DollarSignLBracket,
                     text: "${",
-                    location: at(0, 6)
+                    start: at(0, 6)
                 },
                 Token {
                     kind: StringLiteral,
                     text: "interpolated",
-                    location: at(0, 8)
+                    start: at(0, 8)
                 },
                 Token {
                     kind: MultiLineStringLiteral,
                     text: "(things",
-                    location: at(0, 22)
+                    start: at(0, 22)
                 },
                 Token {
                     kind: DollarSignLBracket,
                     text: "${",
-                    location: at(0, 30)
+                    start: at(0, 30)
                 },
                 Token {
                     kind: Ident,
                     text: "env",
-                    location: at(0, 32)
+                    start: at(0, 32)
                 },
                 Token {
                     kind: LParen,
                     text: "(",
-                    location: at(0, 35)
+                    start: at(0, 35)
                 },
                 Token {
                     kind: StringLiteral,
                     text: "dead_night",
-                    location: at(0, 36)
+                    start: at(0, 36)
                 },
                 Token {
                     kind: RParen,
                     text: ")",
-                    location: at(0, 48)
+                    start: at(0, 48)
                 },
                 Token {
                     kind: MultiLineStringLiteral,
                     text: "",
-                    location: at(0, 49)
+                    start: at(0, 49)
                 },
                 Token {
                     kind: MultiLineStringLiteral,
                     text: "dohickeys",
-                    location: at(0, 52)
+                    start: at(0, 52)
                 },
             ]
         );
@@ -840,27 +831,27 @@ post http://localhost {
                 Token {
                     kind: MultiLineStringLiteral,
                     text: "a",
-                    location: at(0, 0)
+                    start: at(0, 0)
                 },
                 Token {
                     kind: DollarSignLBracket,
                     text: "${",
-                    location: at(0, 2)
+                    start: at(0, 2)
                 },
                 Token {
                     kind: StringLiteral,
                     text: "temp",
-                    location: at(0, 4)
+                    start: at(0, 4)
                 },
                 Token {
                     kind: MultiLineStringLiteral,
                     text: "",
-                    location: at(0, 10)
+                    start: at(0, 10)
                 },
                 Token {
                     kind: RBracket,
                     text: "}",
-                    location: at(0, 13)
+                    start: at(0, 13)
                 },
             ]
         );

@@ -1,4 +1,4 @@
-use lexer::{Token, TokenKind};
+use lexer::{locations::GetSpan, Token, TokenKind};
 
 use error_meta::Error;
 
@@ -80,7 +80,7 @@ impl<'i> ParseErrorConstructor<'i> {
                 },
                 expected,
             },
-            token.location,
+            token.into(),
             self.source_code,
         )
     }
@@ -95,7 +95,7 @@ impl<'i> ParseErrorConstructor<'i> {
                 found: token.into(),
                 expected,
             },
-            token.location,
+            token.span(),
             self.source_code,
         )
     }
@@ -106,7 +106,7 @@ impl<'i> ParseErrorConstructor<'i> {
                 kind: token.kind,
                 text: token.text.to_string(),
             },
-            token.location,
+            token.span(),
             self.source_code,
         )
     }

@@ -2,7 +2,10 @@ use std::fmt::Display;
 
 use serde::Serialize;
 
-use lexer::{Location, Token};
+use lexer::{
+    locations::{GetSpan, Location, Span},
+    Token,
+};
 
 #[derive(Debug, PartialEq, Serialize)]
 pub struct Program<'i> {
@@ -18,20 +21,20 @@ impl<'i> Program<'i> {
 #[derive(Debug, PartialEq, Serialize)]
 pub struct Identifier<'i> {
     pub name: &'i str,
-    pub location: Location,
+    pub span: Span,
 }
 
 #[derive(Debug, PartialEq, Serialize)]
 pub struct Literal<'i> {
     pub value: &'i str,
-    pub location: Location,
+    pub span: Span,
 }
 
 impl<'i> From<Token<'i>> for Identifier<'i> {
     fn from(token: Token<'i>) -> Self {
         Self {
             name: token.text,
-            location: token.location,
+            span: token.into(),
         }
     }
 }
@@ -40,7 +43,7 @@ impl<'i> From<Token<'i>> for Literal<'i> {
     fn from(token: Token<'i>) -> Self {
         Self {
             value: token.text,
-            location: token.location,
+            span: token.into(),
         }
     }
 }
@@ -60,7 +63,7 @@ pub enum Item<'i> {
         method: RequestMethod,
         endpoint: Endpoint<'i>,
         params: Vec<Statement<'i>>,
-        location: Location,
+        span: Span,
     },
     Attribute {
         location: Location,
@@ -92,9 +95,19 @@ pub enum Statement<'i> {
     },
     Body {
         value: Expression<'i>,
-        location: Location,
+        start: Location,
     },
     LineComment(Literal<'i>),
+}
+
+impl<'source> GetSpan for Statement<'source> {
+    fn span(&self) -> lexer::locations::Span {
+        match self {
+            Statement::Header { name, .. } => name.span,
+            Statement::Body { value, start } => start.to_end_of(value.span()),
+            Statement::LineComment(literal) => literal.span,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Serialize)]
@@ -106,8 +119,38 @@ pub enum Expression<'i> {
         arguments: Vec<Expression<'i>>,
     },
     TemplateSringLiteral {
+        span: Span,
         parts: Vec<Expression<'i>>,
     },
+}
+impl<'source> GetSpan for Expression<'source> {
+    fn span(&self) -> Span {
+        match self {
+            Expression::Identifier(i) => i.span,
+            Expression::String(l) => l.span,
+            Expression::Call {
+                identifier,
+                arguments,
+            } => arguments
+                .last()
+                .map(|arg| arg.span())
+                .map(|span| identifier.span.to_end_of(span))
+                .unwrap_or(identifier.span),
+            Expression::TemplateSringLiteral { span, .. } => 
+                *span
+                // parts
+                // .last()
+                // .map(|p| p.span())
+                // .map(|span| start.to_end_of(span))
+                // .unwrap_or(Span::new(
+                //     *start,
+                //     Location {
+                //         line: start.line,
+                //         col: start.col + 1,
+                //     },
+                // )),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Serialize)]

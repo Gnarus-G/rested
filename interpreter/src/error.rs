@@ -1,5 +1,5 @@
 use error_meta::Error;
-use lexer::Location;
+use lexer::locations::Span;
 use parser::ast::{Identifier, Literal};
 use parser::error::ParseError;
 
@@ -63,7 +63,7 @@ impl IntoInterpError for Error<ParseError> {
             inner_error: InterpError::Other {
                 error: self.inner_error.to_string(),
             },
-            location: self.location,
+            span: self.span,
             message: self.message,
             context: self.context,
         }
@@ -85,7 +85,7 @@ impl<'i> InterpErrorFactory<'i> {
             InterpError::UnknownConstant {
                 constant: token.name.to_string(),
             },
-            token.location,
+            token.span,
             self.source_code,
         )
     }
@@ -95,17 +95,12 @@ impl<'i> InterpErrorFactory<'i> {
             InterpError::EnvVariableNotFound {
                 name: token.value.to_string(),
             },
-            token.location,
+            token.span,
             self.source_code,
         )
     }
 
-    pub fn required_args(
-        &self,
-        at: Location,
-        required: usize,
-        recieved: usize,
-    ) -> Error<InterpError> {
+    pub fn required_args(&self, at: Span, required: usize, recieved: usize) -> Error<InterpError> {
         Error::new(
             InterpError::RequiredArguments { required, recieved },
             at,
@@ -118,7 +113,7 @@ impl<'i> InterpErrorFactory<'i> {
             InterpError::UndeclaredIdentifier {
                 name: token.name.to_string(),
             },
-            token.location,
+            token.span,
             self.source_code,
         )
     }
@@ -128,7 +123,7 @@ impl<'i> InterpErrorFactory<'i> {
             InterpError::UnsupportedAttribute {
                 name: token.name.to_string(),
             },
-            token.location,
+            token.span,
             self.source_code,
         )
     }
@@ -138,7 +133,7 @@ impl<'i> InterpErrorFactory<'i> {
             InterpError::DuplicateAttribute {
                 name: token.name.to_string(),
             },
-            token.location,
+            token.span,
             self.source_code,
         )
     }
@@ -148,12 +143,12 @@ impl<'i> InterpErrorFactory<'i> {
             InterpError::UndefinedCallable {
                 name: token.name.to_string(),
             },
-            token.location,
+            token.span,
             self.source_code,
         )
     }
 
-    pub fn unset_base_url(&self, at: Location) -> Error<InterpError> {
+    pub fn unset_base_url(&self, at: Span) -> Error<InterpError> {
         Error::new(
             InterpError::RequestWithPathnameWithoutBaseUrl,
             at,
@@ -161,12 +156,12 @@ impl<'i> InterpErrorFactory<'i> {
         )
     }
 
-    pub fn other<E: std::fmt::Display>(&self, location: Location, error: E) -> Error<InterpError> {
+    pub fn other<E: std::fmt::Display>(&self, span: Span, error: E) -> Error<InterpError> {
         Error::new(
             InterpError::Other {
                 error: error.to_string(),
             },
-            location,
+            span,
             self.source_code,
         )
     }

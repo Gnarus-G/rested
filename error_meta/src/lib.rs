@@ -1,6 +1,6 @@
 use colored::Colorize;
 
-use lexer::Location;
+use lexer::locations::{Location, Span};
 use std::fmt::Display;
 
 #[derive(Debug)]
@@ -29,18 +29,18 @@ impl ErrorSourceContext {
 #[derive(Debug)]
 pub struct Error<EK: Display + std::error::Error> {
     pub inner_error: EK,
-    pub location: Location,
+    pub span: Span,
     pub message: Option<String>,
     pub context: ErrorSourceContext,
 }
 
 impl<EK: Display + std::error::Error> Error<EK> {
-    pub fn new(inner_error: EK, location: Location, source_code: &str) -> Self {
+    pub fn new(inner_error: EK, span: Span, source_code: &str) -> Self {
         Self {
             inner_error,
-            location,
             message: None,
-            context: ErrorSourceContext::new(&location, source_code),
+            context: ErrorSourceContext::new(&span.start, source_code),
+            span,
         }
     }
 
@@ -55,7 +55,7 @@ impl<Ek: Display + std::error::Error> std::error::Error for Error<Ek> {}
 impl<EK: Display + std::error::Error> std::fmt::Display for Error<EK> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let formatted_error = &self.inner_error.to_string().red();
-        let location = self.location.to_string().bold();
+        let location = self.span.to_string().bold();
 
         let c = &self.context;
 
@@ -65,7 +65,7 @@ impl<EK: Display + std::error::Error> std::fmt::Display for Error<EK> {
 
         writeln!(f, "{}", c.line.bold())?;
 
-        let indent_to_error_location = " ".repeat(self.location.col);
+        let indent_to_error_location = " ".repeat(self.span.start.col);
 
         let result = match &self.message {
             Some(m) => writeln!(
@@ -74,7 +74,7 @@ impl<EK: Display + std::error::Error> std::fmt::Display for Error<EK> {
                 indent_to_error_location,
                 location,
                 formatted_error,
-                " ".repeat(self.location.col + location.len()),
+                " ".repeat(self.span.start.col + location.len()),
                 m.bright_red()
             ),
             None => writeln!(

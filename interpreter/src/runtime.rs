@@ -1,6 +1,6 @@
 use std::{collections::HashMap, error::Error, path::PathBuf};
 
-use lexer::Location;
+use lexer::locations::Span;
 use parser::ast::{Expression, Identifier};
 
 pub struct Environment {
@@ -84,7 +84,7 @@ impl Environment {
 
 pub struct Attribute<'source> {
     pub name: &'source str,
-    pub location: Location,
+    pub span: Span,
     pub params: Vec<Expression<'source>>,
 }
 
@@ -110,7 +110,7 @@ impl<'source> AttributeStore<'source> {
 
         self.inner.push(Attribute {
             name: id.name,
-            location: id.location,
+            span: id.span,
             params,
         })
     }

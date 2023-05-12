@@ -1,4 +1,4 @@
-use lexer::Location;
+use lexer::locations::Location;
 use parser::Parser;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::{lsp_types::*, LspService, Server};
@@ -38,11 +38,8 @@ impl Backend {
 
         if let Err(err) = result {
             let range = Range {
-                start: err.location.into_position(),
-                end: Position {
-                    line: err.location.line as u32,
-                    character: 100,
-                },
+                start: err.span.start.into_position(),
+                end: err.span.end.into_position(),
             };
 
             diagnostics.push(Diagnostic::new_simple(
