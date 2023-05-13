@@ -4,11 +4,11 @@ description: "get http://localhost { header \"Authorization\" \"Bearer token\" }
 expression: "lexer.into_iter().collect::<Vec<Token>>()"
 ---
 [
-    Get("get") at 0:0,
-    Url("http://localhost") at 0:4,
-    LBracket("{") at 0:21,
-    Header("header") at 0:23,
-    StringLiteral("\"Authorization\"") at 0:30,
-    StringLiteral("\"Bearer token\"") at 0:46,
-    RBracket("}") at 0:61,
+    Get("get") at Location { line: 0, col: 0 },
+    Url("http://localhost") at Location { line: 0, col: 4 },
+    LBracket("{") at Location { line: 0, col: 21 },
+    Header("header") at Location { line: 0, col: 23 },
+    StringLiteral("\"Authorization\"") at Location { line: 0, col: 30 },
+    StringLiteral("\"Bearer token\"") at Location { line: 0, col: 46 },
+    RBracket("}") at Location { line: 0, col: 61 },
 ]

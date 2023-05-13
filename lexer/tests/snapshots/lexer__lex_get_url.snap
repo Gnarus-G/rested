@@ -4,6 +4,6 @@ description: "get http://localhost"
 expression: "lexer.into_iter().collect::<Vec<Token>>()"
 ---
 [
-    Get("get") at 0:0,
-    Url("http://localhost") at 0:4,
+    Get("get") at Location { line: 0, col: 0 },
+    Url("http://localhost") at Location { line: 0, col: 4 },
 ]

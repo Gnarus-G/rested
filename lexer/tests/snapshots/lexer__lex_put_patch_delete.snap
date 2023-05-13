@@ -4,16 +4,16 @@ description: "\nput /api {}\npatch /api {}\ndelete /api {}\n"
 expression: "lexer.into_iter().collect::<Vec<Token>>()"
 ---
 [
-    Put("put") at 1:0,
-    Pathname("/api") at 1:4,
-    LBracket("{") at 1:9,
-    RBracket("}") at 1:10,
-    Patch("patch") at 2:0,
-    Pathname("/api") at 2:6,
-    LBracket("{") at 2:11,
-    RBracket("}") at 2:12,
-    Delete("delete") at 3:0,
-    Pathname("/api") at 3:7,
-    LBracket("{") at 3:12,
-    RBracket("}") at 3:13,
+    Put("put") at Location { line: 1, col: 0 },
+    Pathname("/api") at Location { line: 1, col: 4 },
+    LBracket("{") at Location { line: 1, col: 9 },
+    RBracket("}") at Location { line: 1, col: 10 },
+    Patch("patch") at Location { line: 2, col: 0 },
+    Pathname("/api") at Location { line: 2, col: 6 },
+    LBracket("{") at Location { line: 2, col: 11 },
+    RBracket("}") at Location { line: 2, col: 12 },
+    Delete("delete") at Location { line: 3, col: 0 },
+    Pathname("/api") at Location { line: 3, col: 7 },
+    LBracket("{") at Location { line: 3, col: 12 },
+    RBracket("}") at Location { line: 3, col: 13 },
 ]

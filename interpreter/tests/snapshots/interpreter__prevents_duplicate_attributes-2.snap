@@ -7,8 +7,14 @@ Error {
         name: "name",
     },
     span: Span {
-        start: 3:9,
-        end: 3:13,
+        start: Location {
+            line: 3,
+            col: 9,
+        },
+        end: Location {
+            line: 3,
+            col: 13,
+        },
     },
     message: None,
     context: ErrorSourceContext {

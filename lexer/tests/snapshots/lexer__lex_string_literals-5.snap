@@ -4,7 +4,7 @@ description: " { \"Bearer token\" } "
 expression: "lexer.into_iter().collect::<Vec<Token>>()"
 ---
 [
-    LBracket("{") at 0:1,
-    StringLiteral("\"Bearer token\"") at 0:3,
-    RBracket("}") at 0:18,
+    LBracket("{") at Location { line: 0, col: 1 },
+    StringLiteral("\"Bearer token\"") at Location { line: 0, col: 3 },
+    RBracket("}") at Location { line: 0, col: 18 },
 ]

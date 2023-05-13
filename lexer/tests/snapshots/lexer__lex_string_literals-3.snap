@@ -4,6 +4,6 @@ description: "\n\"hello\n\"world\n"
 expression: "lexer.into_iter().collect::<Vec<Token>>()"
 ---
 [
-    UnfinishedStringLiteral("\n\"hello") at 1:0,
-    UnfinishedStringLiteral("\n\"hello\n\"world") at 2:0,
+    UnfinishedStringLiteral("\n\"hello") at Location { line: 1, col: 0 },
+    UnfinishedStringLiteral("\n\"hello\n\"world") at Location { line: 2, col: 0 },
 ]

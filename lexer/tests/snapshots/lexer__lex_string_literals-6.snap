@@ -4,6 +4,6 @@ description: "`\n{\n    stuff\n}`\n\n`\nstuff"
 expression: "lexer.into_iter().collect::<Vec<Token>>()"
 ---
 [
-    MultiLineStringLiteral("`\n{\n    stuff\n}`") at 0:0,
-    UnfinishedMultiLineStringLiteral("`\nstuff") at 5:0,
+    MultiLineStringLiteral("`\n{\n    stuff\n}`") at Location { line: 0, col: 0 },
+    UnfinishedMultiLineStringLiteral("`\nstuff") at Location { line: 5, col: 0 },
 ]

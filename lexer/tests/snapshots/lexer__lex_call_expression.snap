@@ -4,11 +4,11 @@ description: "env() env(\"stuff\")"
 expression: "lexer.into_iter().collect::<Vec<Token>>()"
 ---
 [
-    Ident("env") at 0:0,
-    LParen("(") at 0:3,
-    RParen(")") at 0:4,
-    Ident("env") at 0:6,
-    LParen("(") at 0:9,
-    StringLiteral("\"stuff\"") at 0:10,
-    RParen(")") at 0:17,
+    Ident("env") at Location { line: 0, col: 0 },
+    LParen("(") at Location { line: 0, col: 3 },
+    RParen(")") at Location { line: 0, col: 4 },
+    Ident("env") at Location { line: 0, col: 6 },
+    LParen("(") at Location { line: 0, col: 9 },
+    StringLiteral("\"stuff\"") at Location { line: 0, col: 10 },
+    RParen(")") at Location { line: 0, col: 17 },
 ]
