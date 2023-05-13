@@ -3,10 +3,10 @@ set BASE_URL env("b_url")
 // @name("a")
 // @name("a")
 @log
-@log ("google.html")
+@log("google.html")
 get https://google.com
 
-let random = env("love")
+let  random = env("love")
 
 @log
 @dbg
@@ -14,9 +14,7 @@ get / {
     header "random" random
 }
 
-let content_type = "application/json"
-
-let billy = "Billy bob"
+let asdfs = "Billy bob"
 
 @log @dbg
 post / {
@@ -29,7 +27,7 @@ post / {
 post /echo {  
    header "random" "billy bob"
    header "Content-Type" "application/json"
-   body `{
+   body  `{
    "neet": "${escape_new_lines(read("data.txt"))}",
    "34": "asdf\nasdf\n"
    }`

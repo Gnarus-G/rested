@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
 
-use lexer::locations::Location;
+use lexer::locations::{GetSpan, Location};
+use parser::ast::Item;
 use parser::Parser;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::{lsp_types::*, LspService, Server};
@@ -90,6 +91,27 @@ impl Backend {
     }
 }
 
+fn match_hover_and_get_marked_string<N: ToString + GetSpan>(
+    node: &N,
+    hover_position: Position,
+) -> Option<MarkedString> {
+    let span = node.span();
+
+    if span.start.line == hover_position.line as usize {
+        let hover_is_on_token =
+            (span.start.col..span.end.col).contains(&(hover_position.character as usize));
+
+        if hover_is_on_token {
+            return Some(MarkedString::LanguageString(LanguageString {
+                language: "rd".to_string(),
+                value: node.to_string(),
+            }));
+        }
+    }
+
+    return None;
+}
+
 #[tower_lsp::async_trait]
 impl LanguageServer for Backend {
     async fn initialize(&self, _: InitializeParams) -> Result<InitializeResult> {
@@ -116,14 +138,13 @@ impl LanguageServer for Backend {
             .documents
             .get(params.text_document_position_params.text_document.uri)
             .unwrap();
+        let hover_position = params.text_document_position_params.position;
 
         let mut content = vec![];
 
         let lexer = lexer::Lexer::new(&text);
 
         for token in lexer.into_iter() {
-            let hover_position = params.text_document_position_params.position;
-
             if token.start.line != hover_position.line as usize {
                 continue;
             }
@@ -137,6 +158,27 @@ impl LanguageServer for Backend {
                     token.text, token.start,
                 )));
                 break;
+            }
+        }
+
+        let result = Parser::new(&text).parse();
+
+        if let Ok(program) = result {
+            for item in program.items {
+                if let Some(ms) = match_hover_and_get_marked_string(&item, hover_position) {
+                    content.push(ms);
+                    break;
+                }
+
+                if let Item::Request { params, .. } = item {
+                    for param in params {
+                        if let Some(ms) = match_hover_and_get_marked_string(&param, hover_position)
+                        {
+                            content.push(ms);
+                            break;
+                        }
+                    }
+                }
             }
         }
 

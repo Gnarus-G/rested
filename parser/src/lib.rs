@@ -1,4 +1,5 @@
 pub mod ast;
+pub mod ast_stringify;
 pub mod error;
 
 use crate::ast::{Endpoint, Expression, Item, Program, RequestMethod, Statement};

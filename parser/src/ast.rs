@@ -123,6 +123,7 @@ pub enum Expression<'i> {
         parts: Vec<Expression<'i>>,
     },
 }
+
 impl<'source> GetSpan for Expression<'source> {
     fn span(&self) -> Span {
         match self {
@@ -136,19 +137,26 @@ impl<'source> GetSpan for Expression<'source> {
                 .map(|arg| arg.span())
                 .map(|span| identifier.span.to_end_of(span))
                 .unwrap_or(identifier.span),
-            Expression::TemplateSringLiteral { span, .. } => 
-                *span
-                // parts
-                // .last()
-                // .map(|p| p.span())
-                // .map(|span| start.to_end_of(span))
-                // .unwrap_or(Span::new(
-                //     *start,
-                //     Location {
-                //         line: start.line,
-                //         col: start.col + 1,
-                //     },
-                // )),
+            Expression::TemplateSringLiteral { span, .. } => *span,
+        }
+    }
+}
+
+impl<'source> GetSpan for Item<'source> {
+    fn span(&self) -> Span {
+        match self {
+            Item::Set { identifier, value } => identifier.span.to_end_of(value.span()),
+            Item::Let { identifier, value } => identifier.span.to_end_of(value.span()),
+            Item::LineComment(l) => l.span,
+            Item::Request { span, .. } => *span,
+            Item::Attribute {
+                location,
+                identifier,
+                parameters,
+            } => parameters
+                .last()
+                .map(|p| Span::new(*location, p.span().end))
+                .unwrap_or(Span::new(*location, identifier.span.end)),
         }
     }
 }
