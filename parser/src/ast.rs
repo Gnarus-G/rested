@@ -103,7 +103,7 @@ pub enum Statement<'i> {
 impl<'source> GetSpan for Statement<'source> {
     fn span(&self) -> lexer::locations::Span {
         match self {
-            Statement::Header { name, .. } => name.span,
+            Statement::Header { name, value } => name.span.to_end_of(value.span()),
             Statement::Body { value, start } => start.to_end_of(value.span()),
             Statement::LineComment(literal) => literal.span,
         }

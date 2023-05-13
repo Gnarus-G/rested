@@ -30,7 +30,7 @@ impl<'source> ToString for Statement<'source> {
     fn to_string(&self) -> String {
         match self {
             Statement::Header { name, value } => {
-                format!("header {:?} {:?}", name.value, value.to_string())
+                format!("header {:?} {}", name.value, value.to_string())
             }
             Statement::Body { value, .. } => format!("body {}", value.to_string()),
             Statement::LineComment(l) => l.value.to_string(),
