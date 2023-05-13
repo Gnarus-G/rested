@@ -60,17 +60,21 @@ impl<'source> ToString for Item<'source> {
             Item::Request {
                 method,
                 endpoint,
-                params,
+                block,
                 ..
             } => format!(
                 "{} {} {{ {} }}",
                 method,
                 endpoint.to_string(),
-                params
-                    .iter()
-                    .map(|p| p.to_string())
-                    .collect::<Vec<String>>()
-                    .join(" ")
+                block
+                    .as_ref()
+                    .map(|b| b
+                        .statements
+                        .iter()
+                        .map(|p| p.to_string())
+                        .collect::<Vec<String>>()
+                        .join(" "))
+                    .unwrap_or(String::from(""))
             ),
             Item::Attribute {
                 identifier,

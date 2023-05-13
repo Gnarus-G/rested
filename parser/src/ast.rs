@@ -74,6 +74,12 @@ impl<'i> From<Token<'i>> for StringLiteral<'i> {
 }
 
 #[derive(Debug, PartialEq, Serialize)]
+pub struct Block<'source> {
+    pub statements: Vec<Statement<'source>>,
+    pub span: Span,
+}
+
+#[derive(Debug, PartialEq, Serialize)]
 pub enum Item<'i> {
     Set {
         identifier: Identifier<'i>,
@@ -87,7 +93,7 @@ pub enum Item<'i> {
     Request {
         method: RequestMethod,
         endpoint: Endpoint<'i>,
-        params: Vec<Statement<'i>>,
+        block: Option<Block<'i>>,
         span: Span,
     },
     Attribute {

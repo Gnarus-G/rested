@@ -20,66 +20,78 @@ Program(
           ),
         ),
       )),
-      params: [
-        Header(
-          name: StringLiteral(
-            raw: "\"Authorization\"",
-            value: "Authorization",
-            span: Span(
-              start: Location(
-                line: 2,
-                col: 15,
+      block: Some(Block(
+        statements: [
+          Header(
+            name: StringLiteral(
+              raw: "\"Authorization\"",
+              value: "Authorization",
+              span: Span(
+                start: Location(
+                  line: 2,
+                  col: 15,
+                ),
+                end: Location(
+                  line: 2,
+                  col: 30,
+                ),
               ),
-              end: Location(
-                line: 2,
-                col: 30,
+            ),
+            value: String(StringLiteral(
+              raw: "\"Bearer token\"",
+              value: "Bearer token",
+              span: Span(
+                start: Location(
+                  line: 2,
+                  col: 31,
+                ),
+                end: Location(
+                  line: 2,
+                  col: 45,
+                ),
               ),
+            )),
+          ),
+          Body(
+            value: String(StringLiteral(
+              raw: "`\n        {\"neet\": 1337}\n        `",
+              value: "\n        {\"neet\": 1337}\n        ",
+              span: Span(
+                start: Location(
+                  line: 3,
+                  col: 13,
+                ),
+                end: Location(
+                  line: 3,
+                  col: 47,
+                ),
+              ),
+            )),
+            start: Location(
+              line: 3,
+              col: 8,
             ),
           ),
-          value: String(StringLiteral(
-            raw: "\"Bearer token\"",
-            value: "Bearer token",
-            span: Span(
-              start: Location(
-                line: 2,
-                col: 31,
-              ),
-              end: Location(
-                line: 2,
-                col: 45,
-              ),
-            ),
-          )),
-        ),
-        Body(
-          value: String(StringLiteral(
-            raw: "`\n        {\"neet\": 1337}\n        `",
-            value: "\n        {\"neet\": 1337}\n        ",
-            span: Span(
-              start: Location(
-                line: 3,
-                col: 13,
-              ),
-              end: Location(
-                line: 3,
-                col: 47,
-              ),
-            ),
-          )),
+        ],
+        span: Span(
           start: Location(
-            line: 3,
+            line: 1,
+            col: 30,
+          ),
+          end: Location(
+            line: 6,
             col: 8,
           ),
         ),
-      ],
+      )),
       span: Span(
         start: Location(
           line: 1,
           col: 8,
         ),
         end: Location(
-          line: 3,
-          col: 47,
+          line: 6,
+          col: 8,
         ),
       ),
     ),

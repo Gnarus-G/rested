@@ -3,9 +3,10 @@ pub mod ast_stringify;
 pub mod error;
 
 use crate::ast::{Endpoint, Expression, Item, Program, RequestMethod, Statement};
+use ast::Block;
 use error_meta::Error;
 use lexer::{
-    locations::{GetSpan, GetSpanOption, Span},
+    locations::{GetSpan, Span},
     Lexer, Token, TokenKind,
 };
 
@@ -96,13 +97,13 @@ impl<'i> Parser<'i> {
     fn parse_request(&mut self, method: RequestMethod, token: Token<'i>) -> Result<Item<'i>> {
         self.expect_one_of(vec![TokenKind::Url, TokenKind::Pathname])?;
         let url = self.token();
-        let params = self.parse_request_params()?;
+        let block = self.parse_block()?;
         let url_span: Span = url.span();
 
-        let span_next = if params.is_empty() {
-            url_span
+        let span_next = if let Some(b) = block.as_ref() {
+            b.span
         } else {
-            params.get_span().expect("params aren't empty")
+            url_span
         };
 
         Ok(Item::Request {
@@ -113,7 +114,7 @@ impl<'i> Parser<'i> {
                 TokenKind::Pathname => Endpoint::Pathname(url.into()),
                 _ => unreachable!("we're properly expecting only url and pathname tokens here"),
             },
-            params,
+            block,
         })
     }
 
@@ -136,32 +137,37 @@ impl<'i> Parser<'i> {
         })
     }
 
-    fn parse_request_params(&mut self) -> Result<Vec<Statement<'i>>> {
+    fn parse_block(&mut self) -> Result<Option<Block<'i>>> {
         use TokenKind::*;
-        if let LBracket = self.peek_token().kind {
-            self.eat_token();
-            let mut token = self.token();
-            let mut statements = vec![];
-            while token.kind != RBracket {
-                let header = match token.kind {
-                    Header => self.parse_header()?,
-                    Body => self.parse_body(token)?,
-                    Linecomment | Shebang => Statement::LineComment(token.into()),
-                    _ => {
-                        return Err(self
-                            .error()
-                            .unexpected_token(&token)
-                            .with_message("may only declare headers or a body statement here"))
-                    }
-                };
-
-                statements.push(header);
-                token = self.token();
-            }
-            return Ok(statements);
+        let LBracket = self.peek_token().kind else {
+            return Ok(None);
         };
 
-        Ok(vec![])
+        let span_start = self.token().start; // remember LBracket's location
+        let mut token = self.token();
+        let mut statements = vec![];
+
+        while token.kind != RBracket {
+            let header = match token.kind {
+                Header => self.parse_header()?,
+                Body => self.parse_body(token)?,
+                Linecomment | Shebang => Statement::LineComment(token.into()),
+                _ => {
+                    return Err(self
+                        .error()
+                        .unexpected_token(&token)
+                        .with_message("may only declare headers or a body statement here"))
+                }
+            };
+
+            statements.push(header);
+            token = self.token();
+        }
+
+        return Ok(Some(Block {
+            statements,
+            span: Span::new(span_start, token.start), // span to RBracket's location
+        }));
     }
 
     fn parse_header(&mut self) -> Result<Statement<'i>> {

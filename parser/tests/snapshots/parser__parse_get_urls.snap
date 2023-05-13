@@ -20,7 +20,7 @@ Program(
           ),
         ),
       )),
-      params: [],
+      block: None,
       span: Span(
         start: Location(
           line: 0,
@@ -47,7 +47,19 @@ Program(
           ),
         ),
       )),
-      params: [],
+      block: Some(Block(
+        statements: [],
+        span: Span(
+          start: Location(
+            line: 1,
+            col: 34,
+          ),
+          end: Location(
+            line: 1,
+            col: 35,
+          ),
+        ),
+      )),
       span: Span(
         start: Location(
           line: 1,
@@ -55,7 +67,7 @@ Program(
         ),
         end: Location(
           line: 1,
-          col: 33,
+          col: 35,
         ),
       ),
     ),

@@ -56,7 +56,7 @@ impl<'source> Interpreter<'source> {
                     span,
                     method,
                     endpoint,
-                    params,
+                    block,
                 } => {
                     let span = span.to_end_of(endpoint.span());
 
@@ -105,17 +105,19 @@ impl<'source> Interpreter<'source> {
 
                     let mut body = None;
 
-                    for statement in params {
-                        match statement {
-                            ast::Statement::Header { name, value } => {
-                                req = req.set(&name.value, &self.evaluate_expression(&value)?);
-                            }
-                            ast::Statement::Body { value, .. } => {
-                                if let None = body {
-                                    body = Some(self.evaluate_expression(&value)?);
+                    if let Some(statements) = block.map(|b| b.statements) {
+                        for statement in statements {
+                            match statement {
+                                ast::Statement::Header { name, value } => {
+                                    req = req.set(&name.value, &self.evaluate_expression(&value)?);
                                 }
+                                ast::Statement::Body { value, .. } => {
+                                    if let None = body {
+                                        body = Some(self.evaluate_expression(&value)?);
+                                    }
+                                }
+                                ast::Statement::LineComment(_) => {}
                             }
-                            ast::Statement::LineComment(_) => {}
                         }
                     }
 

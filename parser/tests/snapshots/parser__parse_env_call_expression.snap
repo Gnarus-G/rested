@@ -20,92 +20,104 @@ Program(
           ),
         ),
       )),
-      params: [
-        Header(
-          name: StringLiteral(
-            raw: "\"name\"",
-            value: "name",
-            span: Span(
-              start: Location(
-                line: 0,
-                col: 31,
-              ),
-              end: Location(
-                line: 0,
-                col: 37,
-              ),
-            ),
-          ),
-          value: Call(
-            identifier: Identifier(
-              name: "env",
+      block: Some(Block(
+        statements: [
+          Header(
+            name: StringLiteral(
+              raw: "\"name\"",
+              value: "name",
               span: Span(
                 start: Location(
                   line: 0,
-                  col: 38,
+                  col: 31,
                 ),
                 end: Location(
                   line: 0,
-                  col: 41,
+                  col: 37,
                 ),
               ),
             ),
-            arguments: [
-              String(StringLiteral(
-                raw: "\"auth\"",
-                value: "auth",
+            value: Call(
+              identifier: Identifier(
+                name: "env",
                 span: Span(
                   start: Location(
                     line: 0,
-                    col: 42,
+                    col: 38,
                   ),
                   end: Location(
                     line: 0,
-                    col: 48,
+                    col: 41,
                   ),
-                ),
-              )),
-            ],
-          ),
-        ),
-        Body(
-          value: Call(
-            identifier: Identifier(
-              name: "env",
-              span: Span(
-                start: Location(
-                  line: 0,
-                  col: 55,
-                ),
-                end: Location(
-                  line: 0,
-                  col: 58,
                 ),
               ),
+              arguments: [
+                String(StringLiteral(
+                  raw: "\"auth\"",
+                  value: "auth",
+                  span: Span(
+                    start: Location(
+                      line: 0,
+                      col: 42,
+                    ),
+                    end: Location(
+                      line: 0,
+                      col: 48,
+                    ),
+                  ),
+                )),
+              ],
             ),
-            arguments: [
-              String(StringLiteral(
-                raw: "\"data\"",
-                value: "data",
+          ),
+          Body(
+            value: Call(
+              identifier: Identifier(
+                name: "env",
                 span: Span(
                   start: Location(
                     line: 0,
-                    col: 59,
+                    col: 55,
                   ),
                   end: Location(
                     line: 0,
-                    col: 65,
+                    col: 58,
                   ),
                 ),
-              )),
-            ],
+              ),
+              arguments: [
+                String(StringLiteral(
+                  raw: "\"data\"",
+                  value: "data",
+                  span: Span(
+                    start: Location(
+                      line: 0,
+                      col: 59,
+                    ),
+                    end: Location(
+                      line: 0,
+                      col: 65,
+                    ),
+                  ),
+                )),
+              ],
+            ),
+            start: Location(
+              line: 0,
+              col: 50,
+            ),
           ),
+        ],
+        span: Span(
           start: Location(
             line: 0,
-            col: 50,
+            col: 22,
+          ),
+          end: Location(
+            line: 0,
+            col: 67,
           ),
         ),
-      ],
+      )),
       span: Span(
         start: Location(
           line: 0,
@@ -113,7 +125,7 @@ Program(
         ),
         end: Location(
           line: 0,
-          col: 65,
+          col: 67,
         ),
       ),
     ),

@@ -55,7 +55,7 @@ Program(
           ),
         ),
       )),
-      params: [],
+      block: None,
       span: Span(
         start: Location(
           line: 0,
