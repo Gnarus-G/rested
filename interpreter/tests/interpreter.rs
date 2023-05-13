@@ -3,19 +3,26 @@ use std::{fs::File, io::Read, path::PathBuf};
 use insta::assert_debug_snapshot;
 use interpreter::{runtime::Environment, Interpreter};
 
+fn new_env_with_vars(vars: &[(&str, &str)]) -> Environment {
+    let mut env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();
+
+    for (key, value) in vars {
+        env.set_variable(key.to_string(), value.to_string())
+            .unwrap();
+    }
+
+    return env;
+}
+
 #[test]
 fn requests_work() {
     let mut server = mockito::Server::new();
 
     let url = server.url();
 
-    let mut env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();
+    let token = "asl236ap9sdhf";
 
-    env.set_variable("b_url".to_string(), url).unwrap();
-    env.set_variable("token".to_string(), "asl236ap9sdhf".to_string())
-        .unwrap();
-
-    let token = env.get_variable_value("token".to_string()).unwrap();
+    let env = new_env_with_vars(&[("b_url", &url), ("token", token)]);
 
     let get_api = server.mock("GET", "/api").with_status(200).create();
 
@@ -257,9 +264,7 @@ fn let_bindings_work() {
 fn running_specific_requests_by_name() {
     let mut server = mockito::Server::new();
     let url = server.url();
-    let mut env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();
-
-    env.set_variable("b_url".to_string(), url).unwrap();
+    let env = new_env_with_vars(&[("b_url", &url)]);
 
     let mocks =
         ["GET", "POST", "PUT"].map(|method| server.mock(method, "/api").with_status(200).create());
@@ -322,10 +327,6 @@ fn name_attribute_requires_value() {
 
 #[test]
 fn prevents_duplicate_attributes() {
-    let mut env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();
-    env.set_variable("b_url".to_string(), "asdfasdf".to_string())
-        .unwrap();
-
     let code = r#"
         set BASE_URL env("b_url")
         @log
@@ -333,6 +334,7 @@ fn prevents_duplicate_attributes() {
         get /api {}
     "#;
 
+    let env = new_env_with_vars(&[("b_url", "asdfasdf")]);
     let mut program = Interpreter::new(&code, env);
 
     let duped_att_err = program.run(Some(vec!["test".to_string()])).unwrap_err();
@@ -345,7 +347,7 @@ fn prevents_duplicate_attributes() {
         get /api {}
     "#;
 
-    let env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();
+    let env = new_env_with_vars(&[("b_url", "asdfasdf")]);
     let mut program = Interpreter::new(&code, env);
 
     let duped_att_err = program.run(Some(vec!["test".to_string()])).unwrap_err();
