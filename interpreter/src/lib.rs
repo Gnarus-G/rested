@@ -12,7 +12,7 @@ use parser;
 use parser::ast::{self, Endpoint, Expression, Literal};
 
 use error_meta::Error;
-use lexer::locations::Span;
+use lexer::locations::{GetSpan, Span};
 
 use crate::error::IntoInterpError;
 use crate::runtime::AttributeStore;
@@ -58,6 +58,8 @@ impl<'source> Interpreter<'source> {
                     endpoint,
                     params,
                 } => {
+                    let span = span.to_end_of(endpoint.span());
+
                     // Handle @skip
                     if let Some(_) = attributes.get("skip") {
                         attributes.clear();

@@ -191,3 +191,12 @@ pub enum Endpoint<'i> {
     Url(Literal<'i>),
     Pathname(Literal<'i>),
 }
+
+impl<'source> GetSpan for Endpoint<'source> {
+    fn span(&self) -> Span {
+        match self {
+            Endpoint::Url(l) => l.span,
+            Endpoint::Pathname(l) => l.span,
+        }
+    }
+}
