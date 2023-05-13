@@ -19,7 +19,7 @@ impl<'i> From<&Token<'i>> for TokenOwned {
 
 impl std::fmt::Display for TokenOwned {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}({:?})", self.kind, self.text)
+        write!(f, "{:?}({})", self.kind, self.text)
     }
 }
 
@@ -56,7 +56,7 @@ impl std::fmt::Display for ParseError {
                 format!("expected either one of {:?}, but got {}", expected, found)
             }
             ParseError::UnexpectedToken { text, .. } => {
-                format!("unexpected token {:?}", text)
+                format!("unexpected token {}", text)
             }
         };
 
