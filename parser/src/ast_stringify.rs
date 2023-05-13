@@ -4,7 +4,7 @@ impl<'source> ToString for Expression<'source> {
     fn to_string(&self) -> String {
         match self {
             Expression::Identifier(i) => i.name.to_string(),
-            Expression::String(l) => l.value.to_string(),
+            Expression::String(l) => l.raw.to_string(),
             Expression::Call {
                 identifier,
                 arguments,
@@ -30,7 +30,7 @@ impl<'source> ToString for Statement<'source> {
     fn to_string(&self) -> String {
         match self {
             Statement::Header { name, value } => {
-                format!("header {:?} {}", name.value, value.to_string())
+                format!("header {} {}", name.raw, value.to_string())
             }
             Statement::Body { value, .. } => format!("body {}", value.to_string()),
             Statement::LineComment(l) => l.value.to_string(),

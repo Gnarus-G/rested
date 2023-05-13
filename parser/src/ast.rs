@@ -24,12 +24,6 @@ pub struct Identifier<'i> {
     pub span: Span,
 }
 
-#[derive(Debug, PartialEq, Serialize)]
-pub struct Literal<'i> {
-    pub value: &'i str,
-    pub span: Span,
-}
-
 impl<'i> From<Token<'i>> for Identifier<'i> {
     fn from(token: Token<'i>) -> Self {
         Self {
@@ -39,10 +33,41 @@ impl<'i> From<Token<'i>> for Identifier<'i> {
     }
 }
 
+#[derive(Debug, PartialEq, Serialize)]
+pub struct Literal<'i> {
+    pub value: &'i str,
+    pub span: Span,
+}
+
 impl<'i> From<Token<'i>> for Literal<'i> {
     fn from(token: Token<'i>) -> Self {
         Self {
             value: token.text,
+            span: token.into(),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Serialize)]
+pub struct StringLiteral<'source> {
+    pub raw: &'source str,
+    pub value: &'source str,
+    pub span: Span,
+}
+
+impl<'i> From<Token<'i>> for StringLiteral<'i> {
+    fn from(token: Token<'i>) -> Self {
+        let value = match (token.text.chars().nth(0), token.text.chars().last()) {
+            (Some('"'), Some('"')) if token.text.len() > 1 => &token.text[1..token.text.len() - 1],
+            (Some('`'), Some('`')) if token.text.len() > 1 => &token.text[1..token.text.len() - 1],
+            (_, Some('`')) => &token.text[..token.text.len() - 1],
+            (Some('`'), _) => &token.text[1..],
+            _ => token.text,
+        };
+
+        Self {
+            raw: token.text,
+            value,
             span: token.into(),
         }
     }
@@ -90,7 +115,7 @@ impl Display for RequestMethod {
 #[derive(Debug, PartialEq, Serialize)]
 pub enum Statement<'i> {
     Header {
-        name: Literal<'i>,
+        name: StringLiteral<'i>,
         value: Expression<'i>,
     },
     Body {
@@ -113,7 +138,7 @@ impl<'source> GetSpan for Statement<'source> {
 #[derive(Debug, PartialEq, Serialize)]
 pub enum Expression<'i> {
     Identifier(Identifier<'i>),
-    String(Literal<'i>),
+    String(StringLiteral<'i>),
     Call {
         identifier: Identifier<'i>,
         arguments: Vec<Expression<'i>>,

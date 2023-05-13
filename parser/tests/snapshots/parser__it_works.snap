@@ -19,8 +19,9 @@ Program(
           ),
         ),
       ),
-      value: String(Literal(
-        value: "\"httas...\"",
+      value: String(StringLiteral(
+        raw: "\"httas...\"",
+        value: "httas...",
         span: Span(
           start: Location(
             line: 1,
@@ -87,8 +88,9 @@ Program(
           ),
         ),
       ),
-      value: String(Literal(
-        value: "\"output/file.json\"",
+      value: String(StringLiteral(
+        raw: "\"output/file.json\"",
+        value: "output/file.json",
         span: Span(
           start: Location(
             line: 5,
@@ -130,8 +132,9 @@ Program(
           ),
         ),
         arguments: [
-          String(Literal(
-            value: "\"auth-token\"",
+          String(StringLiteral(
+            raw: "\"auth-token\"",
+            value: "auth-token",
             span: Span(
               start: Location(
                 line: 6,
@@ -210,8 +213,9 @@ Program(
           ),
         )),
         Header(
-          name: Literal(
-            value: "\"Authorization\"",
+          name: StringLiteral(
+            raw: "\"Authorization\"",
+            value: "Authorization",
             span: Span(
               start: Location(
                 line: 11,
@@ -250,8 +254,9 @@ Program(
               ),
             ),
             parts: [
-              String(Literal(
-                value: "`{\n      \"neet\": \"",
+              String(StringLiteral(
+                raw: "`{\n      \"neet\": \"",
+                value: "{\n      \"neet\": \"",
                 span: Span(
                   start: Location(
                     line: 12,
@@ -278,8 +283,9 @@ Program(
                   ),
                 ),
                 arguments: [
-                  String(Literal(
-                    value: "\"var\"",
+                  String(StringLiteral(
+                    raw: "\"var\"",
+                    value: "var",
                     span: Span(
                       start: Location(
                         line: 13,
@@ -293,8 +299,9 @@ Program(
                   )),
                 ],
               ),
-              String(Literal(
-                value: "\",\n      \"nerd\": \"",
+              String(StringLiteral(
+                raw: "\",\n      \"nerd\": \"",
+                value: ",\n      \"nerd\": ",
                 span: Span(
                   start: Location(
                     line: 13,
@@ -319,8 +326,9 @@ Program(
                   ),
                 ),
               )),
-              String(Literal(
-                value: "\",\n  }`",
+              String(StringLiteral(
+                raw: "\",\n  }`",
+                value: "\",\n  }",
                 span: Span(
                   start: Location(
                     line: 14,
