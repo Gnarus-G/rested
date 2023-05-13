@@ -8,8 +8,14 @@ Error {
         recieved: 0,
     },
     span: Span {
-        start: 2:9,
-        end: 2:13,
+        start: Location {
+            line: 2,
+            col: 9,
+        },
+        end: Location {
+            line: 2,
+            col: 13,
+        },
     },
     message: Some(
         "@name(..) must be given an argument, like @name(\"req_1\")",

@@ -55,7 +55,7 @@ impl<Ek: Display + std::error::Error> std::error::Error for Error<Ek> {}
 impl<EK: Display + std::error::Error> std::fmt::Display for Error<EK> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let formatted_error = &self.inner_error.to_string().red();
-        let location = self.span.to_string().bold();
+        let location = self.span.start.to_string().dimmed().bold();
 
         let c = &self.context;
 
@@ -67,27 +67,29 @@ impl<EK: Display + std::error::Error> std::fmt::Display for Error<EK> {
 
         let indent_to_error_location = " ".repeat(self.span.start.col);
 
-        let result = match &self.message {
-            Some(m) => writeln!(
+        writeln!(
+            f,
+            "{}{}\n{}\u{21B3} {} {}",
+            indent_to_error_location,
+            "\u{2248}".repeat(self.span.width()).red(),
+            indent_to_error_location,
+            location,
+            formatted_error
+        )?;
+
+        if let Some(m) = &self.message {
+            writeln!(
                 f,
-                "{}\u{21B3} {} {}\n{}   {}",
-                indent_to_error_location,
-                location,
-                formatted_error,
+                "{}   {}",
                 " ".repeat(self.span.start.col + location.len()),
                 m.bright_red()
-            ),
-            None => writeln!(
-                f,
-                "{}\u{21B3} at {} {}",
-                indent_to_error_location, location, formatted_error
-            ),
+            )?
         };
 
         if let Some(line) = &c.below {
             writeln!(f, "{line}")?;
         };
 
-        result
+        Ok(())
     }
 }

@@ -1,10 +1,8 @@
-use std::fmt::Display;
-
 use serde::Serialize;
 
 use crate::Token;
 
-#[derive(PartialEq, Clone, Copy, Serialize)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize)]
 pub struct Location {
     pub line: usize,
     pub col: usize,
@@ -21,13 +19,7 @@ impl Location {
 
 impl std::fmt::Display for Location {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "at {}:{}", self.line + 1, self.col + 1)
-    }
-}
-
-impl std::fmt::Debug for Location {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}:{}", self.line, self.col)
+        write!(f, "[{}:{}]", self.line + 1, self.col + 1)
     }
 }
 
@@ -54,11 +46,16 @@ impl Span {
             end: other_span.end,
         }
     }
-}
 
-impl Display for Span {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "starting {} and ending {}", self.start, self.end)
+    pub fn width(&self) -> usize {
+        let left = self.start.col;
+        let right = self.end.col;
+
+        if right > left {
+            return right - left;
+        }
+
+        return left - right;
     }
 }
 
