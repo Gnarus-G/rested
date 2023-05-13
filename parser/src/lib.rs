@@ -58,6 +58,7 @@ impl<'i> Parser<'i> {
             Shebang,
             AttributePrefix,
             Let,
+            End,
         ])?;
 
         let mut token = self.token();
