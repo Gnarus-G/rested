@@ -227,6 +227,9 @@ impl<'source> Interpreter<'source> {
 
     fn evaluate_expression(&self, exp: &Expression<'source>) -> Result<String> {
         use Expression::*;
+
+        let expression_span = exp.span();
+
         let value = match exp {
             Identifier(token) => self.evaluate_identifier(&token)?,
             String(token) => token.value.to_string(),
@@ -240,7 +243,7 @@ impl<'source> Interpreter<'source> {
                 "env" => {
                     let arg = arguments.first().ok_or_else(|| {
                         self.error_factory
-                            .required_args(identifier.span, 1, 0)
+                            .required_args(expression_span, 1, 0)
                             .with_message("calls to env(..) must include a variable name argument")
                     })?;
 
@@ -248,13 +251,13 @@ impl<'source> Interpreter<'source> {
 
                     self.evaluate_env_variable(&Literal {
                         value: &value,
-                        span: identifier.span,
+                        span: expression_span,
                     })?
                 }
                 "read" => {
                     let arg = arguments.first().ok_or_else(|| {
                         self.error_factory
-                            .required_args(identifier.span, 1, 0)
+                            .required_args(expression_span, 1, 0)
                             .with_message("calls to read(..) must include a file name argument")
                     })?;
 
@@ -262,13 +265,13 @@ impl<'source> Interpreter<'source> {
 
                     self.read_file(&Literal {
                         value: &file_name,
-                        span: identifier.span,
+                        span: expression_span,
                     })?
                 }
                 "escape_new_lines" => {
                     let arg = arguments.first().ok_or_else(|| {
                         self.error_factory
-                            .required_args(identifier.span, 1, 0)
+                            .required_args(expression_span, 1, 0)
                             .with_message("calls to escape_new_lines(..) must include an argument")
                     })?;
 

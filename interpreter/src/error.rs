@@ -31,7 +31,7 @@ impl std::fmt::Display for InterpError {
                 format!("no variable found by the name {:?}", name)
             }
             InterpError::RequestWithPathnameWithoutBaseUrl => {
-                format!("BASE_URL needs to be set first for requests to work with just pathnames")
+                format!("BASE_URL needs to be set first for requests to work with just pathnames; try writing like set BASE_URL \"<api orgin>\" before this request")
             }
             InterpError::UndefinedCallable { name } => {
                 format!("attempting to calling an undefined function: {}", name)
