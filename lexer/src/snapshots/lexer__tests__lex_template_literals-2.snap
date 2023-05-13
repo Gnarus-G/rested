@@ -1,0 +1,11 @@
+---
+source: lexer/src/lib.rs
+description: "`a${\"temp\"}` }}"
+expression: "lexer.into_iter().collect::<Vec<Token>>()"
+---
+[
+    MultiLineStringLiteral("`a") at 0:0,
+    DollarSignLBracket("${") at 0:2,
+    StringLiteral("\"temp\"") at 0:4,
+    RBracket("}") at 0:13,
+]

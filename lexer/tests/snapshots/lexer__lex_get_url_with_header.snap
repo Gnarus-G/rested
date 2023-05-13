@@ -1,0 +1,14 @@
+---
+source: lexer/tests/lexer.rs
+description: "get http://localhost { header \"Authorization\" \"Bearer token\" }"
+expression: "lexer.into_iter().collect::<Vec<Token>>()"
+---
+[
+    Get("get") at 0:0,
+    Url("http://localhost") at 0:4,
+    LBracket("{") at 0:21,
+    Header("header") at 0:23,
+    StringLiteral("\"Authorization\"") at 0:30,
+    StringLiteral("\"Bearer token\"") at 0:46,
+    RBracket("}") at 0:61,
+]

@@ -1,0 +1,10 @@
+---
+source: lexer/src/lib.rs
+description: " { \"Bearer token\" } "
+expression: "lexer.into_iter().collect::<Vec<Token>>()"
+---
+[
+    LBracket("{") at 0:1,
+    StringLiteral("\"Bearer token\"") at 0:3,
+    RBracket("}") at 0:18,
+]

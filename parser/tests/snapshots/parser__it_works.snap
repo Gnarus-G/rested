@@ -20,7 +20,7 @@ Program(
         ),
       ),
       value: String(Literal(
-        value: "httas...",
+        value: "\"httas...\"",
         span: Span(
           start: Location(
             line: 1,
@@ -28,7 +28,7 @@ Program(
           ),
           end: Location(
             line: 1,
-            col: 21,
+            col: 23,
           ),
         ),
       )),
@@ -88,7 +88,7 @@ Program(
         ),
       ),
       value: String(Literal(
-        value: "output/file.json",
+        value: "\"output/file.json\"",
         span: Span(
           start: Location(
             line: 5,
@@ -96,7 +96,7 @@ Program(
           ),
           end: Location(
             line: 5,
-            col: 34,
+            col: 36,
           ),
         ),
       )),
@@ -131,7 +131,7 @@ Program(
         ),
         arguments: [
           String(Literal(
-            value: "auth-token",
+            value: "\"auth-token\"",
             span: Span(
               start: Location(
                 line: 6,
@@ -139,7 +139,7 @@ Program(
               ),
               end: Location(
                 line: 6,
-                col: 26,
+                col: 28,
               ),
             ),
           )),
@@ -211,7 +211,7 @@ Program(
         )),
         Header(
           name: Literal(
-            value: "Authorization",
+            value: "\"Authorization\"",
             span: Span(
               start: Location(
                 line: 11,
@@ -219,7 +219,7 @@ Program(
               ),
               end: Location(
                 line: 11,
-                col: 22,
+                col: 24,
               ),
             ),
           ),
@@ -246,12 +246,12 @@ Program(
               ),
               end: Location(
                 line: 14,
-                col: 34,
+                col: 36,
               ),
             ),
             parts: [
               String(Literal(
-                value: "{\n      \"neet\": \"",
+                value: "`{\n      \"neet\": \"",
                 span: Span(
                   start: Location(
                     line: 12,
@@ -259,7 +259,7 @@ Program(
                   ),
                   end: Location(
                     line: 12,
-                    col: 24,
+                    col: 25,
                   ),
                 ),
               )),
@@ -279,7 +279,7 @@ Program(
                 ),
                 arguments: [
                   String(Literal(
-                    value: "var",
+                    value: "\"var\"",
                     span: Span(
                       start: Location(
                         line: 13,
@@ -287,7 +287,7 @@ Program(
                       ),
                       end: Location(
                         line: 13,
-                        col: 24,
+                        col: 26,
                       ),
                     ),
                   )),
@@ -298,11 +298,11 @@ Program(
                 span: Span(
                   start: Location(
                     line: 13,
-                    col: 27,
+                    col: 28,
                   ),
                   end: Location(
                     line: 13,
-                    col: 45,
+                    col: 46,
                   ),
                 ),
               )),
@@ -320,15 +320,15 @@ Program(
                 ),
               )),
               String(Literal(
-                value: "\",\n  }",
+                value: "\",\n  }`",
                 span: Span(
                   start: Location(
                     line: 14,
-                    col: 28,
+                    col: 29,
                   ),
                   end: Location(
                     line: 14,
-                    col: 34,
+                    col: 36,
                   ),
                 ),
               )),
@@ -347,7 +347,7 @@ Program(
         ),
         end: Location(
           line: 14,
-          col: 34,
+          col: 36,
         ),
       ),
     ),

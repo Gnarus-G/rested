@@ -1,5 +1,4 @@
 pub mod locations;
-use std::ops::Range;
 
 use locations::Location;
 
@@ -105,7 +104,7 @@ impl<'i> Lexer<'i> {
         std::str::from_utf8(&self.input).expect("input should only contain utf-8 characters")
     }
 
-    fn input_slice(&self, range: Range<usize>) -> &'i str {
+    fn input_slice(&self, range: impl std::slice::SliceIndex<[u8], Output = [u8]>) -> &'i str {
         std::str::from_utf8(&self.input[range]).expect("input should only contain utf-8 characters")
     }
 
@@ -187,7 +186,16 @@ impl<'i> Lexer<'i> {
                 self.step();
                 token
             }
-            b'}' if self.inside_multiline_string => self.multiline_string_literal(),
+            b'}' if self.peek_char().is(b'`') && self.inside_multiline_string => {
+                self.step(); // eat the curly
+                self.step(); // eat the backtick
+                self.inside_multiline_string = false;
+                self.next()
+            }
+            b'}' if self.inside_multiline_string => {
+                self.step(); // eat the curly
+                self.multiline_string_literal()
+            }
             b'(' => Token {
                 kind: LParen,
                 start: self.cursor,
@@ -237,29 +245,21 @@ impl<'i> Lexer<'i> {
     fn multiline_string_literal(&mut self) -> Token<'i> {
         self.inside_multiline_string = true;
         let location = self.cursor;
-
-        self.step(); //eat the opening quote
-
         let start_pos = self.position;
 
+        self.step();
+
         let (s, e) = loop {
-            let end_ahead = self.peek_char().is(b'`');
+            let is_at_end = self.ch().is(b'`');
             let dollar_curly_ahead = self.peek_char().is(b'$') && self.peek_n_char(2).is(b'{');
 
             if dollar_curly_ahead {
                 break (start_pos, self.position + 1);
             }
 
-            if end_ahead {
+            if is_at_end {
                 self.inside_multiline_string = false;
-                let end_pos = self.position + 1;
-                self.step();
-                break (start_pos, end_pos);
-            }
-
-            if self.ch().is(b'`') {
-                self.inside_multiline_string = false;
-                break (start_pos, self.position);
+                break (start_pos, self.position + 1);
             }
 
             if let None = self.ch() {
@@ -285,23 +285,22 @@ impl<'i> Lexer<'i> {
     fn string_literal(&mut self) -> Token<'i> {
         let location = self.cursor;
 
-        self.step(); //eat the opening quote
-
         let (s, e) = self.read_while(|&c| c != b'"' && c != b'\n');
-        let string = self.input_slice(s..e);
 
-        self.step(); //eat the closing quote or newline character
-
-        match self.ch() {
+        match self.peek_char() {
             Some(b'\n') | None => {
                 return Token {
                     kind: TokenKind::UnfinishedStringLiteral,
                     start: location,
-                    text: string,
+                    text: self.input_slice(..e),
                 };
             }
             _ => {}
         }
+
+        let string = self.input_slice(s..=e);
+
+        self.step();
 
         Token {
             kind: TokenKind::StringLiteral,
@@ -436,438 +435,5 @@ impl<'source> Iterator for Lexer<'source> {
         }
 
         Some(token)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    use TokenKind::*;
-
-    macro_rules! assert_lexes {
-        ($input:literal, $tokens:expr) => {
-            let mut lexer = Lexer::new($input);
-
-            for token in $tokens {
-                assert_eq!(lexer.next(), token);
-            }
-        };
-    }
-
-    pub fn at(line: usize, col: usize) -> Location {
-        Location { line, col }
-    }
-
-    #[test]
-    fn lex_string_literals() {
-        assert_lexes!(
-            r#""hello""#,
-            [Token {
-                kind: StringLiteral,
-                text: "hello",
-                start: at(0, 0)
-            },]
-        );
-
-        assert_lexes!(
-            r#""hello"#,
-            [Token {
-                kind: UnfinishedStringLiteral,
-                text: "hello",
-                start: at(0, 0)
-            },]
-        );
-
-        assert_lexes!(
-            r#"
-"hello
-"world
-"#,
-            [
-                Token {
-                    kind: UnfinishedStringLiteral,
-                    text: "hello",
-                    start: at(1, 0)
-                },
-                Token {
-                    kind: UnfinishedStringLiteral,
-                    text: "world",
-                    start: at(2, 0)
-                }
-            ]
-        );
-
-        assert_lexes!(
-            r#" "" "" ``"#,
-            [
-                Token {
-                    kind: StringLiteral,
-                    text: "",
-                    start: at(0, 1)
-                },
-                Token {
-                    kind: StringLiteral,
-                    text: "",
-                    start: at(0, 4)
-                },
-                Token {
-                    kind: StringLiteral,
-                    text: "",
-                    start: at(0, 7)
-                }
-            ]
-        );
-
-        assert_lexes!(
-            r#" { "Bearer token" } "#,
-            [
-                Token {
-                    kind: LBracket,
-                    text: "{",
-                    start: at(0, 1)
-                },
-                Token {
-                    kind: StringLiteral,
-                    text: "Bearer token",
-                    start: at(0, 3)
-                },
-                Token {
-                    kind: RBracket,
-                    text: "}",
-                    start: at(0, 18)
-                }
-            ]
-        );
-
-        assert_lexes!(
-            r#"`
-{
-    stuff
-}`
-
-`
-stuff"#,
-            [
-                Token {
-                    kind: MultiLineStringLiteral,
-                    text: "\n{\n    stuff\n}",
-                    start: at(0, 0)
-                },
-                Token {
-                    kind: UnfinishedMultiLineStringLiteral,
-                    text: "\nstuff",
-                    start: at(5, 0)
-                }
-            ]
-        );
-    }
-
-    #[test]
-    fn lex_get_url() {
-        assert_lexes!(
-            "get http://localhost",
-            [
-                Token {
-                    kind: Get,
-                    text: "get",
-                    start: at(0, 0)
-                },
-                Token {
-                    kind: Url,
-                    text: "http://localhost",
-                    start: at(0, 4),
-                }
-            ]
-        );
-    }
-
-    #[test]
-    fn lex_get_url_with_header() {
-        assert_lexes!(
-            "get http://localhost { header \"Authorization\" \"Bearer token\" }",
-            vec![
-                Token {
-                    kind: Get,
-                    start: at(0, 0),
-                    text: "get"
-                },
-                Token {
-                    kind: Url,
-                    start: at(0, 4),
-                    text: "http://localhost"
-                },
-                Token {
-                    kind: LBracket,
-                    start: at(0, 21),
-                    text: "{"
-                },
-                Token {
-                    kind: Header,
-                    start: at(0, 23),
-                    text: "header"
-                },
-                Token {
-                    kind: StringLiteral,
-                    start: at(0, 30),
-                    text: "Authorization"
-                },
-                Token {
-                    kind: StringLiteral,
-                    start: at(0, 46),
-                    text: "Bearer token"
-                },
-                Token {
-                    kind: RBracket,
-                    start: at(0, 61),
-                    text: "}"
-                },
-            ]
-        );
-    }
-
-    #[test]
-    fn lex_get_url_over_many_lines() {
-        assert_lexes!(
-            "get\nhttp://localhost",
-            [
-                Token {
-                    kind: Get,
-                    text: "get",
-                    start: at(0, 0)
-                },
-                Token {
-                    kind: Url,
-                    text: "http://localhost",
-                    start: at(1, 0),
-                }
-            ]
-        );
-
-        assert_lexes!(
-            r#"get 
-    http://localhost 
-{
-}"#,
-            [
-                Token {
-                    kind: Get,
-                    text: "get",
-                    start: at(0, 0)
-                },
-                Token {
-                    kind: Url,
-                    text: "http://localhost",
-                    start: at(1, 4),
-                },
-                Token {
-                    kind: LBracket,
-                    text: "{",
-                    start: at(2, 0),
-                },
-                Token {
-                    kind: RBracket,
-                    text: "}",
-                    start: at(3, 0),
-                }
-            ]
-        );
-    }
-
-    #[test]
-    fn lex_get_url_with_header_and_body() {
-        assert_lexes!(
-            r#"
-post http://localhost { 
-    header "Authorization" "Bearer token" 
-    body "{neet: 1337}" 
-}"#,
-            vec![
-                Token {
-                    kind: Post,
-                    start: at(1, 0),
-                    text: "post"
-                },
-                Token {
-                    kind: Url,
-                    start: at(1, 5),
-                    text: "http://localhost"
-                },
-                Token {
-                    kind: LBracket,
-                    start: at(1, 22),
-                    text: "{"
-                },
-                Token {
-                    kind: Header,
-                    start: at(2, 4),
-                    text: "header"
-                },
-                Token {
-                    kind: StringLiteral,
-                    start: at(2, 11),
-                    text: "Authorization"
-                },
-                Token {
-                    kind: StringLiteral,
-                    start: at(2, 27),
-                    text: "Bearer token"
-                },
-                Token {
-                    kind: Body,
-                    start: at(3, 4),
-                    text: "body"
-                },
-                Token {
-                    kind: StringLiteral,
-                    start: at(3, 9),
-                    text: "{neet: 1337}"
-                },
-                Token {
-                    kind: RBracket,
-                    start: at(4, 0),
-                    text: "}"
-                },
-            ]
-        );
-    }
-
-    #[test]
-    fn lex_call_expression() {
-        assert_lexes!(
-            r#"env() env("stuff")"#,
-            [
-                Token {
-                    kind: Ident,
-                    text: "env",
-                    start: at(0, 0)
-                },
-                Token {
-                    kind: LParen,
-                    text: "(",
-                    start: at(0, 3)
-                },
-                Token {
-                    kind: RParen,
-                    text: ")",
-                    start: at(0, 4)
-                },
-                Token {
-                    kind: Ident,
-                    text: "env",
-                    start: at(0, 6)
-                },
-                Token {
-                    kind: LParen,
-                    text: "(",
-                    start: at(0, 9)
-                },
-                Token {
-                    kind: StringLiteral,
-                    text: "stuff",
-                    start: at(0, 10)
-                },
-                Token {
-                    kind: RParen,
-                    text: ")",
-                    start: at(0, 17)
-                }
-            ]
-        );
-    }
-
-    #[test]
-    fn lex_template_literals() {
-        assert_lexes!(
-            r#"`stuff${"interpolated"}(things${env("dead_night")}` `dohickeys`"#,
-            [
-                Token {
-                    kind: MultiLineStringLiteral,
-                    text: "stuff",
-                    start: at(0, 0)
-                },
-                Token {
-                    kind: DollarSignLBracket,
-                    text: "${",
-                    start: at(0, 6)
-                },
-                Token {
-                    kind: StringLiteral,
-                    text: "interpolated",
-                    start: at(0, 8)
-                },
-                Token {
-                    kind: MultiLineStringLiteral,
-                    text: "(things",
-                    start: at(0, 22)
-                },
-                Token {
-                    kind: DollarSignLBracket,
-                    text: "${",
-                    start: at(0, 30)
-                },
-                Token {
-                    kind: Ident,
-                    text: "env",
-                    start: at(0, 32)
-                },
-                Token {
-                    kind: LParen,
-                    text: "(",
-                    start: at(0, 35)
-                },
-                Token {
-                    kind: StringLiteral,
-                    text: "dead_night",
-                    start: at(0, 36)
-                },
-                Token {
-                    kind: RParen,
-                    text: ")",
-                    start: at(0, 48)
-                },
-                Token {
-                    kind: MultiLineStringLiteral,
-                    text: "",
-                    start: at(0, 49)
-                },
-                Token {
-                    kind: MultiLineStringLiteral,
-                    text: "dohickeys",
-                    start: at(0, 52)
-                },
-            ]
-        );
-
-        assert_lexes!(
-            r#"`a${"temp"}` }}"#,
-            [
-                Token {
-                    kind: MultiLineStringLiteral,
-                    text: "a",
-                    start: at(0, 0)
-                },
-                Token {
-                    kind: DollarSignLBracket,
-                    text: "${",
-                    start: at(0, 2)
-                },
-                Token {
-                    kind: StringLiteral,
-                    text: "temp",
-                    start: at(0, 4)
-                },
-                Token {
-                    kind: MultiLineStringLiteral,
-                    text: "",
-                    start: at(0, 10)
-                },
-                Token {
-                    kind: RBracket,
-                    text: "}",
-                    start: at(0, 13)
-                },
-            ]
-        );
     }
 }

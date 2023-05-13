@@ -1,0 +1,14 @@
+---
+source: lexer/tests/lexer.rs
+description: "env() env(\"stuff\")"
+expression: "lexer.into_iter().collect::<Vec<Token>>()"
+---
+[
+    Ident("env") at 0:0,
+    LParen("(") at 0:3,
+    RParen(")") at 0:4,
+    Ident("env") at 0:6,
+    LParen("(") at 0:9,
+    StringLiteral("\"stuff\"") at 0:10,
+    RParen(")") at 0:17,
+]

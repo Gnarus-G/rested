@@ -1,0 +1,9 @@
+---
+source: lexer/tests/lexer.rs
+description: "\n\"hello\n\"world\n"
+expression: "lexer.into_iter().collect::<Vec<Token>>()"
+---
+[
+    UnfinishedStringLiteral("\n\"hello") at 1:0,
+    UnfinishedStringLiteral("\n\"hello\n\"world") at 2:0,
+]

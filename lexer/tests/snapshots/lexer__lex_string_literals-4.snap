@@ -1,0 +1,10 @@
+---
+source: lexer/tests/lexer.rs
+description: " \"\" \"\" ``"
+expression: "lexer.into_iter().collect::<Vec<Token>>()"
+---
+[
+    StringLiteral("") at 0:1,
+    StringLiteral("") at 0:4,
+    StringLiteral("") at 0:7,
+]

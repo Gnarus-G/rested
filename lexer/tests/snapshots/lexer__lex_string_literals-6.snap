@@ -1,0 +1,9 @@
+---
+source: lexer/tests/lexer.rs
+description: "`\n{\n    stuff\n}`\n\n`\nstuff"
+expression: "lexer.into_iter().collect::<Vec<Token>>()"
+---
+[
+    MultiLineStringLiteral("`\n{\n    stuff\n}`") at 0:0,
+    UnfinishedMultiLineStringLiteral("`\nstuff") at 5:0,
+]

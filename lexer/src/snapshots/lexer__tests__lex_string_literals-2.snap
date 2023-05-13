@@ -1,0 +1,8 @@
+---
+source: lexer/src/lib.rs
+description: "\"hello"
+expression: "lexer.into_iter().collect::<Vec<Token>>()"
+---
+[
+    UnfinishedStringLiteral("\"hello") at 0:0,
+]

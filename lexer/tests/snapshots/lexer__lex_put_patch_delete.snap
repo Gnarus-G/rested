@@ -1,6 +1,7 @@
 ---
-source: tests/lexer.rs
-expression: tokens
+source: lexer/tests/lexer.rs
+description: "\nput /api {}\npatch /api {}\ndelete /api {}\n"
+expression: "lexer.into_iter().collect::<Vec<Token>>()"
 ---
 [
     Put("put") at 1:0,
