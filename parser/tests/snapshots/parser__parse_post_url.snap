@@ -1,0 +1,36 @@
+---
+source: parser/tests/parser.rs
+description: "post http://localhost"
+expression: ast
+---
+Program(
+  items: [
+    Request(
+      method: POST,
+      endpoint: Url(Literal(
+        value: "http://localhost",
+        span: Span(
+          start: Location(
+            line: 0,
+            col: 5,
+          ),
+          end: Location(
+            line: 0,
+            col: 21,
+          ),
+        ),
+      )),
+      params: [],
+      span: Span(
+        start: Location(
+          line: 0,
+          col: 0,
+        ),
+        end: Location(
+          line: 0,
+          col: 21,
+        ),
+      ),
+    ),
+  ],
+)

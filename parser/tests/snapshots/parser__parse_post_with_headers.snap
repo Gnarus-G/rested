@@ -1,0 +1,97 @@
+---
+source: parser/tests/parser.rs
+description: "\n        post http://localhost {\n        header \"Authorization\" \"Bearer token\"\n        header \"random\" \"tokener Bear\"\n        }"
+expression: ast
+---
+Program(
+  items: [
+    Request(
+      method: POST,
+      endpoint: Url(Literal(
+        value: "http://localhost",
+        span: Span(
+          start: Location(
+            line: 1,
+            col: 13,
+          ),
+          end: Location(
+            line: 1,
+            col: 29,
+          ),
+        ),
+      )),
+      params: [
+        Header(
+          name: StringLiteral(
+            raw: "\"Authorization\"",
+            value: "Authorization",
+            span: Span(
+              start: Location(
+                line: 2,
+                col: 15,
+              ),
+              end: Location(
+                line: 2,
+                col: 30,
+              ),
+            ),
+          ),
+          value: String(StringLiteral(
+            raw: "\"Bearer token\"",
+            value: "Bearer token",
+            span: Span(
+              start: Location(
+                line: 2,
+                col: 31,
+              ),
+              end: Location(
+                line: 2,
+                col: 45,
+              ),
+            ),
+          )),
+        ),
+        Header(
+          name: StringLiteral(
+            raw: "\"random\"",
+            value: "random",
+            span: Span(
+              start: Location(
+                line: 3,
+                col: 15,
+              ),
+              end: Location(
+                line: 3,
+                col: 23,
+              ),
+            ),
+          ),
+          value: String(StringLiteral(
+            raw: "\"tokener Bear\"",
+            value: "tokener Bear",
+            span: Span(
+              start: Location(
+                line: 3,
+                col: 24,
+              ),
+              end: Location(
+                line: 3,
+                col: 38,
+              ),
+            ),
+          )),
+        ),
+      ],
+      span: Span(
+        start: Location(
+          line: 1,
+          col: 8,
+        ),
+        end: Location(
+          line: 3,
+          col: 38,
+        ),
+      ),
+    ),
+  ],
+)

@@ -1,0 +1,36 @@
+---
+source: parser/tests/parser.rs
+description: post /api/v2
+expression: ast
+---
+Program(
+  items: [
+    Request(
+      method: POST,
+      endpoint: Pathname(Literal(
+        value: "/api/v2",
+        span: Span(
+          start: Location(
+            line: 0,
+            col: 5,
+          ),
+          end: Location(
+            line: 0,
+            col: 12,
+          ),
+        ),
+      )),
+      params: [],
+      span: Span(
+        start: Location(
+          line: 0,
+          col: 0,
+        ),
+        end: Location(
+          line: 0,
+          col: 12,
+        ),
+      ),
+    ),
+  ],
+)

@@ -1,0 +1,87 @@
+---
+source: parser/tests/parser.rs
+description: "\n        post http://localhost {\n        header \"Authorization\" \"Bearer token\"\n        body \"{neet: 1337}\"\n        }"
+expression: ast
+---
+Program(
+  items: [
+    Request(
+      method: POST,
+      endpoint: Url(Literal(
+        value: "http://localhost",
+        span: Span(
+          start: Location(
+            line: 1,
+            col: 13,
+          ),
+          end: Location(
+            line: 1,
+            col: 29,
+          ),
+        ),
+      )),
+      params: [
+        Header(
+          name: StringLiteral(
+            raw: "\"Authorization\"",
+            value: "Authorization",
+            span: Span(
+              start: Location(
+                line: 2,
+                col: 15,
+              ),
+              end: Location(
+                line: 2,
+                col: 30,
+              ),
+            ),
+          ),
+          value: String(StringLiteral(
+            raw: "\"Bearer token\"",
+            value: "Bearer token",
+            span: Span(
+              start: Location(
+                line: 2,
+                col: 31,
+              ),
+              end: Location(
+                line: 2,
+                col: 45,
+              ),
+            ),
+          )),
+        ),
+        Body(
+          value: String(StringLiteral(
+            raw: "\"{neet: 1337}\"",
+            value: "{neet: 1337}",
+            span: Span(
+              start: Location(
+                line: 3,
+                col: 13,
+              ),
+              end: Location(
+                line: 3,
+                col: 27,
+              ),
+            ),
+          )),
+          start: Location(
+            line: 3,
+            col: 8,
+          ),
+        ),
+      ],
+      span: Span(
+        start: Location(
+          line: 1,
+          col: 8,
+        ),
+        end: Location(
+          line: 3,
+          col: 27,
+        ),
+      ),
+    ),
+  ],
+)

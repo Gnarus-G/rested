@@ -1,0 +1,71 @@
+---
+source: parser/tests/parser.rs
+description: "@log(\"path/to/file\") get /api"
+expression: ast
+---
+Program(
+  items: [
+    Attribute(
+      location: Location(
+        line: 0,
+        col: 0,
+      ),
+      identifier: Identifier(
+        name: "log",
+        span: Span(
+          start: Location(
+            line: 0,
+            col: 1,
+          ),
+          end: Location(
+            line: 0,
+            col: 4,
+          ),
+        ),
+      ),
+      parameters: [
+        String(StringLiteral(
+          raw: "\"path/to/file\"",
+          value: "path/to/file",
+          span: Span(
+            start: Location(
+              line: 0,
+              col: 5,
+            ),
+            end: Location(
+              line: 0,
+              col: 19,
+            ),
+          ),
+        )),
+      ],
+    ),
+    Request(
+      method: GET,
+      endpoint: Pathname(Literal(
+        value: "/api",
+        span: Span(
+          start: Location(
+            line: 0,
+            col: 25,
+          ),
+          end: Location(
+            line: 0,
+            col: 29,
+          ),
+        ),
+      )),
+      params: [],
+      span: Span(
+        start: Location(
+          line: 0,
+          col: 21,
+        ),
+        end: Location(
+          line: 0,
+          col: 29,
+        ),
+      ),
+    ),
+  ],
+)
