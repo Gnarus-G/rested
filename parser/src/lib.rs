@@ -152,6 +152,12 @@ impl<'i> Parser<'i> {
                 Header => self.parse_header()?,
                 Body => self.parse_body(token)?,
                 Linecomment | Shebang => Statement::LineComment(token.into()),
+                End => {
+                    return Err(self
+                        .error()
+                        .unexpected_token(&token)
+                        .with_message("unexpected end of life"))
+                }
                 _ => {
                     return Err(self
                         .error()
