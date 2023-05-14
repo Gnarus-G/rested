@@ -120,14 +120,20 @@ impl<'i> Lexer<'i> {
     }
 
     fn step(&mut self) {
+        if self.peek_char().is_none() {
+            return self.position += 1;
+        }
+        self.check_and_bump_new_line();
+        self.position += 1;
+    }
+
+    fn check_and_bump_new_line(&mut self) {
         if let Some(b'\n') = self.ch() {
             self.cursor.line += 1;
             self.cursor.col = 0;
         } else {
             self.cursor.col += 1;
         };
-
-        self.position += 1;
     }
 
     fn peek_n_char(&self, n: usize) -> Option<&u8> {
