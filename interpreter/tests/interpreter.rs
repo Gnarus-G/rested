@@ -1,7 +1,7 @@
 use std::{fs::File, io::Read, path::PathBuf};
 
 use insta::assert_debug_snapshot;
-use interpreter::{runtime::Environment, Interpreter};
+use interpreter::{runtime::Environment, ureq_runner::UreqRunner, Interpreter};
 
 fn new_env_with_vars(vars: &[(&str, &str)]) -> Environment {
     let mut env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();
@@ -87,7 +87,7 @@ fn requests_work() {
         }
     "#;
 
-    let mut program = Interpreter::new(&code, env);
+    let mut program = Interpreter::new(&code, env, UreqRunner);
 
     program.run(None).unwrap();
 
@@ -126,7 +126,7 @@ fn comments_are_ignored() {
     "#
     );
 
-    let mut program = Interpreter::new(&code, env);
+    let mut program = Interpreter::new(&code, env, UreqRunner);
 
     program.run(None).unwrap();
 
@@ -168,7 +168,7 @@ fn requests_are_skippable() {
         delete /api 
     "#;
 
-    let mut program = Interpreter::new(&code, env);
+    let mut program = Interpreter::new(&code, env, UreqRunner);
 
     program.run(None).unwrap();
 
@@ -200,7 +200,7 @@ fn responses_can_be_logged() {
         post /api
     "#;
 
-    let mut program = Interpreter::new(&code, env);
+    let mut program = Interpreter::new(&code, env, UreqRunner);
 
     program.run(None).unwrap();
 
@@ -251,7 +251,7 @@ fn let_bindings_work() {
         }
     "#;
 
-    let mut program = Interpreter::new(&code, env);
+    let mut program = Interpreter::new(&code, env, UreqRunner);
 
     program.run(None).unwrap();
 
@@ -295,7 +295,7 @@ fn running_specific_requests_by_name() {
         delete /api
     "#;
 
-    let mut program = Interpreter::new(&code, env);
+    let mut program = Interpreter::new(&code, env, UreqRunner);
 
     program.run(Some(vec!["test".to_string()])).unwrap();
 
@@ -318,7 +318,7 @@ fn name_attribute_requires_value() {
         get /api {}
     "#;
 
-    let mut program = Interpreter::new(&code, env);
+    let mut program = Interpreter::new(&code, env, UreqRunner);
 
     let name_att_without_arg_err = program.run(Some(vec!["test".to_string()])).unwrap_err();
 
@@ -335,7 +335,7 @@ fn prevents_duplicate_attributes() {
     "#;
 
     let env = new_env_with_vars(&[("b_url", "asdfasdf")]);
-    let mut program = Interpreter::new(&code, env);
+    let mut program = Interpreter::new(&code, env, UreqRunner);
 
     let duped_att_err = program.run(Some(vec!["test".to_string()])).unwrap_err();
     assert_debug_snapshot!(duped_att_err);
@@ -348,7 +348,7 @@ fn prevents_duplicate_attributes() {
     "#;
 
     let env = new_env_with_vars(&[("b_url", "asdfasdf")]);
-    let mut program = Interpreter::new(&code, env);
+    let mut program = Interpreter::new(&code, env, UreqRunner);
 
     let duped_att_err = program.run(Some(vec!["test".to_string()])).unwrap_err();
     assert_debug_snapshot!(duped_att_err);

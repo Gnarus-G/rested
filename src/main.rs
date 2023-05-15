@@ -1,5 +1,5 @@
 use clap::{CommandFactory, Parser, Subcommand};
-use interpreter::{runtime::Environment, Interpreter};
+use interpreter::{runtime::Environment, ureq_runner::UreqRunner, Interpreter};
 
 use std::{
     collections::HashMap,
@@ -105,7 +105,7 @@ fn run() -> Result<(), Box<dyn Error>> {
 
                 let code = fs::read_to_string(file)?;
 
-                Interpreter::new(&code, env).run(request)?;
+                Interpreter::new(&code, env, UreqRunner).run(request)?;
             }
             Command::Env { command } => match command {
                 EnvCommand::Set {
@@ -143,7 +143,7 @@ fn run() -> Result<(), Box<dyn Error>> {
 
                 let env = Environment::new(PathBuf::from(".vars.rd.json"))?;
 
-                Interpreter::new(&code, env).run(None)?;
+                Interpreter::new(&code, env, UreqRunner).run(None)?;
 
                 print!(":>> ");
                 stdout().flush()?;

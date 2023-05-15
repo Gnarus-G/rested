@@ -1,5 +1,7 @@
 mod error;
+pub mod ir;
 pub mod runtime;
+pub mod ureq_runner;
 
 use std::collections::HashMap;
 use std::fs::{self, File};
@@ -15,6 +17,7 @@ use error_meta::Error;
 use lexer::locations::{GetSpan, Span};
 
 use crate::error::IntoInterpError;
+use crate::ir::Header;
 use crate::runtime::AttributeStore;
 
 use self::error::{InterpError, InterpErrorFactory};
@@ -22,26 +25,111 @@ use self::runtime::Environment;
 
 type Result<T> = std::result::Result<T, Error<InterpError>>;
 
-pub struct Interpreter<'source> {
+enum Log {
+    Std,
+    File(PathBuf),
+}
+
+struct RequestMeta {
+    name: Option<String>,
+    dbg: bool,
+    span: Span,
+    request: ir::Request,
+    log_destination: Option<Log>,
+}
+
+pub struct Interpreter<'source, R: ir::Runner> {
     code: &'source str,
     error_factory: InterpErrorFactory<'source>,
     env: Environment,
     base_url: Option<String>,
     let_bindings: HashMap<&'source str, String>,
+    runner: R,
 }
 
-impl<'source> Interpreter<'source> {
-    pub fn new(code: &'source str, env: Environment) -> Self {
+impl<'source, R: ir::Runner> Interpreter<'source, R> {
+    pub fn new(code: &'source str, env: Environment, runner: R) -> Self {
         Self {
             error_factory: InterpErrorFactory::new(code),
             code,
             env,
             base_url: None,
             let_bindings: HashMap::new(),
+            runner,
         }
     }
 
     pub fn run(&mut self, request_names: Option<Vec<String>>) -> Result<()> {
+        let requests = self.evaluate()?;
+
+        let requests = requests
+            .into_iter()
+            .filter(|r| match (&request_names, &r.name) {
+                (None, _) => true,
+                (Some(_), None) => false,
+                (Some(desired), Some(name)) => desired.contains(name),
+            });
+
+        for RequestMeta {
+            span,
+            request,
+            dbg,
+            log_destination,
+            ..
+        } in requests
+        {
+            println!(
+                "{}",
+                format!(
+                    "sending {} request to {}",
+                    request.method.to_string().yellow().bold(),
+                    request.url.bold()
+                )
+            );
+
+            if dbg {
+                println!("    \u{21B3} with request data:");
+                println!("{}", indent_lines(&format!("{:#?}", request), 6));
+
+                println!(
+                    "{}",
+                    indent_lines(
+                        &format!(
+                            "Body: {}",
+                            request.body.clone().unwrap_or("(no body)".to_string())
+                        ),
+                        6
+                    )
+                );
+            }
+
+            let res = self
+                .runner
+                .run_request(request)
+                .map_err(|e| self.error_factory.other(span, e))?;
+
+            if let Some(log_destination) = log_destination {
+                match log_destination {
+                    Log::Std => {
+                        println!("{}", indent_lines(&res, 4));
+                    }
+                    Log::File(file_path) => {
+                        log(&res, &file_path)
+                            .map_err(|error| self.error_factory.other(span, error))?;
+
+                        println!(
+                            "    \u{21B3} {}",
+                            format!("saved response to {:?}", file_path).blue()
+                        );
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn evaluate(&mut self) -> Result<Vec<RequestMeta>> {
         let mut parser = parser::Parser::new(self.code);
 
         let ast = parser.parse().map_err(|err| err.into_interp_error())?;
@@ -50,66 +138,37 @@ impl<'source> Interpreter<'source> {
 
         let mut attributes = AttributeStore::new();
 
+        let mut requests = vec![];
+
         for item in ast.items {
             match item {
                 Request {
-                    span,
                     method,
                     endpoint,
                     block,
+                    span,
                 } => {
-                    let span = span.to_end_of(endpoint.span());
-
                     // Handle @skip
                     if let Some(_) = attributes.get("skip") {
                         attributes.clear();
                         continue;
                     }
 
-                    // Handle @name
-                    match attributes.get("name") {
-                        Some(att) => {
-                            let exp = att.first_params().ok_or_else(|| {
-                                self.error_factory
-                                    .required_args(att.span, 1, 0)
-                                    .with_message(
-                                    "@name(..) must be given an argument, like @name(\"req_1\")",
-                                )
-                            })?;
+                    let span = span.to_end_of(endpoint.span());
 
-                            let name = self.evaluate_expression(exp)?;
+                    let path = self.evaluate_request_endpoint(endpoint)?;
 
-                            if let Some(names) = &request_names {
-                                if !names.contains(&name) {
-                                    attributes.clear();
-                                    continue;
-                                }
-                            }
-                        }
-                        None => {
-                            if let Some(_) = &request_names {
-                                attributes.clear();
-                                continue;
-                            }
-                        }
-                    }
-
-                    let path = &self.evaluate_request_endpoint(endpoint)?;
-                    let mut req = match method {
-                        ast::RequestMethod::GET => ureq::get(path),
-                        ast::RequestMethod::POST => ureq::post(path),
-                        ast::RequestMethod::PUT => ureq::put(path),
-                        ast::RequestMethod::PATCH => ureq::patch(path),
-                        ast::RequestMethod::DELETE => ureq::delete(path),
-                    };
-
+                    let mut headers = vec![];
                     let mut body = None;
 
                     if let Some(statements) = block.map(|b| b.statements) {
                         for statement in statements {
                             match statement {
                                 ast::Statement::Header { name, value } => {
-                                    req = req.set(&name.value, &self.evaluate_expression(&value)?);
+                                    headers.push(Header::new(
+                                        name.value.to_string(),
+                                        self.evaluate_expression(&value)?,
+                                    ))
                                 }
                                 ast::Statement::Body { value, .. } => {
                                     if let None = body {
@@ -121,70 +180,44 @@ impl<'source> Interpreter<'source> {
                         }
                     }
 
-                    println!(
-                        "{}",
-                        format!(
-                            "sending {} request to {}",
-                            method.to_string().yellow().bold(),
-                            path.bold()
-                        )
-                    );
+                    let name_of_request = match attributes.get("name") {
+                        Some(att) => {
+                            let exp = att.first_params().ok_or_else(|| {
+                                self.error_factory
+                                    .required_args(att.span, 1, 0)
+                                    .with_message(
+                                    "@name(..) must be given an argument, like @name(\"req_1\")",
+                                )
+                            })?;
 
-                    // Handle @dbg
-                    if let Some(_) = attributes.get("dbg") {
-                        println!("    \u{21B3} with request data:");
-                        println!("{}", indent_lines(&format!("{:#?}", req), 6));
-
-                        println!(
-                            "{}",
-                            indent_lines(
-                                &format!(
-                                    "Body: {}",
-                                    body.clone().unwrap_or("(no body)".to_string())
-                                ),
-                                6
-                            )
-                        );
-                    }
-
-                    let res = if let Some(value) = body {
-                        let res = req
-                            .send_string(&value)
-                            .wrap_error_with(&self.error_factory, span)?;
-
-                        if res.content_type() == "application/json" {
-                            let string = &res
-                                .into_string()
-                                .map_err(|e| self.error_factory.other(span, e))?;
-                            prettify_json_string(string)
-                                .map_err(|e| self.error_factory.other(span, e))?
-                        } else {
-                            res.into_string()
-                                .map_err(|error| self.error_factory.other(span, error))?
+                            Some(self.evaluate_expression(exp)?)
                         }
-                    } else {
-                        req.call()
-                            .map_err(|error| self.error_factory.other(span, error))?
-                            .into_string()
-                            .map_err(|error| self.error_factory.other(span, error))?
+                        None => None,
                     };
 
-                    // Handle @log
-                    if let Some(att) = attributes.get("log") {
+                    let log_destination = if let Some(att) = attributes.get("log") {
                         if let Some(arg_exp) = att.first_params() {
                             let file_path = self.evaluate_expression(arg_exp)?.into();
-
-                            log(&res, &file_path)
-                                .map_err(|error| self.error_factory.other(span, error))?;
-
-                            println!(
-                                "    \u{21B3} {}",
-                                format!("saved response to {:?}", file_path).blue()
-                            );
+                            Some(Log::File(file_path))
                         } else {
-                            println!("{}", indent_lines(&res, 4));
+                            Some(Log::Std)
                         }
-                    }
+                    } else {
+                        None
+                    };
+
+                    requests.push(RequestMeta {
+                        name: name_of_request,
+                        dbg: attributes.get("dbg").is_some(),
+                        log_destination,
+                        span,
+                        request: ir::Request {
+                            method,
+                            url: path,
+                            headers,
+                            body,
+                        },
+                    });
 
                     attributes.clear();
                 }
@@ -224,7 +257,7 @@ impl<'source> Interpreter<'source> {
             }
         }
 
-        Ok(())
+        Ok(requests)
     }
 
     fn evaluate_expression(&self, exp: &Expression<'source>) -> Result<String> {
@@ -374,10 +407,6 @@ fn log(content: &str, to_file: &PathBuf) -> std::io::Result<()> {
     write!(w, "{content}")
 }
 
-fn prettify_json_string(string: &str) -> serde_json::Result<String> {
-    serde_json::to_string_pretty(&serde_json::from_str::<serde_json::Value>(string)?)
-}
-
 fn indent_lines(string: &str, indent: u8) -> String {
     string
         .lines()
@@ -393,42 +422,4 @@ fn escaping_new_lines(text: &str) -> String {
         s.push_str("\\n")
     }
     s
-}
-
-trait ErrorWrapper {
-    fn wrap_error_with(
-        self,
-        error_factory: &InterpErrorFactory,
-        location: Span,
-    ) -> Result<ureq::Response>;
-}
-
-impl ErrorWrapper for std::result::Result<ureq::Response, ureq::Error> {
-    fn wrap_error_with(
-        self,
-        error_factory: &InterpErrorFactory,
-        location: Span,
-    ) -> Result<ureq::Response> {
-        match self {
-            Ok(res) => Ok(res),
-            Err(err) => {
-                let err_string = match err {
-                    ureq::Error::Status(status, response) => {
-                        format!(
-                            "{}: status code {}: {} {:#}",
-                            response.get_url().to_owned(),
-                            status,
-                            response.status_text().to_owned(),
-                            response
-                                .into_string()
-                                .map_err(|e| error_factory.other(location, e))?
-                        )
-                    }
-                    ureq::Error::Transport(_) => err.to_string(),
-                };
-
-                Err(error_factory.other(location, err_string))
-            }
-        }
-    }
 }
