@@ -1,3 +1,4 @@
+mod attributes;
 pub mod environment;
 mod error;
 pub mod ir;
@@ -18,7 +19,7 @@ use error_meta::Error;
 use lexer::locations::{GetSpan, Span};
 
 use self::error::{InterpError, InterpErrorFactory};
-use environment::AttributeStore;
+use attributes::AttributeStore;
 use error::IntoInterpError;
 use ir::Header;
 
