@@ -1,6 +1,6 @@
+pub mod environment;
 mod error;
 pub mod ir;
-pub mod runtime;
 pub mod ureq_runner;
 
 use std::collections::HashMap;
@@ -10,18 +10,17 @@ use std::path::PathBuf;
 
 use colored::Colorize;
 
+use environment::Environment;
 use parser;
 use parser::ast::{self, Endpoint, Expression, Literal};
 
 use error_meta::Error;
 use lexer::locations::{GetSpan, Span};
 
-use crate::error::IntoInterpError;
-use crate::ir::Header;
-use crate::runtime::AttributeStore;
-
 use self::error::{InterpError, InterpErrorFactory};
-use self::runtime::Environment;
+use environment::AttributeStore;
+use error::IntoInterpError;
+use ir::Header;
 
 type Result<T> = std::result::Result<T, Error<InterpError>>;
 

@@ -1,7 +1,7 @@
 use std::{fs::File, io::Read, path::PathBuf};
 
 use insta::assert_debug_snapshot;
-use interpreter::{runtime::Environment, ureq_runner::UreqRunner, Interpreter};
+use interpreter::{environment::Environment, ureq_runner::UreqRunner, Interpreter};
 
 fn new_env_with_vars(vars: &[(&str, &str)]) -> Environment {
     let mut env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();

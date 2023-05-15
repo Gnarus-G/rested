@@ -1,5 +1,5 @@
 use clap::{CommandFactory, Parser, Subcommand};
-use interpreter::{runtime::Environment, ureq_runner::UreqRunner, Interpreter};
+use interpreter::{environment::Environment, ureq_runner::UreqRunner, Interpreter};
 
 use std::{
     collections::HashMap,
