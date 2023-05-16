@@ -1,7 +1,8 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
 
 use lexer::locations::{Location, Span};
+use lexer::{Lexer, Token, TokenKind};
 use parser::Parser;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::{lsp_types::*, LspService, Server};
@@ -24,6 +25,7 @@ impl IntoPosition for Location {
 struct Backend {
     pub client: Client,
     pub documents: TextDocuments,
+    pub variables: Mutex<HashSet<(String, (usize, usize))>>,
 }
 
 #[derive(Debug)]
@@ -66,19 +68,34 @@ impl Backend {
 
         let mut diagnostics = vec![];
 
-        if let Err(err) = result {
-            let range = Range {
-                start: err.span.start.into_position(),
-                end: err.span.end.into_position(),
-            };
+        match result {
+            Ok(ast) => {
+                let vars = ast.items.into_iter().filter_map(|item| match item {
+                    parser::ast::Item::Let { identifier, .. } => Some((
+                        identifier.name.to_owned(),
+                        (identifier.span.start.line, identifier.span.start.col),
+                    )),
+                    _ => None,
+                });
 
-            diagnostics.push(Diagnostic::new_simple(
-                range.clone(),
-                err.inner_error.to_string(),
-            ));
+                if let Ok(mut v) = self.variables.lock() {
+                    v.extend(vars)
+                }
+            }
+            Err(err) => {
+                let range = Range {
+                    start: err.span.start.into_position(),
+                    end: err.span.end.into_position(),
+                };
 
-            if let Some(msg) = err.message {
-                diagnostics.push(Diagnostic::new_simple(range, msg))
+                diagnostics.push(Diagnostic::new_simple(
+                    range.clone(),
+                    err.inner_error.to_string(),
+                ));
+
+                if let Some(msg) = err.message {
+                    diagnostics.push(Diagnostic::new_simple(range, msg))
+                }
             }
         };
 
@@ -185,31 +202,89 @@ impl LanguageServer for Backend {
             })
             .to_vec();
 
-        let Ok(ast) = parser::Parser::new(&text).parse() else {
-            return Ok(Some(CompletionResponse::Array(functions)));
+        let variables = self
+            .variables
+            .lock()
+            .unwrap()
+            .iter()
+            .filter(|(.., (line, col))| {
+                if *line == position.line as usize {
+                    return *col < position.character as usize;
+                }
+                return *line < position.line as usize;
+            })
+            .map(|(var, ..)| CompletionItem {
+                label: var.to_owned(),
+                kind: Some(CompletionItemKind::VARIABLE),
+                text_edit: Some(CompletionTextEdit::Edit(TextEdit {
+                    new_text: var.to_owned(),
+                    range: Range::new(
+                        position,
+                        Position {
+                            line: position.line,
+                            character: var.len() as u32,
+                        },
+                    ),
+                })),
+                ..CompletionItem::default()
+            })
+            .collect();
+
+        let tokens: Vec<_> = Lexer::new(&text).into_iter().collect();
+
+        use TokenKind::*;
+
+        let Some(last_token) = tokens.last() else {
+            return Ok(Some(CompletionResponse::Array(
+                [methods, functions].concat(),
+            )));
         };
 
-        for item in ast.items {
-            if let parser::ast::Item::Request { block, .. } = item {
-                if let Some(block) = block {
-                    let contains_position = block.span.contains(&position);
-                    if contains_position {
-                        let statement_types = ["header", "body"]
-                            .map(|kw| kw.to_string())
-                            .map(|keyword| CompletionItem {
-                                label: keyword.clone(),
-                                kind: Some(CompletionItemKind::KEYWORD),
-                                insert_text: Some(keyword),
-                                ..CompletionItem::default()
-                            })
-                            .to_vec();
+        let on_last_token = position.line == last_token.start.line as u32
+            && position.character > last_token.start.col as u32;
 
-                        return Ok(Some(CompletionResponse::Array(
-                            [statement_types, functions].concat(),
-                        )));
+        let (idx, token) = if on_last_token {
+            (tokens.len() - 1, last_token)
+        } else {
+            let found_token = tokens
+                .iter()
+                .enumerate()
+                .find(|(_, token)| {
+                    if token.start.line == position.line as usize {
+                        return token.start.col > position.character as usize;
                     }
+                    return token.start.line > position.line as usize;
+                })
+                .map(|(idx, ..)| tokens.get(idx - 1).map(|t| (idx - 1, t)))
+                .flatten();
+
+            match found_token {
+                Some(a) => a,
+                None => return Ok(None),
+            }
+        };
+
+        match token.kind {
+            Set => {
+                return Ok(Some(CompletionResponse::Array(vec![CompletionItem {
+                    label: "BASE_URL".to_owned(),
+                    kind: Some(CompletionItemKind::CONSTANT),
+                    ..CompletionItem::default()
+                }])))
+            }
+            Assign => {
+                return Ok(Some(CompletionResponse::Array(
+                    [functions, variables].concat(),
+                )));
+            }
+            StringLiteral => {
+                if let Some(Token { kind: Header, .. }) = tokens.get(idx - 1) {
+                    return Ok(Some(CompletionResponse::Array(
+                        [functions, variables].concat(),
+                    )));
                 }
             }
+            _ => {}
         }
 
         return Ok(Some(CompletionResponse::Array(
@@ -243,6 +318,7 @@ pub fn start() {
             let (service, socket) = LspService::new(|client| Backend {
                 client,
                 documents: TextDocuments::new(),
+                variables: Mutex::new(HashSet::new()),
             });
             Server::new(stdin, stdout, socket).serve(service).await;
         });
