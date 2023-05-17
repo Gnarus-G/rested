@@ -80,15 +80,15 @@ impl<'i> Parser<'i> {
 
         while token.kind != End {
             let statement = match token.kind {
-                Get => self.parse_request(RequestMethod::GET, token)?,
-                Post => self.parse_request(RequestMethod::POST, token)?,
-                Put => self.parse_request(RequestMethod::PUT, token)?,
-                Patch => self.parse_request(RequestMethod::PATCH, token)?,
-                Delete => self.parse_request(RequestMethod::DELETE, token)?,
+                Get => self.parse_request(RequestMethod::GET)?,
+                Post => self.parse_request(RequestMethod::POST)?,
+                Put => self.parse_request(RequestMethod::PUT)?,
+                Patch => self.parse_request(RequestMethod::PATCH)?,
+                Delete => self.parse_request(RequestMethod::DELETE)?,
                 Linecomment | Shebang => Item::LineComment(token.into()),
                 Set => self.parse_set_statement()?,
                 AttributePrefix => {
-                    let item = self.parse_attribute(token)?;
+                    let item = self.parse_attribute()?;
                     self.expect_one_of(vec![Get, Post, Put, Patch, Delete, AttributePrefix])
                         .map_err(|e| {
                             e.with_message(
@@ -109,7 +109,8 @@ impl<'i> Parser<'i> {
         Ok(program)
     }
 
-    fn parse_request(&mut self, method: RequestMethod, token: Token<'i>) -> Result<Item<'i>> {
+    fn parse_request(&mut self, method: RequestMethod) -> Result<Item<'i>> {
+        let start = self.curr_token().start;
         self.expect_one_of(vec![TokenKind::Url, TokenKind::Pathname])?;
         let url = self.token();
         let block = self.parse_block()?;
@@ -122,7 +123,7 @@ impl<'i> Parser<'i> {
         };
 
         Ok(Item::Request {
-            span: token.start.to_end_of(span_next),
+            span: start.to_end_of(span_next),
             method,
             endpoint: match url.kind {
                 TokenKind::Url => Endpoint::Url(url.into()),
@@ -165,7 +166,7 @@ impl<'i> Parser<'i> {
         while token.kind != RBracket {
             let header = match token.kind {
                 Header => self.parse_header()?,
-                Body => self.parse_body(token)?,
+                Body => self.parse_body()?,
                 Linecomment | Shebang => Statement::LineComment(token.into()),
                 End => {
                     return Err(self
@@ -220,7 +221,8 @@ impl<'i> Parser<'i> {
         })
     }
 
-    fn parse_body(&mut self, t: Token) -> Result<Statement<'i>> {
+    fn parse_body(&mut self) -> Result<Statement<'i>> {
+        let start = self.curr_token().start;
         self.expect_one_of(vec![
             TokenKind::StringLiteral,
             TokenKind::Ident,
@@ -239,10 +241,7 @@ impl<'i> Parser<'i> {
             _ => unreachable!(),
         };
 
-        Ok(Statement::Body {
-            value,
-            start: t.start,
-        })
+        Ok(Statement::Body { value, start })
     }
 
     fn parse_expression(&mut self, start_token: Token<'i>) -> Result<Expression<'i>> {
@@ -429,8 +428,8 @@ impl<'i> Parser<'i> {
         ParseErrorConstructor::new(self.lexer.input())
     }
 
-    fn parse_attribute(&mut self, token: Token<'i>) -> Result<Item<'i>> {
-        let location = token.start;
+    fn parse_attribute(&mut self) -> Result<Item<'i>> {
+        let location = self.curr_token().start;
 
         self.expect(TokenKind::Ident)?;
 
