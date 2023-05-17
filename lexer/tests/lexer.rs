@@ -97,3 +97,15 @@ fn lex_template_literals() {
 
     assert_lexes!(r#"`a${"temp"}` }}"#);
 }
+
+#[test]
+fn lex_json_object() {
+    assert_lexes!(
+        r#"
+let obj = {
+    key: "value",
+    otherKey: ["val", "vlue"]
+}
+"#
+    );
+}

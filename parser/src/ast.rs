@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{collections::HashMap, fmt::Display};
 
 use serde::Serialize;
 
@@ -141,17 +141,21 @@ impl<'source> GetSpan for Statement<'source> {
     }
 }
 
+pub type ObjectField<'source> = (&'source str, Expression<'source>);
+
 #[derive(Debug, PartialEq, Serialize)]
-pub enum Expression<'i> {
-    Identifier(Identifier<'i>),
-    String(StringLiteral<'i>),
+pub enum Expression<'source> {
+    Identifier(Identifier<'source>),
+    String(StringLiteral<'source>),
     Call {
-        identifier: Identifier<'i>,
-        arguments: Vec<Expression<'i>>,
+        identifier: Identifier<'source>,
+        arguments: Vec<Expression<'source>>,
     },
+    Array(Vec<Expression<'source>>),
+    Object(Vec<ObjectField<'source>>),
     TemplateSringLiteral {
         span: Span,
-        parts: Vec<Expression<'i>>,
+        parts: Vec<Expression<'source>>,
     },
 }
 
@@ -169,6 +173,8 @@ impl<'source> GetSpan for Expression<'source> {
                 .map(|span| identifier.span.to_end_of(span))
                 .unwrap_or(identifier.span),
             Expression::TemplateSringLiteral { span, .. } => *span,
+            Expression::Array(_) => todo!(),
+            Expression::Object(_) => todo!(),
         }
     }
 }

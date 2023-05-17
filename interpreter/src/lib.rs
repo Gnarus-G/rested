@@ -323,6 +323,8 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                         ))
                 }
             },
+            Array(_) => todo!(),
+            Object(_) => todo!(),
         };
 
         Ok(value)

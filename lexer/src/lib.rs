@@ -35,7 +35,11 @@ pub enum TokenKind {
     RParen,
     LBracket,
     RBracket,
+    LSquare,
+    RSquare,
+    Colon,
     AttributePrefix,
+    Comma,
     End,
 
     //edge cases
@@ -221,6 +225,26 @@ impl<'i> Lexer<'i> {
                 kind: RBracket,
                 start: self.cursor,
                 text: "}",
+            },
+            b'[' => Token {
+                kind: LSquare,
+                start: self.cursor,
+                text: "[",
+            },
+            b']' => Token {
+                kind: RSquare,
+                start: self.cursor,
+                text: "]",
+            },
+            b',' => Token {
+                kind: Comma,
+                text: ",",
+                start: self.cursor,
+            },
+            b':' => Token {
+                kind: Colon,
+                text: ":",
+                start: self.cursor,
             },
             b'=' => Token {
                 kind: Assign,

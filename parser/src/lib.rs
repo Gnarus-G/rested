@@ -16,6 +16,7 @@ pub type Result<T> = std::result::Result<T, Error<ParseError>>;
 #[derive(Debug)]
 pub struct Parser<'i> {
     lexer: Lexer<'i>,
+    tok: Option<Token<'i>>,
     peeked: Option<Token<'i>>,
 }
 
@@ -24,14 +25,28 @@ impl<'i> Parser<'i> {
         Self {
             peeked: None,
             lexer: Lexer::new(code),
+            tok: None,
         }
     }
 
     fn token(&mut self) -> Token<'i> {
-        match self.peeked.take() {
-            Some(t) => t,
-            None => self.lexer.next(),
-        }
+        self.tok = match self.peeked.take() {
+            Some(t) => Some(t),
+            None => Some(self.lexer.next()),
+        };
+        let t = &self.tok.as_ref().unwrap();
+        return Token {
+            kind: t.kind,
+            text: t.text,
+            start: t.start,
+        };
+    }
+
+    fn curr_token(&mut self) -> &Token<'i> {
+        &self
+            .tok
+            .as_ref()
+            .expect("self.token should be initialized at the start of parsing")
     }
 
     fn peek_token(&mut self) -> &Token<'i> {
@@ -238,10 +253,86 @@ impl<'i> Parser<'i> {
             Ident => Expression::Identifier(start_token.into()),
             StringLiteral => Expression::String(start_token.into()),
             MultiLineStringLiteral => self.parse_multiline_string_literal(start_token)?,
+            LBracket | LSquare => self.parse_json_like()?,
             _ => return Err(self.error().unexpected_token(&start_token)),
         };
 
         Ok(exp)
+    }
+
+    fn parse_json_like(&mut self) -> Result<Expression<'i>> {
+        use TokenKind::*;
+
+        let start_token = self.curr_token();
+
+        let object = match start_token.kind {
+            LBracket => {
+                let mut fields = vec![];
+
+                dbg!(&self.curr_token());
+                self.expect(Ident)?;
+                let ident = self.token();
+
+                self.expect(Colon)?;
+                self.eat_token();
+                self.eat_token();
+
+                dbg!(&self.curr_token());
+                fields.push((ident.text, self.parse_json_like()?));
+
+                dbg!(&self.curr_token());
+                while self.peek_token().kind != RBracket {
+                    self.expect(Comma)?;
+                    self.eat_token();
+
+                    self.expect(Ident)?;
+                    let ident = self.token();
+
+                    self.expect(Colon)?;
+                    self.eat_token();
+                    self.eat_token();
+
+                    dbg!(&self.curr_token());
+                    fields.push((ident.text, self.parse_json_like()?));
+                }
+
+                self.token();
+
+                Expression::Object(fields)
+            }
+            LSquare => {
+                self.token();
+
+                let mut list = vec![];
+
+                list.push(self.parse_json_like()?);
+
+                while self.peek_token().kind != RSquare {
+                    dbg!(&self.curr_token());
+                    self.expect(Comma)?;
+                    self.eat_token();
+                    self.eat_token();
+
+                    list.push(self.parse_json_like()?);
+                }
+
+                self.token();
+
+                Expression::Array(list)
+            }
+            _ => {
+                dbg!(&self.curr_token());
+                let token = self.curr_token();
+                let token = Token {
+                    start: token.start,
+                    kind: token.kind,
+                    text: token.text,
+                };
+                self.parse_expression(token)?
+            }
+        };
+
+        Ok(object)
     }
 
     fn parse_call_expression(&mut self, identifier: Token<'i>) -> Result<Expression<'i>> {
