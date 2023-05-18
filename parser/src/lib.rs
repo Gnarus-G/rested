@@ -16,7 +16,7 @@ pub type Result<T> = std::result::Result<T, Error<ParseError>>;
 #[derive(Debug)]
 pub struct Parser<'i> {
     lexer: Lexer<'i>,
-    tok: Option<Token<'i>>,
+    token: Option<Token<'i>>,
     peeked: Option<Token<'i>>,
 }
 
@@ -25,36 +25,27 @@ impl<'i> Parser<'i> {
         Self {
             peeked: None,
             lexer: Lexer::new(code),
-            tok: None,
+            token: None,
         }
-    }
-
-    fn token(&mut self) -> Token<'i> {
-        self.tok = match self.peeked.take() {
-            Some(t) => Some(t),
-            None => Some(self.lexer.next()),
-        };
-        let t = &self.tok.as_ref().unwrap();
-        return Token {
-            kind: t.kind,
-            text: t.text,
-            start: t.start,
-        };
     }
 
     fn curr_token(&mut self) -> &Token<'i> {
         &self
-            .tok
+            .token
             .as_ref()
             .expect("self.token should be initialized at the start of parsing")
     }
 
-    fn peek_token(&mut self) -> &Token<'i> {
-        self.peeked.get_or_insert_with(|| self.lexer.next())
+    fn next_token(&mut self) -> &Token<'i> {
+        self.token = match self.peeked.take() {
+            Some(t) => Some(t),
+            None => Some(self.lexer.next()),
+        };
+        self.curr_token()
     }
 
-    fn eat_token(&mut self) {
-        self.token();
+    fn peek_token(&mut self) -> &Token<'i> {
+        self.peeked.get_or_insert_with(|| self.lexer.next())
     }
 
     pub fn parse(&mut self) -> Result<Program<'i>> {
@@ -62,30 +53,16 @@ impl<'i> Parser<'i> {
 
         use lexer::TokenKind::*;
 
-        self.expect_one_of(vec![
-            Set,
-            Get,
-            Post,
-            Put,
-            Patch,
-            Delete,
-            Linecomment,
-            Shebang,
-            AttributePrefix,
-            Let,
-            End,
-        ])?;
+        self.next_token();
 
-        let mut token = self.token();
-
-        while token.kind != End {
-            let statement = match token.kind {
+        while self.curr_token().kind != End {
+            let item = match self.curr_token().kind {
                 Get => self.parse_request(RequestMethod::GET)?,
                 Post => self.parse_request(RequestMethod::POST)?,
                 Put => self.parse_request(RequestMethod::PUT)?,
                 Patch => self.parse_request(RequestMethod::PATCH)?,
                 Delete => self.parse_request(RequestMethod::DELETE)?,
-                Linecomment | Shebang => Item::LineComment(token.into()),
+                Linecomment | Shebang => Item::LineComment(self.curr_token().into()),
                 Set => self.parse_set_statement()?,
                 AttributePrefix => {
                     let item = self.parse_attribute()?;
@@ -98,12 +75,10 @@ impl<'i> Parser<'i> {
                     item
                 }
                 Let => self.parse_let_statement()?,
-                _ => {
-                    unreachable!("we properly expect items at this level of the program structure, found token {token:?}")
-                }
+                _ => Item::Expr(self.parse_expression()?),
             };
-            program.items.push(statement);
-            token = self.token();
+            program.items.push(item);
+            self.next_token();
         }
 
         Ok(program)
@@ -111,10 +86,18 @@ impl<'i> Parser<'i> {
 
     fn parse_request(&mut self, method: RequestMethod) -> Result<Item<'i>> {
         let start = self.curr_token().start;
+
         self.expect_one_of(vec![TokenKind::Url, TokenKind::Pathname])?;
-        let url = self.token();
-        let block = self.parse_block()?;
+
+        let url = self.next_token();
+        let endpoint = match url.kind {
+            TokenKind::Url => Endpoint::Url(url.into()),
+            TokenKind::Pathname => Endpoint::Pathname(url.into()),
+            _ => unreachable!("we're properly expecting only url and pathname tokens here"),
+        };
         let url_span: Span = url.span();
+
+        let block = self.parse_block()?;
 
         let span_next = if let Some(b) = block.as_ref() {
             b.span
@@ -125,11 +108,7 @@ impl<'i> Parser<'i> {
         Ok(Item::Request {
             span: start.to_end_of(span_next),
             method,
-            endpoint: match url.kind {
-                TokenKind::Url => Endpoint::Url(url.into()),
-                TokenKind::Pathname => Endpoint::Pathname(url.into()),
-                _ => unreachable!("we're properly expecting only url and pathname tokens here"),
-            },
+            endpoint,
             block,
         })
     }
@@ -137,7 +116,7 @@ impl<'i> Parser<'i> {
     fn parse_set_statement(&mut self) -> Result<Item<'i>> {
         self.expect(TokenKind::Ident)?;
 
-        let identifier = self.token();
+        let identifier = self.next_token().into();
 
         self.expect_one_of(vec![
             TokenKind::Ident,
@@ -145,11 +124,11 @@ impl<'i> Parser<'i> {
             TokenKind::MultiLineStringLiteral,
         ])?;
 
-        let value_token = self.token();
+        self.next_token();
 
         Ok(Item::Set {
-            identifier: identifier.into(),
-            value: self.parse_expression(value_token)?,
+            identifier,
+            value: self.parse_expression()?,
         })
     }
 
@@ -159,43 +138,36 @@ impl<'i> Parser<'i> {
             return Ok(None);
         };
 
-        let span_start = self.token().start; // remember LBracket's location
-        let mut token = self.token();
+        let span_start = self.next_token().start; // remember LBracket's location
+        self.next_token();
         let mut statements = vec![];
 
-        while token.kind != RBracket {
-            let header = match token.kind {
+        while self.curr_token().kind != RBracket && self.curr_token().kind != End {
+            let statement = match self.curr_token().kind {
                 Header => self.parse_header()?,
                 Body => self.parse_body()?,
-                Linecomment | Shebang => Statement::LineComment(token.into()),
-                End => {
-                    return Err(self
-                        .error()
-                        .unexpected_token(&token)
-                        .with_message("unexpected end of life"))
-                }
+                Linecomment | Shebang => Statement::LineComment(self.curr_token().into()),
                 _ => {
                     return Err(self
                         .error()
-                        .unexpected_token(&token)
+                        .unexpected_token(&self.curr_token())
                         .with_message("may only declare headers or a body statement here"))
                 }
             };
-
-            statements.push(header);
-            token = self.token();
+            statements.push(statement);
+            self.next_token();
         }
 
         return Ok(Some(Block {
             statements,
-            span: Span::new(span_start, token.start), // span to RBracket's location
+            span: Span::new(span_start, self.curr_token().start), // span to RBracket's location
         }));
     }
 
     fn parse_header(&mut self) -> Result<Statement<'i>> {
         self.expect(TokenKind::StringLiteral)?;
 
-        let header_name = self.token();
+        let header_name = self.next_token().into();
 
         self.expect_one_of(vec![
             TokenKind::StringLiteral,
@@ -203,21 +175,13 @@ impl<'i> Parser<'i> {
             TokenKind::MultiLineStringLiteral,
         ])?;
 
-        let header_value = self.token();
+        self.next_token();
+
+        let value = self.parse_expression()?;
 
         Ok(Statement::Header {
-            name: header_name.into(),
-            value: match header_value.kind {
-                TokenKind::Ident if self.peek_token().kind == TokenKind::LParen => {
-                    self.parse_call_expression(header_value)?
-                }
-                TokenKind::Ident => Expression::Identifier(header_value.into()),
-                TokenKind::StringLiteral => Expression::String(header_value.into()),
-                TokenKind::MultiLineStringLiteral => {
-                    self.parse_multiline_string_literal(header_value)?
-                }
-                _ => unreachable!(),
-            },
+            name: header_name,
+            value,
         })
     }
 
@@ -229,31 +193,24 @@ impl<'i> Parser<'i> {
             TokenKind::MultiLineStringLiteral,
         ])?;
 
-        let token = self.token();
+        self.next_token();
 
-        let value = match token.kind {
-            TokenKind::Ident if self.peek_token().kind == TokenKind::LParen => {
-                self.parse_call_expression(token)?
-            }
-            TokenKind::Ident => Expression::Identifier(token.into()),
-            TokenKind::StringLiteral => Expression::String(token.into()),
-            TokenKind::MultiLineStringLiteral => self.parse_multiline_string_literal(token)?,
-            _ => unreachable!(),
-        };
+        let value = self.parse_expression()?;
 
         Ok(Statement::Body { value, start })
     }
 
-    fn parse_expression(&mut self, start_token: Token<'i>) -> Result<Expression<'i>> {
+    fn parse_expression(&mut self) -> Result<Expression<'i>> {
+        let kind = self.curr_token().kind;
         use TokenKind::*;
 
-        let exp = match start_token.kind {
-            Ident if self.peek_token().kind == LParen => self.parse_call_expression(start_token)?,
-            Ident => Expression::Identifier(start_token.into()),
-            StringLiteral => Expression::String(start_token.into()),
-            MultiLineStringLiteral => self.parse_multiline_string_literal(start_token)?,
+        let exp = match kind {
+            Ident if self.peek_token().kind == LParen => self.parse_call_expression()?,
+            Ident => Expression::Identifier(self.curr_token().into()),
+            StringLiteral => Expression::String(self.curr_token().into()),
+            MultiLineStringLiteral => self.parse_multiline_string_literal()?,
             LBracket | LSquare => self.parse_json_like()?,
-            _ => return Err(self.error().unexpected_token(&start_token)),
+            _ => return Err(self.error().unexpected_token(self.curr_token())),
         };
 
         Ok(exp)
@@ -268,120 +225,111 @@ impl<'i> Parser<'i> {
             LBracket => {
                 let mut fields = vec![];
 
-                dbg!(&self.curr_token());
                 self.expect(Ident)?;
-                let ident = self.token();
+                let ident = self.next_token().text;
 
                 self.expect(Colon)?;
-                self.eat_token();
-                self.eat_token();
+                self.next_token();
+                self.next_token();
 
-                dbg!(&self.curr_token());
-                fields.push((ident.text, self.parse_json_like()?));
+                fields.push((ident, self.parse_json_like()?));
 
-                dbg!(&self.curr_token());
                 while self.peek_token().kind != RBracket {
                     self.expect(Comma)?;
-                    self.eat_token();
+                    self.next_token();
 
                     self.expect(Ident)?;
-                    let ident = self.token();
+                    let ident = self.next_token().text;
 
                     self.expect(Colon)?;
-                    self.eat_token();
-                    self.eat_token();
+                    self.next_token();
+                    self.next_token();
 
-                    dbg!(&self.curr_token());
-                    fields.push((ident.text, self.parse_json_like()?));
+                    fields.push((ident, self.parse_json_like()?));
                 }
 
-                self.token();
+                self.next_token();
 
                 Expression::Object(fields)
             }
             LSquare => {
-                self.token();
+                self.next_token();
 
                 let mut list = vec![];
 
                 list.push(self.parse_json_like()?);
 
                 while self.peek_token().kind != RSquare {
-                    dbg!(&self.curr_token());
                     self.expect(Comma)?;
-                    self.eat_token();
-                    self.eat_token();
+                    self.next_token();
+                    self.next_token();
 
                     list.push(self.parse_json_like()?);
                 }
 
-                self.token();
+                self.next_token();
 
                 Expression::Array(list)
             }
-            _ => {
-                dbg!(&self.curr_token());
-                let token = self.curr_token();
-                let token = Token {
-                    start: token.start,
-                    kind: token.kind,
-                    text: token.text,
-                };
-                self.parse_expression(token)?
-            }
+            _ => self.parse_expression()?,
         };
 
         Ok(object)
     }
 
-    fn parse_call_expression(&mut self, identifier: Token<'i>) -> Result<Expression<'i>> {
-        self.eat_token();
+    fn parse_call_expression(&mut self) -> Result<Expression<'i>> {
+        let identifier = self.curr_token().into();
+        self.next_token();
 
-        let mut token = self.token();
+        let mut token = self.next_token();
 
         let mut arguments = vec![];
 
         while token.kind != TokenKind::RParen {
-            let exp = self.parse_expression(token)?;
+            let exp = self.parse_expression()?;
             arguments.push(exp);
-            token = self.token();
+            token = self.next_token();
         }
 
         Ok(Expression::Call {
-            identifier: identifier.into(),
+            identifier,
             arguments,
         })
     }
 
-    fn parse_multiline_string_literal(&mut self, start_token: Token<'i>) -> Result<Expression<'i>> {
+    fn parse_multiline_string_literal(&mut self) -> Result<Expression<'i>> {
         let mut parts = vec![];
-        let start = start_token.start;
+        let start = self.curr_token().start;
         let end;
-        let mut token = start_token;
 
         loop {
-            match &token.kind {
+            let c_kind = self.curr_token().kind;
+            let p_kind = self.peek_token().kind;
+
+            match c_kind {
                 TokenKind::MultiLineStringLiteral
-                    if self.peek_token().kind == TokenKind::DollarSignLBracket =>
+                    if p_kind == TokenKind::DollarSignLBracket =>
                 {
-                    let s_literal = Expression::String(token.into());
+                    let s_literal = Expression::String(self.curr_token().into());
 
                     parts.push(s_literal);
 
-                    self.eat_token();
+                    self.next_token();
 
-                    token = self.token();
+                    self.next_token();
 
-                    parts.push(self.parse_expression(token)?);
-
-                    token = self.token();
+                    parts.push(self.parse_expression()?);
                 }
+                TokenKind::End => {
+                    end = self.curr_token().end_location();
+                    break;
+                },
                 TokenKind::MultiLineStringLiteral if parts.is_empty() => {
-                    return Ok(Expression::String(token.into()));
+                    return Ok(Expression::String(self.curr_token().into()));
                 }
                 TokenKind::MultiLineStringLiteral => {
-                    end = token.end_location();
-                    parts.push(Expression::String(token.into()));
+                    end = self.curr_token().end_location();
+                    parts.push(Expression::String(self.curr_token().into()));
                     break;
                 }
                 tk => unreachable!(
@@ -390,6 +338,8 @@ impl<'i> Parser<'i> {
                     tk
                 ),
             };
+
+            self.next_token();
         }
 
         Ok(Expression::TemplateSringLiteral {
@@ -407,7 +357,7 @@ impl<'i> Parser<'i> {
 
         let error = self
             .error()
-            .expected_one_of_tokens(&self.token(), expected_kinds);
+            .expected_one_of_tokens(&self.next_token(), expected_kinds);
 
         Err(error)
     }
@@ -419,7 +369,9 @@ impl<'i> Parser<'i> {
             return Ok(());
         }
 
-        let error = self.error().expected_token(&self.token(), expected_kind);
+        let error = self
+            .error()
+            .expected_token(&self.next_token(), expected_kind);
 
         Err(error)
     }
@@ -433,41 +385,41 @@ impl<'i> Parser<'i> {
 
         self.expect(TokenKind::Ident)?;
 
-        let ident = self.token();
+        let identifier = self.next_token().into();
 
         let mut params = vec![];
 
         if let TokenKind::LParen = self.peek_token().kind {
-            self.eat_token();
+            self.next_token();
 
-            let mut token = self.token();
+            let mut token = self.next_token();
             while token.kind != TokenKind::RParen {
-                let exp = self.parse_expression(token)?;
+                let exp = self.parse_expression()?;
 
                 params.push(exp);
 
-                token = self.token();
+                token = self.next_token();
             }
         }
 
         Ok(Item::Attribute {
             location,
-            identifier: ident.into(),
+            identifier,
             parameters: params,
         })
     }
 
     fn parse_let_statement(&mut self) -> Result<Item<'i>> {
-        let ident = self.token();
+        let identifier = self.next_token().into();
 
         self.expect(TokenKind::Assign)?;
-        self.eat_token();
+        self.next_token();
 
-        let token = self.token();
+        self.next_token();
 
         Ok(Item::Let {
-            identifier: ident.into(),
-            value: self.parse_expression(token)?,
+            identifier,
+            value: self.parse_expression()?,
         })
     }
 }

@@ -254,6 +254,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                     let value = self.evaluate_expression(&value)?;
                     self.let_bindings.insert(identifier.name, value);
                 }
+                Expr(_) => todo!(),
             }
         }
 
