@@ -360,9 +360,13 @@ fn request_with_json_like_data() {
 set BASE_URL env("b_url")
 
 post /api {
+    header "Content-Type" "application/json"
     body {
         neet: "1337",
-        hello: "world" 
+        arr: ["yo", {h: "i"}],
+        hello: {
+            w: "orld"
+        }
     }
 }
         "#;
@@ -373,11 +377,11 @@ post /api {
 
     let mock = server
         .mock("POST", "/api")
+        .match_header("Content-Type", "application/json")
         .match_body(mockito::Matcher::PartialJsonString(
-            r#"{"neet": "1337", "hello": "world"}"#.to_string(),
+            r#"{"neet": "1337", "arr": ["yo", {"h": "i"}], "hello": {"w": "orld"}}"#.to_string(),
         ))
         .with_status(200)
-        .expect(1)
         .create();
 
     let mut program = Interpreter::new(code, env, UreqRunner);

@@ -262,13 +262,27 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
     }
 
     fn evaluate_expression(&self, exp: &Expression<'source>) -> Result<String> {
+        self.evaluate_expression_and_quote_string(exp, false)
+    }
+
+    fn evaluate_expression_and_quote_string(
+        &self,
+        exp: &Expression<'source>,
+        quote_string_literal: bool,
+    ) -> Result<String> {
         use Expression::*;
 
         let expression_span = exp.span();
 
         let value = match exp {
             Identifier(token) => self.evaluate_identifier(&token)?,
-            String(token) => token.value.to_string(),
+            String(token) => {
+                if quote_string_literal {
+                    format!("{:?}", token.value)
+                } else {
+                    token.value.to_string()
+                }
+            }
             TemplateSringLiteral { parts, .. } => {
                 self.evaluate_template_string_literal_parts(parts)?
             }
@@ -328,20 +342,33 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                 let mut v = vec![];
 
                 for value in values {
-                    v.push(self.evaluate_expression(value)?);
+                    v.push(self.evaluate_expression_and_quote_string(value, true)?);
                 }
 
-                format!("{v:?}")
+                format!(
+                    "[{}]",
+                    v.iter()
+                        .map(|value| format!("{value}"))
+                        .collect::<Vec<_>>()
+                        .join(",")
+                )
             }
-            Object((span, fields)) => {
+            Object((.., fields)) => {
                 let mut props = HashMap::new();
 
                 for (key, value) in fields {
-                    props.insert(key.to_string(), self.evaluate_expression(value)?);
+                    let value = self.evaluate_expression_and_quote_string(value, true)?;
+                    props.insert(key.to_string(), value);
                 }
 
-                serde_json::to_string::<_>(&props)
-                    .map_err(|e| self.error_factory.other(*span, e))?
+                format!(
+                    "{{{}}}",
+                    props
+                        .iter()
+                        .map(|(key, value)| format!("{:?}: {}", key, value))
+                        .collect::<Vec<_>>()
+                        .join(",")
+                )
             }
         };
 
