@@ -195,7 +195,7 @@ impl<'source> GetSpan for Item<'source> {
                 .last()
                 .map(|p| Span::new(*location, p.span().end))
                 .unwrap_or(Span::new(*location, identifier.span.end)),
-            Item::Expr(_) => todo!(),
+            Item::Expr(e) => e.span(),
         }
     }
 }

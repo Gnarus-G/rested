@@ -353,3 +353,24 @@ fn prevents_duplicate_attributes() {
     let duped_att_err = program.run(Some(vec!["test".to_string()])).unwrap_err();
     assert_debug_snapshot!(duped_att_err);
 }
+
+#[test]
+fn ignores_expression_items() {
+    let code = r#"
+env("test") 
+read("file")
+
+// obj literal
+{
+    key: "value",
+    oKey: ["1", "2"]
+}
+
+// string literal expression
+"adsf"
+        "#;
+    let env = new_env_with_vars(&[]);
+    let mut program = Interpreter::new(&code, env, UreqRunner);
+
+    program.run(None).unwrap();
+}
