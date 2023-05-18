@@ -1,6 +1,8 @@
 pub mod ast;
 pub mod error;
 
+use std::collections::BTreeMap;
+
 use crate::ast::{Endpoint, Expression, Item, Program, RequestMethod, Statement};
 use ast::Block;
 use error_meta::Error;
@@ -219,7 +221,7 @@ impl<'i> Parser<'i> {
 
         let object = match start_token.kind {
             LBracket => {
-                let mut fields = vec![];
+                let mut fields = BTreeMap::new();
 
                 self.expect(Ident)?;
                 let ident = self.next_token().text;
@@ -228,7 +230,7 @@ impl<'i> Parser<'i> {
                 self.next_token();
                 self.next_token();
 
-                fields.push((ident, self.parse_json_like()?));
+                fields.insert(ident, self.parse_json_like()?);
 
                 while self.peek_token().kind != RBracket {
                     self.expect(Comma)?;
@@ -241,7 +243,7 @@ impl<'i> Parser<'i> {
                     self.next_token();
                     self.next_token();
 
-                    fields.push((ident, self.parse_json_like()?));
+                    fields.insert(ident, self.parse_json_like()?);
                 }
 
                 self.next_token();

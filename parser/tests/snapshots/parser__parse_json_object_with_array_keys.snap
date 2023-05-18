@@ -28,22 +28,8 @@ Program(
           line: 9,
           col: 1,
         ),
-      ), [
-        ("key", String(StringLiteral(
-          raw: "\"value\"",
-          value: "value",
-          span: Span(
-            start: Location(
-              line: 2,
-              col: 9,
-            ),
-            end: Location(
-              line: 2,
-              col: 16,
-            ),
-          ),
-        ))),
-        ("akey", String(StringLiteral(
+      ), {
+        "akey": String(StringLiteral(
           raw: "\"234va\"",
           value: "234va",
           span: Span(
@@ -56,47 +42,8 @@ Program(
               col: 17,
             ),
           ),
-        ))),
-        ("oKey", Array((Span(
-          start: Location(
-            line: 4,
-            col: 10,
-          ),
-          end: Location(
-            line: 4,
-            col: 25,
-          ),
-        ), [
-          String(StringLiteral(
-            raw: "\"val\"",
-            value: "val",
-            span: Span(
-              start: Location(
-                line: 4,
-                col: 11,
-              ),
-              end: Location(
-                line: 4,
-                col: 16,
-              ),
-            ),
-          )),
-          String(StringLiteral(
-            raw: "\"val2\"",
-            value: "val2",
-            span: Span(
-              start: Location(
-                line: 4,
-                col: 18,
-              ),
-              end: Location(
-                line: 4,
-                col: 24,
-              ),
-            ),
-          )),
-        ]))),
-        ("aoKay", Array((Span(
+        )),
+        "aoKay": Array((Span(
           start: Location(
             line: 5,
             col: 11,
@@ -143,22 +90,8 @@ Program(
               line: 8,
               col: 5,
             ),
-          ), [
-            ("hey", String(StringLiteral(
-              raw: "\"yo!\"",
-              value: "yo!",
-              span: Span(
-                start: Location(
-                  line: 6,
-                  col: 13,
-                ),
-                end: Location(
-                  line: 6,
-                  col: 18,
-                ),
-              ),
-            ))),
-            ("hello", String(StringLiteral(
+          ), {
+            "hello": String(StringLiteral(
               raw: "\"world\"",
               value: "world",
               span: Span(
@@ -171,10 +104,77 @@ Program(
                   col: 22,
                 ),
               ),
-            ))),
-          ])),
-        ]))),
-      ])),
+            )),
+            "hey": String(StringLiteral(
+              raw: "\"yo!\"",
+              value: "yo!",
+              span: Span(
+                start: Location(
+                  line: 6,
+                  col: 13,
+                ),
+                end: Location(
+                  line: 6,
+                  col: 18,
+                ),
+              ),
+            )),
+          })),
+        ])),
+        "key": String(StringLiteral(
+          raw: "\"value\"",
+          value: "value",
+          span: Span(
+            start: Location(
+              line: 2,
+              col: 9,
+            ),
+            end: Location(
+              line: 2,
+              col: 16,
+            ),
+          ),
+        )),
+        "oKey": Array((Span(
+          start: Location(
+            line: 4,
+            col: 10,
+          ),
+          end: Location(
+            line: 4,
+            col: 25,
+          ),
+        ), [
+          String(StringLiteral(
+            raw: "\"val\"",
+            value: "val",
+            span: Span(
+              start: Location(
+                line: 4,
+                col: 11,
+              ),
+              end: Location(
+                line: 4,
+                col: 16,
+              ),
+            ),
+          )),
+          String(StringLiteral(
+            raw: "\"val2\"",
+            value: "val2",
+            span: Span(
+              start: Location(
+                line: 4,
+                col: 18,
+              ),
+              end: Location(
+                line: 4,
+                col: 24,
+              ),
+            ),
+          )),
+        ])),
+      })),
     ),
   ],
 )

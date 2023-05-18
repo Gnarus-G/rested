@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{collections::BTreeMap, fmt::Display};
 
 use serde::Serialize;
 
@@ -142,8 +142,6 @@ impl<'source> GetSpan for Statement<'source> {
     }
 }
 
-pub type ObjectField<'source> = (&'source str, Expression<'source>);
-
 pub type Spanned<T> = (Span, T);
 
 #[derive(Debug, PartialEq, Serialize)]
@@ -155,7 +153,7 @@ pub enum Expression<'source> {
         arguments: Vec<Expression<'source>>,
     },
     Array(Spanned<Vec<Expression<'source>>>),
-    Object(Spanned<Vec<ObjectField<'source>>>),
+    Object(Spanned<BTreeMap<&'source str, Expression<'source>>>),
     TemplateSringLiteral {
         span: Span,
         parts: Vec<Expression<'source>>,

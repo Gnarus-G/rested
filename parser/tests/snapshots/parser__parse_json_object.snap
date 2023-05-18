@@ -28,22 +28,8 @@ Program(
           line: 5,
           col: 1,
         ),
-      ), [
-        ("key", String(StringLiteral(
-          raw: "\"value\"",
-          value: "value",
-          span: Span(
-            start: Location(
-              line: 2,
-              col: 9,
-            ),
-            end: Location(
-              line: 2,
-              col: 16,
-            ),
-          ),
-        ))),
-        ("akey", String(StringLiteral(
+      ), {
+        "akey": String(StringLiteral(
           raw: "\"234va\"",
           value: "234va",
           span: Span(
@@ -56,8 +42,22 @@ Program(
               col: 17,
             ),
           ),
-        ))),
-        ("love", String(StringLiteral(
+        )),
+        "key": String(StringLiteral(
+          raw: "\"value\"",
+          value: "value",
+          span: Span(
+            start: Location(
+              line: 2,
+              col: 9,
+            ),
+            end: Location(
+              line: 2,
+              col: 16,
+            ),
+          ),
+        )),
+        "love": String(StringLiteral(
           raw: "\"me\"",
           value: "me",
           span: Span(
@@ -70,8 +70,8 @@ Program(
               col: 14,
             ),
           ),
-        ))),
-      ])),
+        )),
+      })),
     ),
   ],
 )

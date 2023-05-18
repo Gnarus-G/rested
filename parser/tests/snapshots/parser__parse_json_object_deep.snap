@@ -1,0 +1,124 @@
+---
+source: parser/tests/parser.rs
+description: "\nlet o = {\n    key: \"value\",\n    akey: \"234va\",\n    love: {\n        hello: {\n            w: \"1\",\n            o: {\n                two: \"rld\"\n            }\n        }\n    }\n}"
+expression: ast
+---
+Program(
+  items: [
+    Let(
+      identifier: Identifier(
+        name: "o",
+        span: Span(
+          start: Location(
+            line: 1,
+            col: 4,
+          ),
+          end: Location(
+            line: 1,
+            col: 5,
+          ),
+        ),
+      ),
+      value: Object((Span(
+        start: Location(
+          line: 1,
+          col: 8,
+        ),
+        end: Location(
+          line: 12,
+          col: 1,
+        ),
+      ), {
+        "akey": String(StringLiteral(
+          raw: "\"234va\"",
+          value: "234va",
+          span: Span(
+            start: Location(
+              line: 3,
+              col: 10,
+            ),
+            end: Location(
+              line: 3,
+              col: 17,
+            ),
+          ),
+        )),
+        "key": String(StringLiteral(
+          raw: "\"value\"",
+          value: "value",
+          span: Span(
+            start: Location(
+              line: 2,
+              col: 9,
+            ),
+            end: Location(
+              line: 2,
+              col: 16,
+            ),
+          ),
+        )),
+        "love": Object((Span(
+          start: Location(
+            line: 4,
+            col: 10,
+          ),
+          end: Location(
+            line: 11,
+            col: 5,
+          ),
+        ), {
+          "hello": Object((Span(
+            start: Location(
+              line: 5,
+              col: 15,
+            ),
+            end: Location(
+              line: 10,
+              col: 9,
+            ),
+          ), {
+            "o": Object((Span(
+              start: Location(
+                line: 7,
+                col: 15,
+              ),
+              end: Location(
+                line: 9,
+                col: 13,
+              ),
+            ), {
+              "two": String(StringLiteral(
+                raw: "\"rld\"",
+                value: "rld",
+                span: Span(
+                  start: Location(
+                    line: 8,
+                    col: 21,
+                  ),
+                  end: Location(
+                    line: 8,
+                    col: 26,
+                  ),
+                ),
+              )),
+            })),
+            "w": String(StringLiteral(
+              raw: "\"1\"",
+              value: "1",
+              span: Span(
+                start: Location(
+                  line: 6,
+                  col: 15,
+                ),
+                end: Location(
+                  line: 6,
+                  col: 18,
+                ),
+              ),
+            )),
+          })),
+        })),
+      })),
+    ),
+  ],
+)

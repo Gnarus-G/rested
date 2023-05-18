@@ -150,6 +150,25 @@ let o = {
 }
 
 #[test]
+fn parse_json_object_deep() {
+    assert_ast!(
+        r#"
+let o = {
+    key: "value",
+    akey: "234va",
+    love: {
+        hello: {
+            w: "1",
+            o: {
+                two: "rld"
+            }
+        }
+    }
+}"#
+    );
+}
+
+#[test]
 fn parse_json_object_with_array_keys() {
     assert_ast!(
         r#"
