@@ -355,6 +355,39 @@ fn prevents_duplicate_attributes() {
 }
 
 #[test]
+fn request_with_json_like_data() {
+    let code = r#"
+set BASE_URL env("b_url")
+
+post /api {
+    body {
+        neet: "1337",
+        hello: "world" 
+    }
+}
+        "#;
+
+    let mut server = mockito::Server::new();
+    let url = server.url();
+    let env = new_env_with_vars(&[("b_url", &url)]);
+
+    let mock = server
+        .mock("POST", "/api")
+        .match_body(mockito::Matcher::PartialJsonString(
+            r#"{"neet": "1337", "hello": "world"}"#.to_string(),
+        ))
+        .with_status(200)
+        .expect(1)
+        .create();
+
+    let mut program = Interpreter::new(code, env, UreqRunner);
+
+    program.run(None).unwrap();
+
+    mock.assert();
+}
+
+#[test]
 fn ignores_expression_items() {
     let code = r#"
 env("test") 

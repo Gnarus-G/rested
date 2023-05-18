@@ -324,8 +324,25 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                         ))
                 }
             },
-            Array(_) => todo!(),
-            Object(_) => todo!(),
+            Array((.., values)) => {
+                let mut v = vec![];
+
+                for value in values {
+                    v.push(self.evaluate_expression(value)?);
+                }
+
+                format!("{v:?}")
+            }
+            Object((span, fields)) => {
+                let mut props = HashMap::new();
+
+                for (key, value) in fields {
+                    props.insert(key.to_string(), self.evaluate_expression(value)?);
+                }
+
+                serde_json::to_string::<_>(&props)
+                    .map_err(|e| self.error_factory.other(*span, e))?
+            }
         };
 
         Ok(value)

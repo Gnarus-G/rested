@@ -19,7 +19,16 @@ Program(
           ),
         ),
       ),
-      value: Object([
+      value: Object((Span(
+        start: Location(
+          line: 1,
+          col: 8,
+        ),
+        end: Location(
+          line: 9,
+          col: 1,
+        ),
+      ), [
         ("key", String(StringLiteral(
           raw: "\"value\"",
           value: "value",
@@ -48,7 +57,16 @@ Program(
             ),
           ),
         ))),
-        ("oKey", Array([
+        ("oKey", Array((Span(
+          start: Location(
+            line: 4,
+            col: 10,
+          ),
+          end: Location(
+            line: 4,
+            col: 25,
+          ),
+        ), [
           String(StringLiteral(
             raw: "\"val\"",
             value: "val",
@@ -77,8 +95,17 @@ Program(
               ),
             ),
           )),
-        ])),
-        ("aoKay", Array([
+        ]))),
+        ("aoKay", Array((Span(
+          start: Location(
+            line: 5,
+            col: 11,
+          ),
+          end: Location(
+            line: 8,
+            col: 6,
+          ),
+        ), [
           String(StringLiteral(
             raw: "\"val\"",
             value: "val",
@@ -107,7 +134,16 @@ Program(
               ),
             ),
           )),
-          Object([
+          Object((Span(
+            start: Location(
+              line: 5,
+              col: 26,
+            ),
+            end: Location(
+              line: 8,
+              col: 5,
+            ),
+          ), [
             ("hey", String(StringLiteral(
               raw: "\"yo!\"",
               value: "yo!",
@@ -136,9 +172,9 @@ Program(
                 ),
               ),
             ))),
-          ]),
-        ])),
-      ]),
+          ])),
+        ]))),
+      ])),
     ),
   ],
 )

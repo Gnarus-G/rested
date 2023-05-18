@@ -144,6 +144,8 @@ impl<'source> GetSpan for Statement<'source> {
 
 pub type ObjectField<'source> = (&'source str, Expression<'source>);
 
+pub type Spanned<T> = (Span, T);
+
 #[derive(Debug, PartialEq, Serialize)]
 pub enum Expression<'source> {
     Identifier(Identifier<'source>),
@@ -152,8 +154,8 @@ pub enum Expression<'source> {
         identifier: Identifier<'source>,
         arguments: Vec<Expression<'source>>,
     },
-    Array(Vec<Expression<'source>>),
-    Object(Vec<ObjectField<'source>>),
+    Array(Spanned<Vec<Expression<'source>>>),
+    Object(Spanned<Vec<ObjectField<'source>>>),
     TemplateSringLiteral {
         span: Span,
         parts: Vec<Expression<'source>>,
@@ -174,8 +176,8 @@ impl<'source> GetSpan for Expression<'source> {
                 .map(|span| identifier.span.to_end_of(span))
                 .unwrap_or(identifier.span),
             Expression::TemplateSringLiteral { span, .. } => *span,
-            Expression::Array(_) => todo!(),
-            Expression::Object(_) => todo!(),
+            Expression::Array((span, ..)) => *span,
+            Expression::Object((span, ..)) => *span,
         }
     }
 }

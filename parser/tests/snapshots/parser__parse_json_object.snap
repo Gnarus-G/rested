@@ -19,7 +19,16 @@ Program(
           ),
         ),
       ),
-      value: Object([
+      value: Object((Span(
+        start: Location(
+          line: 1,
+          col: 8,
+        ),
+        end: Location(
+          line: 5,
+          col: 1,
+        ),
+      ), [
         ("key", String(StringLiteral(
           raw: "\"value\"",
           value: "value",
@@ -62,7 +71,7 @@ Program(
             ),
           ),
         ))),
-      ]),
+      ])),
     ),
   ],
 )

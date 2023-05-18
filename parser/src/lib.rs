@@ -187,11 +187,6 @@ impl<'i> Parser<'i> {
 
     fn parse_body(&mut self) -> Result<Statement<'i>> {
         let start = self.curr_token().start;
-        self.expect_one_of(vec![
-            TokenKind::StringLiteral,
-            TokenKind::Ident,
-            TokenKind::MultiLineStringLiteral,
-        ])?;
 
         self.next_token();
 
@@ -220,6 +215,7 @@ impl<'i> Parser<'i> {
         use TokenKind::*;
 
         let start_token = self.curr_token();
+        let start = start_token.start;
 
         let object = match start_token.kind {
             LBracket => {
@@ -250,7 +246,9 @@ impl<'i> Parser<'i> {
 
                 self.next_token();
 
-                Expression::Object(fields)
+                let span = start.to_end_of(self.curr_token().span());
+
+                Expression::Object((span, fields))
             }
             LSquare => {
                 self.next_token();
@@ -269,7 +267,9 @@ impl<'i> Parser<'i> {
 
                 self.next_token();
 
-                Expression::Array(list)
+                let span = start.to_end_of(self.curr_token().span());
+
+                Expression::Array((span, list))
             }
             _ => self.parse_expression()?,
         };
