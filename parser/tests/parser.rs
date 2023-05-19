@@ -143,7 +143,7 @@ fn parse_json_object() {
         r#"
 let o = {
     key: "value",
-    akey: "234va",
+    akey: 123,
     love: "me"
 }"#
     );
@@ -155,12 +155,12 @@ fn parse_json_object_deep() {
         r#"
 let o = {
     key: "value",
-    akey: "234va",
+    akey: false,
     love: {
         hello: {
             w: "1",
             o: {
-                two: "rld"
+                two: 2.123
             }
         }
     }

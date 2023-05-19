@@ -205,6 +205,8 @@ impl<'i> Parser<'i> {
             Ident if self.peek_token().kind == LParen => self.parse_call_expression()?,
             Ident => Expression::Identifier(self.curr_token().into()),
             StringLiteral => Expression::String(self.curr_token().into()),
+            Boolean => Expression::Bool(self.curr_token().into()),
+            Number => Expression::Number(self.curr_token().into()),
             MultiLineStringLiteral => self.parse_multiline_string_literal()?,
             LBracket | LSquare => self.parse_json_like()?,
             _ => return Err(self.error().unexpected_token(self.curr_token())),

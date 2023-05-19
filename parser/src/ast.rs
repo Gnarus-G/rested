@@ -148,6 +148,8 @@ pub type Spanned<T> = (Span, T);
 pub enum Expression<'source> {
     Identifier(Identifier<'source>),
     String(StringLiteral<'source>),
+    Bool(Literal<'source>),
+    Number(Literal<'source>),
     Call {
         identifier: Identifier<'source>,
         arguments: Vec<Expression<'source>>,
@@ -176,6 +178,8 @@ impl<'source> GetSpan for Expression<'source> {
             Expression::TemplateSringLiteral { span, .. } => *span,
             Expression::Array((span, ..)) => *span,
             Expression::Object((span, ..)) => *span,
+            Expression::Bool(l) => l.span,
+            Expression::Number(l) => l.span,
         }
     }
 }

@@ -362,10 +362,12 @@ set BASE_URL env("b_url")
 post /api {
     header "Content-Type" "application/json"
     body {
-        neet: "1337",
+        neet: 1337,
         arr: ["yo", {h: "i"}],
         hello: {
-            w: "orld"
+            w: "orld",
+            fun: true,
+            notFun: false
         }
     }
 }
@@ -379,7 +381,7 @@ post /api {
         .mock("POST", "/api")
         .match_header("Content-Type", "application/json")
         .match_body(mockito::Matcher::PartialJsonString(
-            r#"{"neet": "1337", "arr": ["yo", {"h": "i"}], "hello": {"w": "orld"}}"#.to_string(),
+            r#"{"neet": 1337, "arr": ["yo", {"h": "i"}], "hello": {"w": "orld", "fun": true, "notFun": false}}"#.to_string(),
         ))
         .with_status(200)
         .create();

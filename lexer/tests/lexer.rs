@@ -54,6 +54,16 @@ stuff"#
 }
 
 #[test]
+fn lex_bools() {
+    assert_lexes!("true false");
+}
+
+#[test]
+fn lex_numbers() {
+    assert_lexes!("123124 1.0");
+}
+
+#[test]
 fn lex_get_url() {
     assert_lexes!("get http://localhost");
 }

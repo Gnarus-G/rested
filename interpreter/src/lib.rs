@@ -286,6 +286,8 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
             TemplateSringLiteral { parts, .. } => {
                 self.evaluate_template_string_literal_parts(parts)?
             }
+            Bool(literal) => literal.value.to_string(),
+            Number(literal) => literal.value.to_string(),
             Call {
                 identifier,
                 arguments,
