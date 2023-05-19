@@ -136,3 +136,50 @@ fn parse_template_string_literal() {
         }"#
     );
 }
+
+#[test]
+fn parse_json_object() {
+    assert_ast!(
+        r#"
+let o = {
+    key: "value",
+    akey: 123,
+    love: "me"
+}"#
+    );
+}
+
+#[test]
+fn parse_json_object_deep() {
+    assert_ast!(
+        r#"
+let o = {
+    key: "value",
+    akey: false,
+    love: {
+        hello: {
+            w: "1",
+            o: {
+                two: 2.123
+            }
+        }
+    }
+}"#
+    );
+}
+
+#[test]
+fn parse_json_object_with_array_keys() {
+    assert_ast!(
+        r#"
+let o = {
+    key: "value",
+    akey: "234va",
+    oKey: ["val", "val2"],
+    aoKay: ["val", "123", {
+        hey: "yo!",
+        hello: "world"
+    }]
+}"#
+    );
+}

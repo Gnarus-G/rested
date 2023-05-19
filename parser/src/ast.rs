@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{collections::BTreeMap, fmt::Display};
 
 use serde::Serialize;
 
@@ -24,8 +24,8 @@ pub struct Identifier<'i> {
     pub span: Span,
 }
 
-impl<'i> From<Token<'i>> for Identifier<'i> {
-    fn from(token: Token<'i>) -> Self {
+impl<'i> From<&Token<'i>> for Identifier<'i> {
+    fn from(token: &Token<'i>) -> Self {
         Self {
             name: token.text,
             span: token.into(),
@@ -39,8 +39,8 @@ pub struct Literal<'i> {
     pub span: Span,
 }
 
-impl<'i> From<Token<'i>> for Literal<'i> {
-    fn from(token: Token<'i>) -> Self {
+impl<'i> From<&Token<'i>> for Literal<'i> {
+    fn from(token: &Token<'i>) -> Self {
         Self {
             value: token.text,
             span: token.into(),
@@ -55,8 +55,8 @@ pub struct StringLiteral<'source> {
     pub span: Span,
 }
 
-impl<'i> From<Token<'i>> for StringLiteral<'i> {
-    fn from(token: Token<'i>) -> Self {
+impl<'i> From<&Token<'i>> for StringLiteral<'i> {
+    fn from(token: &Token<'i>) -> Self {
         let value = match (token.text.chars().nth(0), token.text.chars().last()) {
             (Some('"'), Some('"')) if token.text.len() > 1 => &token.text[1..token.text.len() - 1],
             (Some('`'), Some('`')) if token.text.len() > 1 => &token.text[1..token.text.len() - 1],
@@ -96,6 +96,7 @@ pub enum Item<'i> {
         block: Option<Block<'i>>,
         span: Span,
     },
+    Expr(Expression<'i>),
     Attribute {
         location: Location,
         identifier: Identifier<'i>,
@@ -141,17 +142,23 @@ impl<'source> GetSpan for Statement<'source> {
     }
 }
 
+pub type Spanned<T> = (Span, T);
+
 #[derive(Debug, PartialEq, Serialize)]
-pub enum Expression<'i> {
-    Identifier(Identifier<'i>),
-    String(StringLiteral<'i>),
+pub enum Expression<'source> {
+    Identifier(Identifier<'source>),
+    String(StringLiteral<'source>),
+    Bool(Literal<'source>),
+    Number(Literal<'source>),
     Call {
-        identifier: Identifier<'i>,
-        arguments: Vec<Expression<'i>>,
+        identifier: Identifier<'source>,
+        arguments: Vec<Expression<'source>>,
     },
+    Array(Spanned<Vec<Expression<'source>>>),
+    Object(Spanned<BTreeMap<&'source str, Expression<'source>>>),
     TemplateSringLiteral {
         span: Span,
-        parts: Vec<Expression<'i>>,
+        parts: Vec<Expression<'source>>,
     },
 }
 
@@ -169,6 +176,10 @@ impl<'source> GetSpan for Expression<'source> {
                 .map(|span| identifier.span.to_end_of(span))
                 .unwrap_or(identifier.span),
             Expression::TemplateSringLiteral { span, .. } => *span,
+            Expression::Array((span, ..)) => *span,
+            Expression::Object((span, ..)) => *span,
+            Expression::Bool(l) => l.span,
+            Expression::Number(l) => l.span,
         }
     }
 }
@@ -188,6 +199,7 @@ impl<'source> GetSpan for Item<'source> {
                 .last()
                 .map(|p| Span::new(*location, p.span().end))
                 .unwrap_or(Span::new(*location, identifier.span.end)),
+            Item::Expr(e) => e.span(),
         }
     }
 }

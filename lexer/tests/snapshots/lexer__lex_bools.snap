@@ -1,0 +1,9 @@
+---
+source: lexer/tests/lexer.rs
+description: true false
+expression: "lexer.into_iter().collect::<Vec<Token>>()"
+---
+[
+    Boolean("true") at Location { line: 0, col: 0 },
+    Boolean("false") at Location { line: 0, col: 5 },
+]

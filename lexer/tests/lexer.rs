@@ -54,6 +54,16 @@ stuff"#
 }
 
 #[test]
+fn lex_bools() {
+    assert_lexes!("true false");
+}
+
+#[test]
+fn lex_numbers() {
+    assert_lexes!("123124 1.0");
+}
+
+#[test]
 fn lex_get_url() {
     assert_lexes!("get http://localhost");
 }
@@ -96,4 +106,16 @@ fn lex_template_literals() {
     assert_lexes!(r#"`stuff${"interpolated"}(things${env("dead_night")}` `dohickeys`"#);
 
     assert_lexes!(r#"`a${"temp"}` }}"#);
+}
+
+#[test]
+fn lex_json_object() {
+    assert_lexes!(
+        r#"
+let obj = {
+    key: "value",
+    otherKey: ["val", "vlue"]
+}
+"#
+    );
 }

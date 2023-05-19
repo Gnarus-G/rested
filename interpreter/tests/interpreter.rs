@@ -353,3 +353,63 @@ fn prevents_duplicate_attributes() {
     let duped_att_err = program.run(Some(vec!["test".to_string()])).unwrap_err();
     assert_debug_snapshot!(duped_att_err);
 }
+
+#[test]
+fn request_with_json_like_data() {
+    let code = r#"
+set BASE_URL env("b_url")
+
+post /api {
+    header "Content-Type" "application/json"
+    body {
+        neet: 1337,
+        arr: ["yo", {h: "i"}],
+        hello: {
+            w: "orld",
+            fun: true,
+            notFun: false
+        }
+    }
+}
+        "#;
+
+    let mut server = mockito::Server::new();
+    let url = server.url();
+    let env = new_env_with_vars(&[("b_url", &url)]);
+
+    let mock = server
+        .mock("POST", "/api")
+        .match_header("Content-Type", "application/json")
+        .match_body(mockito::Matcher::PartialJsonString(
+            r#"{"neet": 1337, "arr": ["yo", {"h": "i"}], "hello": {"w": "orld", "fun": true, "notFun": false}}"#.to_string(),
+        ))
+        .with_status(200)
+        .create();
+
+    let mut program = Interpreter::new(code, env, UreqRunner);
+
+    program.run(None).unwrap();
+
+    mock.assert();
+}
+
+#[test]
+fn ignores_expression_items() {
+    let code = r#"
+env("test") 
+read("file")
+
+// obj literal
+{
+    key: "value",
+    oKey: ["1", "2"]
+}
+
+// string literal expression
+"adsf"
+        "#;
+    let env = new_env_with_vars(&[]);
+    let mut program = Interpreter::new(&code, env, UreqRunner);
+
+    program.run(None).unwrap();
+}

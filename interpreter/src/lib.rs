@@ -254,6 +254,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                     let value = self.evaluate_expression(&value)?;
                     self.let_bindings.insert(identifier.name, value);
                 }
+                Expr(_) => continue,
             }
         }
 
@@ -261,16 +262,32 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
     }
 
     fn evaluate_expression(&self, exp: &Expression<'source>) -> Result<String> {
+        self.evaluate_expression_and_quote_string(exp, false)
+    }
+
+    fn evaluate_expression_and_quote_string(
+        &self,
+        exp: &Expression<'source>,
+        quote_string_literal: bool,
+    ) -> Result<String> {
         use Expression::*;
 
         let expression_span = exp.span();
 
         let value = match exp {
             Identifier(token) => self.evaluate_identifier(&token)?,
-            String(token) => token.value.to_string(),
+            String(token) => {
+                if quote_string_literal {
+                    format!("{:?}", token.value)
+                } else {
+                    token.value.to_string()
+                }
+            }
             TemplateSringLiteral { parts, .. } => {
                 self.evaluate_template_string_literal_parts(parts)?
             }
+            Bool(literal) => literal.value.to_string(),
+            Number(literal) => literal.value.to_string(),
             Call {
                 identifier,
                 arguments,
@@ -323,6 +340,38 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                         ))
                 }
             },
+            Array((.., values)) => {
+                let mut v = vec![];
+
+                for value in values {
+                    v.push(self.evaluate_expression_and_quote_string(value, true)?);
+                }
+
+                format!(
+                    "[{}]",
+                    v.iter()
+                        .map(|value| format!("{value}"))
+                        .collect::<Vec<_>>()
+                        .join(",")
+                )
+            }
+            Object((.., fields)) => {
+                let mut props = HashMap::new();
+
+                for (key, value) in fields {
+                    let value = self.evaluate_expression_and_quote_string(value, true)?;
+                    props.insert(key.to_string(), value);
+                }
+
+                format!(
+                    "{{{}}}",
+                    props
+                        .iter()
+                        .map(|(key, value)| format!("{:?}: {}", key, value))
+                        .collect::<Vec<_>>()
+                        .join(",")
+                )
+            }
         };
 
         Ok(value)

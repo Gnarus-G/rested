@@ -18,6 +18,8 @@ pub enum TokenKind {
     Ident,
 
     // literals
+    Boolean,
+    Number,
     StringLiteral,
     MultiLineStringLiteral,
     Url,
@@ -35,7 +37,11 @@ pub enum TokenKind {
     RParen,
     LBracket,
     RBracket,
+    LSquare,
+    RSquare,
+    Colon,
     AttributePrefix,
+    Comma,
     End,
 
     //edge cases
@@ -222,6 +228,26 @@ impl<'i> Lexer<'i> {
                 start: self.cursor,
                 text: "}",
             },
+            b'[' => Token {
+                kind: LSquare,
+                start: self.cursor,
+                text: "[",
+            },
+            b']' => Token {
+                kind: RSquare,
+                start: self.cursor,
+                text: "]",
+            },
+            b',' => Token {
+                kind: Comma,
+                text: ",",
+                start: self.cursor,
+            },
+            b':' => Token {
+                kind: Colon,
+                text: ":",
+                start: self.cursor,
+            },
             b'=' => Token {
                 kind: Assign,
                 text: "=",
@@ -236,6 +262,7 @@ impl<'i> Lexer<'i> {
             b'/' => self.pathname(),
             b'#' if self.peek_char().is(b'!') => self.shebang(),
             c if c.is_ascii_alphabetic() => self.keyword_or_identifier(),
+            c if c.is_ascii_digit() => self.number(),
             _ => Token {
                 kind: IllegalToken,
                 text: std::str::from_utf8(&self.input[self.position..self.position + 1]).unwrap(),
@@ -378,6 +405,16 @@ impl<'i> Lexer<'i> {
                 start: location,
                 text: string,
             },
+            "false" => Token {
+                kind: Boolean,
+                start: location,
+                text: string,
+            },
+            "true" => Token {
+                kind: Boolean,
+                start: location,
+                text: string,
+            },
             "http" | "https" => {
                 let (.., e) = self.read_while(|&c| !c.is_ascii_whitespace());
                 let s = self.input_slice(s..e);
@@ -402,6 +439,33 @@ impl<'i> Lexer<'i> {
 
         Token {
             kind: TokenKind::Pathname,
+            start: location,
+            text: string,
+        }
+    }
+
+    fn number(&mut self) -> Token<'i> {
+        let location = self.cursor;
+        let (s, e) = self.read_while(|&c| c.is_ascii_digit());
+        let string = self.input_slice(s..e);
+
+        if self.peek_char().is(b'.') {
+            self.step();
+            if self.peek_char().passes(|c| c.is_ascii_digit()) {
+                self.step();
+                let (.., e) = self.read_while(|&c| c.is_ascii_digit());
+                let string = self.input_slice(s..e);
+
+                return Token {
+                    kind: TokenKind::Number,
+                    start: location,
+                    text: string,
+                };
+            }
+        }
+
+        Token {
+            kind: TokenKind::Number,
             start: location,
             text: string,
         }

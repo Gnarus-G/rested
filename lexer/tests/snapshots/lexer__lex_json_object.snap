@@ -1,0 +1,23 @@
+---
+source: lexer/tests/lexer.rs
+description: "\nlet obj = {\n    key: \"value\",\n    otherKey: [\"val\", \"vlue\"]\n}\n"
+expression: "lexer.into_iter().collect::<Vec<Token>>()"
+---
+[
+    Let("let") at Location { line: 1, col: 0 },
+    Ident("obj") at Location { line: 1, col: 4 },
+    Assign("=") at Location { line: 1, col: 8 },
+    LBracket("{") at Location { line: 1, col: 10 },
+    Ident("key") at Location { line: 2, col: 4 },
+    Colon(":") at Location { line: 2, col: 7 },
+    StringLiteral("\"value\"") at Location { line: 2, col: 9 },
+    Comma(",") at Location { line: 2, col: 16 },
+    Ident("otherKey") at Location { line: 3, col: 4 },
+    Colon(":") at Location { line: 3, col: 12 },
+    LSquare("[") at Location { line: 3, col: 14 },
+    StringLiteral("\"val\"") at Location { line: 3, col: 15 },
+    Comma(",") at Location { line: 3, col: 20 },
+    StringLiteral("\"vlue\"") at Location { line: 3, col: 22 },
+    RSquare("]") at Location { line: 3, col: 28 },
+    RBracket("}") at Location { line: 4, col: 0 },
+]
