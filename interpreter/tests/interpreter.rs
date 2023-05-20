@@ -365,7 +365,8 @@ post /api {
         neet: 1337,
         arr: ["yo", {h: "i"}],
         hello: {
-            w: "orld",
+            w: env("hello"),
+            warudo: env(env("hi")),
             fun: true,
             notFun: false,
             e: {},
@@ -377,13 +378,13 @@ post /api {
 
     let mut server = mockito::Server::new();
     let url = server.url();
-    let env = new_env_with_vars(&[("b_url", &url)]);
+    let env = new_env_with_vars(&[("b_url", &url), ("hello", "world"), ("hi", "hello")]);
 
     let mock = server
         .mock("POST", "/api")
         .match_header("Content-Type", "application/json")
         .match_body(mockito::Matcher::PartialJsonString(
-            r#"{"neet": 1337, "arr": ["yo", {"h": "i"}], "hello": {"w": "orld", "fun": true, "notFun": false, "e": {}, "em": []}}"#.to_string(),
+            r#"{"neet": 1337, "arr": ["yo", {"h": "i"}], "hello": {"w": "world", "warudo": "world", "fun": true, "notFun": false, "e": {}, "em": []}}"#.to_string(),
         ))
         .with_status(200)
         .create();

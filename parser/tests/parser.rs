@@ -184,3 +184,14 @@ let o = {
 }"#
     );
 }
+
+#[test]
+fn parse_json_object_with_call_expressions() {
+    assert_ast!(
+        r#"
+let o = {
+    key: read("test"),
+    akey: env("url")
+}"#
+    );
+}
