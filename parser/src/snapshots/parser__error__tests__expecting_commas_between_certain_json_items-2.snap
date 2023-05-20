@@ -1,0 +1,8 @@
+---
+source: parser/src/error.rs
+expression: error
+---
+ let o = ["joe" "world"] 
+                ≈≈≈≈≈≈≈
+                ↳ [1:17] expected Comma, got StringLiteral("world")
+

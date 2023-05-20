@@ -114,73 +114,34 @@ impl<'i> ParseErrorConstructor<'i> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::Parser;
 
-    use TokenKind::*;
+    use insta::assert_debug_snapshot;
 
     macro_rules! assert_errs {
-        ($input:literal, $kind:expr) => {
+        ($input:literal) => {
             let mut parser = Parser::new($input);
             let error = parser.parse().unwrap_err();
 
-            assert_eq!(error.inner_error, $kind)
+            assert_debug_snapshot!(error)
         };
     }
 
-    use ParseError::*;
-
     #[test]
     fn expected_url_after_method() {
-        assert_errs!(
-            "get {}",
-            ExpectedEitherOfTokens {
-                found: TokenOwned {
-                    kind: LBracket,
-                    text: "{".into(),
-                },
-                expected: vec![Url, Pathname],
-            }
-        );
+        assert_errs!("get {}");
 
-        assert_errs!(
-            "post",
-            ExpectedEitherOfTokens {
-                found: TokenOwned {
-                    kind: End,
-                    text: "".into(),
-                },
-                expected: vec![Url, Pathname],
-            }
-        );
+        assert_errs!("post");
     }
 
     #[test]
     fn expected_name_after_header_keyword() {
-        assert_errs!(
-            "post http://localhost {header}",
-            ExpectedToken {
-                found: TokenOwned {
-                    kind: RBracket,
-                    text: "}".into()
-                },
-                expected: StringLiteral,
-            }
-        );
+        assert_errs!("post http://localhost {header}");
     }
 
     #[test]
     fn expecting_identifier_or_string_lit_after_header_name() {
-        assert_errs!(
-            r#"get http://localhost { header "name" }"#,
-            ExpectedEitherOfTokens {
-                found: TokenOwned {
-                    kind: RBracket,
-                    text: "}".into()
-                },
-                expected: vec![StringLiteral, Ident, MultiLineStringLiteral],
-            }
-        );
+        assert_errs!(r#"get http://localhost { header "name" }"#);
     }
 
     #[test]
@@ -190,14 +151,18 @@ mod tests {
             @skip
             @dbg
             let k = "v"
-            get http://localhost { header "name" k }"#,
-            ExpectedEitherOfTokens {
-                found: TokenOwned {
-                    kind: Let,
-                    text: "let".into()
-                },
-                expected: vec![Get, Post, Put, Patch, Delete, AttributePrefix],
-            }
+            get http://localhost { header "name" k }"#
         );
+    }
+
+    #[test]
+    fn expecting_commas_between_certain_json_items() {
+        assert_errs!(
+            r#"let o = {
+                 yo: "joe"
+                 hello: "world"
+               }"#
+        );
+        assert_errs!(r#" let o = ["joe" "world"] "#);
     }
 }

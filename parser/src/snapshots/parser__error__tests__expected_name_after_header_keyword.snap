@@ -1,0 +1,8 @@
+---
+source: parser/src/error.rs
+expression: error
+---
+post http://localhost {header}
+                             ≈
+                             ↳ [1:30] expected StringLiteral, got RBracket(})
+

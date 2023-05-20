@@ -1,0 +1,10 @@
+---
+source: parser/src/error.rs
+expression: error
+---
+                 yo: "joe"
+                 hello: "world"
+                 ≈≈≈≈≈
+                 ↳ [3:18] expected Comma, got Ident(hello)
+               }
+

@@ -1,0 +1,8 @@
+---
+source: parser/src/error.rs
+expression: error
+---
+get {}
+    ≈
+    ↳ [1:5] expected either one of [Url, Pathname], but got LBracket({)
+

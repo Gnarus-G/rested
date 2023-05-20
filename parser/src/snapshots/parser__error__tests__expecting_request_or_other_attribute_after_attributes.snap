@@ -1,0 +1,11 @@
+---
+source: parser/src/error.rs
+expression: error
+---
+            @dbg
+            let k = "v"
+            ≈≈≈
+            ↳ [4:13] expected either one of [Get, Post, Put, Patch, Delete, AttributePrefix], but got Let(let)
+                     after attributes should come requests or more attributes
+            get http://localhost { header "name" k }
+
