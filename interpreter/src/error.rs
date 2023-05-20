@@ -1,10 +1,10 @@
-use error_meta::Error;
+use error_meta::ContextualError;
 use lexer::locations::Span;
 use parser::ast::{Identifier, Literal};
-use parser::error::ParseError;
+use parser::error::{ParseError, ParserErrors};
 
 #[derive(Debug, PartialEq)]
-pub enum InterpError {
+pub enum InterpreterErrorKind {
     UnknownConstant { constant: String },
     RequiredArguments { required: usize, recieved: usize },
     EnvVariableNotFound { name: String },
@@ -16,57 +16,81 @@ pub enum InterpError {
     Other { error: String },
 }
 
-impl std::error::Error for InterpError {}
+impl std::error::Error for InterpreterErrorKind {}
 
-impl std::fmt::Display for InterpError {
+impl std::fmt::Display for InterpreterErrorKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let formatted_error = match self {
-            InterpError::UnknownConstant { constant } => {
+            InterpreterErrorKind::UnknownConstant { constant } => {
                 format!("trying to set an unknown constant {}", constant)
             }
-            InterpError::RequiredArguments { required, recieved } => {
+            InterpreterErrorKind::RequiredArguments { required, recieved } => {
                 format!("{} argument(s) required, recieved {}", required, recieved)
             }
-            InterpError::EnvVariableNotFound { name } => {
+            InterpreterErrorKind::EnvVariableNotFound { name } => {
                 format!("no variable found by the name {:?}", name)
             }
-            InterpError::RequestWithPathnameWithoutBaseUrl => {
+            InterpreterErrorKind::RequestWithPathnameWithoutBaseUrl => {
                 format!("BASE_URL needs to be set first for requests to work with just pathnames; try writing like set BASE_URL \"<api orgin>\" before this request")
             }
-            InterpError::UndefinedCallable { name } => {
+            InterpreterErrorKind::UndefinedCallable { name } => {
                 format!("attempting to calling an undefined function: {}", name)
             }
-            InterpError::UndeclaredIdentifier { name } => format!("undeclared variable: {}", name),
-            InterpError::UnsupportedAttribute { name } => {
+            InterpreterErrorKind::UndeclaredIdentifier { name } => {
+                format!("undeclared variable: {}", name)
+            }
+            InterpreterErrorKind::UnsupportedAttribute { name } => {
                 format!("unsupported attribute: {}", name)
             }
-            InterpError::DuplicateAttribute { name } => {
+            InterpreterErrorKind::DuplicateAttribute { name } => {
                 format!(
                     "duplicate attribute: @{} is already set for this request",
                     name
                 )
             }
-            InterpError::Other { error } => error.clone(),
+            InterpreterErrorKind::Other { error } => error.clone(),
         };
 
         f.write_str(&formatted_error)
     }
 }
 
-pub trait IntoInterpError {
-    fn into_interp_error(self) -> Error<InterpError>;
+pub enum InterpreterError {
+    ParseErrors(Vec<ContextualError<ParseError>>),
+    Error(ContextualError<InterpreterErrorKind>),
 }
 
-impl IntoInterpError for Error<ParseError> {
-    fn into_interp_error(self) -> Error<InterpError> {
-        Error {
-            inner_error: InterpError::Other {
-                error: self.inner_error.to_string(),
-            },
-            span: self.span,
-            message: self.message,
-            context: self.context,
+impl std::error::Error for InterpreterError {}
+
+impl std::fmt::Debug for InterpreterError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self}")
+    }
+}
+
+impl std::fmt::Display for InterpreterError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            InterpreterError::Error(err) => write!(f, "{err}"),
+            InterpreterError::ParseErrors(errors) => {
+                for err in errors {
+                    write!(f, "{err}")?
+                }
+                Ok(())
+            }
         }
+    }
+}
+
+impl From<ContextualError<InterpreterErrorKind>> for InterpreterError {
+    fn from(value: ContextualError<InterpreterErrorKind>) -> Self {
+        Self::Error(value)
+    }
+}
+
+impl<'source> From<ParserErrors<'source>> for InterpreterError {
+    fn from(value: ParserErrors) -> Self {
+        Self::ParseErrors(value.errors)
     }
 }
 
@@ -80,9 +104,9 @@ impl<'i> InterpErrorFactory<'i> {
             source_code: source,
         }
     }
-    pub fn unknown_constant(&self, token: &Identifier) -> Error<InterpError> {
-        Error::new(
-            InterpError::UnknownConstant {
+    pub fn unknown_constant(&self, token: &Identifier) -> ContextualError<InterpreterErrorKind> {
+        ContextualError::new(
+            InterpreterErrorKind::UnknownConstant {
                 constant: token.name.to_string(),
             },
             token.span,
@@ -90,9 +114,9 @@ impl<'i> InterpErrorFactory<'i> {
         )
     }
 
-    pub fn env_variable_not_found(&self, token: &Literal) -> Error<InterpError> {
-        Error::new(
-            InterpError::EnvVariableNotFound {
+    pub fn env_variable_not_found(&self, token: &Literal) -> ContextualError<InterpreterErrorKind> {
+        ContextualError::new(
+            InterpreterErrorKind::EnvVariableNotFound {
                 name: token.value.to_string(),
             },
             token.span,
@@ -100,17 +124,25 @@ impl<'i> InterpErrorFactory<'i> {
         )
     }
 
-    pub fn required_args(&self, at: Span, required: usize, recieved: usize) -> Error<InterpError> {
-        Error::new(
-            InterpError::RequiredArguments { required, recieved },
+    pub fn required_args(
+        &self,
+        at: Span,
+        required: usize,
+        recieved: usize,
+    ) -> ContextualError<InterpreterErrorKind> {
+        ContextualError::new(
+            InterpreterErrorKind::RequiredArguments { required, recieved },
             at,
             self.source_code,
         )
     }
 
-    pub fn undeclared_identifier(&self, token: &Identifier) -> Error<InterpError> {
-        Error::new(
-            InterpError::UndeclaredIdentifier {
+    pub fn undeclared_identifier(
+        &self,
+        token: &Identifier,
+    ) -> ContextualError<InterpreterErrorKind> {
+        ContextualError::new(
+            InterpreterErrorKind::UndeclaredIdentifier {
                 name: token.name.to_string(),
             },
             token.span,
@@ -118,9 +150,12 @@ impl<'i> InterpErrorFactory<'i> {
         )
     }
 
-    pub fn unsupported_attribute(&self, token: &Identifier) -> Error<InterpError> {
-        Error::new(
-            InterpError::UnsupportedAttribute {
+    pub fn unsupported_attribute(
+        &self,
+        token: &Identifier,
+    ) -> ContextualError<InterpreterErrorKind> {
+        ContextualError::new(
+            InterpreterErrorKind::UnsupportedAttribute {
                 name: token.name.to_string(),
             },
             token.span,
@@ -128,9 +163,9 @@ impl<'i> InterpErrorFactory<'i> {
         )
     }
 
-    pub fn duplicate_attribute(&self, token: &Identifier) -> Error<InterpError> {
-        Error::new(
-            InterpError::DuplicateAttribute {
+    pub fn duplicate_attribute(&self, token: &Identifier) -> ContextualError<InterpreterErrorKind> {
+        ContextualError::new(
+            InterpreterErrorKind::DuplicateAttribute {
                 name: token.name.to_string(),
             },
             token.span,
@@ -138,9 +173,9 @@ impl<'i> InterpErrorFactory<'i> {
         )
     }
 
-    pub fn undefined_callable(&self, token: &Identifier) -> Error<InterpError> {
-        Error::new(
-            InterpError::UndefinedCallable {
+    pub fn undefined_callable(&self, token: &Identifier) -> ContextualError<InterpreterErrorKind> {
+        ContextualError::new(
+            InterpreterErrorKind::UndefinedCallable {
                 name: token.name.to_string(),
             },
             token.span,
@@ -148,17 +183,21 @@ impl<'i> InterpErrorFactory<'i> {
         )
     }
 
-    pub fn unset_base_url(&self, at: Span) -> Error<InterpError> {
-        Error::new(
-            InterpError::RequestWithPathnameWithoutBaseUrl,
+    pub fn unset_base_url(&self, at: Span) -> ContextualError<InterpreterErrorKind> {
+        ContextualError::new(
+            InterpreterErrorKind::RequestWithPathnameWithoutBaseUrl,
             at,
             self.source_code,
         )
     }
 
-    pub fn other<E: std::fmt::Display>(&self, span: Span, error: E) -> Error<InterpError> {
-        Error::new(
-            InterpError::Other {
+    pub fn other<E: std::fmt::Display>(
+        &self,
+        span: Span,
+        error: E,
+    ) -> ContextualError<InterpreterErrorKind> {
+        ContextualError::new(
+            InterpreterErrorKind::Other {
                 error: error.to_string(),
             },
             span,

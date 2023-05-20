@@ -1,6 +1,8 @@
 use lexer::{locations::GetSpan, Token, TokenKind};
 
-use error_meta::Error;
+use error_meta::ContextualError;
+
+use crate::ast::Program;
 
 #[derive(Debug, PartialEq)]
 pub struct TokenOwned {
@@ -64,6 +66,35 @@ impl std::fmt::Display for ParseError {
     }
 }
 
+#[derive(Debug)]
+pub struct ParserErrors<'source> {
+    pub errors: Vec<ContextualError<ParseError>>,
+    pub incomplete_rogram: Program<'source>,
+}
+
+impl<'source> ParserErrors<'source> {
+    pub fn new(
+        errors: Vec<ContextualError<ParseError>>,
+        incomplete_rogram: Program<'source>,
+    ) -> Self {
+        Self {
+            errors,
+            incomplete_rogram,
+        }
+    }
+}
+
+impl<'source> std::error::Error for ParserErrors<'source> {}
+
+impl<'source> std::fmt::Display for ParserErrors<'source> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for err in &self.errors {
+            write!(f, "{err}")?
+        }
+        Ok(())
+    }
+}
+
 impl<'i> ParseErrorConstructor<'i> {
     pub fn new(source: &'i str) -> Self {
         Self {
@@ -71,8 +102,12 @@ impl<'i> ParseErrorConstructor<'i> {
         }
     }
 
-    pub fn expected_token(&self, token: &Token, expected: TokenKind) -> Error<ParseError> {
-        Error::new(
+    pub fn expected_token(
+        &self,
+        token: &Token,
+        expected: TokenKind,
+    ) -> ContextualError<ParseError> {
+        ContextualError::new(
             ParseError::ExpectedToken {
                 found: TokenOwned {
                     text: token.text.to_string(),
@@ -89,8 +124,8 @@ impl<'i> ParseErrorConstructor<'i> {
         &self,
         token: &Token,
         expected: Vec<TokenKind>,
-    ) -> Error<ParseError> {
-        Error::new(
+    ) -> ContextualError<ParseError> {
+        ContextualError::new(
             ParseError::ExpectedEitherOfTokens {
                 found: token.into(),
                 expected,
@@ -100,8 +135,8 @@ impl<'i> ParseErrorConstructor<'i> {
         )
     }
 
-    pub fn unexpected_token(&self, token: &Token) -> Error<ParseError> {
-        Error::new(
+    pub fn unexpected_token(&self, token: &Token) -> ContextualError<ParseError> {
+        ContextualError::new(
             ParseError::UnexpectedToken {
                 kind: token.kind,
                 text: token.text.to_string(),

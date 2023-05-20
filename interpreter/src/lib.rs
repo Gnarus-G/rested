@@ -1,6 +1,6 @@
 mod attributes;
 pub mod environment;
-mod error;
+pub mod error;
 pub mod ir;
 pub mod ureq_runner;
 
@@ -12,18 +12,17 @@ use std::path::PathBuf;
 use colored::Colorize;
 
 use environment::Environment;
+use error::InterpreterError;
 use parser;
 use parser::ast::{self, Endpoint, Expression, Identifier, Literal};
 
-use error_meta::Error;
 use lexer::locations::{GetSpan, Span};
 
-use self::error::{InterpError, InterpErrorFactory};
+use self::error::InterpErrorFactory;
 use attributes::AttributeStore;
-use error::IntoInterpError;
 use ir::Header;
 
-type Result<T> = std::result::Result<T, Error<InterpError>>;
+type Result<T> = std::result::Result<T, InterpreterError>;
 
 enum Log {
     Std,
@@ -132,7 +131,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
     fn evaluate(&mut self) -> Result<Vec<RequestMeta>> {
         let mut parser = parser::Parser::new(self.code);
 
-        let ast = parser.parse().map_err(|err| err.into_interp_error())?;
+        let ast = parser.parse()?;
 
         use ast::Item::*;
 
@@ -223,7 +222,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                 }
                 Set { identifier, value } => {
                     if identifier.name != "BASE_URL" {
-                        return Err(self.error_factory.unknown_constant(&identifier));
+                        return Err(self.error_factory.unknown_constant(&identifier).into());
                     }
 
                     self.base_url = Some(self.evaluate_expression(&value)?);
@@ -236,7 +235,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                 } => match identifier.name {
                     "name" | "log" | "dbg" | "skip" => {
                         if attributes.has(identifier.name) {
-                            return Err(self.error_factory.duplicate_attribute(&identifier));
+                            return Err(self.error_factory.duplicate_attribute(&identifier).into());
                         }
                         attributes.add(identifier, parameters);
                     }
@@ -391,7 +390,8 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                     .undefined_callable(&identifier)
                     .with_message(
                         "env(..), read(..), escape_new_lines(..) are the only calls supported",
-                    ))
+                    )
+                    .into())
             }
         };
 
@@ -399,10 +399,13 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
     }
 
     fn evaluate_env_variable(&self, token: &Literal<'source>) -> Result<String> {
-        self.env
+        let value = self
+            .env
             .get_variable_value(token.value.to_string())
             .ok_or_else(|| self.error_factory.env_variable_not_found(token))
-            .map(|s| s.to_owned())
+            .map(|s| s.to_owned())?;
+
+        Ok(value)
     }
 
     fn read_file(&self, file_path: &Literal) -> Result<String> {
@@ -432,21 +435,24 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                     }
                     base_url
                 } else {
-                    return Err(self.error_factory.unset_base_url(pn.span));
+                    return Err(self.error_factory.unset_base_url(pn.span).into());
                 }
             }
         })
     }
 
     fn evaluate_identifier(&self, token: &ast::Identifier) -> Result<String> {
-        self.let_bindings
+        let value = self
+            .let_bindings
             .get(token.name)
             .map(|value| value.to_string())
             .ok_or_else(|| {
                 self.error_factory
                     .undeclared_identifier(token)
                     .with_message("variable identifiers are not supported")
-            })
+            })?;
+
+        Ok(value)
     }
 
     fn evaluate_template_string_literal_parts(&self, parts: &[Expression]) -> Result<String> {

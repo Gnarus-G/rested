@@ -2,7 +2,18 @@
 source: parser/src/error.rs
 expression: error
 ---
-get {}
-    ≈
-    ↳ [1:5] expected either one of [Url, Pathname], but got LBracket({)
-
+ParserErrors {
+    errors: [
+        get {}
+            ≈
+            ↳ [1:5] expected either one of [Url, Pathname], but got LBracket({)
+        ,
+        get {}
+             ≈
+             ↳ [1:6] unexpected token }
+        ,
+    ],
+    incomplete_rogram: Program {
+        items: [],
+    },
+}

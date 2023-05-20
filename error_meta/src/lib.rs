@@ -72,21 +72,21 @@ impl ErrorSourceContext {
     }
 }
 
-pub struct Error<EK: Display + std::error::Error> {
+pub struct ContextualError<EK: Display + std::error::Error> {
     pub inner_error: EK,
     pub span: Span,
     pub message: Option<String>,
     pub context: ErrorSourceContext,
 }
 
-impl<EK: Display + std::error::Error> std::fmt::Debug for Error<EK> {
+impl<E: Display + std::error::Error> std::fmt::Debug for ContextualError<E> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{self}")
     }
 }
 
-impl<EK: Display + std::error::Error> Error<EK> {
-    pub fn new(inner_error: EK, span: Span, source_code: &str) -> Self {
+impl<E: Display + std::error::Error> ContextualError<E> {
+    pub fn new(inner_error: E, span: Span, source_code: &str) -> Self {
         Self {
             inner_error,
             message: None,
@@ -101,7 +101,7 @@ impl<EK: Display + std::error::Error> Error<EK> {
     }
 }
 
-impl<EK: Display + std::error::Error> ErrorDisplay<String> for Error<EK> {
+impl<E: Display + std::error::Error> ErrorDisplay<String> for ContextualError<E> {
     fn formatted_error(&self) -> String {
         self.inner_error.to_string()
     }
@@ -135,9 +135,9 @@ impl<EK: Display + std::error::Error> ErrorDisplay<String> for Error<EK> {
     }
 }
 
-impl<EK: Display + std::error::Error> std::error::Error for Error<EK> {}
+impl<E: Display + std::error::Error> std::error::Error for ContextualError<E> {}
 
-impl<EK: Display + std::error::Error> std::fmt::Display for Error<EK> {
+impl<E: Display + std::error::Error> std::fmt::Display for ContextualError<E> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.format(f)
     }

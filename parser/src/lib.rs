@@ -5,7 +5,8 @@ use std::collections::BTreeMap;
 
 use crate::ast::{Endpoint, Expression, Item, Program, RequestMethod, Statement};
 use ast::Block;
-use error_meta::Error;
+use error::ParserErrors;
+use error_meta::ContextualError;
 use lexer::{
     locations::{GetSpan, Location, Span},
     Lexer, Token, TokenKind,
@@ -13,7 +14,7 @@ use lexer::{
 
 use self::error::{ParseError, ParseErrorConstructor};
 
-pub type Result<T> = std::result::Result<T, Error<ParseError>>;
+pub type Result<T> = std::result::Result<T, ContextualError<ParseError>>;
 
 #[derive(Debug)]
 pub struct Parser<'i> {
@@ -54,40 +55,63 @@ impl<'i> Parser<'i> {
         start.to_end_of(self.curr_token().span())
     }
 
-    pub fn parse(&mut self) -> Result<Program<'i>> {
+    pub fn parse(&mut self) -> std::result::Result<Program<'i>, ParserErrors<'i>> {
         let mut program = Program::new();
+        let mut errors = vec![];
 
         use lexer::TokenKind::*;
 
         self.next_token();
 
         while self.curr_token().kind != End {
-            let item = match self.curr_token().kind {
-                Get => self.parse_request(RequestMethod::GET)?,
-                Post => self.parse_request(RequestMethod::POST)?,
-                Put => self.parse_request(RequestMethod::PUT)?,
-                Patch => self.parse_request(RequestMethod::PATCH)?,
-                Delete => self.parse_request(RequestMethod::DELETE)?,
-                Linecomment | Shebang => Item::LineComment(self.curr_token().into()),
-                Set => self.parse_set_statement()?,
+            let result = match self.curr_token().kind {
+                Get => self.parse_request(RequestMethod::GET),
+                Post => self.parse_request(RequestMethod::POST),
+                Put => self.parse_request(RequestMethod::PUT),
+                Patch => self.parse_request(RequestMethod::PATCH),
+                Delete => self.parse_request(RequestMethod::DELETE),
+                Linecomment | Shebang => Ok(Item::LineComment(self.curr_token().into())),
+                Set => self.parse_set_statement(),
                 AttributePrefix => {
-                    let item = self.parse_attribute()?;
-                    self.expect_one_of(vec![Get, Post, Put, Patch, Delete, AttributePrefix])
-                        .map_err(|e| {
-                            e.with_message(
-                                "after attributes should come requests or more attributes",
-                            )
-                        })?;
-                    item
+                    let item = self.parse_attribute();
+                    match item {
+                        Ok(_) => {
+                            let expectation = self
+                                .expect_one_of(vec![Get, Post, Put, Patch, Delete, AttributePrefix])
+                                .map_err(|e| {
+                                    e.with_message(
+                                        "after attributes should come requests or more attributes",
+                                    )
+                                });
+
+                            match expectation {
+                                Ok(_) => item,
+                                Err(err) => Err(err),
+                            }
+                        }
+                        err => err,
+                    }
                 }
-                Let => self.parse_let_statement()?,
-                _ => Item::Expr(self.parse_expression()?),
+                Let => self.parse_let_statement(),
+                _ => match self.parse_expression() {
+                    Ok(exp) => Ok(Item::Expr(exp)),
+                    Err(err) => Err(err),
+                },
             };
-            program.items.push(item);
+
+            match result {
+                Ok(item) => program.items.push(item),
+                Err(error) => errors.push(error),
+            };
+
             self.next_token();
         }
 
-        Ok(program)
+        if errors.is_empty() {
+            return Ok(program);
+        }
+
+        return Err(ParserErrors::new(errors, program));
     }
 
     fn parse_request(&mut self, method: RequestMethod) -> Result<Item<'i>> {

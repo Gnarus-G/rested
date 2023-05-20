@@ -2,7 +2,14 @@
 source: parser/src/error.rs
 expression: error
 ---
-post
-   
-   ↳ [1:4] expected either one of [Url, Pathname], but got End()
-
+ParserErrors {
+    errors: [
+        post
+           
+           ↳ [1:4] expected either one of [Url, Pathname], but got End()
+        ,
+    ],
+    incomplete_rogram: Program {
+        items: [],
+    },
+}

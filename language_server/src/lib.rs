@@ -66,19 +66,21 @@ impl Backend {
 
         let mut diagnostics = vec![];
 
-        if let Err(err) = result {
-            let range = Range {
-                start: err.span.start.into_position(),
-                end: err.span.end.into_position(),
-            };
+        if let Err(error) = result {
+            for err in error.errors {
+                let range = Range {
+                    start: err.span.start.into_position(),
+                    end: err.span.end.into_position(),
+                };
 
-            diagnostics.push(Diagnostic::new_simple(
-                range.clone(),
-                err.inner_error.to_string(),
-            ));
+                diagnostics.push(Diagnostic::new_simple(
+                    range.clone(),
+                    err.inner_error.to_string(),
+                ));
 
-            if let Some(msg) = err.message {
-                diagnostics.push(Diagnostic::new_simple(range, msg))
+                if let Some(msg) = err.message {
+                    diagnostics.push(Diagnostic::new_simple(range, msg))
+                }
             }
         };
 
