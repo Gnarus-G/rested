@@ -372,6 +372,8 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                         .join(",")
                 )
             }
+            EmptyArray(_) => "[]".to_string(),
+            EmptyObject(_) => "{}".to_string(),
         };
 
         Ok(value)
