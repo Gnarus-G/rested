@@ -40,10 +40,6 @@ pub enum ParseError {
         found: TokenOwned,
         expected: Vec<TokenKind>,
     },
-    UnexpectedToken {
-        kind: TokenKind,
-        text: String,
-    },
 }
 
 impl std::error::Error for ParseError {}
@@ -56,9 +52,6 @@ impl std::fmt::Display for ParseError {
             }
             ParseError::ExpectedEitherOfTokens { found, expected } => {
                 format!("expected either one of {:?}, but got {}", expected, found)
-            }
-            ParseError::UnexpectedToken { text, .. } => {
-                format!("unexpected token {}", text)
             }
         };
 
@@ -123,23 +116,20 @@ impl<'i> ParseErrorConstructor<'i> {
     pub fn expected_one_of_tokens(
         &self,
         token: &Token,
-        expected: Vec<TokenKind>,
+        expected_kinds: Vec<TokenKind>,
     ) -> ContextualError<ParseError> {
+        let mut expected_dedpuded = vec![];
+
+        for kind in expected_kinds {
+            if !expected_dedpuded.contains(&kind) {
+                expected_dedpuded.push(kind)
+            }
+        }
+
         ContextualError::new(
             ParseError::ExpectedEitherOfTokens {
                 found: token.into(),
-                expected,
-            },
-            token.span(),
-            self.source_code,
-        )
-    }
-
-    pub fn unexpected_token(&self, token: &Token) -> ContextualError<ParseError> {
-        ContextualError::new(
-            ParseError::UnexpectedToken {
-                kind: token.kind,
-                text: token.text.to_string(),
+                expected: expected_dedpuded,
             },
             token.span(),
             self.source_code,

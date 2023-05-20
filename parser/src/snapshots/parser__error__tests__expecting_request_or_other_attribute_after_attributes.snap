@@ -14,7 +14,7 @@ ParserErrors {
                     @dbg
                     let k = "v"
                           ≈
-                          ↳ [4:19] unexpected token =
+                          ↳ [4:19] expected either one of [Ident, StringLiteral, Boolean, Number, MultiLineStringLiteral, LBracket, LSquare], but got Assign(=)
                     get http://localhost { header "name" k }
         ,
     ],

@@ -13,13 +13,13 @@ ParserErrors {
                          yo: "joe"
                          hello: "world"
                               ≈
-                              ↳ [3:23] unexpected token :
+                              ↳ [3:23] expected either one of [Ident, StringLiteral, Boolean, Number, MultiLineStringLiteral, LBracket, LSquare], but got Colon(:)
                        }
         ,
                          hello: "world"
                        }
                        ≈
-                       ↳ [4:16] unexpected token }
+                       ↳ [4:16] expected either one of [Ident, StringLiteral, Boolean, Number, MultiLineStringLiteral, LBracket, LSquare], but got RBracket(})
         ,
     ],
     incomplete_rogram: Program {

@@ -14,6 +14,19 @@ use lexer::{
 
 use self::error::{ParseError, ParseErrorConstructor};
 
+use TokenKind::*;
+
+macro_rules! match_or_throw {
+    ($expression:expr; $self:ident; $( $( $pattern:ident )|+ $( if $guard: expr )? => $arm:expr $(,)? )+ $( ,$message:literal )? ) => {
+        match $expression {
+            $(
+                $( TokenKind::$pattern )|+ $( if $guard )? => $arm,
+            )+
+            _ => return Err($self.error().expected_one_of_tokens($self.curr_token(), vec![$( $( $pattern ),+ ),+])$(.with_message($message))?)
+        }
+    };
+}
+
 pub type Result<T> = std::result::Result<T, ContextualError<ParseError>>;
 
 #[derive(Debug)]
@@ -117,13 +130,13 @@ impl<'i> Parser<'i> {
     fn parse_request(&mut self, method: RequestMethod) -> Result<Item<'i>> {
         let start = self.curr_token().start;
 
-        self.expect_one_of(vec![TokenKind::Url, TokenKind::Pathname])?;
+        self.expect_one_of(vec![Url, Pathname])?;
 
         let url = self.next_token();
-        let endpoint = match url.kind {
-            TokenKind::Url => Endpoint::Url(url.into()),
-            TokenKind::Pathname => Endpoint::Pathname(url.into()),
-            _ => unreachable!("we're properly expecting only url and pathname tokens here"),
+        let endpoint = match_or_throw! { url.kind; self;
+            Url => Endpoint::Url(url.into()),
+            Pathname => Endpoint::Pathname(url.into()),
+            "expecting only a url and pathname here"
         };
         let url_span: Span = url.span();
 
@@ -163,7 +176,6 @@ impl<'i> Parser<'i> {
     }
 
     fn parse_block(&mut self) -> Result<Option<Block<'i>>> {
-        use TokenKind::*;
         let LBracket = self.peek_token().kind else {
             return Ok(None);
         };
@@ -173,16 +185,11 @@ impl<'i> Parser<'i> {
         let mut statements = vec![];
 
         while self.curr_token().kind != RBracket && self.curr_token().kind != End {
-            let statement = match self.curr_token().kind {
+            let statement = match_or_throw! { self.curr_token().kind; self;
                 Header => self.parse_header()?,
                 Body => self.parse_body()?,
                 Linecomment | Shebang => Statement::LineComment(self.curr_token().into()),
-                _ => {
-                    return Err(self
-                        .error()
-                        .unexpected_token(&self.curr_token())
-                        .with_message("may only declare headers or a body statement here"))
-                }
+                "may only declare headers or a body statement here"
             };
             statements.push(statement);
             self.next_token();
@@ -227,25 +234,21 @@ impl<'i> Parser<'i> {
 
     fn parse_expression(&mut self) -> Result<Expression<'i>> {
         let kind = self.curr_token().kind;
-        use TokenKind::*;
 
-        let exp = match kind {
+        let exp = match_or_throw! { kind; self;
             Ident if self.peek_token().kind == LParen => self.parse_call_expression()?,
-            Ident => Expression::Identifier(self.curr_token().into()),
+            Ident => {Expression::Identifier(self.curr_token().into())},
             StringLiteral => Expression::String(self.curr_token().into()),
             Boolean => Expression::Bool(self.curr_token().into()),
             Number => Expression::Number(self.curr_token().into()),
             MultiLineStringLiteral => self.parse_multiline_string_literal()?,
-            LBracket | LSquare => self.parse_json_like()?,
-            _ => return Err(self.error().unexpected_token(self.curr_token())),
+            LBracket | LSquare => self.parse_json_like()?
         };
 
         Ok(exp)
     }
 
     fn parse_json_like(&mut self) -> Result<Expression<'i>> {
-        use TokenKind::*;
-
         let start_token = self.curr_token();
         let start = start_token.start;
 
@@ -349,8 +352,8 @@ impl<'i> Parser<'i> {
             let c_kind = self.curr_token().kind;
             let p_kind = self.peek_token().kind;
 
-            match c_kind {
-                TokenKind::MultiLineStringLiteral
+            match_or_throw! { c_kind; self;
+                MultiLineStringLiteral
                     if p_kind == TokenKind::DollarSignLBracket =>
                 {
                     let s_literal = Expression::String(self.curr_token().into());
@@ -363,23 +366,18 @@ impl<'i> Parser<'i> {
 
                     parts.push(self.parse_expression()?);
                 }
-                TokenKind::End => {
+                End => {
                     end = self.curr_token().end_location();
                     break;
                 },
-                TokenKind::MultiLineStringLiteral if parts.is_empty() => {
+                MultiLineStringLiteral if parts.is_empty() => {
                     return Ok(Expression::String(self.curr_token().into()));
                 }
-                TokenKind::MultiLineStringLiteral => {
+                MultiLineStringLiteral => {
                     end = self.curr_token().end_location();
                     parts.push(Expression::String(self.curr_token().into()));
                     break;
                 }
-                tk => unreachable!(
-                    "expecting to start parsing multiline string literals only on the {:?} token, found: {:?}",
-                    TokenKind::MultiLineStringLiteral,
-                    tk
-                ),
             };
 
             self.next_token();

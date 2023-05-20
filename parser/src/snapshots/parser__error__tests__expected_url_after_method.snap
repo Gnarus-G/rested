@@ -10,7 +10,7 @@ ParserErrors {
         ,
         get {}
              ≈
-             ↳ [1:6] unexpected token }
+             ↳ [1:6] expected either one of [Ident, StringLiteral, Boolean, Number, MultiLineStringLiteral, LBracket, LSquare], but got RBracket(})
         ,
     ],
     incomplete_rogram: Program {
