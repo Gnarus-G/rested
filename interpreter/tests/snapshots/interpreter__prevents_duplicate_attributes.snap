@@ -2,28 +2,9 @@
 source: interpreter/tests/interpreter.rs
 expression: duped_att_err
 ---
-Error {
-    inner_error: DuplicateAttribute {
-        name: "log",
-    },
-    span: Span {
-        start: Location {
-            line: 3,
-            col: 9,
-        },
-        end: Location {
-            line: 3,
-            col: 12,
-        },
-    },
-    message: None,
-    context: ErrorSourceContext {
-        above: Some(
-            "        @log",
-        ),
-        line: "        @log",
-        below: Some(
-            "        get /api {}",
-        ),
-    },
-}
+        @log
+        @log
+         ≈≈≈
+         ↳ [4:10] duplicate attribute: @log is already set for this request
+        get /api {}
+

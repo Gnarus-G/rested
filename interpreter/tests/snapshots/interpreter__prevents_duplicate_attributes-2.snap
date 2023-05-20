@@ -2,28 +2,9 @@
 source: interpreter/tests/interpreter.rs
 expression: duped_att_err
 ---
-Error {
-    inner_error: DuplicateAttribute {
-        name: "name",
-    },
-    span: Span {
-        start: Location {
-            line: 3,
-            col: 9,
-        },
-        end: Location {
-            line: 3,
-            col: 13,
-        },
-    },
-    message: None,
-    context: ErrorSourceContext {
-        above: Some(
-            "        @name(\"a\")",
-        ),
-        line: "        @name(\"b\")",
-        below: Some(
-            "        get /api {}",
-        ),
-    },
-}
+        @name("a")
+        @name("b")
+         ≈≈≈≈
+         ↳ [4:10] duplicate attribute: @name is already set for this request
+        get /api {}
+

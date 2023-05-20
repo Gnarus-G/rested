@@ -1,9 +1,11 @@
+mod error;
+
 use clap::{CommandFactory, Parser, Subcommand};
+use error::ColoredError;
 use interpreter::{environment::Environment, ureq_runner::UreqRunner, Interpreter};
 
 use std::{
     collections::HashMap,
-    error::Error,
     fs,
     io::{stdin, stdout, Write},
     path::PathBuf,
@@ -87,7 +89,7 @@ fn main() {
     }
 }
 
-fn run() -> Result<(), Box<dyn Error>> {
+fn run() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
     let mut env = Environment::new(PathBuf::from(".vars.rd.json"))?;
@@ -105,7 +107,9 @@ fn run() -> Result<(), Box<dyn Error>> {
 
                 let code = fs::read_to_string(file)?;
 
-                Interpreter::new(&code, env, UreqRunner).run(request)?;
+                Interpreter::new(&code, env, UreqRunner)
+                    .run(request)
+                    .map_err(ColoredError)?;
             }
             Command::Env { command } => match command {
                 EnvCommand::Set {
@@ -143,7 +147,9 @@ fn run() -> Result<(), Box<dyn Error>> {
 
                 let env = Environment::new(PathBuf::from(".vars.rd.json"))?;
 
-                Interpreter::new(&code, env, UreqRunner).run(None)?;
+                Interpreter::new(&code, env, UreqRunner)
+                    .run(None)
+                    .map_err(ColoredError)?;
 
                 print!(":>> ");
                 stdout().flush()?;

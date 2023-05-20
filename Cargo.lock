@@ -285,7 +285,6 @@ dependencies = [
 name = "error_meta"
 version = "0.1.0"
 dependencies = [
- "colored",
  "lexer",
 ]
 
@@ -934,8 +933,11 @@ version = "0.2.0"
 dependencies = [
  "clap",
  "clap_complete",
+ "colored",
+ "error_meta",
  "interpreter",
  "language_server",
+ "lexer",
 ]
 
 [[package]]

@@ -17,6 +17,9 @@ clap = { version = "4.2.1", features = ["derive"] }
 clap_complete = "4.2.1"
 interpreter = { path = "./interpreter" }
 language_server = { path = "./language_server" }
+lexer = { path = "./lexer" }
+error_meta = { path = "./error_meta" }
+colored = "2.0.0"
 
 [profile.dev.package.insta]
 opt-level = 3
