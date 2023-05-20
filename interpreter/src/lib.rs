@@ -13,7 +13,7 @@ use colored::Colorize;
 
 use environment::Environment;
 use parser;
-use parser::ast::{self, Endpoint, Expression, Literal};
+use parser::ast::{self, Endpoint, Expression, Identifier, Literal};
 
 use error_meta::Error;
 use lexer::locations::{GetSpan, Span};
@@ -291,55 +291,15 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
             Call {
                 identifier,
                 arguments,
-            } => match identifier.name {
-                "env" => {
-                    let arg = arguments.first().ok_or_else(|| {
-                        self.error_factory
-                            .required_args(expression_span, 1, 0)
-                            .with_message("calls to env(..) must include a variable name argument")
-                    })?;
-
-                    let value = self.evaluate_expression(arg)?;
-
-                    self.evaluate_env_variable(&Literal {
-                        value: &value,
-                        span: expression_span,
-                    })?
+            } => {
+                let value =
+                    self.evaluate_call_expression(identifier, arguments, expression_span)?;
+                if quote_string_literal {
+                    format!("{:?}", value)
+                } else {
+                    value
                 }
-                "read" => {
-                    let arg = arguments.first().ok_or_else(|| {
-                        self.error_factory
-                            .required_args(expression_span, 1, 0)
-                            .with_message("calls to read(..) must include a file name argument")
-                    })?;
-
-                    let file_name = self.evaluate_expression(arg)?;
-
-                    self.read_file(&Literal {
-                        value: &file_name,
-                        span: expression_span,
-                    })?
-                }
-                "escape_new_lines" => {
-                    let arg = arguments.first().ok_or_else(|| {
-                        self.error_factory
-                            .required_args(expression_span, 1, 0)
-                            .with_message("calls to escape_new_lines(..) must include an argument")
-                    })?;
-
-                    let value = self.evaluate_expression(arg)?;
-
-                    escaping_new_lines(&value)
-                }
-                _ => {
-                    return Err(self
-                        .error_factory
-                        .undefined_callable(&identifier)
-                        .with_message(
-                            "env(..), read(..), escape_new_lines(..) are the only calls supported",
-                        ))
-                }
-            },
+            }
             Array((.., values)) => {
                 let mut v = vec![];
 
@@ -372,9 +332,70 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                         .join(",")
                 )
             }
+            EmptyArray(_) => "[]".to_string(),
+            EmptyObject(_) => "{}".to_string(),
         };
 
         Ok(value)
+    }
+
+    fn evaluate_call_expression(
+        &self,
+        identifier: &Identifier<'source>,
+        arguments: &Vec<Expression<'source>>,
+        expression_span: Span,
+    ) -> Result<String> {
+        let string_value = match identifier.name {
+            "env" => {
+                let arg = arguments.first().ok_or_else(|| {
+                    self.error_factory
+                        .required_args(expression_span, 1, 0)
+                        .with_message("calls to env(..) must include a variable name argument")
+                })?;
+
+                let value = self.evaluate_expression(arg)?;
+
+                self.evaluate_env_variable(&Literal {
+                    value: &value,
+                    span: expression_span,
+                })?
+            }
+            "read" => {
+                let arg = arguments.first().ok_or_else(|| {
+                    self.error_factory
+                        .required_args(expression_span, 1, 0)
+                        .with_message("calls to read(..) must include a file name argument")
+                })?;
+
+                let file_name = self.evaluate_expression(arg)?;
+
+                self.read_file(&Literal {
+                    value: &file_name,
+                    span: expression_span,
+                })?
+            }
+            "escape_new_lines" => {
+                let arg = arguments.first().ok_or_else(|| {
+                    self.error_factory
+                        .required_args(expression_span, 1, 0)
+                        .with_message("calls to escape_new_lines(..) must include an argument")
+                })?;
+
+                let value = self.evaluate_expression(arg)?;
+
+                escaping_new_lines(&value)
+            }
+            _ => {
+                return Err(self
+                    .error_factory
+                    .undefined_callable(&identifier)
+                    .with_message(
+                        "env(..), read(..), escape_new_lines(..) are the only calls supported",
+                    ))
+            }
+        };
+
+        Ok(string_value)
     }
 
     fn evaluate_env_variable(&self, token: &Literal<'source>) -> Result<String> {

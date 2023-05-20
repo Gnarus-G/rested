@@ -156,6 +156,8 @@ pub enum Expression<'source> {
     },
     Array(Spanned<Vec<Expression<'source>>>),
     Object(Spanned<BTreeMap<&'source str, Expression<'source>>>),
+    EmptyArray(Span),
+    EmptyObject(Span),
     TemplateSringLiteral {
         span: Span,
         parts: Vec<Expression<'source>>,
@@ -180,6 +182,8 @@ impl<'source> GetSpan for Expression<'source> {
             Expression::Object((span, ..)) => *span,
             Expression::Bool(l) => l.span,
             Expression::Number(l) => l.span,
+            Expression::EmptyArray(s) => *s,
+            Expression::EmptyObject(s) => *s,
         }
     }
 }

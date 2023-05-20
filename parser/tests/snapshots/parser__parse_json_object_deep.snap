@@ -1,6 +1,6 @@
 ---
 source: parser/tests/parser.rs
-description: "\nlet o = {\n    key: \"value\",\n    akey: false,\n    love: {\n        hello: {\n            w: \"1\",\n            o: {\n                two: 2.123\n            }\n        }\n    }\n}"
+description: "\nlet o = {\n    key: \"value\",\n    akey: false,\n    love: {\n        hello: {\n            w: \"1\",\n            o: {\n                two: 2.123,\n                and: {}\n            }\n        }\n    }\n}"
 expression: ast
 ---
 Program(
@@ -25,7 +25,7 @@ Program(
           col: 8,
         ),
         end: Location(
-          line: 12,
+          line: 13,
           col: 1,
         ),
       ), {
@@ -62,7 +62,7 @@ Program(
             col: 10,
           ),
           end: Location(
-            line: 11,
+            line: 12,
             col: 5,
           ),
         ), {
@@ -72,7 +72,7 @@ Program(
               col: 15,
             ),
             end: Location(
-              line: 10,
+              line: 11,
               col: 9,
             ),
           ), {
@@ -82,10 +82,20 @@ Program(
                 col: 15,
               ),
               end: Location(
-                line: 9,
+                line: 10,
                 col: 13,
               ),
             ), {
+              "and": EmptyObject(Span(
+                start: Location(
+                  line: 9,
+                  col: 21,
+                ),
+                end: Location(
+                  line: 9,
+                  col: 23,
+                ),
+              )),
               "two": Number(Literal(
                 value: "2.123",
                 span: Span(

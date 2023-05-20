@@ -7,7 +7,7 @@ use crate::ast::{Endpoint, Expression, Item, Program, RequestMethod, Statement};
 use ast::Block;
 use error_meta::Error;
 use lexer::{
-    locations::{GetSpan, Span},
+    locations::{GetSpan, Location, Span},
     Lexer, Token, TokenKind,
 };
 
@@ -31,7 +31,7 @@ impl<'i> Parser<'i> {
         }
     }
 
-    fn curr_token(&mut self) -> &Token<'i> {
+    fn curr_token(&self) -> &Token<'i> {
         &self
             .token
             .as_ref()
@@ -48,6 +48,10 @@ impl<'i> Parser<'i> {
 
     fn peek_token(&mut self) -> &Token<'i> {
         self.peeked.get_or_insert_with(|| self.lexer.next())
+    }
+
+    fn span_from(&self, start: Location) -> Span {
+        start.to_end_of(self.curr_token().span())
     }
 
     pub fn parse(&mut self) -> Result<Program<'i>> {
@@ -223,29 +227,24 @@ impl<'i> Parser<'i> {
 
         let object = match start_token.kind {
             LBracket => {
+                if self.peek_token().kind == RBracket {
+                    self.next_token();
+                    return Ok(Expression::EmptyObject(self.span_from(start)));
+                }
+
                 let mut fields = BTreeMap::new();
 
-                self.expect(Ident)?;
-                let ident = self.next_token().text;
+                let (key, value) = self.parse_object_property()?;
 
-                self.expect(Colon)?;
-                self.next_token();
-                self.next_token();
-
-                fields.insert(ident, self.parse_json_like()?);
+                fields.insert(key, value);
 
                 while self.peek_token().kind != RBracket {
                     self.expect(Comma)?;
                     self.next_token();
 
-                    self.expect(Ident)?;
-                    let ident = self.next_token().text;
+                    let (key, value) = self.parse_object_property()?;
 
-                    self.expect(Colon)?;
-                    self.next_token();
-                    self.next_token();
-
-                    fields.insert(ident, self.parse_json_like()?);
+                    fields.insert(key, value);
                 }
 
                 self.next_token();
@@ -255,6 +254,11 @@ impl<'i> Parser<'i> {
                 Expression::Object((span, fields))
             }
             LSquare => {
+                if self.peek_token().kind == RSquare {
+                    self.next_token();
+                    return Ok(Expression::EmptyArray(self.span_from(start)));
+                }
+
                 self.next_token();
 
                 let mut list = vec![];
@@ -279,6 +283,17 @@ impl<'i> Parser<'i> {
         };
 
         Ok(object)
+    }
+
+    fn parse_object_property(&mut self) -> Result<(&'i str, Expression<'i>)> {
+        self.expect(TokenKind::Ident)?;
+        let ident = self.next_token().text;
+
+        self.expect(TokenKind::Colon)?;
+        self.next_token();
+        self.next_token();
+
+        return Ok((ident, self.parse_json_like()?));
     }
 
     fn parse_call_expression(&mut self) -> Result<Expression<'i>> {
