@@ -1,3 +1,4 @@
+mod display;
 pub mod locations;
 
 use locations::Location;

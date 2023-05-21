@@ -21,7 +21,13 @@ impl<'i> From<&Token<'i>> for TokenOwned {
 
 impl std::fmt::Display for TokenOwned {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}({})", self.kind, self.text)
+        use TokenKind::*;
+        match self.kind {
+            Url | Linecomment | IllegalToken => {
+                write!(f, "{}<{}>", self.kind, self.text)
+            }
+            kind => write!(f, "{kind}"),
+        }
     }
 }
 
@@ -48,10 +54,15 @@ impl std::fmt::Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let formatted_error = match self {
             ParseError::ExpectedToken { expected, found } => {
-                format!("expected {:?}, got {}", expected, found)
+                format!("expected {}, got {}", expected, found)
             }
             ParseError::ExpectedEitherOfTokens { found, expected } => {
-                format!("expected either one of {:?}, but got {}", expected, found)
+                let expected = expected
+                    .iter()
+                    .map(|kind| kind.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",");
+                format!("expected either one of {}, but got {}", expected, found)
             }
         };
 

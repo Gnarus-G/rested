@@ -17,12 +17,6 @@ impl Location {
     }
 }
 
-impl std::fmt::Display for Location {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{}:{}]", self.line + 1, self.col + 1)
-    }
-}
-
 #[derive(Debug, PartialEq, Clone, Copy, Serialize)]
 pub struct Span {
     pub start: Location,
