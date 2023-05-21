@@ -1,0 +1,164 @@
+---
+source: parser/tests/parser.rs
+description: "\nlet o = {\n    key: \"value\",\n    akey: [1, 2, 3,],\n    love: \"me\",\n    test: {a: \"asdf\", b: 1, c: 3,},\n}"
+expression: ast
+---
+Program(
+  items: [
+    Let(
+      identifier: Identifier(
+        name: "o",
+        span: Span(
+          start: Location(
+            line: 1,
+            col: 4,
+          ),
+          end: Location(
+            line: 1,
+            col: 5,
+          ),
+        ),
+      ),
+      value: Object((Span(
+        start: Location(
+          line: 1,
+          col: 8,
+        ),
+        end: Location(
+          line: 6,
+          col: 1,
+        ),
+      ), {
+        "akey": Array((Span(
+          start: Location(
+            line: 3,
+            col: 10,
+          ),
+          end: Location(
+            line: 3,
+            col: 20,
+          ),
+        ), [
+          Number(Literal(
+            value: "1",
+            span: Span(
+              start: Location(
+                line: 3,
+                col: 11,
+              ),
+              end: Location(
+                line: 3,
+                col: 12,
+              ),
+            ),
+          )),
+          Number(Literal(
+            value: "2",
+            span: Span(
+              start: Location(
+                line: 3,
+                col: 14,
+              ),
+              end: Location(
+                line: 3,
+                col: 15,
+              ),
+            ),
+          )),
+          Number(Literal(
+            value: "3",
+            span: Span(
+              start: Location(
+                line: 3,
+                col: 17,
+              ),
+              end: Location(
+                line: 3,
+                col: 18,
+              ),
+            ),
+          )),
+        ])),
+        "key": String(StringLiteral(
+          raw: "\"value\"",
+          value: "value",
+          span: Span(
+            start: Location(
+              line: 2,
+              col: 9,
+            ),
+            end: Location(
+              line: 2,
+              col: 16,
+            ),
+          ),
+        )),
+        "love": String(StringLiteral(
+          raw: "\"me\"",
+          value: "me",
+          span: Span(
+            start: Location(
+              line: 4,
+              col: 10,
+            ),
+            end: Location(
+              line: 4,
+              col: 14,
+            ),
+          ),
+        )),
+        "test": Object((Span(
+          start: Location(
+            line: 5,
+            col: 10,
+          ),
+          end: Location(
+            line: 5,
+            col: 34,
+          ),
+        ), {
+          "a": String(StringLiteral(
+            raw: "\"asdf\"",
+            value: "asdf",
+            span: Span(
+              start: Location(
+                line: 5,
+                col: 14,
+              ),
+              end: Location(
+                line: 5,
+                col: 20,
+              ),
+            ),
+          )),
+          "b": Number(Literal(
+            value: "1",
+            span: Span(
+              start: Location(
+                line: 5,
+                col: 25,
+              ),
+              end: Location(
+                line: 5,
+                col: 26,
+              ),
+            ),
+          )),
+          "c": Number(Literal(
+            value: "3",
+            span: Span(
+              start: Location(
+                line: 5,
+                col: 31,
+              ),
+              end: Location(
+                line: 5,
+                col: 32,
+              ),
+            ),
+          )),
+        })),
+      })),
+    ),
+  ],
+)

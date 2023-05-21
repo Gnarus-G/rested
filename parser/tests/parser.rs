@@ -150,6 +150,19 @@ let o = {
 }
 
 #[test]
+fn parse_json_object_allowing_trailing_comma() {
+    assert_ast!(
+        r#"
+let o = {
+    key: "value",
+    akey: [1, 2, 3,],
+    love: "me",
+    test: {a: "asdf", b: 1, c: 3,},
+}"#
+    );
+}
+
+#[test]
 fn parse_json_object_deep() {
     assert_ast!(
         r#"
