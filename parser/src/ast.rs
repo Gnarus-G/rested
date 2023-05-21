@@ -146,6 +146,7 @@ pub enum Expression<'source> {
     },
     Array(Spanned<Vec<Expression<'source>>>),
     Object(Spanned<BTreeMap<&'source str, Expression<'source>>>),
+    Null(Span),
     EmptyArray(Span),
     EmptyObject(Span),
     TemplateSringLiteral {

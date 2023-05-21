@@ -333,6 +333,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
             }
             EmptyArray(_) => "[]".to_string(),
             EmptyObject(_) => "{}".to_string(),
+            Null(_) => "null".to_string(),
         };
 
         Ok(value)

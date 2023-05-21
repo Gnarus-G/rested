@@ -10,7 +10,7 @@ ParserErrors {
         ,
          let o = ["joe" "world"] 
                                ≈
-                               ↳ [1:24] expected either one of identifier,string,boolean,number,string,{,[, but got ]
+                               ↳ [1:24] expected either one of identifier,string,boolean,number,string,{,[,null, but got ]
         ,
     ],
     incomplete_rogram: Program {
