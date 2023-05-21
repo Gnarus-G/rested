@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 
 use lexer::locations::{Location, Span};
+use lexer::Token;
 use parser::Parser;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::{lsp_types::*, LspService, Server};
@@ -155,43 +156,50 @@ impl LanguageServer for Backend {
             .map(|keyword| CompletionItem {
                 label: format!("{}", keyword),
                 kind: Some(CompletionItemKind::KEYWORD),
-                text_edit: Some(CompletionTextEdit::Edit(TextEdit {
-                    new_text: format!("{}", keyword),
-                    range: Range::new(
-                        position,
-                        Position {
-                            line: position.line,
-                            character: keyword.len() as u32,
-                        },
-                    ),
-                })),
+                insert_text: Some(format!("{}", keyword)),
                 ..CompletionItem::default()
             })
             .to_vec();
 
-        let functions = ["env", "read", "escape_new_lines"]
+        let builtin_functions = ["env", "read", "escape_new_lines"]
             .map(|keyword| CompletionItem {
                 label: format!("{}(..)", keyword),
                 kind: Some(CompletionItemKind::FUNCTION),
+                insert_text: Some(format!("{}(${{1:argument}})", keyword)),
+                insert_text_format: Some(InsertTextFormat::SNIPPET),
+                ..CompletionItem::default()
+            })
+            .to_vec();
+
+        let program = match parser::Parser::new(&text).parse() {
+            Ok(ast) => ast,
+            Err(err) => err.incomplete_rogram,
+        };
+
+        let variables = program
+            .variables_before(Location {
+                line: position.line as usize,
+                col: position.character as usize,
+            })
+            .into_iter()
+            .map(|var| CompletionItem {
+                label: format!("{}", var.name),
+                kind: Some(CompletionItemKind::VARIABLE),
                 text_edit: Some(CompletionTextEdit::Edit(TextEdit {
-                    new_text: format!("{}(", keyword),
+                    new_text: format!("{}", var.name),
                     range: Range::new(
                         position,
                         Position {
                             line: position.line,
-                            character: keyword.len() as u32,
+                            character: var.name.len() as u32,
                         },
                     ),
                 })),
                 ..CompletionItem::default()
             })
-            .to_vec();
+            .collect();
 
-        let Ok(ast) = parser::Parser::new(&text).parse() else {
-            return Ok(Some(CompletionResponse::Array(functions)));
-        };
-
-        for item in ast.items {
+        for item in program.items {
             if let parser::ast::Item::Request { block, .. } = item {
                 if let Some(block) = block {
                     let contains_position = block.span.contains(&position);
@@ -206,16 +214,49 @@ impl LanguageServer for Backend {
                             })
                             .to_vec();
 
-                        return Ok(Some(CompletionResponse::Array(
-                            [statement_types, functions].concat(),
-                        )));
+                        return Ok(Some(CompletionResponse::Array([statement_types].concat())));
                     }
                 }
             }
         }
 
+        let mut tokens = lexer::Lexer::new(&text)
+            .filter(|t| {
+                if t.start.line == position.line as usize {
+                    return t.start.col <= position.character as usize;
+                }
+                return t.start.line < position.line as usize;
+            })
+            .collect::<Vec<_>>();
+
+        tokens.reverse();
+
+        use lexer::TokenKind::*;
+
+        match tokens.as_slice() {
+            [Token {
+                kind: StringLiteral,
+                ..
+            }, Token { kind: Header, .. }, ..]
+            | [Token { kind: Assign, .. }, _, _]
+            | [Token { kind: Body, .. }, ..]
+            | [Token { kind: Colon, .. }, Token { kind: Ident, .. }, ..] => {
+                return Ok(Some(CompletionResponse::Array(
+                    [builtin_functions, variables].concat(),
+                )));
+            }
+            [Token { kind: Set, .. }, ..] => {
+                return Ok(Some(CompletionResponse::Array(vec![CompletionItem {
+                    label: "BASE_URL".to_string(),
+                    kind: Some(CompletionItemKind::CONSTANT),
+                    ..CompletionItem::default()
+                }])));
+            }
+            _ => {}
+        }
+
         return Ok(Some(CompletionResponse::Array(
-            [methods, functions].concat(),
+            [methods, builtin_functions, variables].concat(),
         )));
     }
 

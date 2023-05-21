@@ -1,4 +1,5 @@
 pub mod ast;
+mod ast_queries;
 pub mod error;
 
 use std::collections::BTreeMap;
