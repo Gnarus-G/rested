@@ -2,9 +2,46 @@
 source: parser/src/error.rs
 expression: error
 ---
-                 yo: "joe"
-                 hello: "world"
-                 ≈≈≈≈≈
-                 ↳ [3:18] expected Comma, got Ident(hello)
-               }
-
+ParserErrors {
+    errors: [
+                         yo: "joe"
+                         hello: "world"
+                         ≈≈≈≈≈
+                         ↳ [3:18] expected ,, got identifier
+                       }
+        ,
+                         yo: "joe"
+                         hello: "world"
+                              ≈
+                              ↳ [3:23] expected either one of identifier,string,boolean,number,string,{,[, but got :
+                       }
+        ,
+                         hello: "world"
+                       }
+                       ≈
+                       ↳ [4:16] expected either one of identifier,string,boolean,number,string,{,[, but got }
+        ,
+    ],
+    incomplete_rogram: Program {
+        items: [
+            Expr(
+                String(
+                    StringLiteral {
+                        raw: "\"world\"",
+                        value: "world",
+                        span: Span {
+                            start: Location {
+                                line: 2,
+                                col: 24,
+                            },
+                            end: Location {
+                                line: 2,
+                                col: 31,
+                            },
+                        },
+                    },
+                ),
+            ),
+        ],
+    },
+}

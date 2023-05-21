@@ -15,11 +15,12 @@ impl Location {
             end: span.end,
         }
     }
-}
 
-impl std::fmt::Display for Location {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{}:{}]", self.line + 1, self.col + 1)
+    pub fn is_before(self, location: Location) -> bool {
+        if self.line == location.line {
+            return self.col <= location.col;
+        }
+        return self.line < location.line;
     }
 }
 

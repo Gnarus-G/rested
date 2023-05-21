@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
+mod completions;
 
-use lexer::locations::{Location, Span};
+use completions::*;
+use lexer::locations::Location;
+use lexer::Token;
 use parser::Parser;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::{lsp_types::*, LspService, Server};
@@ -66,19 +69,21 @@ impl Backend {
 
         let mut diagnostics = vec![];
 
-        if let Err(err) = result {
-            let range = Range {
-                start: err.span.start.into_position(),
-                end: err.span.end.into_position(),
-            };
+        if let Err(error) = result {
+            for err in error.errors {
+                let range = Range {
+                    start: err.span.start.into_position(),
+                    end: err.span.end.into_position(),
+                };
 
-            diagnostics.push(Diagnostic::new_simple(
-                range.clone(),
-                err.inner_error.to_string(),
-            ));
+                diagnostics.push(Diagnostic::new_simple(
+                    range.clone(),
+                    err.inner_error.to_string(),
+                ));
 
-            if let Some(msg) = err.message {
-                diagnostics.push(Diagnostic::new_simple(range, msg))
+                if let Some(msg) = err.message {
+                    diagnostics.push(Diagnostic::new_simple(range, msg))
+                }
             }
         };
 
@@ -87,19 +92,6 @@ impl Backend {
         self.client
             .publish_diagnostics(params.uri, diagnostics, Some(params.version))
             .await;
-    }
-}
-
-trait ContainsPosition {
-    fn contains(&self, position: &Position) -> bool;
-}
-
-impl ContainsPosition for Span {
-    fn contains(&self, position: &Position) -> bool {
-        if self.start.line == self.end.line {
-            return (self.start.col..=self.end.col).contains(&(position.character as usize));
-        }
-        (self.start.line..=self.end.line).contains(&(position.line as usize))
     }
 }
 
@@ -149,71 +141,78 @@ impl LanguageServer for Backend {
                 return Ok(None);
             };
 
-        let methods = ["get", "post", "put", "patch", "delete"]
-            .map(|keyword| CompletionItem {
-                label: format!("{}", keyword),
-                kind: Some(CompletionItemKind::KEYWORD),
-                text_edit: Some(CompletionTextEdit::Edit(TextEdit {
-                    new_text: format!("{}", keyword),
-                    range: Range::new(
-                        position,
-                        Position {
-                            line: position.line,
-                            character: keyword.len() as u32,
-                        },
-                    ),
-                })),
-                ..CompletionItem::default()
-            })
-            .to_vec();
+        let methods = http_method_completions();
 
-        let functions = ["env", "read", "escape_new_lines"]
-            .map(|keyword| CompletionItem {
-                label: format!("{}(..)", keyword),
-                kind: Some(CompletionItemKind::FUNCTION),
-                text_edit: Some(CompletionTextEdit::Edit(TextEdit {
-                    new_text: format!("{}(", keyword),
-                    range: Range::new(
-                        position,
-                        Position {
-                            line: position.line,
-                            character: keyword.len() as u32,
-                        },
-                    ),
-                })),
-                ..CompletionItem::default()
-            })
-            .to_vec();
+        let builtin_functions = builtin_functions_completions();
 
-        let Ok(ast) = parser::Parser::new(&text).parse() else {
-            return Ok(Some(CompletionResponse::Array(functions)));
+        let program = match parser::Parser::new(&text).parse() {
+            Ok(ast) => ast,
+            Err(err) => err.incomplete_rogram,
         };
 
-        for item in ast.items {
+        let variables = program
+            .variables_before(Location {
+                line: position.line as usize,
+                col: position.character as usize,
+            })
+            .into_iter()
+            .map(|var| CompletionItem {
+                label: format!("{}", var.name),
+                kind: Some(CompletionItemKind::VARIABLE),
+                insert_text: Some(format!("{}", var.name)),
+                ..CompletionItem::default()
+            })
+            .collect();
+
+        for item in program.items {
             if let parser::ast::Item::Request { block, .. } = item {
                 if let Some(block) = block {
                     let contains_position = block.span.contains(&position);
                     if contains_position {
-                        let statement_types = ["header", "body"]
-                            .map(|kw| kw.to_string())
-                            .map(|keyword| CompletionItem {
-                                label: keyword.clone(),
-                                kind: Some(CompletionItemKind::KEYWORD),
-                                insert_text: Some(keyword),
-                                ..CompletionItem::default()
-                            })
-                            .to_vec();
-
-                        return Ok(Some(CompletionResponse::Array(
-                            [statement_types, functions].concat(),
-                        )));
+                        let header_or_body = header_body_keyword_completions();
+                        return Ok(Some(CompletionResponse::Array([header_or_body].concat())));
                     }
                 }
             }
         }
 
+        let mut tokens = lexer::Lexer::new(&text)
+            .filter(|t| {
+                t.start.is_before(Location {
+                    line: position.line as usize,
+                    col: position.character as usize,
+                })
+            })
+            .collect::<Vec<_>>();
+
+        tokens.reverse();
+
+        use lexer::TokenKind::*;
+
+        match tokens.as_slice() {
+            [Token {
+                kind: StringLiteral,
+                ..
+            }, Token { kind: Header, .. }, ..]
+            | [Token { kind: Assign, .. }, _, _]
+            | [Token { kind: Body, .. }, ..]
+            | [Token { kind: Colon, .. }, Token { kind: Ident, .. }, ..] => {
+                return Ok(Some(CompletionResponse::Array(
+                    [builtin_functions, variables].concat(),
+                )));
+            }
+            [Token { kind: Set, .. }, ..] => {
+                return Ok(Some(CompletionResponse::Array(vec![CompletionItem {
+                    label: "BASE_URL".to_string(),
+                    kind: Some(CompletionItemKind::CONSTANT),
+                    ..CompletionItem::default()
+                }])));
+            }
+            _ => {}
+        }
+
         return Ok(Some(CompletionResponse::Array(
-            [methods, functions].concat(),
+            [methods, builtin_functions, variables].concat(),
         )));
     }
 

@@ -2,7 +2,14 @@
 source: parser/src/error.rs
 expression: error
 ---
-get http://localhost { header "name" }
-                                     ≈
-                                     ↳ [1:38] expected either one of [StringLiteral, Ident, MultiLineStringLiteral], but got RBracket(})
-
+ParserErrors {
+    errors: [
+        get http://localhost { header "name" }
+                                             ≈
+                                             ↳ [1:38] expected either one of string,identifier,string, but got }
+        ,
+    ],
+    incomplete_rogram: Program {
+        items: [],
+    },
+}

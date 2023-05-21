@@ -234,7 +234,7 @@ fn let_bindings_work() {
         server
             .mock(method, "/api")
             .with_status(200)
-            .with_header("test", env.get_variable_value("test".to_string()).unwrap())
+            .with_header("test", env.get_variable_value(&"test".to_string()).unwrap())
             .with_header("test1", "asdf")
             .create()
     });

@@ -1,25 +1,33 @@
 use lexer::{locations::GetSpan, Token, TokenKind};
 
-use error_meta::Error;
+use error_meta::ContextualError;
+
+use crate::ast::Program;
 
 #[derive(Debug, PartialEq)]
-pub struct TokenOwned {
+pub struct ErroneousToken<'source> {
     kind: TokenKind,
-    text: String,
+    text: &'source str,
 }
 
-impl<'i> From<&Token<'i>> for TokenOwned {
-    fn from(token: &Token<'i>) -> Self {
+impl<'source> From<&Token<'source>> for ErroneousToken<'source> {
+    fn from(token: &Token<'source>) -> Self {
         Self {
-            text: token.text.to_string(),
+            text: token.text,
             kind: token.kind,
         }
     }
 }
 
-impl std::fmt::Display for TokenOwned {
+impl<'source> std::fmt::Display for ErroneousToken<'source> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}({})", self.kind, self.text)
+        use TokenKind::*;
+        match self.kind {
+            Url | Linecomment | IllegalToken => {
+                write!(f, "{}<{}>", self.kind, self.text)
+            }
+            kind => write!(f, "{kind}"),
+        }
     }
 }
 
@@ -29,38 +37,65 @@ pub struct ParseErrorConstructor<'i> {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum ParseError {
+pub enum ParseError<'source> {
     ExpectedToken {
-        found: TokenOwned,
+        found: ErroneousToken<'source>,
         expected: TokenKind,
     },
     ExpectedEitherOfTokens {
-        found: TokenOwned,
+        found: ErroneousToken<'source>,
         expected: Vec<TokenKind>,
-    },
-    UnexpectedToken {
-        kind: TokenKind,
-        text: String,
     },
 }
 
-impl std::error::Error for ParseError {}
+impl<'source> std::error::Error for ParseError<'source> {}
 
-impl std::fmt::Display for ParseError {
+impl<'source> std::fmt::Display for ParseError<'source> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let formatted_error = match self {
             ParseError::ExpectedToken { expected, found } => {
-                format!("expected {:?}, got {}", expected, found)
+                format!("expected {}, got {}", expected, found)
             }
             ParseError::ExpectedEitherOfTokens { found, expected } => {
-                format!("expected either one of {:?}, but got {}", expected, found)
-            }
-            ParseError::UnexpectedToken { text, .. } => {
-                format!("unexpected token {}", text)
+                let expected = expected
+                    .iter()
+                    .map(|kind| kind.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",");
+                format!("expected either one of {}, but got {}", expected, found)
             }
         };
 
         f.write_str(&formatted_error)
+    }
+}
+
+#[derive(Debug)]
+pub struct ParserErrors<'source> {
+    pub errors: Vec<ContextualError<ParseError<'source>>>,
+    pub incomplete_rogram: Program<'source>,
+}
+
+impl<'source> ParserErrors<'source> {
+    pub fn new(
+        errors: Vec<ContextualError<ParseError<'source>>>,
+        incomplete_rogram: Program<'source>,
+    ) -> Self {
+        Self {
+            errors,
+            incomplete_rogram,
+        }
+    }
+}
+
+impl<'source> std::error::Error for ParserErrors<'source> {}
+
+impl<'source> std::fmt::Display for ParserErrors<'source> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for err in &self.errors {
+            write!(f, "{err}")?
+        }
+        Ok(())
     }
 }
 
@@ -71,11 +106,15 @@ impl<'i> ParseErrorConstructor<'i> {
         }
     }
 
-    pub fn expected_token(&self, token: &Token, expected: TokenKind) -> Error<ParseError> {
-        Error::new(
+    pub fn expected_token(
+        &self,
+        token: &Token<'i>,
+        expected: TokenKind,
+    ) -> ContextualError<ParseError<'i>> {
+        ContextualError::new(
             ParseError::ExpectedToken {
-                found: TokenOwned {
-                    text: token.text.to_string(),
+                found: ErroneousToken {
+                    text: token.text,
                     kind: token.kind,
                 },
                 expected,
@@ -87,27 +126,24 @@ impl<'i> ParseErrorConstructor<'i> {
 
     pub fn expected_one_of_tokens(
         &self,
-        token: &Token,
-        expected: Vec<TokenKind>,
-    ) -> Error<ParseError> {
-        Error::new(
+        token: &Token<'i>,
+        expected_kinds: Vec<TokenKind>,
+    ) -> ContextualError<ParseError<'i>> {
+        let mut expected_dedpuded = vec![];
+
+        for kind in expected_kinds {
+            if !expected_dedpuded.contains(&kind) {
+                expected_dedpuded.push(kind)
+            }
+        }
+
+        ContextualError::new(
             ParseError::ExpectedEitherOfTokens {
                 found: token.into(),
-                expected,
+                expected: expected_dedpuded,
             },
             token.span(),
-            self.source_code,
-        )
-    }
-
-    pub fn unexpected_token(&self, token: &Token) -> Error<ParseError> {
-        Error::new(
-            ParseError::UnexpectedToken {
-                kind: token.kind,
-                text: token.text.to_string(),
-            },
-            token.span(),
-            self.source_code,
+            self.source_code.as_ref(),
         )
     }
 }

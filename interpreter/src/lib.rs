@@ -1,6 +1,6 @@
 mod attributes;
 pub mod environment;
-mod error;
+pub mod error;
 pub mod ir;
 pub mod ureq_runner;
 
@@ -12,18 +12,17 @@ use std::path::PathBuf;
 use colored::Colorize;
 
 use environment::Environment;
+use error::InterpreterError;
 use parser;
 use parser::ast::{self, Endpoint, Expression, Identifier, Literal};
 
-use error_meta::Error;
 use lexer::locations::{GetSpan, Span};
 
-use self::error::{InterpError, InterpErrorFactory};
+use self::error::InterpErrorFactory;
 use attributes::AttributeStore;
-use error::IntoInterpError;
 use ir::Header;
 
-type Result<T> = std::result::Result<T, Error<InterpError>>;
+type Result<'source, T> = std::result::Result<T, InterpreterError<'source>>;
 
 enum Log {
     Std,
@@ -59,7 +58,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         }
     }
 
-    pub fn run(&mut self, request_names: Option<Vec<String>>) -> Result<()> {
+    pub fn run(&mut self, request_names: Option<Vec<String>>) -> Result<'source, ()> {
         let requests = self.evaluate()?;
 
         let requests = requests
@@ -129,10 +128,10 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         Ok(())
     }
 
-    fn evaluate(&mut self) -> Result<Vec<RequestMeta>> {
+    fn evaluate(&mut self) -> Result<'source, Vec<RequestMeta>> {
         let mut parser = parser::Parser::new(self.code);
 
-        let ast = parser.parse().map_err(|err| err.into_interp_error())?;
+        let ast = parser.parse()?;
 
         use ast::Item::*;
 
@@ -223,7 +222,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                 }
                 Set { identifier, value } => {
                     if identifier.name != "BASE_URL" {
-                        return Err(self.error_factory.unknown_constant(&identifier));
+                        return Err(self.error_factory.unknown_constant(&identifier).into());
                     }
 
                     self.base_url = Some(self.evaluate_expression(&value)?);
@@ -236,7 +235,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                 } => match identifier.name {
                     "name" | "log" | "dbg" | "skip" => {
                         if attributes.has(identifier.name) {
-                            return Err(self.error_factory.duplicate_attribute(&identifier));
+                            return Err(self.error_factory.duplicate_attribute(&identifier).into());
                         }
                         attributes.add(identifier, parameters);
                     }
@@ -261,7 +260,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         Ok(requests)
     }
 
-    fn evaluate_expression(&self, exp: &Expression<'source>) -> Result<String> {
+    fn evaluate_expression(&self, exp: &Expression<'source>) -> Result<'source, String> {
         self.evaluate_expression_and_quote_string(exp, false)
     }
 
@@ -269,7 +268,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         &self,
         exp: &Expression<'source>,
         quote_string_literal: bool,
-    ) -> Result<String> {
+    ) -> Result<'source, String> {
         use Expression::*;
 
         let expression_span = exp.span();
@@ -344,7 +343,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         identifier: &Identifier<'source>,
         arguments: &Vec<Expression<'source>>,
         expression_span: Span,
-    ) -> Result<String> {
+    ) -> Result<'source, String> {
         let string_value = match identifier.name {
             "env" => {
                 let arg = arguments.first().ok_or_else(|| {
@@ -355,10 +354,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
 
                 let value = self.evaluate_expression(arg)?;
 
-                self.evaluate_env_variable(&Literal {
-                    value: &value,
-                    span: expression_span,
-                })?
+                self.evaluate_env_variable(value, expression_span)?
             }
             "read" => {
                 let arg = arguments.first().ok_or_else(|| {
@@ -391,21 +387,25 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                     .undefined_callable(&identifier)
                     .with_message(
                         "env(..), read(..), escape_new_lines(..) are the only calls supported",
-                    ))
+                    )
+                    .into())
             }
         };
 
         Ok(string_value)
     }
 
-    fn evaluate_env_variable(&self, token: &Literal<'source>) -> Result<String> {
-        self.env
-            .get_variable_value(token.value.to_string())
-            .ok_or_else(|| self.error_factory.env_variable_not_found(token))
-            .map(|s| s.to_owned())
+    fn evaluate_env_variable(&self, variable: String, span: Span) -> Result<'source, String> {
+        let value = self
+            .env
+            .get_variable_value(&variable)
+            .ok_or_else(|| self.error_factory.env_variable_not_found(variable, span))
+            .map(|s| s.to_owned())?;
+
+        Ok(value)
     }
 
-    fn read_file(&self, file_path: &Literal) -> Result<String> {
+    fn read_file(&self, file_path: &Literal) -> Result<'source, String> {
         let handle_error = |e| {
             self.error_factory.other(
                 file_path.span,
@@ -422,7 +422,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         Ok(string)
     }
 
-    fn evaluate_request_endpoint(&self, endpoint: Endpoint) -> Result<String> {
+    fn evaluate_request_endpoint(&self, endpoint: Endpoint) -> Result<'source, String> {
         Ok(match endpoint {
             Endpoint::Url(url) => url.value.to_string(),
             Endpoint::Pathname(pn) => {
@@ -432,24 +432,30 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                     }
                     base_url
                 } else {
-                    return Err(self.error_factory.unset_base_url(pn.span));
+                    return Err(self.error_factory.unset_base_url(pn.span).into());
                 }
             }
         })
     }
 
-    fn evaluate_identifier(&self, token: &ast::Identifier) -> Result<String> {
-        self.let_bindings
+    fn evaluate_identifier(&self, token: &ast::Identifier) -> Result<'source, String> {
+        let value = self
+            .let_bindings
             .get(token.name)
             .map(|value| value.to_string())
             .ok_or_else(|| {
                 self.error_factory
                     .undeclared_identifier(token)
                     .with_message("variable identifiers are not supported")
-            })
+            })?;
+
+        Ok(value)
     }
 
-    fn evaluate_template_string_literal_parts(&self, parts: &[Expression]) -> Result<String> {
+    fn evaluate_template_string_literal_parts(
+        &self,
+        parts: &[Expression<'source>],
+    ) -> Result<'source, String> {
         let mut strings = vec![];
 
         for part in parts {
