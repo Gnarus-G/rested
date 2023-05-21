@@ -6,7 +6,7 @@ ParserErrors {
     errors: [
         post
            
-           ↳ [1:4] expected either one of url,pathname, but got Eof
+           ↳ [1:4] expected either one of 'url','pathname' but got Eof
         ,
     ],
     incomplete_rogram: Program {

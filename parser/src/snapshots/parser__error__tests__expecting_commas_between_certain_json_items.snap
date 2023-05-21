@@ -13,13 +13,13 @@ ParserErrors {
                          yo: "joe"
                          hello: "world"
                               ≈
-                              ↳ [3:23] expected either one of identifier,string,boolean,number,string,{,[,null, but got :
+                              ↳ [3:23] expected either one of 'identifier','string','boolean','number','string','{','[','null' but got :
                        }
         ,
                          hello: "world"
                        }
                        ≈
-                       ↳ [4:16] expected either one of identifier,string,boolean,number,string,{,[,null, but got }
+                       ↳ [4:16] expected either one of 'identifier','string','boolean','number','string','{','[','null' but got }
         ,
     ],
     incomplete_rogram: Program {

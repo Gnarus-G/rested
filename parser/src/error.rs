@@ -59,10 +59,10 @@ impl<'source> std::fmt::Display for ParseError<'source> {
             ParseError::ExpectedEitherOfTokens { found, expected } => {
                 let expected = expected
                     .iter()
-                    .map(|kind| kind.to_string())
+                    .map(|kind| format!("'{}'", kind))
                     .collect::<Vec<String>>()
                     .join(",");
-                format!("expected either one of {}, but got {}", expected, found)
+                format!("expected either one of {} but got {}", expected, found)
             }
         };
 

@@ -7,14 +7,14 @@ ParserErrors {
                     @dbg
                     let k = "v"
                     ≈≈≈
-                    ↳ [4:13] expected either one of get,post,put,patch,delete,@, but got let
+                    ↳ [4:13] expected either one of 'get','post','put','patch','delete','@' but got let
                              after attributes should come requests or more attributes
                     get http://localhost { header "name" k }
         ,
                     @dbg
                     let k = "v"
                           ≈
-                          ↳ [4:19] expected either one of identifier,string,boolean,number,string,{,[,null, but got =
+                          ↳ [4:19] expected either one of 'identifier','string','boolean','number','string','{','[','null' but got =
                     get http://localhost { header "name" k }
         ,
     ],
