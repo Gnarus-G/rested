@@ -54,7 +54,7 @@ impl<'source> std::fmt::Display for ParseError<'source> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let formatted_error = match self {
             ParseError::ExpectedToken { expected, found } => {
-                format!("expected {}, got {}", expected, found)
+                format!("expected '{}' but got {}", expected, found)
             }
             ParseError::ExpectedEitherOfTokens { found, expected } => {
                 let expected = expected

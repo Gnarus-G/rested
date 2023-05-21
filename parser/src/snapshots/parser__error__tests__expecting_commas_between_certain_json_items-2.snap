@@ -6,7 +6,7 @@ ParserErrors {
     errors: [
          let o = ["joe" "world"] 
                         ≈≈≈≈≈≈≈
-                        ↳ [1:17] expected ,, got string
+                        ↳ [1:17] expected ',' but got string
         ,
          let o = ["joe" "world"] 
                                ≈

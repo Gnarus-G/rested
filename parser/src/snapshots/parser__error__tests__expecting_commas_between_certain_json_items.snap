@@ -7,7 +7,7 @@ ParserErrors {
                          yo: "joe"
                          hello: "world"
                          ≈≈≈≈≈
-                         ↳ [3:18] expected ,, got identifier
+                         ↳ [3:18] expected ',' but got identifier
                        }
         ,
                          yo: "joe"
