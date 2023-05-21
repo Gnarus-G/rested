@@ -22,7 +22,7 @@ use self::error::InterpErrorFactory;
 use attributes::AttributeStore;
 use ir::Header;
 
-type Result<T> = std::result::Result<T, InterpreterError>;
+type Result<'source, T> = std::result::Result<T, InterpreterError<'source>>;
 
 enum Log {
     Std,
@@ -58,7 +58,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         }
     }
 
-    pub fn run(&mut self, request_names: Option<Vec<String>>) -> Result<()> {
+    pub fn run(&mut self, request_names: Option<Vec<String>>) -> Result<'source, ()> {
         let requests = self.evaluate()?;
 
         let requests = requests
@@ -128,7 +128,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         Ok(())
     }
 
-    fn evaluate(&mut self) -> Result<Vec<RequestMeta>> {
+    fn evaluate(&mut self) -> Result<'source, Vec<RequestMeta>> {
         let mut parser = parser::Parser::new(self.code);
 
         let ast = parser.parse()?;
@@ -260,7 +260,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         Ok(requests)
     }
 
-    fn evaluate_expression(&self, exp: &Expression<'source>) -> Result<String> {
+    fn evaluate_expression(&self, exp: &Expression<'source>) -> Result<'source, String> {
         self.evaluate_expression_and_quote_string(exp, false)
     }
 
@@ -268,7 +268,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         &self,
         exp: &Expression<'source>,
         quote_string_literal: bool,
-    ) -> Result<String> {
+    ) -> Result<'source, String> {
         use Expression::*;
 
         let expression_span = exp.span();
@@ -343,7 +343,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         identifier: &Identifier<'source>,
         arguments: &Vec<Expression<'source>>,
         expression_span: Span,
-    ) -> Result<String> {
+    ) -> Result<'source, String> {
         let string_value = match identifier.name {
             "env" => {
                 let arg = arguments.first().ok_or_else(|| {
@@ -354,10 +354,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
 
                 let value = self.evaluate_expression(arg)?;
 
-                self.evaluate_env_variable(&Literal {
-                    value: &value,
-                    span: expression_span,
-                })?
+                self.evaluate_env_variable(value, expression_span)?
             }
             "read" => {
                 let arg = arguments.first().ok_or_else(|| {
@@ -398,17 +395,17 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         Ok(string_value)
     }
 
-    fn evaluate_env_variable(&self, token: &Literal<'source>) -> Result<String> {
+    fn evaluate_env_variable(&self, variable: String, span: Span) -> Result<'source, String> {
         let value = self
             .env
-            .get_variable_value(token.value.to_string())
-            .ok_or_else(|| self.error_factory.env_variable_not_found(token))
+            .get_variable_value(&variable)
+            .ok_or_else(|| self.error_factory.env_variable_not_found(variable, span))
             .map(|s| s.to_owned())?;
 
         Ok(value)
     }
 
-    fn read_file(&self, file_path: &Literal) -> Result<String> {
+    fn read_file(&self, file_path: &Literal) -> Result<'source, String> {
         let handle_error = |e| {
             self.error_factory.other(
                 file_path.span,
@@ -425,7 +422,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         Ok(string)
     }
 
-    fn evaluate_request_endpoint(&self, endpoint: Endpoint) -> Result<String> {
+    fn evaluate_request_endpoint(&self, endpoint: Endpoint) -> Result<'source, String> {
         Ok(match endpoint {
             Endpoint::Url(url) => url.value.to_string(),
             Endpoint::Pathname(pn) => {
@@ -441,7 +438,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         })
     }
 
-    fn evaluate_identifier(&self, token: &ast::Identifier) -> Result<String> {
+    fn evaluate_identifier(&self, token: &ast::Identifier) -> Result<'source, String> {
         let value = self
             .let_bindings
             .get(token.name)
@@ -455,7 +452,10 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         Ok(value)
     }
 
-    fn evaluate_template_string_literal_parts(&self, parts: &[Expression]) -> Result<String> {
+    fn evaluate_template_string_literal_parts(
+        &self,
+        parts: &[Expression<'source>],
+    ) -> Result<'source, String> {
         let mut strings = vec![];
 
         for part in parts {

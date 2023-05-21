@@ -1,6 +1,6 @@
 use error_meta::ContextualError;
 use lexer::locations::Span;
-use parser::ast::{Identifier, Literal};
+use parser::ast::Identifier;
 use parser::error::{ParseError, ParserErrors};
 
 #[derive(Debug, PartialEq)]
@@ -55,20 +55,20 @@ impl std::fmt::Display for InterpreterErrorKind {
     }
 }
 
-pub enum InterpreterError {
-    ParseErrors(Vec<ContextualError<ParseError>>),
+pub enum InterpreterError<'source> {
+    ParseErrors(Vec<ContextualError<ParseError<'source>>>),
     Error(ContextualError<InterpreterErrorKind>),
 }
 
-impl std::error::Error for InterpreterError {}
+impl<'source> std::error::Error for InterpreterError<'source> {}
 
-impl std::fmt::Debug for InterpreterError {
+impl<'source> std::fmt::Debug for InterpreterError<'source> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{self}")
     }
 }
 
-impl std::fmt::Display for InterpreterError {
+impl<'source> std::fmt::Display for InterpreterError<'source> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             InterpreterError::Error(err) => write!(f, "{err}"),
@@ -82,14 +82,14 @@ impl std::fmt::Display for InterpreterError {
     }
 }
 
-impl From<ContextualError<InterpreterErrorKind>> for InterpreterError {
+impl<'source> From<ContextualError<InterpreterErrorKind>> for InterpreterError<'source> {
     fn from(value: ContextualError<InterpreterErrorKind>) -> Self {
         Self::Error(value)
     }
 }
 
-impl<'source> From<ParserErrors<'source>> for InterpreterError {
-    fn from(value: ParserErrors) -> Self {
+impl<'source> From<ParserErrors<'source>> for InterpreterError<'source> {
+    fn from(value: ParserErrors<'source>) -> Self {
         Self::ParseErrors(value.errors)
     }
 }
@@ -114,12 +114,16 @@ impl<'i> InterpErrorFactory<'i> {
         )
     }
 
-    pub fn env_variable_not_found(&self, token: &Literal) -> ContextualError<InterpreterErrorKind> {
+    pub fn env_variable_not_found(
+        &self,
+        variable: String,
+        span: Span,
+    ) -> ContextualError<InterpreterErrorKind> {
         ContextualError::new(
             InterpreterErrorKind::EnvVariableNotFound {
-                name: token.value.to_string(),
+                name: variable.to_string(),
             },
-            token.span,
+            span,
             self.source_code,
         )
     }

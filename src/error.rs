@@ -13,7 +13,7 @@ impl From<std::io::Error> for CliError {
     }
 }
 
-impl From<InterpreterError> for CliError {
+impl<'source> From<InterpreterError<'source>> for CliError {
     fn from(value: InterpreterError) -> Self {
         match value {
             InterpreterError::ParseErrors(errors) => {

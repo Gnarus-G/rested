@@ -44,13 +44,13 @@ impl Environment {
             .unwrap_or("default".to_string())
     }
 
-    pub fn get_variable_value(&self, name: String) -> Option<&String> {
+    pub fn get_variable_value(&self, name: &String) -> Option<&String> {
         let variables_map = self
             .namespaced_variables
             .get(&self.selected_namespace())
             .unwrap();
 
-        variables_map.get(&name)
+        variables_map.get(name)
     }
 
     pub fn set_variable(&mut self, name: String, value: String) -> Result<(), Box<dyn Error>> {
