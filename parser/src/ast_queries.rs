@@ -11,12 +11,7 @@ impl<'source> Program<'source> {
 
     pub fn variables_before(&self, location: Location) -> Vec<&Identifier<'source>> {
         self.variables()
-            .filter(|i| {
-                if i.span.start.line == location.line {
-                    return i.span.start.col <= location.col;
-                }
-                return i.span.start.line < location.line;
-            })
+            .filter(|i| i.span.start.is_before(location))
             .collect()
     }
 }

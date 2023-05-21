@@ -15,6 +15,13 @@ impl Location {
             end: span.end,
         }
     }
+
+    pub fn is_before(self, location: Location) -> bool {
+        if self.line == location.line {
+            return self.col <= location.col;
+        }
+        return self.line < location.line;
+    }
 }
 
 #[derive(Debug, PartialEq, Clone, Copy, Serialize)]

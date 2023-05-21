@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
+mod completions;
 
-use lexer::locations::{Location, Span};
+use completions::*;
+use lexer::locations::Location;
 use lexer::Token;
 use parser::Parser;
 use tower_lsp::jsonrpc::Result;
@@ -93,19 +95,6 @@ impl Backend {
     }
 }
 
-trait ContainsPosition {
-    fn contains(&self, position: &Position) -> bool;
-}
-
-impl ContainsPosition for Span {
-    fn contains(&self, position: &Position) -> bool {
-        if self.start.line == self.end.line {
-            return (self.start.col..=self.end.col).contains(&(position.character as usize));
-        }
-        (self.start.line..=self.end.line).contains(&(position.line as usize))
-    }
-}
-
 #[tower_lsp::async_trait]
 impl LanguageServer for Backend {
     async fn initialize(&self, _: InitializeParams) -> Result<InitializeResult> {
@@ -152,24 +141,9 @@ impl LanguageServer for Backend {
                 return Ok(None);
             };
 
-        let methods = ["get", "post", "put", "patch", "delete"]
-            .map(|keyword| CompletionItem {
-                label: format!("{}", keyword),
-                kind: Some(CompletionItemKind::KEYWORD),
-                insert_text: Some(format!("{}", keyword)),
-                ..CompletionItem::default()
-            })
-            .to_vec();
+        let methods = http_method_completions();
 
-        let builtin_functions = ["env", "read", "escape_new_lines"]
-            .map(|keyword| CompletionItem {
-                label: format!("{}(..)", keyword),
-                kind: Some(CompletionItemKind::FUNCTION),
-                insert_text: Some(format!("{}(${{1:argument}})", keyword)),
-                insert_text_format: Some(InsertTextFormat::SNIPPET),
-                ..CompletionItem::default()
-            })
-            .to_vec();
+        let builtin_functions = builtin_functions_completions();
 
         let program = match parser::Parser::new(&text).parse() {
             Ok(ast) => ast,
@@ -185,16 +159,7 @@ impl LanguageServer for Backend {
             .map(|var| CompletionItem {
                 label: format!("{}", var.name),
                 kind: Some(CompletionItemKind::VARIABLE),
-                text_edit: Some(CompletionTextEdit::Edit(TextEdit {
-                    new_text: format!("{}", var.name),
-                    range: Range::new(
-                        position,
-                        Position {
-                            line: position.line,
-                            character: var.name.len() as u32,
-                        },
-                    ),
-                })),
+                insert_text: Some(format!("{}", var.name)),
                 ..CompletionItem::default()
             })
             .collect();
@@ -204,17 +169,8 @@ impl LanguageServer for Backend {
                 if let Some(block) = block {
                     let contains_position = block.span.contains(&position);
                     if contains_position {
-                        let statement_types = ["header", "body"]
-                            .map(|kw| kw.to_string())
-                            .map(|keyword| CompletionItem {
-                                label: keyword.clone(),
-                                kind: Some(CompletionItemKind::KEYWORD),
-                                insert_text: Some(keyword),
-                                ..CompletionItem::default()
-                            })
-                            .to_vec();
-
-                        return Ok(Some(CompletionResponse::Array([statement_types].concat())));
+                        let header_or_body = header_body_keyword_completions();
+                        return Ok(Some(CompletionResponse::Array([header_or_body].concat())));
                     }
                 }
             }
@@ -222,10 +178,10 @@ impl LanguageServer for Backend {
 
         let mut tokens = lexer::Lexer::new(&text)
             .filter(|t| {
-                if t.start.line == position.line as usize {
-                    return t.start.col <= position.character as usize;
-                }
-                return t.start.line < position.line as usize;
+                t.start.is_before(Location {
+                    line: position.line as usize,
+                    col: position.character as usize,
+                })
             })
             .collect::<Vec<_>>();
 
