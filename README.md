@@ -47,12 +47,23 @@ setting BASE_URL like so, allows you to be able to request to pathnames
 get /potatoes
 ```
 
+## Let bindings
+
+```rd
+let variable = "Bearer <token>"
+```
+
 ## Defining request headers and request body
 
 ```rd
 post /potatoes {
    header "Authorization" "Bearer token"
+
+   // template string literals
    body `{"neet": 1337}`
+
+   // or json-like expressions
+   body { neet: 1337 }
 }
 ```
 
