@@ -15,6 +15,7 @@ pub enum TokenKind {
     Body,
     Set,
     Let,
+    Null,
 
     Ident,
 
@@ -413,6 +414,11 @@ impl<'i> Lexer<'i> {
             },
             "true" => Token {
                 kind: Boolean,
+                start: location,
+                text: string,
+            },
+            "null" => Token {
+                kind: Null,
                 start: location,
                 text: string,
             },

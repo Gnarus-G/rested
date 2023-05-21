@@ -37,6 +37,7 @@ impl std::fmt::Display for TokenKind {
             UnfinishedStringLiteral => "\"...",
             UnfinishedMultiLineStringLiteral => "`...",
             IllegalToken => "illegal",
+            Null => "null",
         };
 
         f.write_str(str)

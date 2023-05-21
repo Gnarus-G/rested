@@ -32,6 +32,7 @@ impl<'source> GetSpan for Expression<'source> {
             Expression::Number(l) => l.span,
             Expression::EmptyArray(s) => *s,
             Expression::EmptyObject(s) => *s,
+            Expression::Null(s) => *s,
         }
     }
 }

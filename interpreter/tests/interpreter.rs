@@ -363,6 +363,7 @@ post /api {
     header "Content-Type" "application/json"
     body {
         neet: 1337,
+        nothing: null,
         arr: ["yo", {h: "i"}],
         hello: {
             w: env("hello"),
@@ -384,7 +385,7 @@ post /api {
         .mock("POST", "/api")
         .match_header("Content-Type", "application/json")
         .match_body(mockito::Matcher::PartialJsonString(
-            r#"{"neet": 1337, "arr": ["yo", {"h": "i"}], "hello": {"w": "world", "warudo": "world", "fun": true, "notFun": false, "e": {}, "em": []}}"#.to_string(),
+            r#"{"neet": 1337, "nothing": null, "arr": ["yo", {"h": "i"}], "hello": {"w": "world", "warudo": "world", "fun": true, "notFun": false, "e": {}, "em": []}}"#.to_string(),
         ))
         .with_status(200)
         .create();

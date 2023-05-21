@@ -250,12 +250,13 @@ impl<'i> Parser<'i> {
 
         let exp = match_or_throw! { kind; self;
             Ident if self.peek_token().kind == LParen => self.parse_call_expression()?,
-            Ident => {Expression::Identifier(self.curr_token().into())},
+            Ident => Expression::Identifier(self.curr_token().into()),
             StringLiteral => Expression::String(self.curr_token().into()),
             Boolean => Expression::Bool(self.curr_token().into()),
             Number => Expression::Number(self.curr_token().into()),
             MultiLineStringLiteral => self.parse_multiline_string_literal()?,
-            LBracket | LSquare => self.parse_json_like()?
+            LBracket | LSquare => self.parse_json_like()?,
+            Null => Expression::Null(self.curr_token().span()),
         };
 
         Ok(exp)

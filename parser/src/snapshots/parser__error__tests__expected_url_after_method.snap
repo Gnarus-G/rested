@@ -10,7 +10,7 @@ ParserErrors {
         ,
         get {}
              ≈
-             ↳ [1:6] expected either one of identifier,string,boolean,number,string,{,[, but got }
+             ↳ [1:6] expected either one of identifier,string,boolean,number,string,{,[,null, but got }
         ,
     ],
     incomplete_rogram: Program {

@@ -14,7 +14,7 @@ ParserErrors {
                     @dbg
                     let k = "v"
                           ≈
-                          ↳ [4:19] expected either one of identifier,string,boolean,number,string,{,[, but got =
+                          ↳ [4:19] expected either one of identifier,string,boolean,number,string,{,[,null, but got =
                     get http://localhost { header "name" k }
         ,
     ],
