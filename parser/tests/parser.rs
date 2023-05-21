@@ -150,6 +150,22 @@ let o = {
 }
 
 #[test]
+fn parse_json_object_ignoring_comments() {
+    assert_ast!(
+        r#"
+let o = {
+    key: "value",
+    // akey: 123,
+    love: [
+        "asdf",
+        // asdf,
+        12
+    ]
+}"#
+    );
+}
+
+#[test]
 fn parse_json_object_allowing_trailing_comma() {
     assert_ast!(
         r#"

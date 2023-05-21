@@ -276,6 +276,11 @@ impl<'i> Parser<'i> {
                 let mut fields = BTreeMap::new();
 
                 while self.peek_token().kind != RBracket {
+                    if self.peek_token().is(Linecomment) {
+                        self.next_token();
+                        continue;
+                    }
+
                     let (key, value) = self.parse_object_property()?;
                     fields.insert(key, value);
 
@@ -299,6 +304,11 @@ impl<'i> Parser<'i> {
                 let mut list = vec![];
 
                 while self.peek_token().kind != RSquare {
+                    if self.peek_token().is(Linecomment) {
+                        self.next_token();
+                        continue;
+                    }
+
                     self.next_token();
                     list.push(self.parse_json_like()?);
 
