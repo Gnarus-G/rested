@@ -33,7 +33,7 @@ pub type Result<'source, T> = std::result::Result<T, ContextualError<ParseError<
 
 trait TokenCheck {
     fn is_one_of(&self, kinds: &[TokenKind]) -> bool;
-    fn is(&self, kind: &TokenKind) -> bool;
+    fn is(&self, kind: TokenKind) -> bool;
 }
 
 impl<'source> TokenCheck for Token<'source> {
@@ -41,8 +41,8 @@ impl<'source> TokenCheck for Token<'source> {
         kinds.contains(&self.kind)
     }
 
-    fn is(&self, kind: &TokenKind) -> bool {
-        self.kind == *kind
+    fn is(&self, kind: TokenKind) -> bool {
+        self.kind == kind
     }
 }
 
@@ -275,16 +275,13 @@ impl<'i> Parser<'i> {
 
                 let mut fields = BTreeMap::new();
 
-                let (key, value) = self.parse_object_property()?;
-
-                fields.insert(key, value);
-
                 while self.peek_token().kind != RBracket {
-                    self.expect(Comma)?;
-
                     let (key, value) = self.parse_object_property()?;
-
                     fields.insert(key, value);
+
+                    if !self.peek_token().is(RBracket) {
+                        self.expect(Comma)?;
+                    }
                 }
 
                 self.next_token();
@@ -299,17 +296,15 @@ impl<'i> Parser<'i> {
                     return Ok(Expression::EmptyArray(self.span_from(start)));
                 }
 
-                self.next_token();
-
                 let mut list = vec![];
 
-                list.push(self.parse_json_like()?);
-
                 while self.peek_token().kind != RSquare {
-                    self.expect(Comma)?;
                     self.next_token();
-
                     list.push(self.parse_json_like()?);
+
+                    if !self.peek_token().is(RSquare) {
+                        self.expect(Comma)?;
+                    }
                 }
 
                 self.next_token();
@@ -410,7 +405,7 @@ impl<'i> Parser<'i> {
     }
 
     fn expect(&mut self, expected_kind: TokenKind) -> Result<'i, &Token<'i>> {
-        if self.peek_token().is(&expected_kind) {
+        if self.peek_token().is(expected_kind) {
             return Ok(self.next_token());
         }
 
