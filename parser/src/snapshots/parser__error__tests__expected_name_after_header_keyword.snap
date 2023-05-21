@@ -6,7 +6,7 @@ ParserErrors {
     errors: [
         post http://localhost {header}
                                      ≈
-                                     ↳ [1:30] expected StringLiteral, got RBracket(})
+                                     ↳ [1:30] expected string, got }
         ,
     ],
     incomplete_rogram: Program {

@@ -6,11 +6,11 @@ ParserErrors {
     errors: [
         get {}
             ≈
-            ↳ [1:5] expected either one of [Url, Pathname], but got LBracket({)
+            ↳ [1:5] expected either one of url,pathname, but got {
         ,
         get {}
              ≈
-             ↳ [1:6] expected either one of [Ident, StringLiteral, Boolean, Number, MultiLineStringLiteral, LBracket, LSquare], but got RBracket(})
+             ↳ [1:6] expected either one of identifier,string,boolean,number,string,{,[, but got }
         ,
     ],
     incomplete_rogram: Program {

@@ -7,19 +7,19 @@ ParserErrors {
                          yo: "joe"
                          hello: "world"
                          ≈≈≈≈≈
-                         ↳ [3:18] expected Comma, got Ident(hello)
+                         ↳ [3:18] expected ,, got identifier
                        }
         ,
                          yo: "joe"
                          hello: "world"
                               ≈
-                              ↳ [3:23] expected either one of [Ident, StringLiteral, Boolean, Number, MultiLineStringLiteral, LBracket, LSquare], but got Colon(:)
+                              ↳ [3:23] expected either one of identifier,string,boolean,number,string,{,[, but got :
                        }
         ,
                          hello: "world"
                        }
                        ≈
-                       ↳ [4:16] expected either one of [Ident, StringLiteral, Boolean, Number, MultiLineStringLiteral, LBracket, LSquare], but got RBracket(})
+                       ↳ [4:16] expected either one of identifier,string,boolean,number,string,{,[, but got }
         ,
     ],
     incomplete_rogram: Program {
