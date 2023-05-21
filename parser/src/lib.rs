@@ -29,6 +29,21 @@ macro_rules! match_or_throw {
 
 pub type Result<T> = std::result::Result<T, ContextualError<ParseError>>;
 
+trait TokenCheck {
+    fn is_one_of(&self, kinds: &[TokenKind]) -> bool;
+    fn is(&self, kind: &TokenKind) -> bool;
+}
+
+impl<'source> TokenCheck for Token<'source> {
+    fn is_one_of(&self, kinds: &[TokenKind]) -> bool {
+        kinds.contains(&self.kind)
+    }
+
+    fn is(&self, kind: &TokenKind) -> bool {
+        self.kind == *kind
+    }
+}
+
 #[derive(Debug)]
 pub struct Parser<'i> {
     lexer: Lexer<'i>,
@@ -89,17 +104,22 @@ impl<'i> Parser<'i> {
                     let item = self.parse_attribute();
                     match item {
                         Ok(_) => {
-                            let expectation = self
-                                .expect_one_of(vec![Get, Post, Put, Patch, Delete, AttributePrefix])
-                                .map_err(|e| {
-                                    e.with_message(
-                                        "after attributes should come requests or more attributes",
-                                    )
-                                });
+                            let valid_after_attribute =
+                                vec![Get, Post, Put, Patch, Delete, AttributePrefix];
 
-                            match expectation {
-                                Ok(_) => item,
-                                Err(err) => Err(err),
+                            if !self.peek_token().is_one_of(&valid_after_attribute) {
+                                let error = self
+                                    .error()
+                                    .expected_one_of_tokens(
+                                        &self.next_token(),
+                                        valid_after_attribute,
+                                    )
+                                    .with_message(
+                                        "after attributes should come requests or more attributes",
+                                    );
+                                Err(error)
+                            } else {
+                                item
                             }
                         }
                         err => err,
@@ -130,9 +150,8 @@ impl<'i> Parser<'i> {
     fn parse_request(&mut self, method: RequestMethod) -> Result<Item<'i>> {
         let start = self.curr_token().start;
 
-        self.expect_one_of(vec![Url, Pathname])?;
+        let url = self.expect_one_of(vec![Url, Pathname])?;
 
-        let url = self.next_token();
         let endpoint = match_or_throw! { url.kind; self;
             Url => Endpoint::Url(url.into()),
             Pathname => Endpoint::Pathname(url.into()),
@@ -157,17 +176,13 @@ impl<'i> Parser<'i> {
     }
 
     fn parse_set_statement(&mut self) -> Result<Item<'i>> {
-        self.expect(TokenKind::Ident)?;
-
-        let identifier = self.next_token().into();
+        let identifier = self.expect(TokenKind::Ident)?.into();
 
         self.expect_one_of(vec![
             TokenKind::Ident,
             TokenKind::StringLiteral,
             TokenKind::MultiLineStringLiteral,
         ])?;
-
-        self.next_token();
 
         Ok(Item::Set {
             identifier,
@@ -202,17 +217,13 @@ impl<'i> Parser<'i> {
     }
 
     fn parse_header(&mut self) -> Result<Statement<'i>> {
-        self.expect(TokenKind::StringLiteral)?;
-
-        let header_name = self.next_token().into();
+        let header_name = self.expect(TokenKind::StringLiteral)?.into();
 
         self.expect_one_of(vec![
             TokenKind::StringLiteral,
             TokenKind::Ident,
             TokenKind::MultiLineStringLiteral,
         ])?;
-
-        self.next_token();
 
         let value = self.parse_expression()?;
 
@@ -267,7 +278,6 @@ impl<'i> Parser<'i> {
 
                 while self.peek_token().kind != RBracket {
                     self.expect(Comma)?;
-                    self.next_token();
 
                     let (key, value) = self.parse_object_property()?;
 
@@ -295,7 +305,6 @@ impl<'i> Parser<'i> {
                 while self.peek_token().kind != RSquare {
                     self.expect(Comma)?;
                     self.next_token();
-                    self.next_token();
 
                     list.push(self.parse_json_like()?);
                 }
@@ -313,11 +322,9 @@ impl<'i> Parser<'i> {
     }
 
     fn parse_object_property(&mut self) -> Result<(&'i str, Expression<'i>)> {
-        self.expect(TokenKind::Ident)?;
-        let ident = self.next_token().text;
+        let ident = self.expect(TokenKind::Ident)?.text;
 
         self.expect(TokenKind::Colon)?;
-        self.next_token();
         self.next_token();
 
         return Ok((ident, self.parse_json_like()?));
@@ -327,14 +334,14 @@ impl<'i> Parser<'i> {
         let identifier = self.curr_token().into();
         self.next_token();
 
-        let mut token = self.next_token();
+        self.next_token();
 
         let mut arguments = vec![];
 
-        while token.kind != TokenKind::RParen {
+        while self.curr_token().kind != TokenKind::RParen {
             let exp = self.parse_expression()?;
             arguments.push(exp);
-            token = self.next_token();
+            self.next_token();
         }
 
         Ok(Expression::Call {
@@ -349,12 +356,11 @@ impl<'i> Parser<'i> {
         let end;
 
         loop {
-            let c_kind = self.curr_token().kind;
-            let p_kind = self.peek_token().kind;
+            let kind = self.curr_token().kind;
 
-            match_or_throw! { c_kind; self;
+            match_or_throw! { kind; self;
                 MultiLineStringLiteral
-                    if p_kind == TokenKind::DollarSignLBracket =>
+                    if self.peek_token().kind == TokenKind::DollarSignLBracket =>
                 {
                     let s_literal = Expression::String(self.curr_token().into());
 
@@ -389,11 +395,9 @@ impl<'i> Parser<'i> {
         })
     }
 
-    fn expect_one_of(&mut self, expected_kinds: Vec<TokenKind>) -> Result<()> {
-        let ahead = self.peek_token();
-
-        if expected_kinds.contains(&ahead.kind) {
-            return Ok(());
+    fn expect_one_of(&mut self, expected_kinds: Vec<TokenKind>) -> Result<&Token<'i>> {
+        if self.peek_token().is_one_of(&expected_kinds) {
+            return Ok(self.next_token());
         }
 
         let error = self
@@ -403,11 +407,9 @@ impl<'i> Parser<'i> {
         Err(error)
     }
 
-    fn expect(&mut self, expected_kind: TokenKind) -> Result<()> {
-        let ahead = self.peek_token();
-
-        if ahead.kind == expected_kind {
-            return Ok(());
+    fn expect(&mut self, expected_kind: TokenKind) -> Result<&Token<'i>> {
+        if self.peek_token().is(&expected_kind) {
+            return Ok(self.next_token());
         }
 
         let error = self
@@ -424,22 +426,20 @@ impl<'i> Parser<'i> {
     fn parse_attribute(&mut self) -> Result<Item<'i>> {
         let location = self.curr_token().start;
 
-        self.expect(TokenKind::Ident)?;
-
-        let identifier = self.next_token().into();
+        let identifier = self.expect(TokenKind::Ident)?.into();
 
         let mut params = vec![];
 
         if let TokenKind::LParen = self.peek_token().kind {
             self.next_token();
 
-            let mut token = self.next_token();
-            while token.kind != TokenKind::RParen {
+            self.next_token();
+            while self.curr_token().kind != TokenKind::RParen {
                 let exp = self.parse_expression()?;
 
                 params.push(exp);
 
-                token = self.next_token();
+                self.next_token();
             }
         }
 
@@ -454,7 +454,6 @@ impl<'i> Parser<'i> {
         let identifier = self.next_token().into();
 
         self.expect(TokenKind::Assign)?;
-        self.next_token();
 
         self.next_token();
 
