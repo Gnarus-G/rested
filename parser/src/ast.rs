@@ -57,7 +57,7 @@ pub struct StringLiteral<'source> {
 
 impl<'i> From<&Token<'i>> for StringLiteral<'i> {
     fn from(token: &Token<'i>) -> Self {
-        let value = match (token.text.chars().nth(0), token.text.chars().last()) {
+        let value = match (token.text.chars().next(), token.text.chars().last()) {
             (Some('"'), Some('"')) if token.text.len() > 1 => &token.text[1..token.text.len() - 1],
             (Some('`'), Some('`')) if token.text.len() > 1 => &token.text[1..token.text.len() - 1],
             (_, Some('`')) => &token.text[..token.text.len() - 1],

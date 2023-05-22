@@ -31,7 +31,7 @@ impl std::fmt::Display for InterpreterErrorKind {
                 format!("no variable found by the name {:?}", name)
             }
             InterpreterErrorKind::RequestWithPathnameWithoutBaseUrl => {
-                format!("BASE_URL needs to be set first for requests to work with just pathnames; try writing like set BASE_URL \"<api orgin>\" before this request")
+                "BASE_URL needs to be set first for requests to work with just pathnames; try writing like set BASE_URL \"<api orgin>\" before this request".to_string()
             }
             InterpreterErrorKind::UndefinedCallable { name } => {
                 format!("attempting to calling an undefined function: {}", name)
@@ -121,7 +121,7 @@ impl<'i> InterpErrorFactory<'i> {
     ) -> ContextualError<InterpreterErrorKind> {
         ContextualError::new(
             InterpreterErrorKind::EnvVariableNotFound {
-                name: variable.to_string(),
+                name: variable,
             },
             span,
             self.source_code,

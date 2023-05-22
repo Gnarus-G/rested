@@ -15,7 +15,7 @@ impl ContainsPosition for Span {
 }
 
 pub fn builtin_functions_completions() -> Vec<CompletionItem> {
-    return ["env", "read", "escape_new_lines"]
+    ["env", "read", "escape_new_lines"]
         .map(|keyword| CompletionItem {
             label: format!("{}(..)", keyword),
             kind: Some(CompletionItemKind::FUNCTION),
@@ -23,22 +23,22 @@ pub fn builtin_functions_completions() -> Vec<CompletionItem> {
             insert_text_format: Some(InsertTextFormat::SNIPPET),
             ..CompletionItem::default()
         })
-        .to_vec();
+        .to_vec()
 }
 
 pub fn http_method_completions() -> Vec<CompletionItem> {
-    return ["get", "post", "put", "patch", "delete"]
+    ["get", "post", "put", "patch", "delete"]
         .map(|keyword| CompletionItem {
-            label: format!("{}", keyword),
+            label: keyword.to_string(),
             kind: Some(CompletionItemKind::KEYWORD),
-            insert_text: Some(format!("{}", keyword)),
+            insert_text: Some(keyword.to_string()),
             ..CompletionItem::default()
         })
-        .to_vec();
+        .to_vec()
 }
 
 pub fn header_body_keyword_completions() -> Vec<CompletionItem> {
-    return ["header", "body"]
+    ["header", "body"]
         .map(|kw| kw.to_string())
         .map(|keyword| CompletionItem {
             label: keyword.clone(),
@@ -46,5 +46,5 @@ pub fn header_body_keyword_completions() -> Vec<CompletionItem> {
             insert_text: Some(keyword),
             ..CompletionItem::default()
         })
-        .to_vec();
+        .to_vec()
 }

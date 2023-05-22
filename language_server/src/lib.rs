@@ -11,11 +11,11 @@ use tower_lsp::{lsp_types::*, LspService, Server};
 use tower_lsp::{Client, LanguageServer};
 
 trait IntoPosition {
-    fn into_position(&self) -> Position;
+    fn into_position(self) -> Position;
 }
 
 impl IntoPosition for Location {
-    fn into_position(&self) -> Position {
+    fn into_position(self) -> Position {
         Position {
             line: self.line as u32,
             character: self.col as u32,
@@ -43,7 +43,7 @@ impl TextDocuments {
 
     fn get(&self, uri: Url) -> Option<String> {
         match self.inner.lock() {
-            Ok(map) => map.get(&uri).map(|s| s.clone()),
+            Ok(map) => map.get(&uri).cloned(),
             Err(_) => None,
         }
     }
@@ -76,10 +76,7 @@ impl Backend {
                     end: err.span.end.into_position(),
                 };
 
-                diagnostics.push(Diagnostic::new_simple(
-                    range.clone(),
-                    err.inner_error.to_string(),
-                ));
+                diagnostics.push(Diagnostic::new_simple(range, err.inner_error.to_string()));
 
                 if let Some(msg) = err.message {
                     diagnostics.push(Diagnostic::new_simple(range, msg))
@@ -157,21 +154,22 @@ impl LanguageServer for Backend {
             })
             .into_iter()
             .map(|var| CompletionItem {
-                label: format!("{}", var.name),
+                label: var.name.to_string(),
                 kind: Some(CompletionItemKind::VARIABLE),
-                insert_text: Some(format!("{}", var.name)),
+                insert_text: Some(var.name.to_string()),
                 ..CompletionItem::default()
             })
             .collect();
 
         for item in program.items {
-            if let parser::ast::Item::Request { block, .. } = item {
-                if let Some(block) = block {
-                    let contains_position = block.span.contains(&position);
-                    if contains_position {
-                        let header_or_body = header_body_keyword_completions();
-                        return Ok(Some(CompletionResponse::Array([header_or_body].concat())));
-                    }
+            if let parser::ast::Item::Request {
+                block: Some(block), ..
+            } = item
+            {
+                let contains_position = block.span.contains(&position);
+                if contains_position {
+                    let header_or_body = header_body_keyword_completions();
+                    return Ok(Some(CompletionResponse::Array([header_or_body].concat())));
                 }
             }
         }

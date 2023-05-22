@@ -20,7 +20,7 @@ impl Location {
         if self.line == location.line {
             return self.col <= location.col;
         }
-        return self.line < location.line;
+        self.line < location.line
     }
 }
 
@@ -56,19 +56,19 @@ impl Span {
             return right - left;
         }
 
-        return left - right;
+        left - right
     }
 }
 
-impl<'source> Into<Span> for Token<'source> {
-    fn into(self) -> Span {
-        self.span()
+impl<'source> From<Token<'source>> for Span {
+    fn from(val: Token<'source>) -> Self {
+        val.span()
     }
 }
 
-impl<'source> Into<Span> for &Token<'source> {
-    fn into(self) -> Span {
-        self.span()
+impl<'source> From<&Token<'source>> for Span {
+    fn from(val: &Token<'source>) -> Self {
+        val.span()
     }
 }
 
@@ -79,7 +79,7 @@ pub trait GetSpan {
 impl<'source> GetSpan for Token<'source> {
     fn span(&self) -> Span {
         Span {
-            start: self.start.clone(),
+            start: self.start,
             end: Location {
                 line: self.start.line,
                 col: self.start.col + self.text.len(),

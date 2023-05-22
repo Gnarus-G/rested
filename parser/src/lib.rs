@@ -53,6 +53,8 @@ pub struct Parser<'i> {
     peeked: Option<Token<'i>>,
 }
 
+#[allow(clippy::result_large_err)]
+
 impl<'i> Parser<'i> {
     pub fn new(code: &'i str) -> Self {
         Self {
@@ -63,8 +65,7 @@ impl<'i> Parser<'i> {
     }
 
     fn curr_token(&self) -> &Token<'i> {
-        &self
-            .token
+        self.token
             .as_ref()
             .expect("self.token should be initialized at the start of parsing")
     }
@@ -72,21 +73,21 @@ impl<'i> Parser<'i> {
     fn next_token(&mut self) -> &Token<'i> {
         self.token = match self.peeked.take() {
             Some(t) => Some(t),
-            None => Some(self.lexer.next()),
+            None => Some(self.lexer.next_token()),
         };
         self.curr_token()
     }
 
     fn peek_token(&mut self) -> &Token<'i> {
-        self.peeked.get_or_insert_with(|| self.lexer.next())
+        self.peeked.get_or_insert_with(|| self.lexer.next_token())
     }
 
     fn eat_till_next_top_level_peek_token(&mut self) {
         loop {
-            let is_top_level_token_ahead = match self.peek_token().kind {
-                Get | Post | Put | Patch | Delete | Set | AttributePrefix | Let | End => true,
-                _ => false,
-            };
+            let is_top_level_token_ahead = matches!(
+                self.peek_token().kind,
+                Get | Post | Put | Patch | Delete | Set | AttributePrefix | Let | End
+            );
 
             if is_top_level_token_ahead {
                 break;
@@ -120,7 +121,7 @@ impl<'i> Parser<'i> {
                 AttributePrefix => {
                     let item = self.parse_attribute();
 
-                    if let Ok(_) = item {
+                    if item.is_ok() {
                         let valid_after_attribute =
                             vec![Get, Post, Put, Patch, Delete, AttributePrefix, Linecomment];
 
@@ -350,7 +351,7 @@ impl<'i> Parser<'i> {
         self.expect_peek(TokenKind::Colon)?;
         self.next_token();
 
-        return Ok((key, self.parse_json_like()?));
+        Ok((key, self.parse_json_like()?))
     }
 
     fn parse_call_expression(&mut self) -> Result<'i, Expression<'i>> {
@@ -429,7 +430,7 @@ impl<'i> Parser<'i> {
         }
         let con = self.error();
 
-        let error = con.expected_one_of_tokens(&self.next_token(), expected_kinds);
+        let error = con.expected_one_of_tokens(self.next_token(), expected_kinds);
 
         Err(error)
     }
@@ -441,7 +442,7 @@ impl<'i> Parser<'i> {
 
         let error = self
             .error()
-            .expected_token(&self.next_token(), expected_kind);
+            .expected_token(self.next_token(), expected_kind);
 
         Err(error)
     }

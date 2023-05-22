@@ -143,7 +143,7 @@ impl<'i> ParseErrorConstructor<'i> {
                 expected: expected_dedpuded,
             },
             token.span(),
-            self.source_code.as_ref(),
+            self.source_code,
         )
     }
 }

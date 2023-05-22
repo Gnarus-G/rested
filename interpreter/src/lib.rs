@@ -13,7 +13,7 @@ use colored::Colorize;
 
 use environment::Environment;
 use error::InterpreterError;
-use parser;
+
 use parser::ast::{self, Endpoint, Expression, Identifier, Literal};
 
 use lexer::locations::{GetSpan, Span};
@@ -45,6 +45,8 @@ pub struct Interpreter<'source, R: ir::Runner> {
     let_bindings: HashMap<&'source str, String>,
     runner: R,
 }
+
+#[allow(clippy::result_large_err)]
 
 impl<'source, R: ir::Runner> Interpreter<'source, R> {
     pub fn new(code: &'source str, env: Environment, runner: R) -> Self {
@@ -78,12 +80,9 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         } in requests
         {
             println!(
-                "{}",
-                format!(
-                    "sending {} request to {}",
-                    request.method.to_string().yellow().bold(),
-                    request.url.bold()
-                )
+                "sending {} request to {}",
+                request.method.to_string().yellow().bold(),
+                request.url.bold()
             );
 
             if dbg {
@@ -148,7 +147,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                     span,
                 } => {
                     // Handle @skip
-                    if let Some(_) = attributes.get("skip") {
+                    if attributes.get("skip").is_some() {
                         attributes.clear();
                         continue;
                     }
@@ -170,7 +169,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                                     ))
                                 }
                                 ast::Statement::Body { value, .. } => {
-                                    if let None = body {
+                                    if body.is_none() {
                                         body = Some(self.evaluate_expression(&value)?);
                                     }
                                 }
@@ -274,7 +273,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         let expression_span = exp.span();
 
         let value = match exp {
-            Identifier(token) => self.evaluate_identifier(&token)?,
+            Identifier(token) => self.evaluate_identifier(token)?,
             String(token) => {
                 if quote_string_literal {
                     format!("{:?}", token.value)
@@ -309,7 +308,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                 format!(
                     "[{}]",
                     v.iter()
-                        .map(|value| format!("{value}"))
+                        .map(|value| value.to_string())
                         .collect::<Vec<_>>()
                         .join(",")
                 )
@@ -342,7 +341,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
     fn evaluate_call_expression(
         &self,
         identifier: &Identifier<'source>,
-        arguments: &Vec<Expression<'source>>,
+        arguments: &[Expression<'source>],
         expression_span: Span,
     ) -> Result<'source, String> {
         let string_value = match identifier.name {
@@ -385,7 +384,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
             _ => {
                 return Err(self
                     .error_factory
-                    .undefined_callable(&identifier)
+                    .undefined_callable(identifier)
                     .with_message(
                         "env(..), read(..), escape_new_lines(..) are the only calls supported",
                     )
@@ -410,7 +409,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         let handle_error = |e| {
             self.error_factory.other(
                 file_path.span,
-                &format!("Error reading file '{}': {e}", file_path.value),
+                format!("Error reading file '{}': {e}", file_path.value),
             )
         };
 
@@ -487,7 +486,7 @@ fn log(content: &str, to_file: &PathBuf) -> std::io::Result<()> {
 fn indent_lines(string: &str, indent: u8) -> String {
     string
         .lines()
-        .map(|line| String::from(" ".repeat(indent as usize) + line))
+        .map(|line| (" ".repeat(indent as usize) + line))
         .collect::<Vec<_>>()
         .join("\n")
 }

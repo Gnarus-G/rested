@@ -109,7 +109,7 @@ impl<'i> Lexer<'i> {
     }
 
     pub fn input(&self) -> &'i str {
-        std::str::from_utf8(&self.input).expect("input should only contain utf-8 characters")
+        std::str::from_utf8(self.input).expect("input should only contain utf-8 characters")
     }
 
     fn input_slice(&self, range: impl std::slice::SliceIndex<[u8], Output = [u8]>) -> &'i str {
@@ -120,7 +120,7 @@ impl<'i> Lexer<'i> {
         if position < self.input.len() {
             return Some(&self.input[position]);
         }
-        return None;
+        None
     }
 
     fn ch(&self) -> Option<&u8> {
@@ -161,7 +161,7 @@ impl<'i> Lexer<'i> {
             self.step();
         }
 
-        return (start_pos, self.position + 1);
+        (start_pos, self.position + 1)
     }
 
     fn skip_whitespace(&mut self) {
@@ -170,7 +170,7 @@ impl<'i> Lexer<'i> {
         }
     }
 
-    pub fn next(&mut self) -> Token<'i> {
+    pub fn next_token(&mut self) -> Token<'i> {
         use TokenKind::*;
 
         self.skip_whitespace();
@@ -204,7 +204,7 @@ impl<'i> Lexer<'i> {
                 self.step(); // eat the curly
                 self.step(); // eat the backtick
                 self.inside_multiline_string = false;
-                self.next()
+                self.next_token()
             }
             b'}' if self.inside_multiline_string => {
                 self.step(); // eat the curly
@@ -297,7 +297,7 @@ impl<'i> Lexer<'i> {
                 break (start_pos, self.position + 1);
             }
 
-            if let None = self.ch() {
+            if self.ch().is_none() {
                 return Token {
                     kind: TokenKind::UnfinishedMultiLineStringLiteral,
                     start: location,
@@ -505,7 +505,7 @@ impl<'source> Iterator for Lexer<'source> {
     type Item = Token<'source>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let token = self.next();
+        let token = self.next_token();
 
         if let TokenKind::End = token.kind {
             return None;
