@@ -340,12 +340,17 @@ impl<'i> Parser<'i> {
     }
 
     fn parse_object_property(&mut self) -> Result<'i, (&'i str, Expression<'i>)> {
-        let ident = self.expect_peek(TokenKind::Ident)?.text;
+        let key_token = self.next_token();
+
+        let key = match_or_throw! { key_token.kind; self;
+            Ident => key_token.text,
+            StringLiteral => ast::StringLiteral::from(key_token).value
+        };
 
         self.expect_peek(TokenKind::Colon)?;
         self.next_token();
 
-        return Ok((ident, self.parse_json_like()?));
+        return Ok((key, self.parse_json_like()?));
     }
 
     fn parse_call_expression(&mut self) -> Result<'i, Expression<'i>> {

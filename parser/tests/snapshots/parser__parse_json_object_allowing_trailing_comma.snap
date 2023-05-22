@@ -1,6 +1,6 @@
 ---
 source: parser/tests/parser.rs
-description: "\nlet o = {\n    key: \"value\",\n    akey: [1, 2, 3,],\n    love: \"me\",\n    test: {a: \"asdf\", b: 1, c: 3,},\n}"
+description: "\nlet o = {\n    key: \"value\",\n    akey: [1, 2, 3,],\n    love: \"me\",\n    \"test\": {a: \"asdf\", b: 1, c: 3,},\n}"
 expression: ast
 ---
 Program(
@@ -110,11 +110,11 @@ Program(
         "test": Object((Span(
           start: Location(
             line: 5,
-            col: 10,
+            col: 12,
           ),
           end: Location(
             line: 5,
-            col: 34,
+            col: 36,
           ),
         ), {
           "a": String(StringLiteral(
@@ -123,11 +123,11 @@ Program(
             span: Span(
               start: Location(
                 line: 5,
-                col: 14,
+                col: 16,
               ),
               end: Location(
                 line: 5,
-                col: 20,
+                col: 22,
               ),
             ),
           )),
@@ -136,11 +136,11 @@ Program(
             span: Span(
               start: Location(
                 line: 5,
-                col: 25,
+                col: 27,
               ),
               end: Location(
                 line: 5,
-                col: 26,
+                col: 28,
               ),
             ),
           )),
@@ -149,11 +149,11 @@ Program(
             span: Span(
               start: Location(
                 line: 5,
-                col: 31,
+                col: 33,
               ),
               end: Location(
                 line: 5,
-                col: 32,
+                col: 34,
               ),
             ),
           )),

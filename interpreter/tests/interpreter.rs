@@ -365,10 +365,10 @@ post /api {
         neet: 1337,
         nothing: null,
         arr: ["yo", {h: "i"}],
-        hello: {
+        "hello": {
             w: env("hello"),
             warudo: env(env("hi")),
-            fun: true,
+            "fun": true,
             notFun: false,
             e: {},
             em: []

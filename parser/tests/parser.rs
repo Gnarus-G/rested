@@ -182,7 +182,7 @@ let o = {
     key: "value",
     akey: [1, 2, 3,],
     love: "me",
-    test: {a: "asdf", b: 1, c: 3,},
+    "test": {a: "asdf", b: 1, c: 3,},
 }"#
     );
 }
