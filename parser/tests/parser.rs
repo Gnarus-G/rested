@@ -73,6 +73,15 @@ fn parse_attributes() {
 }
 
 #[test]
+fn parse_attributes_ignoring_comments_after_them() {
+    assert_ast!(
+        r#"@log("path/to/file") 
+                // ignored
+                get /api"#
+    );
+}
+
+#[test]
 fn parse_get_with_headers() {
     assert_ast!(
         r#"

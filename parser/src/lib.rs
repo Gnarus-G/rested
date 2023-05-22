@@ -122,7 +122,7 @@ impl<'i> Parser<'i> {
 
                     if let Ok(_) = item {
                         let valid_after_attribute =
-                            vec![Get, Post, Put, Patch, Delete, AttributePrefix];
+                            vec![Get, Post, Put, Patch, Delete, AttributePrefix, Linecomment];
 
                         if let Err(err) = self.expect_peek_one_of(valid_after_attribute) {
                             errors.push(err.with_message(
