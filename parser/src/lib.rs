@@ -124,14 +124,10 @@ impl<'i> Parser<'i> {
                         let valid_after_attribute =
                             vec![Get, Post, Put, Patch, Delete, AttributePrefix];
 
-                        if !self.peek_token().is_one_of(&valid_after_attribute) {
-                            let error = self
-                                .error()
-                                .expected_one_of_tokens(&self.next_token(), valid_after_attribute)
-                                .with_message(
-                                    "after attributes should come requests or more attributes",
-                                );
-                            errors.push(error);
+                        if let Err(err) = self.expect_peek_one_of(valid_after_attribute) {
+                            errors.push(err.with_message(
+                                "after attributes should come requests or more attributes",
+                            ));
                             continue;
                         }
                     }
@@ -166,7 +162,7 @@ impl<'i> Parser<'i> {
     fn parse_request(&mut self, method: RequestMethod) -> Result<'i, Item<'i>> {
         let start = self.curr_token().start;
 
-        let url = self.expect_one_of(vec![Url, Pathname])?;
+        let url = self.next_expecting_one_of(vec![Url, Pathname])?;
 
         let endpoint = match_or_throw! { url.kind; self;
             Url => Endpoint::Url(url.into()),
@@ -192,9 +188,9 @@ impl<'i> Parser<'i> {
     }
 
     fn parse_set_statement(&mut self) -> Result<'i, Item<'i>> {
-        let identifier = self.expect(TokenKind::Ident)?.into();
+        let identifier = self.expect_peek(TokenKind::Ident)?.into();
 
-        self.expect_one_of(vec![
+        self.next_expecting_one_of(vec![
             TokenKind::Ident,
             TokenKind::StringLiteral,
             TokenKind::MultiLineStringLiteral,
@@ -233,9 +229,9 @@ impl<'i> Parser<'i> {
     }
 
     fn parse_header(&mut self) -> Result<'i, Statement<'i>> {
-        let header_name = self.expect(TokenKind::StringLiteral)?.into();
+        let header_name = self.expect_peek(TokenKind::StringLiteral)?.into();
 
-        self.expect_one_of(vec![
+        self.next_expecting_one_of(vec![
             TokenKind::StringLiteral,
             TokenKind::Ident,
             TokenKind::MultiLineStringLiteral,
@@ -299,7 +295,7 @@ impl<'i> Parser<'i> {
                     fields.insert(key, value);
 
                     if !self.peek_token().is(RBracket) {
-                        self.expect(Comma)?;
+                        self.expect_peek(Comma)?;
                     }
                 }
 
@@ -327,7 +323,7 @@ impl<'i> Parser<'i> {
                     list.push(self.parse_json_like()?);
 
                     if !self.peek_token().is(RSquare) {
-                        self.expect(Comma)?;
+                        self.expect_peek(Comma)?;
                     }
                 }
 
@@ -344,9 +340,9 @@ impl<'i> Parser<'i> {
     }
 
     fn parse_object_property(&mut self) -> Result<'i, (&'i str, Expression<'i>)> {
-        let ident = self.expect(TokenKind::Ident)?.text;
+        let ident = self.expect_peek(TokenKind::Ident)?.text;
 
-        self.expect(TokenKind::Colon)?;
+        self.expect_peek(TokenKind::Colon)?;
         self.next_token();
 
         return Ok((ident, self.parse_json_like()?));
@@ -417,9 +413,14 @@ impl<'i> Parser<'i> {
         })
     }
 
-    fn expect_one_of(&mut self, expected_kinds: Vec<TokenKind>) -> Result<'i, &Token<'i>> {
+    fn next_expecting_one_of(&mut self, expected_kinds: Vec<TokenKind>) -> Result<'i, &Token<'i>> {
+        self.expect_peek_one_of(expected_kinds)
+            .map(|_| self.next_token())
+    }
+
+    fn expect_peek_one_of(&mut self, expected_kinds: Vec<TokenKind>) -> Result<'i, ()> {
         if self.peek_token().is_one_of(&expected_kinds) {
-            return Ok(self.next_token());
+            return Ok(());
         }
         let con = self.error();
 
@@ -428,7 +429,7 @@ impl<'i> Parser<'i> {
         Err(error)
     }
 
-    fn expect(&mut self, expected_kind: TokenKind) -> Result<'i, &Token<'i>> {
+    fn expect_peek(&mut self, expected_kind: TokenKind) -> Result<'i, &Token<'i>> {
         if self.peek_token().is(expected_kind) {
             return Ok(self.next_token());
         }
@@ -447,7 +448,7 @@ impl<'i> Parser<'i> {
     fn parse_attribute(&mut self) -> Result<'i, Item<'i>> {
         let location = self.curr_token().start;
 
-        let identifier = self.expect(TokenKind::Ident)?.into();
+        let identifier = self.expect_peek(TokenKind::Ident)?.into();
 
         let mut params = vec![];
 
@@ -474,7 +475,7 @@ impl<'i> Parser<'i> {
     fn parse_let_statement(&mut self) -> Result<'i, Item<'i>> {
         let identifier = self.next_token().into();
 
-        self.expect(TokenKind::Assign)?;
+        self.expect_peek(TokenKind::Assign)?;
 
         self.next_token();
 
