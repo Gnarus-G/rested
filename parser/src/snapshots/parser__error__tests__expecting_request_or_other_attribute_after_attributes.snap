@@ -11,12 +11,6 @@ ParserErrors {
                              after attributes should come requests or more attributes
                     get http://localhost { header "name" k }
         ,
-                    @dbg
-                    let k = "v"
-                          ≈
-                          ↳ [4:19] expected either one of 'identifier','string','boolean','number','string','{','[','null' but got =
-                    get http://localhost { header "name" k }
-        ,
     ],
     incomplete_rogram: Program {
         items: [
@@ -40,25 +34,21 @@ ParserErrors {
                 },
                 parameters: [],
             },
-            Expr(
-                Identifier(
-                    Identifier {
-                        name: "k",
-                        span: Span {
-                            start: Location {
-                                line: 3,
-                                col: 16,
-                            },
-                            end: Location {
-                                line: 3,
-                                col: 17,
-                            },
+            Let {
+                identifier: Identifier {
+                    name: "k",
+                    span: Span {
+                        start: Location {
+                            line: 3,
+                            col: 16,
+                        },
+                        end: Location {
+                            line: 3,
+                            col: 17,
                         },
                     },
-                ),
-            ),
-            Expr(
-                String(
+                },
+                value: String(
                     StringLiteral {
                         raw: "\"v\"",
                         value: "v",
@@ -74,7 +64,7 @@ ParserErrors {
                         },
                     },
                 ),
-            ),
+            },
             Request {
                 method: GET,
                 endpoint: Url(

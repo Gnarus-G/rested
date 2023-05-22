@@ -8,10 +8,6 @@ ParserErrors {
             ≈
             ↳ [1:5] expected either one of 'url','pathname' but got {
         ,
-        get {}
-             ≈
-             ↳ [1:6] expected either one of 'identifier','string','boolean','number','string','{','[','null' but got }
-        ,
     ],
     incomplete_rogram: Program {
         items: [],

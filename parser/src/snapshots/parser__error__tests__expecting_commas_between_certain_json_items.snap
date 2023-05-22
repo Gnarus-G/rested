@@ -10,38 +10,8 @@ ParserErrors {
                          ↳ [3:18] expected ',' but got identifier
                        }
         ,
-                         yo: "joe"
-                         hello: "world"
-                              ≈
-                              ↳ [3:23] expected either one of 'identifier','string','boolean','number','string','{','[','null' but got :
-                       }
-        ,
-                         hello: "world"
-                       }
-                       ≈
-                       ↳ [4:16] expected either one of 'identifier','string','boolean','number','string','{','[','null' but got }
-        ,
     ],
     incomplete_rogram: Program {
-        items: [
-            Expr(
-                String(
-                    StringLiteral {
-                        raw: "\"world\"",
-                        value: "world",
-                        span: Span {
-                            start: Location {
-                                line: 2,
-                                col: 24,
-                            },
-                            end: Location {
-                                line: 2,
-                                col: 31,
-                            },
-                        },
-                    },
-                ),
-            ),
-        ],
+        items: [],
     },
 }

@@ -81,6 +81,21 @@ impl<'i> Parser<'i> {
         self.peeked.get_or_insert_with(|| self.lexer.next())
     }
 
+    fn eat_till_next_top_level_peek_token(&mut self) {
+        loop {
+            let is_top_level_token_ahead = match self.peek_token().kind {
+                Get | Post | Put | Patch | Delete | Set | AttributePrefix | Let | End => true,
+                _ => false,
+            };
+
+            if is_top_level_token_ahead {
+                break;
+            }
+
+            self.next_token();
+        }
+    }
+
     fn span_from(&self, start: Location) -> Span {
         start.to_end_of(self.curr_token().span())
     }
@@ -104,28 +119,24 @@ impl<'i> Parser<'i> {
                 Set => self.parse_set_statement(),
                 AttributePrefix => {
                     let item = self.parse_attribute();
-                    match item {
-                        Ok(_) => {
-                            let valid_after_attribute =
-                                vec![Get, Post, Put, Patch, Delete, AttributePrefix];
 
-                            if !self.peek_token().is_one_of(&valid_after_attribute) {
-                                let error = self
-                                    .error()
-                                    .expected_one_of_tokens(
-                                        &self.next_token(),
-                                        valid_after_attribute,
-                                    )
-                                    .with_message(
-                                        "after attributes should come requests or more attributes",
-                                    );
-                                Err(error)
-                            } else {
-                                item
-                            }
+                    if let Ok(_) = item {
+                        let valid_after_attribute =
+                            vec![Get, Post, Put, Patch, Delete, AttributePrefix];
+
+                        if !self.peek_token().is_one_of(&valid_after_attribute) {
+                            let error = self
+                                .error()
+                                .expected_one_of_tokens(&self.next_token(), valid_after_attribute)
+                                .with_message(
+                                    "after attributes should come requests or more attributes",
+                                );
+                            errors.push(error);
+                            continue;
                         }
-                        err => err,
                     }
+
+                    item
                 }
                 Let => self.parse_let_statement(),
                 _ => match self.parse_expression() {
@@ -136,8 +147,11 @@ impl<'i> Parser<'i> {
 
             match result {
                 Ok(item) => program.items.push(item),
-                Err(error) => errors.push(error),
-            };
+                Err(error) => {
+                    errors.push(error);
+                    self.eat_till_next_top_level_peek_token();
+                }
+            }
 
             self.next_token();
         }
