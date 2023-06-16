@@ -64,13 +64,11 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
     pub fn run(&mut self, request_names: Option<Array<String>>) -> Result<'source, ()> {
         let requests = self.evaluate()?;
 
-        let requests = requests
-            .into_iter()
-            .filter(|r| match (&request_names, &r.name) {
-                (None, _) => true,
-                (Some(_), None) => false,
-                (Some(desired), Some(name)) => desired.contains(name),
-            });
+        let requests = requests.iter().filter(|r| match (&request_names, &r.name) {
+            (None, _) => true,
+            (Some(_), None) => false,
+            (Some(desired), Some(name)) => desired.contains(name),
+        });
 
         for RequestMeta {
             span,
@@ -113,7 +111,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                         println!("{}", indent_lines(&res, 4));
                     }
                     Log::File(file_path) => {
-                        log(&res, &file_path)
+                        log(&res, file_path)
                             .map_err(|error| self.error_factory.other(*span, error))?;
 
                         println!(
@@ -139,7 +137,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
 
         let mut requests = vec![];
 
-        for item in ast.items.into_iter() {
+        for item in ast.items.iter() {
             match item {
                 Request {
                     method,
@@ -161,17 +159,17 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                     let mut body = None;
 
                     if let Some(statements) = block.as_ref().map(|b| &b.statements) {
-                        for statement in statements.into_iter() {
+                        for statement in statements.iter() {
                             match statement {
                                 ast::Statement::Header { name, value } => {
                                     headers.push(Header::new(
                                         name.value.to_string(),
-                                        self.evaluate_expression(&value)?,
+                                        self.evaluate_expression(value)?,
                                     ))
                                 }
                                 ast::Statement::Body { value, .. } => {
                                     if body.is_none() {
-                                        body = Some(self.evaluate_expression(&value)?);
+                                        body = Some(self.evaluate_expression(value)?);
                                     }
                                 }
                                 ast::Statement::LineComment(_) => {}
@@ -222,10 +220,10 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                 }
                 Set { identifier, value } => {
                     if identifier.name != "BASE_URL" {
-                        return Err(self.error_factory.unknown_constant(&identifier).into());
+                        return Err(self.error_factory.unknown_constant(identifier).into());
                     }
 
-                    self.base_url = Some(self.evaluate_expression(&value)?);
+                    self.base_url = Some(self.evaluate_expression(value)?);
                 }
                 LineComment(_) => {}
                 Attribute {
@@ -235,14 +233,14 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                 } => match identifier.name {
                     "name" | "log" | "dbg" | "skip" => {
                         if attributes.has(identifier.name) {
-                            return Err(self.error_factory.duplicate_attribute(&identifier).into());
+                            return Err(self.error_factory.duplicate_attribute(identifier).into());
                         }
                         attributes.add(identifier, parameters.clone());
                     }
                     _ => {
                         return Err(self
                             .error_factory
-                            .unsupported_attribute(&identifier)
+                            .unsupported_attribute(identifier)
                             .with_message(
                                 "@name, @log, @skip and @dbg are the only supported attributes",
                             )
@@ -250,7 +248,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                     }
                 },
                 Let { identifier, value } => {
-                    let value = self.evaluate_expression(&value)?;
+                    let value = self.evaluate_expression(value)?;
                     self.let_bindings.insert(identifier.name, value);
                 }
                 Expr(_) => continue,
@@ -302,7 +300,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
             Array((.., values)) => {
                 let mut v = vec![];
 
-                for value in values.into_iter() {
+                for value in values.iter() {
                     v.push(self.evaluate_expression_and_quote_string(value, true)?);
                 }
 

@@ -295,7 +295,7 @@ fn running_specific_requests_by_name() {
         delete /api
     "#;
 
-    let mut program = Interpreter::new(&code, env, UreqRunner);
+    let mut program = Interpreter::new(code, env, UreqRunner);
 
     program.run(Some(Arc::new(["test".to_string()]))).unwrap();
 
@@ -318,7 +318,7 @@ fn name_attribute_requires_value() {
         get /api {}
     "#;
 
-    let mut program = Interpreter::new(&code, env, UreqRunner);
+    let mut program = Interpreter::new(code, env, UreqRunner);
 
     let name_att_without_arg_err = program
         .run(Some(Arc::new(["test".to_string()])))
@@ -419,7 +419,7 @@ read("file")
 "adsf"
         "#;
     let env = new_env_with_vars(&[]);
-    let mut program = Interpreter::new(&code, env, UreqRunner);
+    let mut program = Interpreter::new(code, env, UreqRunner);
 
     program.run(None).unwrap();
 }

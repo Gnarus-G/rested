@@ -18,8 +18,8 @@ impl Runner for UreqRunner {
             RequestMethod::DELETE => ureq::delete(path),
         };
 
-        for Header { name, value } in request.headers.into_iter() {
-            req = req.set(&name, &value);
+        for Header { name, value } in request.headers.iter() {
+            req = req.set(name, value);
         }
 
         let res = if let Some(value) = request.body.clone() {

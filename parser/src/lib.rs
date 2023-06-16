@@ -425,7 +425,7 @@ impl<'i> Parser<'i> {
     }
 
     fn expect_peek_one_of(&mut self, expected_kinds: &[TokenKind]) -> Result<'i, ()> {
-        if self.peek_token().is_one_of(&expected_kinds) {
+        if self.peek_token().is_one_of(expected_kinds) {
             return Ok(());
         }
         let con = self.error();

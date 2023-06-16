@@ -70,7 +70,7 @@ impl Backend {
         let mut diagnostics = vec![];
 
         if let Err(error) = result {
-            for err in error.errors.into_iter() {
+            for err in error.errors.iter() {
                 let range = Range {
                     start: err.span.start.into_position(),
                     end: err.span.end.into_position(),
@@ -152,7 +152,7 @@ impl LanguageServer for Backend {
                 line: position.line as usize,
                 col: position.character as usize,
             })
-            .into_iter()
+            .iter()
             .map(|var| CompletionItem {
                 label: var.name.to_string(),
                 kind: Some(CompletionItemKind::VARIABLE),
@@ -161,7 +161,7 @@ impl LanguageServer for Backend {
             })
             .collect();
 
-        for item in program.items.into_iter() {
+        for item in program.items.iter() {
             if let parser::ast::Item::Request {
                 block: Some(block), ..
             } = item

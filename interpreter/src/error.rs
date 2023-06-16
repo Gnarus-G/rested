@@ -74,7 +74,7 @@ impl<'source> std::fmt::Display for InterpreterError<'source> {
         match self {
             InterpreterError::Error(err) => write!(f, "{err}"),
             InterpreterError::ParseErrors(errors) => {
-                for err in errors.into_iter() {
+                for err in errors.iter() {
                     write!(f, "{err}")?
                 }
                 Ok(())

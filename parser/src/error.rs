@@ -92,7 +92,7 @@ impl<'source> std::error::Error for ParserErrors<'source> {}
 
 impl<'source> std::fmt::Display for ParserErrors<'source> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for err in self.errors.into_iter() {
+        for err in self.errors.iter() {
             write!(f, "{err}")?
         }
         Ok(())
