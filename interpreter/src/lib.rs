@@ -14,6 +14,7 @@ use colored::Colorize;
 use environment::Environment;
 use error::InterpreterError;
 
+use lexer::Array;
 use parser::ast::{self, Endpoint, Expression, Identifier, Literal};
 
 use lexer::locations::{GetSpan, Span};
@@ -60,7 +61,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         }
     }
 
-    pub fn run(&mut self, request_names: Option<Vec<String>>) -> Result<'source, ()> {
+    pub fn run(&mut self, request_names: Option<Array<String>>) -> Result<'source, ()> {
         let requests = self.evaluate()?;
 
         let requests = requests
@@ -85,7 +86,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                 request.url.bold()
             );
 
-            if dbg {
+            if *dbg {
                 println!("    \u{21B3} with request data:");
                 println!("{}", indent_lines(&format!("{:#?}", request), 6));
 
@@ -104,7 +105,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
             let res = self
                 .runner
                 .run_request(request)
-                .map_err(|e| self.error_factory.other(span, e))?;
+                .map_err(|e| self.error_factory.other(*span, e))?;
 
             if let Some(log_destination) = log_destination {
                 match log_destination {
@@ -113,7 +114,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                     }
                     Log::File(file_path) => {
                         log(&res, &file_path)
-                            .map_err(|error| self.error_factory.other(span, error))?;
+                            .map_err(|error| self.error_factory.other(*span, error))?;
 
                         println!(
                             "    \u{21B3} {}",
@@ -127,7 +128,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         Ok(())
     }
 
-    fn evaluate(&mut self) -> Result<'source, Vec<RequestMeta>> {
+    fn evaluate(&mut self) -> Result<'source, Array<RequestMeta>> {
         let mut parser = parser::Parser::new(self.code);
 
         let ast = parser.parse()?;
@@ -138,7 +139,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
 
         let mut requests = vec![];
 
-        for item in ast.items {
+        for item in ast.items.into_iter() {
             match item {
                 Request {
                     method,
@@ -159,8 +160,8 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                     let mut headers = vec![];
                     let mut body = None;
 
-                    if let Some(statements) = block.map(|b| b.statements) {
-                        for statement in statements {
+                    if let Some(statements) = block.as_ref().map(|b| &b.statements) {
+                        for statement in statements.into_iter() {
                             match statement {
                                 ast::Statement::Header { name, value } => {
                                     headers.push(Header::new(
@@ -210,9 +211,9 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                         log_destination,
                         span,
                         request: ir::Request {
-                            method,
+                            method: *method,
                             url: path,
-                            headers,
+                            headers: headers.into(),
                             body,
                         },
                     });
@@ -236,7 +237,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                         if attributes.has(identifier.name) {
                             return Err(self.error_factory.duplicate_attribute(&identifier).into());
                         }
-                        attributes.add(identifier, parameters);
+                        attributes.add(identifier, parameters.clone());
                     }
                     _ => {
                         return Err(self
@@ -256,7 +257,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
             }
         }
 
-        Ok(requests)
+        Ok(requests.into())
     }
 
     fn evaluate_expression(&self, exp: &Expression<'source>) -> Result<'source, String> {
@@ -301,7 +302,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
             Array((.., values)) => {
                 let mut v = vec![];
 
-                for value in values {
+                for value in values.into_iter() {
                     v.push(self.evaluate_expression_and_quote_string(value, true)?);
                 }
 
@@ -422,7 +423,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         Ok(string)
     }
 
-    fn evaluate_request_endpoint(&self, endpoint: Endpoint) -> Result<'source, String> {
+    fn evaluate_request_endpoint(&self, endpoint: &Endpoint) -> Result<'source, String> {
         Ok(match endpoint {
             Endpoint::Url(url) => url.value.to_string(),
             Endpoint::Pathname(pn) => {

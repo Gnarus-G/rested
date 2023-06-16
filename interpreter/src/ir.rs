@@ -1,5 +1,6 @@
 use std::error::Error;
 
+use lexer::Array;
 pub use parser::ast::RequestMethod;
 
 #[derive(Debug)]
@@ -18,12 +19,12 @@ impl Header {
 pub struct Request {
     pub method: RequestMethod,
     pub url: String,
-    pub headers: Vec<Header>,
+    pub headers: Array<Header>,
     pub body: Option<String>,
 }
 
 pub trait Runner {
-    fn run_request(&mut self, request: Request) -> std::result::Result<String, Box<dyn Error>>;
+    fn run_request(&mut self, request: &Request) -> std::result::Result<String, Box<dyn Error>>;
 }
 
 pub fn prettify_json_string(string: &str) -> serde_json::Result<String> {

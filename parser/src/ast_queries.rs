@@ -1,5 +1,5 @@
 use crate::ast::{Identifier, Program};
-use lexer::locations::Location;
+use lexer::{locations::Location, Array};
 
 impl<'source> Program<'source> {
     pub fn variables(&self) -> impl Iterator<Item = &Identifier<'source>> {
@@ -9,7 +9,7 @@ impl<'source> Program<'source> {
         })
     }
 
-    pub fn variables_before(&self, location: Location) -> Vec<&Identifier<'source>> {
+    pub fn variables_before(&self, location: Location) -> Array<&Identifier<'source>> {
         self.variables()
             .filter(|i| i.span.start.is_before(location))
             .collect()

@@ -24,7 +24,7 @@ macro_rules! match_or_throw {
             $(
                 $( TokenKind::$pattern )|+ $( if $guard )? => $arm,
             )+
-            _ => return Err($self.error().expected_one_of_tokens($self.curr_token(), vec![$( $( $pattern ),+ ),+])$(.with_message($message))?)
+            _ => return Err($self.error().expected_one_of_tokens($self.curr_token(), &[$( $( $pattern ),+ ),+])$(.with_message($message))?)
         }
     };
 }
@@ -102,7 +102,7 @@ impl<'i> Parser<'i> {
     }
 
     pub fn parse(&mut self) -> std::result::Result<Program<'i>, ParserErrors<'i>> {
-        let mut program = Program::new();
+        let mut items = vec![];
         let mut errors = vec![];
 
         use lexer::TokenKind::*;
@@ -123,9 +123,9 @@ impl<'i> Parser<'i> {
 
                     if item.is_ok() {
                         let valid_after_attribute =
-                            vec![Get, Post, Put, Patch, Delete, AttributePrefix, Linecomment];
+                            [Get, Post, Put, Patch, Delete, AttributePrefix, Linecomment];
 
-                        if let Err(err) = self.expect_peek_one_of(valid_after_attribute) {
+                        if let Err(err) = self.expect_peek_one_of(&valid_after_attribute) {
                             errors.push(err.with_message(
                                 "after attributes should come requests or more attributes",
                             ));
@@ -143,7 +143,7 @@ impl<'i> Parser<'i> {
             };
 
             match result {
-                Ok(item) => program.items.push(item),
+                Ok(item) => items.push(item),
                 Err(error) => {
                     errors.push(error);
                     self.eat_till_next_top_level_peek_token();
@@ -154,16 +154,16 @@ impl<'i> Parser<'i> {
         }
 
         if errors.is_empty() {
-            return Ok(program);
+            return Ok(Program::new(items.into()));
         }
 
-        return Err(ParserErrors::new(errors, program));
+        return Err(ParserErrors::new(errors.into(), Program::new(items.into())));
     }
 
     fn parse_request(&mut self, method: RequestMethod) -> Result<'i, Item<'i>> {
         let start = self.curr_token().start;
 
-        let url = self.next_expecting_one_of(vec![Url, Pathname])?;
+        let url = self.next_expecting_one_of(&[Url, Pathname])?;
 
         let endpoint = match_or_throw! { url.kind; self;
             Url => Endpoint::Url(url.into()),
@@ -191,7 +191,7 @@ impl<'i> Parser<'i> {
     fn parse_set_statement(&mut self) -> Result<'i, Item<'i>> {
         let identifier = self.expect_peek(TokenKind::Ident)?.into();
 
-        self.next_expecting_one_of(vec![
+        self.next_expecting_one_of(&[
             TokenKind::Ident,
             TokenKind::StringLiteral,
             TokenKind::MultiLineStringLiteral,
@@ -224,7 +224,7 @@ impl<'i> Parser<'i> {
         }
 
         return Ok(Some(Block {
-            statements,
+            statements: statements.into(),
             span: Span::new(span_start, self.curr_token().start), // span to RBracket's location
         }));
     }
@@ -232,7 +232,7 @@ impl<'i> Parser<'i> {
     fn parse_header(&mut self) -> Result<'i, Statement<'i>> {
         let header_name = self.expect_peek(TokenKind::StringLiteral)?.into();
 
-        self.next_expecting_one_of(vec![
+        self.next_expecting_one_of(&[
             TokenKind::StringLiteral,
             TokenKind::Ident,
             TokenKind::MultiLineStringLiteral,
@@ -332,7 +332,7 @@ impl<'i> Parser<'i> {
 
                 let span = start.to_end_of(self.curr_token().span());
 
-                Expression::Array((span, list))
+                Expression::Array((span, list.into()))
             }
             _ => self.parse_expression()?,
         };
@@ -370,7 +370,7 @@ impl<'i> Parser<'i> {
 
         Ok(Expression::Call {
             identifier,
-            arguments,
+            arguments: arguments.into(),
         })
     }
 
@@ -415,16 +415,16 @@ impl<'i> Parser<'i> {
 
         Ok(Expression::TemplateSringLiteral {
             span: Span::new(start, end),
-            parts,
+            parts: parts.into(),
         })
     }
 
-    fn next_expecting_one_of(&mut self, expected_kinds: Vec<TokenKind>) -> Result<'i, &Token<'i>> {
+    fn next_expecting_one_of(&mut self, expected_kinds: &[TokenKind]) -> Result<'i, &Token<'i>> {
         self.expect_peek_one_of(expected_kinds)
             .map(|_| self.next_token())
     }
 
-    fn expect_peek_one_of(&mut self, expected_kinds: Vec<TokenKind>) -> Result<'i, ()> {
+    fn expect_peek_one_of(&mut self, expected_kinds: &[TokenKind]) -> Result<'i, ()> {
         if self.peek_token().is_one_of(&expected_kinds) {
             return Ok(());
         }
@@ -474,7 +474,7 @@ impl<'i> Parser<'i> {
         Ok(Item::Attribute {
             location,
             identifier,
-            parameters: params,
+            parameters: params.into(),
         })
     }
 

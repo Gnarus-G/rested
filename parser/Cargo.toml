@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 colored = "2.0.0"
-serde = { version = "1.0.159", features = ["derive"] }
+serde = { version = "1.0.159", features = ["derive", "rc"] }
 lexer = { path = "../lexer" }
 error_meta = { path = "../error_meta" }
 

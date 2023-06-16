@@ -1,4 +1,4 @@
-use lexer::{locations::GetSpan, Token, TokenKind};
+use lexer::{locations::GetSpan, Array, Token, TokenKind};
 
 use error_meta::ContextualError;
 
@@ -44,7 +44,7 @@ pub enum ParseError<'source> {
     },
     ExpectedEitherOfTokens {
         found: ErroneousToken<'source>,
-        expected: Vec<TokenKind>,
+        expected: Array<TokenKind>,
     },
 }
 
@@ -72,13 +72,13 @@ impl<'source> std::fmt::Display for ParseError<'source> {
 
 #[derive(Debug)]
 pub struct ParserErrors<'source> {
-    pub errors: Vec<ContextualError<ParseError<'source>>>,
+    pub errors: Array<ContextualError<ParseError<'source>>>,
     pub incomplete_rogram: Program<'source>,
 }
 
 impl<'source> ParserErrors<'source> {
     pub fn new(
-        errors: Vec<ContextualError<ParseError<'source>>>,
+        errors: Array<ContextualError<ParseError<'source>>>,
         incomplete_rogram: Program<'source>,
     ) -> Self {
         Self {
@@ -92,7 +92,7 @@ impl<'source> std::error::Error for ParserErrors<'source> {}
 
 impl<'source> std::fmt::Display for ParserErrors<'source> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for err in &self.errors {
+        for err in self.errors.into_iter() {
             write!(f, "{err}")?
         }
         Ok(())
@@ -127,20 +127,20 @@ impl<'i> ParseErrorConstructor<'i> {
     pub fn expected_one_of_tokens(
         &self,
         token: &Token<'i>,
-        expected_kinds: Vec<TokenKind>,
+        expected_kinds: &[TokenKind],
     ) -> ContextualError<ParseError<'i>> {
-        let mut expected_dedpuded = vec![];
+        let mut expected_dedpuded: Vec<TokenKind> = vec![];
 
         for kind in expected_kinds {
-            if !expected_dedpuded.contains(&kind) {
-                expected_dedpuded.push(kind)
+            if !expected_dedpuded.contains(kind) {
+                expected_dedpuded.push(*kind)
             }
         }
 
         ContextualError::new(
             ParseError::ExpectedEitherOfTokens {
                 found: token.into(),
-                expected: expected_dedpuded,
+                expected: expected_dedpuded.into(),
             },
             token.span(),
             self.source_code,

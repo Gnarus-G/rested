@@ -70,7 +70,7 @@ impl Backend {
         let mut diagnostics = vec![];
 
         if let Err(error) = result {
-            for err in error.errors {
+            for err in error.errors.into_iter() {
                 let range = Range {
                     start: err.span.start.into_position(),
                     end: err.span.end.into_position(),
@@ -78,7 +78,7 @@ impl Backend {
 
                 diagnostics.push(Diagnostic::new_simple(range, err.inner_error.to_string()));
 
-                if let Some(msg) = err.message {
+                if let Some(msg) = err.message.clone() {
                     diagnostics.push(Diagnostic::new_simple(range, msg))
                 }
             }
@@ -161,7 +161,7 @@ impl LanguageServer for Backend {
             })
             .collect();
 
-        for item in program.items {
+        for item in program.items.into_iter() {
             if let parser::ast::Item::Request {
                 block: Some(block), ..
             } = item

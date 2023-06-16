@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read, path::PathBuf};
+use std::{fs::File, io::Read, path::PathBuf, sync::Arc};
 
 use insta::assert_debug_snapshot;
 use interpreter::{environment::Environment, ureq_runner::UreqRunner, Interpreter};
@@ -29,34 +29,34 @@ fn requests_work() {
     let get_api_v2 = server
         .mock("GET", "/api/v2")
         .with_status(200)
-        .with_header("Authorization", &token)
+        .with_header("Authorization", token)
         .create();
 
     let post_api = server
         .mock("POST", "/api")
         .with_status(200)
-        .with_header("Authorization", &token)
+        .with_header("Authorization", token)
         .with_body("data")
         .create();
 
     let put_api = server
         .mock("PUT", "/api")
         .with_status(200)
-        .with_header("Authorization", &token)
+        .with_header("Authorization", token)
         .with_body("data")
         .create();
 
     let patch_api = server
         .mock("PATCH", "/api")
         .with_status(200)
-        .with_header("Authorization", &token)
+        .with_header("Authorization", token)
         .with_body("data")
         .create();
 
     let delete_api = server
         .mock("DELETE", "/api")
         .with_status(200)
-        .with_header("Authorization", &token)
+        .with_header("Authorization", token)
         .create();
 
     let code = r#"
@@ -87,7 +87,7 @@ fn requests_work() {
         }
     "#;
 
-    let mut program = Interpreter::new(&code, env, UreqRunner);
+    let mut program = Interpreter::new(code, env, UreqRunner);
 
     program.run(None).unwrap();
 
@@ -168,7 +168,7 @@ fn requests_are_skippable() {
         delete /api 
     "#;
 
-    let mut program = Interpreter::new(&code, env, UreqRunner);
+    let mut program = Interpreter::new(code, env, UreqRunner);
 
     program.run(None).unwrap();
 
@@ -200,7 +200,7 @@ fn responses_can_be_logged() {
         post /api
     "#;
 
-    let mut program = Interpreter::new(&code, env, UreqRunner);
+    let mut program = Interpreter::new(code, env, UreqRunner);
 
     program.run(None).unwrap();
 
@@ -251,7 +251,7 @@ fn let_bindings_work() {
         }
     "#;
 
-    let mut program = Interpreter::new(&code, env, UreqRunner);
+    let mut program = Interpreter::new(code, env, UreqRunner);
 
     program.run(None).unwrap();
 
@@ -297,7 +297,7 @@ fn running_specific_requests_by_name() {
 
     let mut program = Interpreter::new(&code, env, UreqRunner);
 
-    program.run(Some(vec!["test".to_string()])).unwrap();
+    program.run(Some(Arc::new(["test".to_string()]))).unwrap();
 
     for mock in mocks {
         mock.assert();
@@ -320,7 +320,9 @@ fn name_attribute_requires_value() {
 
     let mut program = Interpreter::new(&code, env, UreqRunner);
 
-    let name_att_without_arg_err = program.run(Some(vec!["test".to_string()])).unwrap_err();
+    let name_att_without_arg_err = program
+        .run(Some(Arc::new(["test".to_string()])))
+        .unwrap_err();
 
     assert_debug_snapshot!(name_att_without_arg_err);
 }
@@ -335,9 +337,11 @@ fn prevents_duplicate_attributes() {
     "#;
 
     let env = new_env_with_vars(&[("b_url", "asdfasdf")]);
-    let mut program = Interpreter::new(&code, env, UreqRunner);
+    let mut program = Interpreter::new(code, env, UreqRunner);
 
-    let duped_att_err = program.run(Some(vec!["test".to_string()])).unwrap_err();
+    let duped_att_err = program
+        .run(Some(Arc::new(["test".to_string()])))
+        .unwrap_err();
     assert_debug_snapshot!(duped_att_err);
 
     let code = r#"
@@ -348,9 +352,11 @@ fn prevents_duplicate_attributes() {
     "#;
 
     let env = new_env_with_vars(&[("b_url", "asdfasdf")]);
-    let mut program = Interpreter::new(&code, env, UreqRunner);
+    let mut program = Interpreter::new(code, env, UreqRunner);
 
-    let duped_att_err = program.run(Some(vec!["test".to_string()])).unwrap_err();
+    let duped_att_err = program
+        .run(Some(Arc::new(["test".to_string()])))
+        .unwrap_err();
     assert_debug_snapshot!(duped_att_err);
 }
 

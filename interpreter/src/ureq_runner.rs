@@ -7,7 +7,7 @@ use crate::ir::{prettify_json_string, Header, Request, Runner};
 pub struct UreqRunner;
 
 impl Runner for UreqRunner {
-    fn run_request(&mut self, request: Request) -> std::result::Result<String, Box<dyn Error>> {
+    fn run_request(&mut self, request: &Request) -> std::result::Result<String, Box<dyn Error>> {
         let path = &request.url;
 
         let mut req = match request.method {
@@ -18,11 +18,11 @@ impl Runner for UreqRunner {
             RequestMethod::DELETE => ureq::delete(path),
         };
 
-        for Header { name, value } in request.headers {
+        for Header { name, value } in request.headers.into_iter() {
             req = req.set(&name, &value);
         }
 
-        let res = if let Some(value) = request.body {
+        let res = if let Some(value) = request.body.clone() {
             let res = req.send_string(&value).map_err(ResponseErrorString::from)?;
 
             if res.content_type() == "application/json" {

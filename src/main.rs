@@ -107,7 +107,7 @@ fn run() -> Result<(), CliError> {
 
                 let code = fs::read_to_string(file)?;
 
-                Interpreter::new(&code, env, UreqRunner).run(request)?;
+                Interpreter::new(&code, env, UreqRunner).run(request.map(|r| r.into()))?;
             }
             Command::Env { command } => match command {
                 EnvCommand::Set {

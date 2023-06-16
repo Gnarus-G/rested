@@ -4,17 +4,17 @@ use serde::Serialize;
 
 use lexer::{
     locations::{Location, Span},
-    Token,
+    Array, Token,
 };
 
 #[derive(Debug, PartialEq, Serialize)]
 pub struct Program<'i> {
-    pub items: Vec<Item<'i>>,
+    pub items: Array<Item<'i>>,
 }
 
 impl<'i> Program<'i> {
-    pub fn new() -> Self {
-        Self { items: vec![] }
+    pub fn new(items: Array<Item<'i>>) -> Self {
+        Self { items }
     }
 }
 
@@ -75,7 +75,7 @@ impl<'i> From<&Token<'i>> for StringLiteral<'i> {
 
 #[derive(Debug, PartialEq, Serialize)]
 pub struct Block<'source> {
-    pub statements: Vec<Statement<'source>>,
+    pub statements: Array<Statement<'source>>,
     pub span: Span,
 }
 
@@ -100,11 +100,11 @@ pub enum Item<'i> {
     Attribute {
         location: Location,
         identifier: Identifier<'i>,
-        parameters: Vec<Expression<'i>>,
+        parameters: Array<Expression<'i>>,
     },
 }
 
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize)]
 pub enum RequestMethod {
     GET,
     POST,
@@ -142,16 +142,16 @@ pub enum Expression<'source> {
     Number(Literal<'source>),
     Call {
         identifier: Identifier<'source>,
-        arguments: Vec<Expression<'source>>,
+        arguments: Array<Expression<'source>>,
     },
-    Array(Spanned<Vec<Expression<'source>>>),
+    Array(Spanned<Array<Expression<'source>>>),
     Object(Spanned<BTreeMap<&'source str, Expression<'source>>>),
     Null(Span),
     EmptyArray(Span),
     EmptyObject(Span),
     TemplateSringLiteral {
         span: Span,
-        parts: Vec<Expression<'source>>,
+        parts: Array<Expression<'source>>,
     },
 }
 

@@ -1,5 +1,6 @@
 use error_meta::ContextualError;
 use lexer::locations::Span;
+use lexer::Array;
 use parser::ast::Identifier;
 use parser::error::{ParseError, ParserErrors};
 
@@ -56,7 +57,7 @@ impl std::fmt::Display for InterpreterErrorKind {
 }
 
 pub enum InterpreterError<'source> {
-    ParseErrors(Vec<ContextualError<ParseError<'source>>>),
+    ParseErrors(Array<ContextualError<ParseError<'source>>>),
     Error(ContextualError<InterpreterErrorKind>),
 }
 
@@ -73,7 +74,7 @@ impl<'source> std::fmt::Display for InterpreterError<'source> {
         match self {
             InterpreterError::Error(err) => write!(f, "{err}"),
             InterpreterError::ParseErrors(errors) => {
-                for err in errors {
+                for err in errors.into_iter() {
                     write!(f, "{err}")?
                 }
                 Ok(())
@@ -120,9 +121,7 @@ impl<'i> InterpErrorFactory<'i> {
         span: Span,
     ) -> ContextualError<InterpreterErrorKind> {
         ContextualError::new(
-            InterpreterErrorKind::EnvVariableNotFound {
-                name: variable,
-            },
+            InterpreterErrorKind::EnvVariableNotFound { name: variable },
             span,
             self.source_code,
         )
