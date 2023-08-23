@@ -1,7 +1,7 @@
+use crate::error_meta::ErrorDisplay;
+use crate::interpreter::error::InterpreterError;
+use crate::lexer::locations::Location;
 use colored::{ColoredString, Colorize};
-use error_meta::ErrorDisplay;
-use interpreter::error::InterpreterError;
-use lexer::locations::Location;
 use std::fmt::Display;
 
 pub struct CliError(pub String);
@@ -29,7 +29,7 @@ impl<'source> From<InterpreterError<'source>> for CliError {
 
 #[derive(Debug)]
 pub struct ColoredMetaError<'e, EK: Display + std::error::Error>(
-    pub &'e error_meta::ContextualError<EK>,
+    pub &'e crate::error_meta::ContextualError<EK>,
 );
 
 impl<'e, EK: Display + std::error::Error> std::error::Error for ColoredMetaError<'e, EK> {}
@@ -40,7 +40,7 @@ impl<'e, EK: Display + std::error::Error> std::fmt::Display for ColoredMetaError
     }
 }
 
-impl<'e, EK: Display + std::error::Error> error_meta::ErrorDisplay<ColoredString>
+impl<'e, EK: Display + std::error::Error> crate::error_meta::ErrorDisplay<ColoredString>
     for ColoredMetaError<'e, EK>
 {
     fn formatted_error(&self) -> ColoredString {

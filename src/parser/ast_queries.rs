@@ -1,0 +1,17 @@
+use super::ast::{Identifier, Program};
+use crate::lexer::{locations::Location, Array};
+
+impl<'source> Program<'source> {
+    pub fn variables(&self) -> impl Iterator<Item = &Identifier<'source>> {
+        self.items.iter().filter_map(|i| match i {
+            super::ast::Item::Let { identifier, .. } => Some(identifier),
+            _ => None,
+        })
+    }
+
+    pub fn variables_before(&self, location: Location) -> Array<&Identifier<'source>> {
+        self.variables()
+            .filter(|i| i.span.start.is_before(location))
+            .collect()
+    }
+}

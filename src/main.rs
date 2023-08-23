@@ -1,8 +1,6 @@
-mod error;
-
 use clap::{CommandFactory, Parser, Subcommand};
-use error::CliError;
-use interpreter::{environment::Environment, ureq_runner::UreqRunner, Interpreter};
+use rested::error::CliError;
+use rested::interpreter::{environment::Environment, ureq_runner::UreqRunner, Interpreter};
 
 use std::{
     collections::HashMap,
@@ -135,7 +133,7 @@ fn run() -> Result<(), CliError> {
             Command::Completion { shell } => {
                 clap_complete::generate(shell, &mut Cli::command(), "rstd", &mut std::io::stdout())
             }
-            Command::Lsp => language_server::start(),
+            Command::Lsp => rested::language_server::start(),
         },
         None => {
             print!(":>> ");

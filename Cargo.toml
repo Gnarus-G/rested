@@ -7,19 +7,21 @@ edition = "2021"
 name = "rstd"
 path = "src/main.rs"
 
-[workspace]
-members = ["lexer", "interpreter", "parser", "error_meta", "language_server"]
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+tokio = { version = "1.28.0", features = ["io-std", "rt-multi-thread"] }
 clap = { version = "4.2.1", features = ["derive"] }
 clap_complete = "4.2.1"
-interpreter = { path = "./interpreter" }
-language_server = { path = "./language_server" }
-lexer = { path = "./lexer" }
-error_meta = { path = "./error_meta" }
 colored = "2.0.0"
+serde = { version = "1.0.159", features = ["derive", "rc"] }
+serde_json = "1.0.95"
+ureq = "2.6.2"
+tower-lsp = "0.20.0"
+
+[dev-dependencies]
+mockito = "1.0.2"
+insta = { version = "1.29.0", features = ["ron"] }
 
 [profile.dev.package.insta]
 opt-level = 3

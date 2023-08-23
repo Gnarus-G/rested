@@ -1,9 +1,0 @@
----
-source: lexer/src/lib.rs
-description: "get\nhttp://localhost"
-expression: "lexer.into_iter().collect::<Vec<Token>>()"
----
-[
-    Get("get") at 0:0,
-    Url("http://localhost") at 1:0,
-]
