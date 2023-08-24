@@ -1,3 +1,6 @@
+[![crates.io](https://img.shields.io/crates/v/rested.svg)](https://crates.io/crates/rested)
+[![npm version](https://img.shields.io/npm/v/rstd.svg)](https://www.npmjs.com/package/rstd)
+
 # rested (Experimental)
 
 Language/Interpreter for easily defining and running requests to an http server.
