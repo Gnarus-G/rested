@@ -1,0 +1,41 @@
+{
+  "name": "rstd",
+  "version": "0.4.1",
+  "description": "Language/Interpreter for easily defining and running requests to an http server.",
+  "bin": {
+    "rstd": "./npm/run.js"
+  },
+  "files": [
+    "npm/**/*"
+  ],
+  "homepage": "https://github.com/Gnarus-G/rested#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gnarus-G/rested"
+  },
+  "scripts": {
+    "postinstall": "node ./npm/install.js"
+  },
+  "keywords": [
+    "rest",
+    "rest-client",
+    "http",
+    "script",
+    "language",
+    "cli",
+    "interpreter",
+    "rest-api",
+    "api",
+    "testing"
+  ],
+  "author": "Gnarus-G",
+  "license": "GPL-2.0",
+  "dependencies": {
+    "binary-install": "^1.1.0",
+    "tar": "^6.1.15",
+    "zod": "^3.21.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.1.6"
+  }
+}
