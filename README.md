@@ -9,15 +9,36 @@ Many developers have great success with that strategy, and it's powerful because
 
 # Install (the CLI Interpreter)
 
+From `crates.io`
+
 ```sh
-export VER=$(wget -qO- https://github.com/Gnarus-G/rested/releases/latest | grep -oP 'v\d+\.\d+\.\d+' | tail -n 1);
-curl -L https://github.com/Gnarus-G/rested/releases/download/$VER/rstd-$OSTYPE.tar.gz -o rested.tar.gz
-tar -xzvf rested.tar.gz rstd
-# Allow to able to run it from anywhere [Optional]
-sudo mv rstd /usr/local/bin
+cargo install rested
+```
+
+or from `npmjs.com`
+
+```sh
+npm install -g rstd
 ```
 
 # Usage
+
+```
+The CLI runtime for Rested, the language/interpreter for easily defining and running requests to an http server
+
+Usage: rstd [COMMAND]
+
+Commands:
+  run         Run a script written in the language
+  env         Operate on the environment variables available in the runtime
+  completion  Generate a completions file for a specified shell
+  lsp         Start the rested language server
+  help        Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
+```
 
 Write a script, for example
 
