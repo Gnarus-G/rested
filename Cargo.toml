@@ -1,7 +1,11 @@
 [package]
 name = "rested"
-version = "0.4.0"
+version = "0.4.1"
+description = "Language/Interpreter for easily defining and running requests to an http server."
+homepage = "https://github.com/Gnarus-G/rested"
+repository = "https://github.com/Gnarus-G/rested"
 edition = "2021"
+license = "GPL-2.0"
 
 [[bin]]
 name = "rstd"
