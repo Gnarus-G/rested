@@ -30,10 +30,14 @@ enum Command {
         /// Path to the script to run
         file: Option<PathBuf>,
     },
-    /// Operate on the environment variables available in the runtime
+    /// Open your default editor to start editing a temporary file
     Scratch {
         #[command(subcommand)]
         command: Option<ScratchCommand>,
+
+        /// Run the saved file when done editing
+        #[arg(long)]
+        run: bool,
     },
     /// Operate on the environment variables available in the runtime
     Env {
@@ -145,7 +149,7 @@ fn run() -> Result<(), CliError> {
             clap_complete::generate(shell, &mut Cli::command(), "rstd", &mut std::io::stdout())
         }
         Command::Lsp => rested::language_server::start(),
-        Command::Scratch { command: _ } => {
+        Command::Scratch { command: _, run } => {
             let default_editor = env::var("EDITOR").map_err(|e| CliError(e.to_string()))?;
 
             let file_name = format!(
@@ -159,9 +163,14 @@ fn run() -> Result<(), CliError> {
             fs::File::create(&file_name)?;
 
             std::process::Command::new(default_editor)
-                .arg(file_name)
+                .arg(&file_name)
                 .spawn()?
                 .wait()?;
+
+            if run {
+                let code = fs::read_to_string(file_name)?;
+                Interpreter::new(&code, env, UreqRunner).run(None)?;
+            }
         }
     };
 
