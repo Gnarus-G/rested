@@ -2,6 +2,7 @@ use clap::{CommandFactory, Parser, Subcommand};
 use rested::error::CliError;
 use rested::interpreter::{environment::Environment, ureq_runner::UreqRunner, Interpreter};
 
+use std::io::{stdin, Read};
 use std::{collections::HashMap, fs, path::PathBuf};
 
 #[derive(Parser, Debug)]
@@ -25,7 +26,7 @@ enum Command {
         request: Option<Vec<String>>,
 
         /// Path to the script to run
-        file: PathBuf,
+        file: Option<PathBuf>,
     },
     /// Operate on the environment variables available in the runtime
     Env {
@@ -97,7 +98,11 @@ fn run() -> Result<(), CliError> {
                 env.select_variables_namespace(ns);
             }
 
-            let code = fs::read_to_string(file)?;
+            let code = file.map(fs::read_to_string).unwrap_or_else(|| {
+                let mut buf = String::new();
+                stdin().read_to_string(&mut buf)?;
+                Ok(buf)
+            })?;
 
             Interpreter::new(&code, env, UreqRunner).run(request.map(|r| r.into()))?;
         }
