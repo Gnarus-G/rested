@@ -2,19 +2,14 @@ use clap::{CommandFactory, Parser, Subcommand};
 use rested::error::CliError;
 use rested::interpreter::{environment::Environment, ureq_runner::UreqRunner, Interpreter};
 
-use std::{
-    collections::HashMap,
-    fs,
-    io::{stdin, stdout, Write},
-    path::PathBuf,
-};
+use std::{collections::HashMap, fs, path::PathBuf};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
 /// The CLI runtime for Rested, the language/interpreter for easily defining and running requests to an http server.
 struct Cli {
     #[command(subcommand)]
-    command: Option<Command>,
+    command: Command,
 }
 
 #[derive(Debug, Subcommand)]
@@ -93,64 +88,47 @@ fn run() -> Result<(), CliError> {
     let mut env = Environment::new(PathBuf::from(".vars.rd.json"))?;
 
     match cli.command {
-        Some(command) => match command {
-            Command::Run {
-                file,
+        Command::Run {
+            file,
+            namespace,
+            request,
+        } => {
+            if let Some(ns) = namespace {
+                env.select_variables_namespace(ns);
+            }
+
+            let code = fs::read_to_string(file)?;
+
+            Interpreter::new(&code, env, UreqRunner).run(request.map(|r| r.into()))?;
+        }
+        Command::Env { command } => match command {
+            EnvCommand::Set {
+                name,
+                value,
                 namespace,
-                request,
             } => {
                 if let Some(ns) = namespace {
                     env.select_variables_namespace(ns);
                 }
-
-                let code = fs::read_to_string(file)?;
-
-                Interpreter::new(&code, env, UreqRunner).run(request.map(|r| r.into()))?;
+                env.set_variable(name, value)
+                    .map_err(|e| CliError(e.to_string()))?;
             }
-            Command::Env { command } => match command {
-                EnvCommand::Set {
-                    name,
-                    value,
-                    namespace,
-                } => {
-                    if let Some(ns) = namespace {
-                        env.select_variables_namespace(ns);
-                    }
-                    env.set_variable(name, value)
-                        .map_err(|e| CliError(e.to_string()))?;
+            EnvCommand::NS { command } => match command {
+                EnvNamespaceCommand::Add { name } => {
+                    env.namespaced_variables.insert(name, HashMap::new());
+                    env.save_to_file().map_err(|e| CliError(e.to_string()))?;
                 }
-                EnvCommand::NS { command } => match command {
-                    EnvNamespaceCommand::Add { name } => {
-                        env.namespaced_variables.insert(name, HashMap::new());
-                        env.save_to_file().map_err(|e| CliError(e.to_string()))?;
-                    }
-                    EnvNamespaceCommand::Rm { name } => {
-                        env.namespaced_variables.remove(&name);
-                        env.save_to_file().map_err(|e| CliError(e.to_string()))?;
-                    }
-                },
+                EnvNamespaceCommand::Rm { name } => {
+                    env.namespaced_variables.remove(&name);
+                    env.save_to_file().map_err(|e| CliError(e.to_string()))?;
+                }
             },
-            Command::Completion { shell } => {
-                clap_complete::generate(shell, &mut Cli::command(), "rstd", &mut std::io::stdout())
-            }
-            Command::Lsp => rested::language_server::start(),
         },
-        None => {
-            print!(":>> ");
-            stdout().flush()?;
-
-            for line in stdin().lines() {
-                let code = line?;
-
-                let env = Environment::new(PathBuf::from(".vars.rd.json"))?;
-
-                Interpreter::new(&code, env, UreqRunner).run(None)?;
-
-                print!(":>> ");
-                stdout().flush()?;
-            }
+        Command::Completion { shell } => {
+            clap_complete::generate(shell, &mut Cli::command(), "rstd", &mut std::io::stdout())
         }
-    }
+        Command::Lsp => rested::language_server::start(),
+    };
 
     Ok(())
 }
