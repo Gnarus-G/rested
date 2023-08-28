@@ -2,7 +2,9 @@ use clap::{CommandFactory, Parser, Subcommand};
 use rested::error::CliError;
 use rested::interpreter::{environment::Environment, ureq_runner::UreqRunner, Interpreter};
 
+use std::env;
 use std::io::{stdin, Read};
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::{collections::HashMap, fs, path::PathBuf};
 
 #[derive(Parser, Debug)]
@@ -27,6 +29,11 @@ enum Command {
 
         /// Path to the script to run
         file: Option<PathBuf>,
+    },
+    /// Operate on the environment variables available in the runtime
+    Scratch {
+        #[command(subcommand)]
+        command: Option<ScratchCommand>,
     },
     /// Operate on the environment variables available in the runtime
     Env {
@@ -75,6 +82,11 @@ enum EnvNamespaceCommand {
         /// Of the namespace
         name: String,
     },
+}
+
+#[derive(Debug, Subcommand)]
+enum ScratchCommand {
+    History {},
 }
 
 fn main() {
@@ -133,6 +145,24 @@ fn run() -> Result<(), CliError> {
             clap_complete::generate(shell, &mut Cli::command(), "rstd", &mut std::io::stdout())
         }
         Command::Lsp => rested::language_server::start(),
+        Command::Scratch { command: _ } => {
+            let default_editor = env::var("EDITOR").map_err(|e| CliError(e.to_string()))?;
+
+            let file_name = format!(
+                "scratch-{:?}.rd",
+                SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .map_err(|e| CliError(e.to_string()))?
+                    .as_millis()
+            );
+
+            fs::File::create(&file_name)?;
+
+            std::process::Command::new(default_editor)
+                .arg(file_name)
+                .spawn()?
+                .wait()?;
+        }
     };
 
     Ok(())
