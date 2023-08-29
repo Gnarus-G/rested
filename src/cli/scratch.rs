@@ -36,23 +36,29 @@ pub struct ScratchCommandArgs {
 
 #[derive(Debug, Subcommand)]
 pub enum ScratchCommand {
-    History {},
+    History {
+        // Don't show scratch file previews
+        #[arg(short, long)]
+        quiet: bool,
+    },
 }
 
 impl ScratchCommandArgs {
     pub fn handle(&self, env: Environment) -> Result<(), CliError> {
         match &self.command {
             Some(command) => match command {
-                ScratchCommand::History {} => {
+                ScratchCommand::History { quiet } => {
                     for file_path in fetch_scratch_files()? {
                         println!("{}", file_path.to_string_lossy().bold());
 
-                        let three_lines = fs::File::open(file_path)
-                            .map(BufReader::new)
-                            .map(|reader| reader.lines().flatten().take(3))?;
+                        if !quiet {
+                            let three_lines = fs::File::open(file_path)
+                                .map(BufReader::new)
+                                .map(|reader| reader.lines().flatten().take(3))?;
 
-                        for (idx, line) in three_lines.enumerate() {
-                            eprintln!("{}", format!("  {}|  {}", idx + 1, line).dimmed());
+                            for (idx, line) in three_lines.enumerate() {
+                                eprintln!("{}", format!("  {}|  {}", idx + 1, line).dimmed());
+                            }
                         }
                     }
                 }
