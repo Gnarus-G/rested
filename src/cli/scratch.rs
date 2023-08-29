@@ -1,11 +1,13 @@
 use std::{
     borrow::Cow,
     env, fs,
+    io::{BufRead, BufReader},
     path::PathBuf,
     time::{SystemTime, UNIX_EPOCH},
 };
 
 use clap::{Args, Subcommand};
+use colored::Colorize;
 use rested::{error::CliError, interpreter::environment::Environment};
 
 use super::run::RunArgs;
@@ -32,57 +34,58 @@ pub struct ScratchCommandArgs {
     request: Option<Vec<String>>,
 }
 
+#[derive(Debug, Subcommand)]
+pub enum ScratchCommand {
+    History {},
+}
+
 impl ScratchCommandArgs {
     pub fn handle(&self, env: Environment) -> Result<(), CliError> {
-        let default_editor = env::var("EDITOR").map_err(|e| CliError(e.to_string()))?;
+        match &self.command {
+            Some(command) => match command {
+                ScratchCommand::History {} => {
+                    for file_path in fetch_scratch_files()? {
+                        println!("{}", file_path.to_string_lossy().bold());
 
-        let file_name = if self.new {
-            create_scratch_file()?
-        } else {
-            let entries = fs::read_dir(".")?
-                .map(|res| res.map(|e| e.path()))
-                .collect::<Result<Vec<_>, std::io::Error>>()?;
+                        let three_lines = fs::File::open(file_path)
+                            .map(BufReader::new)
+                            .map(|reader| reader.lines().flatten().take(3))?;
 
-            let mut scratch_files = entries
-                .into_iter()
-                .filter(|e| {
-                    matches!(
-                        e.extension().map(|e| e.to_string_lossy()),
-                        Some(Cow::Borrowed("rd"))
-                    )
-                })
-                .collect::<Vec<_>>();
+                        for (idx, line) in three_lines.enumerate() {
+                            eprintln!("{}", format!("  {}|  {}", idx + 1, line).dimmed());
+                        }
+                    }
+                }
+            },
+            None => {
+                let default_editor = env::var("EDITOR").map_err(|e| CliError(e.to_string()))?;
 
-            scratch_files.sort();
+                let file_name = if self.new {
+                    create_scratch_file()?
+                } else if let Some(file) = fetch_scratch_files()?.last().cloned() {
+                    file
+                } else {
+                    create_scratch_file()?
+                };
 
-            if let Some(file) = scratch_files.last().cloned() {
-                file
-            } else {
-                create_scratch_file()?
+                std::process::Command::new(default_editor)
+                    .arg(&file_name)
+                    .spawn()?
+                    .wait()?;
+
+                if self.run {
+                    RunArgs {
+                        request: self.request.clone(),
+                        namespace: self.namespace.clone(),
+                        file: Some(file_name),
+                    }
+                    .handle(env)?;
+                }
             }
-        };
-
-        std::process::Command::new(default_editor)
-            .arg(&file_name)
-            .spawn()?
-            .wait()?;
-
-        if self.run {
-            RunArgs {
-                request: self.request.clone(),
-                namespace: self.namespace.clone(),
-                file: Some(file_name),
-            }
-            .handle(env)?;
         }
 
         Ok(())
     }
-}
-
-#[derive(Debug, Subcommand)]
-pub enum ScratchCommand {
-    History {},
 }
 
 fn create_scratch_file() -> Result<PathBuf, CliError> {
@@ -98,4 +101,24 @@ fn create_scratch_file() -> Result<PathBuf, CliError> {
     fs::File::create(&path)?;
 
     Ok(path)
+}
+
+fn fetch_scratch_files() -> Result<Vec<PathBuf>, std::io::Error> {
+    let entries = fs::read_dir(".")?
+        .map(|res| res.map(|e| e.path()))
+        .collect::<Result<Vec<_>, std::io::Error>>()?;
+
+    let mut scratch_files = entries
+        .into_iter()
+        .filter(|e| {
+            matches!(
+                e.extension().map(|e| e.to_string_lossy()),
+                Some(Cow::Borrowed("rd"))
+            )
+        })
+        .collect::<Vec<_>>();
+
+    scratch_files.sort();
+
+    Ok(scratch_files)
 }
