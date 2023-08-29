@@ -6,23 +6,30 @@ use std::{
 };
 
 use clap::{Args, Subcommand};
-use rested::{
-    error::CliError,
-    interpreter::{environment::Environment, ureq_runner::UreqRunner, Interpreter},
-};
+use rested::{error::CliError, interpreter::environment::Environment};
+
+use super::run::RunArgs;
 
 #[derive(Debug, Args)]
 pub struct ScratchCommandArgs {
     #[command(subcommand)]
     command: Option<ScratchCommand>,
 
+    /// Create a new scratch file
+    #[arg(long)]
+    new: bool,
+
     /// Run the saved file when done editing
     #[arg(long)]
     run: bool,
 
-    /// Create a new scratch file
-    #[arg(short, long)]
-    new: bool,
+    /// Namespace in which to look for environment variables
+    #[arg(short = 'n', long, requires = "run")]
+    namespace: Option<String>,
+
+    /// One or more names of the specific request(s) to run
+    #[arg(short = 'r', long, requires = "run", num_args(1..))]
+    request: Option<Vec<String>>,
 }
 
 impl ScratchCommandArgs {
@@ -61,8 +68,12 @@ impl ScratchCommandArgs {
             .wait()?;
 
         if self.run {
-            let code = fs::read_to_string(file_name)?;
-            Interpreter::new(&code, env, UreqRunner).run(None)?;
+            RunArgs {
+                request: self.request.clone(),
+                namespace: self.namespace.clone(),
+                file: Some(file_name),
+            }
+            .handle(env)?;
         }
 
         Ok(())

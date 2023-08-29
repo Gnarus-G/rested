@@ -14,14 +14,14 @@ use rested::{
 pub struct RunArgs {
     /// Namespace in which to look for environment variables
     #[arg(short = 'n', long)]
-    namespace: Option<String>,
+    pub namespace: Option<String>,
 
     /// One or more names of the specific request(s) to run
     #[arg(short = 'r', long, num_args(1..))]
-    request: Option<Vec<String>>,
+    pub request: Option<Vec<String>>,
 
     /// Path to the script to run
-    file: Option<PathBuf>,
+    pub file: Option<PathBuf>,
 }
 
 impl RunArgs {
