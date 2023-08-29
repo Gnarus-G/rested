@@ -1,12 +1,12 @@
 mod cli;
 
 use clap::{CommandFactory, Parser, Subcommand};
+use cli::run::RunArgs;
 use cli::scratch::ScratchCommandArgs;
 use rested::error::CliError;
-use rested::interpreter::{environment::Environment, ureq_runner::UreqRunner, Interpreter};
+use rested::interpreter::environment::Environment;
 
-use std::io::{stdin, Read};
-use std::{collections::HashMap, fs, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
@@ -19,18 +19,7 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Command {
     /// Run a script written in the language
-    Run {
-        /// Namespace in which to look for environment variables
-        #[arg(short = 'n', long)]
-        namespace: Option<String>,
-
-        /// One or more names of the specific request(s) to run
-        #[arg(short = 'r', long, num_args(1..))]
-        request: Option<Vec<String>>,
-
-        /// Path to the script to run
-        file: Option<PathBuf>,
-    },
+    Run(RunArgs),
     /// Open your default editor to start editing a temporary file
     Scratch(ScratchCommandArgs),
     /// Operate on the environment variables available in the runtime
@@ -99,23 +88,6 @@ fn run() -> Result<(), CliError> {
     let mut env = Environment::new(PathBuf::from(".vars.rd.json"))?;
 
     match cli.command {
-        Command::Run {
-            file,
-            namespace,
-            request,
-        } => {
-            if let Some(ns) = namespace {
-                env.select_variables_namespace(ns);
-            }
-
-            let code = file.map(fs::read_to_string).unwrap_or_else(|| {
-                let mut buf = String::new();
-                stdin().read_to_string(&mut buf)?;
-                Ok(buf)
-            })?;
-
-            Interpreter::new(&code, env, UreqRunner).run(request.map(|r| r.into()))?;
-        }
         Command::Env { command } => match command {
             EnvCommand::Set {
                 name,
@@ -143,6 +115,7 @@ fn run() -> Result<(), CliError> {
             clap_complete::generate(shell, &mut Cli::command(), "rstd", &mut std::io::stdout())
         }
         Command::Lsp => rested::language_server::start(),
+        Command::Run(run) => run.handle(env)?,
         Command::Scratch(scratch) => scratch.handle(env)?,
     };
 
