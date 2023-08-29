@@ -2,6 +2,7 @@ use clap::{CommandFactory, Parser, Subcommand};
 use rested::error::CliError;
 use rested::interpreter::{environment::Environment, ureq_runner::UreqRunner, Interpreter};
 
+use std::borrow::Cow;
 use std::env;
 use std::io::{stdin, Read};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -38,6 +39,10 @@ enum Command {
         /// Run the saved file when done editing
         #[arg(long)]
         run: bool,
+
+        /// Create a new scratch file
+        #[arg(short, long)]
+        new: bool,
     },
     /// Operate on the environment variables available in the runtime
     Env {
@@ -149,18 +154,38 @@ fn run() -> Result<(), CliError> {
             clap_complete::generate(shell, &mut Cli::command(), "rstd", &mut std::io::stdout())
         }
         Command::Lsp => rested::language_server::start(),
-        Command::Scratch { command: _, run } => {
+        Command::Scratch {
+            command: _,
+            run,
+            new,
+        } => {
             let default_editor = env::var("EDITOR").map_err(|e| CliError(e.to_string()))?;
 
-            let file_name = format!(
-                "scratch-{:?}.rd",
-                SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .map_err(|e| CliError(e.to_string()))?
-                    .as_millis()
-            );
+            let file_name = if new {
+                create_scratch_file()?
+            } else {
+                let entries = fs::read_dir(".")?
+                    .map(|res| res.map(|e| e.path()))
+                    .collect::<Result<Vec<_>, std::io::Error>>()?;
 
-            fs::File::create(&file_name)?;
+                let mut scratch_files = entries
+                    .into_iter()
+                    .filter(|e| {
+                        matches!(
+                            e.extension().map(|e| e.to_string_lossy()),
+                            Some(Cow::Borrowed("rd"))
+                        )
+                    })
+                    .collect::<Vec<_>>();
+
+                scratch_files.sort();
+
+                if let Some(file) = scratch_files.last().cloned() {
+                    file
+                } else {
+                    create_scratch_file()?
+                }
+            };
 
             std::process::Command::new(default_editor)
                 .arg(&file_name)
@@ -175,4 +200,19 @@ fn run() -> Result<(), CliError> {
     };
 
     Ok(())
+}
+
+fn create_scratch_file() -> Result<PathBuf, CliError> {
+    let path = format!(
+        "scratch-{:?}.rd",
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|e| CliError(e.to_string()))?
+            .as_millis()
+    )
+    .into();
+
+    fs::File::create(&path)?;
+
+    Ok(path)
 }
