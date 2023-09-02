@@ -12,6 +12,12 @@ impl From<std::io::Error> for CliError {
     }
 }
 
+impl From<confy::ConfyError> for CliError {
+    fn from(value: confy::ConfyError) -> Self {
+        Self(value.to_string())
+    }
+}
+
 impl<'source> From<InterpreterError<'source>> for CliError {
     fn from(value: InterpreterError) -> Self {
         match value {
