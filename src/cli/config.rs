@@ -87,12 +87,12 @@ impl ConfigArgs {
     pub fn handle(self) -> Result<(), CliError> {
         match self.command {
             ConfigCommand::ScratchDirectory { command } => match command {
-                MutateScratchDirCommand::Set { value: path } => {
+                ManageScratchDirCommand::Set { value: path } => {
                     let mut config = Config::load()?;
                     config.scratch_dir = path.check_is_dir()?;
                     config.save()?;
                 }
-                MutateScratchDirCommand::Show {} => {
+                ManageScratchDirCommand::Show {} => {
                     println!("{}", Config::load()?.scratch_dir.to_string_lossy());
                 }
             },
@@ -112,14 +112,14 @@ enum ConfigCommand {
     /// The folder to contain scratch files that are saved
     ScratchDirectory {
         #[command(subcommand)]
-        command: MutateScratchDirCommand,
+        command: ManageScratchDirCommand,
     },
     /// Where these configurations are persisted
     Path {},
 }
 
 #[derive(Debug, Subcommand)]
-enum MutateScratchDirCommand {
+enum ManageScratchDirCommand {
     /// Set the path
     Set { value: PathBuf },
     /// Print the path
