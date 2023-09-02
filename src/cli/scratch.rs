@@ -10,7 +10,7 @@ use clap::{Args, Subcommand};
 use colored::Colorize;
 use rested::{error::CliError, interpreter::environment::Environment};
 
-use super::run::RunArgs;
+use super::{config::Config, run::RunArgs};
 
 #[derive(Debug, Args)]
 pub struct ScratchCommandArgs {
@@ -95,22 +95,25 @@ impl ScratchCommandArgs {
 }
 
 fn create_scratch_file() -> Result<PathBuf, CliError> {
-    let path = format!(
+    let prefix_path = Config::load()?.scratch_dir;
+
+    let path = prefix_path.join::<String>(format!(
         "scratch-{:?}.rd",
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map_err(|e| CliError(e.to_string()))?
             .as_millis()
-    )
-    .into();
+    ));
 
     fs::File::create(&path)?;
 
     Ok(path)
 }
 
-fn fetch_scratch_files() -> Result<Vec<PathBuf>, std::io::Error> {
-    let entries = fs::read_dir(".")?
+fn fetch_scratch_files() -> Result<Vec<PathBuf>, CliError> {
+    let prefix_path = Config::load()?.scratch_dir;
+
+    let entries = fs::read_dir(prefix_path)?
         .map(|res| res.map(|e| e.path()))
         .collect::<Result<Vec<_>, std::io::Error>>()?;
 

@@ -1,6 +1,7 @@
 mod cli;
 
 use clap::{CommandFactory, Parser, Subcommand};
+use cli::config::ConfigArgs;
 use cli::run::RunArgs;
 use cli::scratch::ScratchCommandArgs;
 use rested::error::CliError;
@@ -34,6 +35,9 @@ enum Command {
     },
     /// Start the rested language server
     Lsp,
+
+    /// Configure, or view current configurations
+    Config(ConfigArgs),
 }
 
 #[derive(Debug, Subcommand)]
@@ -117,6 +121,7 @@ fn run() -> Result<(), CliError> {
         Command::Lsp => rested::language_server::start(),
         Command::Run(run) => run.handle(env)?,
         Command::Scratch(scratch) => scratch.handle(env)?,
+        Command::Config(config) => config.handle()?,
     };
 
     Ok(())
