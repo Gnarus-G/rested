@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
 
 use clap::{Parser, Subcommand};
 use rested::error::CliError;
@@ -21,9 +21,33 @@ impl Config {
 
 impl Default for Config {
     fn default() -> Self {
-        Self {
-            scratch_dir: PathBuf::from("."),
+        let folder_name = "rested-scratch";
+
+        #[cfg(windows)]
+        let home_dir_key = "USERPROFILE";
+
+        #[cfg(unix)]
+        let home_dir_key = "HOME";
+
+        let home = std::env::var(home_dir_key).unwrap_or_else(|_| {
+            panic!(
+                "failed to read the user's home directory, using the {} environment variable",
+                home_dir_key
+            )
+        });
+
+        let scratch_dir = PathBuf::from(home).join(folder_name);
+
+        if !scratch_dir.exists() {
+            fs::create_dir(&scratch_dir).unwrap_or_else(|_| {
+                panic!(
+                    "failed to create a directory for the scratch files: {}",
+                    scratch_dir.to_string_lossy()
+                )
+            })
         }
+
+        Self { scratch_dir }
     }
 }
 
