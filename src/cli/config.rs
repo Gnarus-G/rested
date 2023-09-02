@@ -57,13 +57,39 @@ pub struct ConfigArgs {
     command: ConfigCommand,
 }
 
+trait ValidateDir {
+    fn check_is_dir(self) -> Result<Self, CliError>
+    where
+        Self: std::marker::Sized;
+}
+
+impl ValidateDir for PathBuf {
+    fn check_is_dir(self) -> Result<Self, CliError> {
+        if !self.exists() {
+            return Err(CliError(format!(
+                "'{}' does not exist",
+                self.to_string_lossy()
+            )));
+        }
+
+        if !self.is_dir() {
+            return Err(CliError(format!(
+                "'{}' is not a folder",
+                self.to_string_lossy()
+            )));
+        }
+
+        Ok(self)
+    }
+}
+
 impl ConfigArgs {
     pub fn handle(self) -> Result<(), CliError> {
         match self.command {
             ConfigCommand::ScratchDirectory { command } => match command {
-                MutateScratchDirCommand::Set { value } => {
+                MutateScratchDirCommand::Set { value: path } => {
                     let mut config = Config::load()?;
-                    config.scratch_dir = value;
+                    config.scratch_dir = path.check_is_dir()?;
                     config.save()?;
                 }
                 MutateScratchDirCommand::Show {} => {
