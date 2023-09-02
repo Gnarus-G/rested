@@ -4,10 +4,13 @@ use std::{
     path::PathBuf,
 };
 
+use anyhow::anyhow;
 use clap::Args;
 use rested::{
-    error::CliError,
-    interpreter::{environment::Environment, ureq_runner::UreqRunner, Interpreter},
+    error::ColoredMetaError,
+    interpreter::{
+        environment::Environment, error::InterpreterError, ureq_runner::UreqRunner, Interpreter,
+    },
 };
 
 #[derive(Debug, Args)]
@@ -25,7 +28,7 @@ pub struct RunArgs {
 }
 
 impl RunArgs {
-    pub fn handle(self, mut env: Environment) -> Result<(), CliError> {
+    pub fn handle(self, mut env: Environment) -> anyhow::Result<()> {
         if let Some(ns) = self.namespace {
             env.select_variables_namespace(ns);
         }
@@ -36,7 +39,21 @@ impl RunArgs {
             Ok(buf)
         })?;
 
-        Interpreter::new(&code, env, UreqRunner).run(self.request.map(|r| r.into()))?;
+        let mut interp = Interpreter::new(&code, env, UreqRunner);
+
+        interp
+            .run(self.request.map(|r| r.into()))
+            .map_err(|value| match value {
+                InterpreterError::ParseErrors(errors) => {
+                    let error_string: String = errors
+                        .iter()
+                        .map(|e| ColoredMetaError(e).to_string())
+                        .collect();
+
+                    return anyhow!(error_string);
+                }
+                InterpreterError::Error(e) => anyhow!(ColoredMetaError(&e).to_string()),
+            })?;
 
         Ok(())
     }

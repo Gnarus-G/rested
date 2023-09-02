@@ -8,7 +8,7 @@ use std::{
 
 use clap::{Args, Subcommand};
 use colored::Colorize;
-use rested::{error::CliError, interpreter::environment::Environment};
+use rested::interpreter::environment::Environment;
 
 use super::{config::Config, run::RunArgs};
 
@@ -45,7 +45,7 @@ pub enum ScratchCommand {
 }
 
 impl ScratchCommandArgs {
-    pub fn handle(&self, env: Environment) -> Result<(), CliError> {
+    pub fn handle(&self, env: Environment) -> anyhow::Result<()> {
         match &self.command {
             Some(command) => match command {
                 ScratchCommand::History { quiet } => {
@@ -65,7 +65,7 @@ impl ScratchCommandArgs {
                 }
             },
             None => {
-                let default_editor = env::var("EDITOR").map_err(|e| CliError(e.to_string()))?;
+                let default_editor = env::var("EDITOR")?;
 
                 let file_name = if self.new {
                     create_scratch_file()?
@@ -95,15 +95,12 @@ impl ScratchCommandArgs {
     }
 }
 
-fn create_scratch_file() -> Result<PathBuf, CliError> {
+fn create_scratch_file() -> anyhow::Result<PathBuf> {
     let prefix_path = Config::load()?.scratch_dir;
 
     let path = prefix_path.join::<String>(format!(
         "scratch-{:?}.rd",
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map_err(|e| CliError(e.to_string()))?
-            .as_millis()
+        SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
     ));
 
     fs::File::create(&path)?;
@@ -111,7 +108,7 @@ fn create_scratch_file() -> Result<PathBuf, CliError> {
     Ok(path)
 }
 
-fn fetch_scratch_files() -> Result<Vec<PathBuf>, CliError> {
+fn fetch_scratch_files() -> anyhow::Result<Vec<PathBuf>> {
     let prefix_path = Config::load()?.scratch_dir;
 
     let entries = fs::read_dir(prefix_path)?

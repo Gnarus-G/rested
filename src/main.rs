@@ -4,7 +4,6 @@ use clap::{CommandFactory, Parser, Subcommand};
 use cli::config::ConfigArgs;
 use cli::run::RunArgs;
 use cli::scratch::ScratchCommandArgs;
-use rested::error::CliError;
 use rested::interpreter::environment::Environment;
 
 use std::{collections::HashMap, path::PathBuf};
@@ -77,11 +76,11 @@ enum EnvNamespaceCommand {
 
 fn main() {
     if let Err(e) = run() {
-        eprint!("{}", e.0);
+        eprint!("{}", e);
     }
 }
 
-fn run() -> Result<(), CliError> {
+fn run() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     let mut env = Environment::new(PathBuf::from(".vars.rd.json"))?;
@@ -96,17 +95,16 @@ fn run() -> Result<(), CliError> {
                 if let Some(ns) = namespace {
                     env.select_variables_namespace(ns);
                 }
-                env.set_variable(name, value)
-                    .map_err(|e| CliError(e.to_string()))?;
+                env.set_variable(name, value)?;
             }
             EnvCommand::NS { command } => match command {
                 EnvNamespaceCommand::Add { name } => {
                     env.namespaced_variables.insert(name, HashMap::new());
-                    env.save_to_file().map_err(|e| CliError(e.to_string()))?;
+                    env.save_to_file()?;
                 }
                 EnvNamespaceCommand::Rm { name } => {
                     env.namespaced_variables.remove(&name);
-                    env.save_to_file().map_err(|e| CliError(e.to_string()))?;
+                    env.save_to_file()?;
                 }
             },
         },

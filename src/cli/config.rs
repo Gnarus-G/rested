@@ -1,7 +1,7 @@
+use anyhow::anyhow;
 use std::{fs, path::PathBuf};
 
 use clap::{Parser, Subcommand};
-use rested::error::CliError;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -10,11 +10,11 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn load() -> Result<Self, CliError> {
+    pub fn load() -> anyhow::Result<Self> {
         return confy::load("rested", None).map_err(|e| e.into());
     }
 
-    pub fn save(self) -> Result<(), CliError> {
+    pub fn save(self) -> anyhow::Result<()> {
         return confy::store("rested", None, self).map_err(|e| e.into());
     }
 }
@@ -58,25 +58,19 @@ pub struct ConfigArgs {
 }
 
 trait ValidateDir {
-    fn check_is_dir(self) -> Result<Self, CliError>
+    fn check_is_dir(self) -> anyhow::Result<Self>
     where
         Self: std::marker::Sized;
 }
 
 impl ValidateDir for PathBuf {
-    fn check_is_dir(self) -> Result<Self, CliError> {
+    fn check_is_dir(self) -> anyhow::Result<Self> {
         if !self.exists() {
-            return Err(CliError(format!(
-                "'{}' does not exist",
-                self.to_string_lossy()
-            )));
+            return Err(anyhow!("'{}' does not exist", self.to_string_lossy()));
         }
 
         if !self.is_dir() {
-            return Err(CliError(format!(
-                "'{}' is not a folder",
-                self.to_string_lossy()
-            )));
+            return Err(anyhow!("'{}' is not a folder", self.to_string_lossy()));
         }
 
         Ok(self)
@@ -84,7 +78,7 @@ impl ValidateDir for PathBuf {
 }
 
 impl ConfigArgs {
-    pub fn handle(self) -> Result<(), CliError> {
+    pub fn handle(self) -> anyhow::Result<()> {
         match self.command {
             ConfigCommand::ScratchDirectory { command } => match command {
                 ManageScratchDirCommand::Set { value: path } => {

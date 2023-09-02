@@ -1,4 +1,5 @@
-use std::{collections::HashMap, error::Error, path::PathBuf};
+use anyhow;
+use std::{collections::HashMap, path::PathBuf};
 
 pub struct Environment {
     env_file_name: PathBuf,
@@ -7,7 +8,7 @@ pub struct Environment {
 }
 
 impl Environment {
-    pub fn new(file_name: PathBuf) -> Result<Self, std::io::Error> {
+    pub fn new(file_name: PathBuf) -> anyhow::Result<Self, std::io::Error> {
         let mut env = Self {
             env_file_name: file_name,
             namespaced_variables: HashMap::from([("default".to_string(), HashMap::new())]),
@@ -19,7 +20,7 @@ impl Environment {
         Ok(env)
     }
 
-    fn load_variables_from_file(&mut self) -> Result<(), std::io::Error> {
+    fn load_variables_from_file(&mut self) -> anyhow::Result<(), std::io::Error> {
         let file = std::fs::File::options()
             .read(true)
             .write(true)
@@ -53,7 +54,7 @@ impl Environment {
         variables_map.get(name)
     }
 
-    pub fn set_variable(&mut self, name: String, value: String) -> Result<(), Box<dyn Error>> {
+    pub fn set_variable(&mut self, name: String, value: String) -> anyhow::Result<()> {
         let variables_map = self
             .namespaced_variables
             .get_mut(&self.selected_namespace())
@@ -66,7 +67,7 @@ impl Environment {
         Ok(())
     }
 
-    pub fn save_to_file(&self) -> Result<(), Box<dyn Error>> {
+    pub fn save_to_file(&self) -> anyhow::Result<()> {
         let file = std::fs::File::options()
             .write(true)
             .truncate(true)

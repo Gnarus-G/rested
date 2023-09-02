@@ -23,6 +23,7 @@ serde_json = "1.0.95"
 ureq = "2.6.2"
 tower-lsp = "0.20.0"
 confy = { version = "0.5.1", features = ["ron_conf"], default-features = false }
+anyhow = "1.0.75"
 
 [dev-dependencies]
 mockito = "1.0.2"
