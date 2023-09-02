@@ -75,11 +75,6 @@ enum EnvNamespaceCommand {
     },
 }
 
-#[derive(Debug, Subcommand)]
-enum ScratchCommand {
-    History {},
-}
-
 fn main() {
     if let Err(e) = run() {
         eprint!("{}", e.0);

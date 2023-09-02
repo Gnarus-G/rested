@@ -36,6 +36,7 @@ pub struct ScratchCommandArgs {
 
 #[derive(Debug, Subcommand)]
 pub enum ScratchCommand {
+    /// List all the scratch files created or edited from oldest to newest
     History {
         // Don't show scratch file previews
         #[arg(short, long)]
