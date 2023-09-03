@@ -1,5 +1,5 @@
 ---
-source: parser/src/error.rs
+source: src/parser/error.rs
 expression: error
 ---
 ParserErrors {
@@ -11,7 +11,7 @@ ParserErrors {
                        }
         ,
     ],
-    incomplete_rogram: Program {
+    incomplete_program: Program {
         items: [],
     },
 }

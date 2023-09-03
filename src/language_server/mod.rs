@@ -134,9 +134,9 @@ impl LanguageServer for Backend {
         let Some(text) = self
             .documents
             .get(params.text_document_position.text_document.uri)
-            else {
-                return Ok(None);
-            };
+        else {
+            return Ok(None);
+        };
 
         let methods = http_method_completions();
 
@@ -144,7 +144,7 @@ impl LanguageServer for Backend {
 
         let program = match crate::parser::Parser::new(&text).parse() {
             Ok(ast) => ast,
-            Err(err) => err.incomplete_rogram,
+            Err(err) => err.incomplete_program,
         };
 
         let variables = program

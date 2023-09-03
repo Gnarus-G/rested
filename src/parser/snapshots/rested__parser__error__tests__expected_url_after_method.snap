@@ -1,5 +1,5 @@
 ---
-source: parser/src/error.rs
+source: src/parser/error.rs
 expression: error
 ---
 ParserErrors {
@@ -9,7 +9,7 @@ ParserErrors {
             ↳ [1:5] expected either one of 'url','pathname' but got {
         ,
     ],
-    incomplete_rogram: Program {
+    incomplete_program: Program {
         items: [],
     },
 }

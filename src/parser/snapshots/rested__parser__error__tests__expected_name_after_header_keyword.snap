@@ -9,7 +9,7 @@ ParserErrors {
                                      ↳ [1:30] expected 'string' but got }
         ,
     ],
-    incomplete_rogram: Program {
+    incomplete_program: Program {
         items: [
             Request {
                 method: POST,

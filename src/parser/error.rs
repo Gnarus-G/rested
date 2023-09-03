@@ -73,17 +73,17 @@ impl<'source> std::fmt::Display for ParseError<'source> {
 #[derive(Debug)]
 pub struct ParserErrors<'source> {
     pub errors: Array<ContextualError<ParseError<'source>>>,
-    pub incomplete_rogram: Program<'source>,
+    pub incomplete_program: Program<'source>,
 }
 
 impl<'source> ParserErrors<'source> {
     pub fn new(
         errors: Array<ContextualError<ParseError<'source>>>,
-        incomplete_rogram: Program<'source>,
+        incomplete_program: Program<'source>,
     ) -> Self {
         Self {
             errors,
-            incomplete_rogram,
+            incomplete_program,
         }
     }
 }

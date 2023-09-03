@@ -1,5 +1,5 @@
 ---
-source: parser/src/error.rs
+source: src/parser/error.rs
 expression: error
 ---
 ParserErrors {
@@ -12,7 +12,7 @@ ParserErrors {
                     get http://localhost { header "name" k }
         ,
     ],
-    incomplete_rogram: Program {
+    incomplete_program: Program {
         items: [
             Attribute {
                 location: Location {

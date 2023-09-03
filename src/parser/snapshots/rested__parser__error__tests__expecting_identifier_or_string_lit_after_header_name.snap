@@ -9,7 +9,7 @@ ParserErrors {
                                              ↳ [1:38] expected either one of 'string','identifier','string' but got }
         ,
     ],
-    incomplete_rogram: Program {
+    incomplete_program: Program {
         items: [
             Request {
                 method: GET,
