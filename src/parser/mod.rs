@@ -2,14 +2,17 @@ pub mod ast;
 mod ast_queries;
 mod ast_span;
 pub mod error;
+mod error_recovering;
 
 use std::collections::BTreeMap;
+use std::result;
 
 use ast::Block;
 use ast::{Endpoint, Expression, Item, Program, RequestMethod, Statement};
 use error::ParserErrors;
 
 use self::error::{ParseError, ParseErrorConstructor};
+use self::error_recovering::RecoveredItem;
 
 use crate::error_meta::ContextualError;
 use crate::lexer::locations::{GetSpan, Location, Span};
@@ -23,7 +26,7 @@ macro_rules! match_or_throw {
             $(
                 $( TokenKind::$pattern )|+ $( if $guard )? => $arm,
             )+
-            _ => return Err($self.error().expected_one_of_tokens($self.curr_token(), &[$( $( $pattern ),+ ),+])$(.with_message($message))?)
+            _ => return Err($self.error().expected_one_of_tokens($self.curr_token(), &[$( $( $pattern ),+ ),+])$(.with_message($message))?.into())
         }
     };
 }
@@ -137,14 +140,17 @@ impl<'i> Parser<'i> {
                 Let => self.parse_let_statement(),
                 _ => match self.parse_expression() {
                     Ok(exp) => Ok(Item::Expr(exp)),
-                    Err(err) => Err(err),
+                    Err(err) => Err(err.into()),
                 },
             };
 
             match result {
                 Ok(item) => items.push(item),
-                Err(error) => {
-                    errors.push(error);
+                Err(recovered) => {
+                    if let Some(item) = recovered.item {
+                        items.push(item);
+                    }
+                    errors.push(recovered.error);
                     self.eat_till_next_top_level_peek_token();
                 }
             }
@@ -159,7 +165,10 @@ impl<'i> Parser<'i> {
         return Err(ParserErrors::new(errors.into(), Program::new(items.into())));
     }
 
-    fn parse_request(&mut self, method: RequestMethod) -> Result<'i, Item<'i>> {
+    fn parse_request(
+        &mut self,
+        method: RequestMethod,
+    ) -> result::Result<Item<'i>, RecoveredItem<'i>> {
         let start = self.curr_token().start;
 
         let url = self.next_expecting_one_of(&[Url, Pathname])?;
@@ -169,9 +178,23 @@ impl<'i> Parser<'i> {
             Pathname => Endpoint::Pathname(url.into()),
             "expecting only a url and pathname here"
         };
+
         let url_span: Span = url.span();
 
-        let block = self.parse_block()?;
+        let block = match self.parse_block() {
+            Ok(b) => b,
+            Err(error) => {
+                return Err(RecoveredItem::new(
+                    error,
+                    Item::Request {
+                        span: start.to_end_of(endpoint.span()),
+                        method,
+                        endpoint,
+                        block: None,
+                    },
+                ))
+            }
+        };
 
         let span_next = if let Some(b) = block.as_ref() {
             b.span
@@ -187,7 +210,7 @@ impl<'i> Parser<'i> {
         })
     }
 
-    fn parse_set_statement(&mut self) -> Result<'i, Item<'i>> {
+    fn parse_set_statement(&mut self) -> result::Result<Item<'i>, RecoveredItem<'i>> {
         let identifier = self.expect_peek(TokenKind::Ident)?.into();
 
         self.next_expecting_one_of(&[
@@ -450,7 +473,7 @@ impl<'i> Parser<'i> {
         ParseErrorConstructor::new(self.lexer.input())
     }
 
-    fn parse_attribute(&mut self) -> Result<'i, Item<'i>> {
+    fn parse_attribute(&mut self) -> result::Result<Item<'i>, RecoveredItem<'i>> {
         let location = self.curr_token().start;
 
         let identifier = self.expect_peek(TokenKind::Ident)?.into();
@@ -477,7 +500,7 @@ impl<'i> Parser<'i> {
         })
     }
 
-    fn parse_let_statement(&mut self) -> Result<'i, Item<'i>> {
+    fn parse_let_statement(&mut self) -> result::Result<Item<'i>, RecoveredItem<'i>> {
         let identifier = self.next_token().into();
 
         self.expect_peek(TokenKind::Assign)?;

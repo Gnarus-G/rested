@@ -80,27 +80,27 @@ pub struct Block<'source> {
 }
 
 #[derive(Debug, PartialEq, Serialize)]
-pub enum Item<'i> {
+pub enum Item<'source> {
     Set {
-        identifier: Identifier<'i>,
-        value: Expression<'i>,
+        identifier: Identifier<'source>,
+        value: Expression<'source>,
     },
     Let {
-        identifier: Identifier<'i>,
-        value: Expression<'i>,
+        identifier: Identifier<'source>,
+        value: Expression<'source>,
     },
-    LineComment(Literal<'i>),
+    LineComment(Literal<'source>),
     Request {
         method: RequestMethod,
-        endpoint: Endpoint<'i>,
-        block: Option<Block<'i>>,
+        endpoint: Endpoint<'source>,
+        block: Option<Block<'source>>,
         span: Span,
     },
-    Expr(Expression<'i>),
+    Expr(Expression<'source>),
     Attribute {
         location: Location,
-        identifier: Identifier<'i>,
-        parameters: Array<Expression<'i>>,
+        identifier: Identifier<'source>,
+        parameters: Array<Expression<'source>>,
     },
 }
 

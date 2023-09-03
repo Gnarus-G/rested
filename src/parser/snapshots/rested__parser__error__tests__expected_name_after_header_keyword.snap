@@ -1,5 +1,5 @@
 ---
-source: parser/src/error.rs
+source: src/parser/error.rs
 expression: error
 ---
 ParserErrors {
@@ -10,6 +10,36 @@ ParserErrors {
         ,
     ],
     incomplete_rogram: Program {
-        items: [],
+        items: [
+            Request {
+                method: POST,
+                endpoint: Url(
+                    Literal {
+                        value: "http://localhost",
+                        span: Span {
+                            start: Location {
+                                line: 0,
+                                col: 5,
+                            },
+                            end: Location {
+                                line: 0,
+                                col: 21,
+                            },
+                        },
+                    },
+                ),
+                block: None,
+                span: Span {
+                    start: Location {
+                        line: 0,
+                        col: 0,
+                    },
+                    end: Location {
+                        line: 0,
+                        col: 21,
+                    },
+                },
+            },
+        ],
     },
 }
