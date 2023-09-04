@@ -48,3 +48,28 @@ pub fn header_body_keyword_completions() -> Vec<CompletionItem> {
         })
         .to_vec()
 }
+
+pub fn attributes_completions() -> Vec<CompletionItem> {
+    let mut comp = ["log", "name"]
+        .map(|keyword| CompletionItem {
+            label: format!("{}(..)", keyword),
+            kind: Some(CompletionItemKind::FUNCTION),
+            insert_text: Some(format!("{}(${{1:argument}})", keyword)),
+            insert_text_format: Some(InsertTextFormat::SNIPPET),
+            ..CompletionItem::default()
+        })
+        .to_vec();
+
+    comp.extend_from_slice(
+        &["log", "dbg", "skip"]
+            .map(|kw| kw.to_string())
+            .map(|keyword| CompletionItem {
+                label: keyword.clone(),
+                kind: Some(CompletionItemKind::KEYWORD),
+                insert_text: Some(keyword),
+                ..CompletionItem::default()
+            }),
+    );
+
+    comp
+}

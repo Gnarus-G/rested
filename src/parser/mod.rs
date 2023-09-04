@@ -128,9 +128,12 @@ impl<'i> Parser<'i> {
                             [Get, Post, Put, Patch, Delete, AttributePrefix, Linecomment];
 
                         if let Err(err) = self.expect_peek_one_of(&valid_after_attribute) {
-                            errors.push(err.with_message(
-                                "after attributes should come requests or more attributes",
-                            ));
+                            errors.push(
+                                err.with_message(
+                                    "after attributes should come requests or more attributes",
+                                )
+                                .into(),
+                            );
                             continue;
                         }
                     }
@@ -146,11 +149,8 @@ impl<'i> Parser<'i> {
 
             match result {
                 Ok(item) => items.push(item),
-                Err(recovered) => {
-                    if let Some(item) = recovered.item {
-                        items.push(item);
-                    }
-                    errors.push(recovered.error);
+                Err(error) => {
+                    errors.push(error);
                     self.eat_till_next_top_level_peek_token();
                 }
             }
@@ -162,7 +162,7 @@ impl<'i> Parser<'i> {
             return Ok(Program::new(items.into()));
         }
 
-        return Err(ParserErrors::new(errors.into(), Program::new(items.into())));
+        return Err(ParserErrors::new(errors));
     }
 
     fn parse_request(

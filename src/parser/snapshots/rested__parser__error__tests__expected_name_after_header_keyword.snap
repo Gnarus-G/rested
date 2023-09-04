@@ -4,56 +4,56 @@ expression: error
 ---
 ParserErrors {
     errors: [
-        post http://localhost {header}
-                                     ≈
-                                     ↳ [1:30] expected 'string' but got }
-        ,
-    ],
-    incomplete_program: Program {
-        items: [
-            Request {
-                method: POST,
-                endpoint: Url(
-                    Literal {
-                        value: "http://localhost",
-                        span: Span {
-                            start: Location {
-                                line: 0,
-                                col: 5,
-                            },
-                            end: Location {
-                                line: 0,
-                                col: 21,
+        RecoveredItem {
+            item: Some(
+                Request {
+                    method: POST,
+                    endpoint: Url(
+                        Literal {
+                            value: "http://localhost",
+                            span: Span {
+                                start: Location {
+                                    line: 0,
+                                    col: 5,
+                                },
+                                end: Location {
+                                    line: 0,
+                                    col: 21,
+                                },
                             },
                         },
-                    },
-                ),
-                block: Some(
-                    Block {
-                        statements: [],
-                        span: Span {
-                            start: Location {
-                                line: 0,
-                                col: 22,
-                            },
-                            end: Location {
-                                line: 0,
-                                col: 29,
+                    ),
+                    block: Some(
+                        Block {
+                            statements: [],
+                            span: Span {
+                                start: Location {
+                                    line: 0,
+                                    col: 22,
+                                },
+                                end: Location {
+                                    line: 0,
+                                    col: 29,
+                                },
                             },
                         },
-                    },
-                ),
-                span: Span {
-                    start: Location {
-                        line: 0,
-                        col: 0,
-                    },
-                    end: Location {
-                        line: 0,
-                        col: 29,
+                    ),
+                    span: Span {
+                        start: Location {
+                            line: 0,
+                            col: 0,
+                        },
+                        end: Location {
+                            line: 0,
+                            col: 29,
+                        },
                     },
                 },
-            },
-        ],
-    },
+            ),
+            error: post http://localhost {header}
+                                         ≈
+                                         ↳ [1:30] expected 'string' but got }
+            ,
+        },
+    ],
 }

@@ -4,12 +4,12 @@ expression: error
 ---
 ParserErrors {
     errors: [
-         let o = ["joe" "world"] 
-                        ≈≈≈≈≈≈≈
-                        ↳ [1:17] expected ',' but got string
-        ,
+        RecoveredItem {
+            item: None,
+            error:  let o = ["joe" "world"] 
+                            ≈≈≈≈≈≈≈
+                            ↳ [1:17] expected ',' but got string
+            ,
+        },
     ],
-    incomplete_program: Program {
-        items: [],
-    },
 }

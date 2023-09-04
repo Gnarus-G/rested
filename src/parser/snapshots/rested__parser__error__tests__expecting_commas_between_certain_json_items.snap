@@ -4,14 +4,14 @@ expression: error
 ---
 ParserErrors {
     errors: [
-                         yo: "joe"
-                         hello: "world"
-                         ≈≈≈≈≈
-                         ↳ [3:18] expected ',' but got identifier
-                       }
-        ,
+        RecoveredItem {
+            item: None,
+            error:                  yo: "joe"
+                             hello: "world"
+                             ≈≈≈≈≈
+                             ↳ [3:18] expected ',' but got identifier
+                           }
+            ,
+        },
     ],
-    incomplete_program: Program {
-        items: [],
-    },
 }

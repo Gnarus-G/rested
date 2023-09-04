@@ -4,12 +4,12 @@ expression: error
 ---
 ParserErrors {
     errors: [
-        get {}
-            ≈
-            ↳ [1:5] expected either one of 'url','pathname' but got {
-        ,
+        RecoveredItem {
+            item: None,
+            error: get {}
+                ≈
+                ↳ [1:5] expected either one of 'url','pathname' but got {
+            ,
+        },
     ],
-    incomplete_program: Program {
-        items: [],
-    },
 }

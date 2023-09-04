@@ -2,8 +2,9 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 mod completions;
 
-use crate::lexer::locations::Location;
+use crate::lexer::locations::{GetSpan, Location};
 use crate::lexer::Token;
+use crate::parser::ast::{self, Program};
 use crate::parser::Parser;
 use completions::*;
 use tower_lsp::jsonrpc::Result;
@@ -72,13 +73,16 @@ impl Backend {
         if let Err(error) = result {
             for err in error.errors.iter() {
                 let range = Range {
-                    start: err.span.start.into_position(),
-                    end: err.span.end.into_position(),
+                    start: err.error.span.start.into_position(),
+                    end: err.error.span.end.into_position(),
                 };
 
-                diagnostics.push(Diagnostic::new_simple(range, err.inner_error.to_string()));
+                diagnostics.push(Diagnostic::new_simple(
+                    range,
+                    err.error.inner_error.to_string(),
+                ));
 
-                if let Some(msg) = err.message.clone() {
+                if let Some(msg) = err.error.message.clone() {
                     diagnostics.push(Diagnostic::new_simple(range, msg))
                 }
             }
@@ -142,35 +146,117 @@ impl LanguageServer for Backend {
 
         let builtin_functions = builtin_functions_completions();
 
-        let program = match crate::parser::Parser::new(&text).parse() {
-            Ok(ast) => ast,
-            Err(err) => err.incomplete_program,
+        let get_variables = |program: &Program| {
+            return program
+                .variables_before(Location {
+                    line: position.line as usize,
+                    col: position.character as usize,
+                })
+                .iter()
+                .map(|var| CompletionItem {
+                    label: var.name.to_string(),
+                    kind: Some(CompletionItemKind::VARIABLE),
+                    insert_text: Some(var.name.to_string()),
+                    ..CompletionItem::default()
+                })
+                .collect();
         };
 
-        let variables = program
-            .variables_before(Location {
-                line: position.line as usize,
-                col: position.character as usize,
-            })
-            .iter()
-            .map(|var| CompletionItem {
-                label: var.name.to_string(),
-                kind: Some(CompletionItemKind::VARIABLE),
-                insert_text: Some(var.name.to_string()),
-                ..CompletionItem::default()
-            })
-            .collect();
+        let program = match crate::parser::Parser::new(&text).parse() {
+            Ok(ast) => ast,
+            Err(err) => {
+                let errors: Vec<_> = err.errors.into_iter().collect();
+
+                Program {
+                    items: errors.into_iter().filter_map(|e| e.item).collect(),
+                }
+            }
+        };
+
+        let variables = get_variables(&program);
 
         for item in program.items.iter() {
-            if let crate::parser::ast::Item::Request {
-                block: Some(block), ..
-            } = item
-            {
-                let contains_position = block.span.contains(&position);
-                if contains_position {
-                    let header_or_body = header_body_keyword_completions();
-                    return Ok(Some(CompletionResponse::Array([header_or_body].concat())));
+            match item {
+                ast::Item::Set { identifier, value } => {
+                    if identifier.span.contains(&position) {
+                        return Ok(Some(CompletionResponse::Array(vec![CompletionItem {
+                            label: "BASE_URL".to_string(),
+                            kind: Some(CompletionItemKind::CONSTANT),
+                            ..CompletionItem::default()
+                        }])));
+                    }
+
+                    if value.span().contains(&position) {
+                        return Ok(Some(CompletionResponse::Array(
+                            [builtin_functions, variables].concat(),
+                        )));
+                    }
                 }
+                ast::Item::Let { value, .. } => {
+                    if value.span().contains(&position) {
+                        return Ok(Some(CompletionResponse::Array(
+                            [builtin_functions, variables].concat(),
+                        )));
+                    }
+                }
+                ast::Item::Request {
+                    block: Some(block), ..
+                } => {
+                    let contains_position = block.span.contains(&position);
+                    if contains_position {
+                        let header_or_body = header_body_keyword_completions();
+
+                        for statement in block.statements.iter() {
+                            if statement.span().contains(&position) {
+                                match statement {
+                                    ast::Statement::Header { value, .. } => {
+                                        if value.span().contains(&position) {
+                                            return Ok(Some(CompletionResponse::Array(
+                                                [builtin_functions, variables].concat(),
+                                            )));
+                                        }
+                                        return Ok(None);
+                                    }
+                                    ast::Statement::Body { value, .. } => {
+                                        if value.span().contains(&position) {
+                                            return Ok(Some(CompletionResponse::Array(
+                                                [builtin_functions, variables].concat(),
+                                            )));
+                                        }
+                                    }
+                                    ast::Statement::LineComment(_) => {}
+                                }
+                            }
+                        }
+
+                        return Ok(Some(CompletionResponse::Array([header_or_body].concat())));
+                    }
+                }
+                ast::Item::Expr(expr) => {
+                    if expr.span().contains(&position) {
+                        return Ok(Some(CompletionResponse::Array(
+                            [builtin_functions, variables].concat(),
+                        )));
+                    }
+                }
+                ast::Item::Attribute {
+                    identifier,
+                    parameters,
+                    ..
+                } => {
+                    if identifier.span.contains(&position) {
+                        return Ok(Some(CompletionResponse::Array(attributes_completions())));
+                    }
+
+                    for param in parameters.iter() {
+                        if param.span().contains(&position) {
+                            return Ok(Some(CompletionResponse::Array(
+                                [builtin_functions, variables].concat(),
+                            )));
+                        }
+                    }
+                }
+                _ => {}
             }
         }
 

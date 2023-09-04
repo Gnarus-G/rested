@@ -1,8 +1,7 @@
 use crate::error_meta::ContextualError;
 use crate::lexer::locations::Span;
-use crate::lexer::Array;
 use crate::parser::ast::Identifier;
-use crate::parser::error::{ParseError, ParserErrors};
+use crate::parser::error::ParserErrors;
 
 #[derive(Debug, PartialEq)]
 pub enum InterpreterErrorKind {
@@ -57,7 +56,7 @@ impl std::fmt::Display for InterpreterErrorKind {
 }
 
 pub enum InterpreterError<'source> {
-    ParseErrors(Array<ContextualError<ParseError<'source>>>),
+    ParseErrors(ParserErrors<'source>),
     Error(ContextualError<InterpreterErrorKind>),
 }
 
@@ -73,7 +72,7 @@ impl<'source> std::fmt::Display for InterpreterError<'source> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             InterpreterError::Error(err) => write!(f, "{err}"),
-            InterpreterError::ParseErrors(errors) => {
+            InterpreterError::ParseErrors(ParserErrors { errors }) => {
                 for err in errors.iter() {
                     write!(f, "{err}")?
                 }
@@ -91,7 +90,7 @@ impl<'source> From<ContextualError<InterpreterErrorKind>> for InterpreterError<'
 
 impl<'source> From<ParserErrors<'source>> for InterpreterError<'source> {
     fn from(value: ParserErrors<'source>) -> Self {
-        Self::ParseErrors(value.errors)
+        Self::ParseErrors(value)
     }
 }
 

@@ -2,7 +2,7 @@ use crate::lexer::{locations::GetSpan, Array, Token, TokenKind};
 
 use crate::error_meta::ContextualError;
 
-use super::ast::Program;
+use super::error_recovering::RecoveredItem;
 
 #[derive(Debug, PartialEq)]
 pub struct ErroneousToken<'source> {
@@ -72,19 +72,12 @@ impl<'source> std::fmt::Display for ParseError<'source> {
 
 #[derive(Debug)]
 pub struct ParserErrors<'source> {
-    pub errors: Array<ContextualError<ParseError<'source>>>,
-    pub incomplete_program: Program<'source>,
+    pub errors: Vec<RecoveredItem<'source>>,
 }
 
 impl<'source> ParserErrors<'source> {
-    pub fn new(
-        errors: Array<ContextualError<ParseError<'source>>>,
-        incomplete_program: Program<'source>,
-    ) -> Self {
-        Self {
-            errors,
-            incomplete_program,
-        }
+    pub fn new(errors: Vec<RecoveredItem<'source>>) -> Self {
+        Self { errors }
     }
 }
 
