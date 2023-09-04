@@ -12,7 +12,7 @@ use ast::{Endpoint, Expression, Item, Program, RequestMethod, Statement};
 use error::ParserErrors;
 
 use self::error::{ParseError, ParseErrorConstructor};
-use self::error_recovering::RecoveredItem;
+use self::error_recovering::{RecoveredBlock, RecoveredItem};
 
 use crate::error_meta::ContextualError;
 use crate::lexer::locations::{GetSpan, Location, Span};
@@ -183,14 +183,14 @@ impl<'i> Parser<'i> {
 
         let block = match self.parse_block() {
             Ok(b) => b,
-            Err(error) => {
+            Err(recovered) => {
                 return Err(RecoveredItem::new(
-                    error,
+                    recovered.error,
                     Item::Request {
-                        span: start.to_end_of(endpoint.span()),
+                        span: start.to_end_of(recovered.block.span),
                         method,
                         endpoint,
-                        block: None,
+                        block: Some(recovered.block),
                     },
                 ))
             }
@@ -225,7 +225,7 @@ impl<'i> Parser<'i> {
         })
     }
 
-    fn parse_block(&mut self) -> Result<'i, Option<Block<'i>>> {
+    fn parse_block(&mut self) -> result::Result<Option<Block<'i>>, RecoveredBlock<'i>> {
         let LBracket = self.peek_token().kind else {
             return Ok(None);
         };
@@ -235,11 +235,17 @@ impl<'i> Parser<'i> {
         let mut statements = vec![];
 
         while self.curr_token().kind != RBracket && self.curr_token().kind != End {
-            let statement = match_or_throw! { self.curr_token().kind; self;
-                Header => self.parse_header()?,
-                Body => self.parse_body()?,
-                Linecomment | Shebang => Statement::LineComment(self.curr_token().into()),
-                "may only declare headers or a body statement here"
+            let statement = match self.parse_statement() {
+                Ok(s) => s,
+                Err(error) => {
+                    return Err(RecoveredBlock::new(
+                        error,
+                        Block {
+                            statements: statements.into(),
+                            span: Span::new(span_start, self.curr_token().start), // span to RBracket's location
+                        },
+                    ));
+                }
             };
             statements.push(statement);
             self.next_token();
@@ -249,6 +255,17 @@ impl<'i> Parser<'i> {
             statements: statements.into(),
             span: Span::new(span_start, self.curr_token().start), // span to RBracket's location
         }));
+    }
+
+    fn parse_statement(&mut self) -> Result<'i, Statement<'i>> {
+        let statement = match_or_throw! { self.curr_token().kind; self;
+            Header => self.parse_header()?,
+            Body => self.parse_body()?,
+            Linecomment | Shebang => Statement::LineComment(self.curr_token().into()),
+            "may only declare headers or a body statement here"
+        };
+
+        Ok(statement)
     }
 
     fn parse_header(&mut self) -> Result<'i, Statement<'i>> {

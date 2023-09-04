@@ -33,3 +33,23 @@ impl<'source> std::fmt::Display for RecoveredItem<'source> {
         self.error.fmt(f)
     }
 }
+
+#[derive(Debug)]
+pub struct RecoveredBlock<'source> {
+    pub block: ast::Block<'source>,
+    pub error: ContextualError<ParseError<'source>>,
+}
+
+impl<'source> std::error::Error for RecoveredBlock<'source> {}
+
+impl<'source> RecoveredBlock<'source> {
+    pub fn new(error: ContextualError<ParseError<'source>>, block: ast::Block<'source>) -> Self {
+        Self { block, error }
+    }
+}
+
+impl<'source> std::fmt::Display for RecoveredBlock<'source> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.error.fmt(f)
+    }
+}

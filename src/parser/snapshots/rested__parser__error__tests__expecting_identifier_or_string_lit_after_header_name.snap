@@ -28,7 +28,21 @@ ParserErrors {
                         },
                     },
                 ),
-                block: None,
+                block: Some(
+                    Block {
+                        statements: [],
+                        span: Span {
+                            start: Location {
+                                line: 0,
+                                col: 21,
+                            },
+                            end: Location {
+                                line: 0,
+                                col: 37,
+                            },
+                        },
+                    },
+                ),
                 span: Span {
                     start: Location {
                         line: 0,
@@ -36,7 +50,7 @@ ParserErrors {
                     },
                     end: Location {
                         line: 0,
-                        col: 20,
+                        col: 37,
                     },
                 },
             },

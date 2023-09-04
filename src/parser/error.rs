@@ -201,4 +201,9 @@ mod tests {
         );
         assert_errs!(r#" let o = ["joe" "world"] "#);
     }
+
+    #[test]
+    fn expecting_partial_block_with_error() {
+        assert_errs!(r#"get /hello { header "test" "value" header }"#);
+    }
 }
