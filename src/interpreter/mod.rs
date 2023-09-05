@@ -18,6 +18,7 @@ use crate::lexer::Array;
 use crate::parser::ast::{self, Endpoint, Expression, Identifier, Literal};
 
 use crate::lexer::locations::{GetSpan, Span};
+use crate::parser::error::ParserErrors;
 
 use self::error::InterpErrorFactory;
 use attributes::AttributeStore;
@@ -129,7 +130,13 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
     fn evaluate(&mut self) -> Result<'source, Array<RequestMeta>> {
         let mut parser = crate::parser::Parser::new(self.code);
 
-        let ast = parser.parse()?;
+        let ast = parser.parse();
+
+        let parse_errors = ast.errors();
+
+        if !parse_errors.is_empty() {
+            return Err(ParserErrors::new(parse_errors).into());
+        }
 
         use ast::Item::*;
 
@@ -137,7 +144,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
 
         let mut requests = vec![];
 
-        for item in ast.items.iter() {
+        for item in ast.items.into_iter() {
             match item {
                 Request {
                     method,
@@ -153,7 +160,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
 
                     let span = span.to_end_of(endpoint.span());
 
-                    let path = self.evaluate_request_endpoint(endpoint)?;
+                    let path = self.evaluate_request_endpoint(&endpoint)?;
 
                     let mut headers = vec![];
                     let mut body = None;
@@ -173,6 +180,9 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                                     }
                                 }
                                 ast::Statement::LineComment(_) => {}
+                                ast::Statement::Error(_) => {
+                                    unreachable!("errors should have been handled")
+                                }
                             }
                         }
                     }
@@ -209,7 +219,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                         log_destination,
                         span,
                         request: ir::Request {
-                            method: *method,
+                            method,
                             url: path,
                             headers: headers.into(),
                             body,
@@ -220,10 +230,10 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                 }
                 Set { identifier, value } => {
                     if identifier.name != "BASE_URL" {
-                        return Err(self.error_factory.unknown_constant(identifier).into());
+                        return Err(self.error_factory.unknown_constant(&identifier).into());
                     }
 
-                    self.base_url = Some(self.evaluate_expression(value)?);
+                    self.base_url = Some(self.evaluate_expression(&value)?);
                 }
                 LineComment(_) => {}
                 Attribute {
@@ -233,14 +243,14 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                 } => match identifier.name {
                     "name" | "log" | "dbg" | "skip" => {
                         if attributes.has(identifier.name) {
-                            return Err(self.error_factory.duplicate_attribute(identifier).into());
+                            return Err(self.error_factory.duplicate_attribute(&identifier).into());
                         }
-                        attributes.add(identifier, parameters.clone());
+                        attributes.add(&identifier, parameters);
                     }
                     _ => {
                         return Err(self
                             .error_factory
-                            .unsupported_attribute(identifier)
+                            .unsupported_attribute(&identifier)
                             .with_message(
                                 "@name, @log, @skip and @dbg are the only supported attributes",
                             )
@@ -248,10 +258,11 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                     }
                 },
                 Let { identifier, value } => {
-                    let value = self.evaluate_expression(value)?;
+                    let value = self.evaluate_expression(&value)?;
                     self.let_bindings.insert(identifier.name, value);
                 }
                 Expr(_) => continue,
+                Error(err) => return Err(ParserErrors::new(vec![err]).into()),
             }
         }
 
@@ -332,6 +343,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
             EmptyArray(_) => "[]".to_string(),
             EmptyObject(_) => "{}".to_string(),
             Null(_) => "null".to_string(),
+            Error(err) => return Err(ParserErrors::new(vec![err.to_owned()]).into()),
         };
 
         Ok(value)

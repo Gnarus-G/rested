@@ -80,10 +80,7 @@ impl<'source> GetSpan for Token<'source> {
     fn span(&self) -> Span {
         Span {
             start: self.start,
-            end: Location {
-                line: self.start.line,
-                col: self.start.col + self.text.len(),
-            },
+            end: self.end_location(),
         }
     }
 }

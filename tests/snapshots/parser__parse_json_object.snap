@@ -1,5 +1,5 @@
 ---
-source: parser/tests/parser.rs
+source: tests/parser.rs
 description: "\nlet o = {\n    key: \"value\",\n    akey: 123,\n    love: \"me\"\n}"
 expression: ast
 ---

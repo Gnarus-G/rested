@@ -1,7 +1,7 @@
 ---
-source: lexer/tests/lexer.rs
+source: tests/lexer.rs
 description: "\npost http://localhost { \n    header \"Authorization\" \"Bearer token\" \n    body \"{neet: 1337}\" \n}"
-expression: "lexer.into_iter().collect::<Vec<Token>>()"
+expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
     Post("post") at Location { line: 1, col: 0 },

@@ -1,7 +1,7 @@
 ---
-source: lexer/tests/lexer.rs
+source: tests/lexer.rs
 description: "get http://localhost"
-expression: "lexer.into_iter().collect::<Vec<Token>>()"
+expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
     Get("get") at Location { line: 0, col: 0 },

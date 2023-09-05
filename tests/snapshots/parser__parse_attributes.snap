@@ -1,5 +1,5 @@
 ---
-source: parser/tests/parser.rs
+source: tests/parser.rs
 description: "@log(\"path/to/file\") get /api"
 expression: ast
 ---

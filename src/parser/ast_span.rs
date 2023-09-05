@@ -8,6 +8,7 @@ impl<'source> GetSpan for Statement<'source> {
             Statement::Header { name, value } => name.span.to_end_of(value.span()),
             Statement::Body { value, start } => start.to_end_of(value.span()),
             Statement::LineComment(literal) => literal.span,
+            Statement::Error(e) => e.span,
         }
     }
 }
@@ -33,6 +34,7 @@ impl<'source> GetSpan for Expression<'source> {
             Expression::EmptyArray(s) => *s,
             Expression::EmptyObject(s) => *s,
             Expression::Null(s) => *s,
+            Expression::Error(e) => e.span,
         }
     }
 }
@@ -52,6 +54,7 @@ impl<'source> GetSpan for Item<'source> {
                 .map(|p| Span::new(*location, p.span().end))
                 .unwrap_or(Span::new(*location, identifier.span.end)),
             Item::Expr(e) => e.span(),
+            Item::Error(e) => e.span,
         }
     }
 }

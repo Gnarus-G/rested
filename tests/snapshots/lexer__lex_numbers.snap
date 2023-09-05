@@ -1,7 +1,7 @@
 ---
-source: lexer/tests/lexer.rs
+source: tests/lexer.rs
 description: 123124 1.0
-expression: "lexer.into_iter().collect::<Vec<Token>>()"
+expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
     Number("123124") at Location { line: 0, col: 0 },

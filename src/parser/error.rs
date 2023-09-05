@@ -2,9 +2,7 @@ use crate::lexer::{locations::GetSpan, Array, Token, TokenKind};
 
 use crate::error_meta::ContextualError;
 
-use super::error_recovering::RecoveredItem;
-
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct ErroneousToken<'source> {
     kind: TokenKind,
     text: &'source str,
@@ -36,7 +34,7 @@ pub struct ParseErrorConstructor<'i> {
     source_code: &'i str,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub enum ParseError<'source> {
     ExpectedToken {
         found: ErroneousToken<'source>,
@@ -72,11 +70,11 @@ impl<'source> std::fmt::Display for ParseError<'source> {
 
 #[derive(Debug)]
 pub struct ParserErrors<'source> {
-    pub errors: Vec<RecoveredItem<'source>>,
+    pub errors: Vec<ContextualError<ParseError<'source>>>,
 }
 
 impl<'source> ParserErrors<'source> {
-    pub fn new(errors: Vec<RecoveredItem<'source>>) -> Self {
+    pub fn new(errors: Vec<ContextualError<ParseError<'source>>>) -> Self {
         Self { errors }
     }
 }
@@ -150,9 +148,7 @@ mod tests {
     macro_rules! assert_errs {
         ($input:literal) => {
             let mut parser = Parser::new($input);
-            let error = parser.parse().unwrap_err();
-
-            assert_debug_snapshot!(error)
+            assert_debug_snapshot!(parser.parse().errors())
         };
     }
 

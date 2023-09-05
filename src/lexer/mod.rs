@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use locations::Location;
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, serde::Serialize)]
 pub enum TokenKind {
     // keywords
     Get,

@@ -1,17 +1,12 @@
 ---
 source: src/parser/error.rs
-expression: error
+expression: parser.parse().errors()
 ---
-ParserErrors {
-    errors: [
-        RecoveredItem {
-            item: None,
-            error:                  yo: "joe"
-                             hello: "world"
-                             ≈≈≈≈≈
-                             ↳ [3:18] expected ',' but got identifier
-                           }
-            ,
-        },
-    ],
-}
+[
+                     yo: "joe"
+                     hello: "world"
+                     ≈≈≈≈≈
+                     ↳ [3:18] expected ',' but got identifier
+                   }
+    ,
+]

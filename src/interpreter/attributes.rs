@@ -1,10 +1,10 @@
-use crate::lexer::{locations::Span, Array};
+use crate::lexer::locations::Span;
 use crate::parser::ast::{Expression, Identifier};
 
 pub struct Attribute<'source> {
     pub name: &'source str,
     pub span: Span,
-    pub params: Array<Expression<'source>>,
+    pub params: Vec<Expression<'source>>,
 }
 
 impl<'source> Attribute<'source> {
@@ -22,7 +22,7 @@ impl<'source> AttributeStore<'source> {
         Self { inner: vec![] }
     }
 
-    pub fn add(&mut self, id: &Identifier<'source>, params: Array<Expression<'source>>) {
+    pub fn add(&mut self, id: &Identifier<'source>, params: Vec<Expression<'source>>) {
         if self.has(id.name) {
             return;
         }

@@ -4,20 +4,25 @@ use colored::{ColoredString, Colorize};
 use std::fmt::Display;
 
 #[derive(Debug)]
-pub struct ColoredMetaError<'e, EK: Display + std::error::Error>(
+pub struct ColoredMetaError<'e, EK: Display + std::error::Error + std::clone::Clone>(
     pub &'e crate::error_meta::ContextualError<EK>,
 );
 
-impl<'e, EK: Display + std::error::Error> std::error::Error for ColoredMetaError<'e, EK> {}
+impl<'e, EK: Display + std::error::Error + std::clone::Clone> std::error::Error
+    for ColoredMetaError<'e, EK>
+{
+}
 
-impl<'e, EK: Display + std::error::Error> std::fmt::Display for ColoredMetaError<'e, EK> {
+impl<'e, EK: Display + std::error::Error + std::clone::Clone> std::fmt::Display
+    for ColoredMetaError<'e, EK>
+{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.format(f)
     }
 }
 
-impl<'e, EK: Display + std::error::Error> crate::error_meta::ErrorDisplay<ColoredString>
-    for ColoredMetaError<'e, EK>
+impl<'e, EK: Display + std::error::Error + std::clone::Clone>
+    crate::error_meta::ErrorDisplay<ColoredString> for ColoredMetaError<'e, EK>
 {
     fn formatted_error(&self) -> ColoredString {
         self.0.inner_error.to_string().red()

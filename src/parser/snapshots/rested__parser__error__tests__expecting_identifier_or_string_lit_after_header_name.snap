@@ -1,59 +1,10 @@
 ---
 source: src/parser/error.rs
-expression: error
+expression: parser.parse().errors()
 ---
-ParserErrors {
-    errors: [
-        RecoveredItem {
-            item: Some(
-                Request {
-                    method: GET,
-                    endpoint: Url(
-                        Literal {
-                            value: "http://localhost",
-                            span: Span {
-                                start: Location {
-                                    line: 0,
-                                    col: 4,
-                                },
-                                end: Location {
-                                    line: 0,
-                                    col: 20,
-                                },
-                            },
-                        },
-                    ),
-                    block: Some(
-                        Block {
-                            statements: [],
-                            span: Span {
-                                start: Location {
-                                    line: 0,
-                                    col: 21,
-                                },
-                                end: Location {
-                                    line: 0,
-                                    col: 37,
-                                },
-                            },
-                        },
-                    ),
-                    span: Span {
-                        start: Location {
-                            line: 0,
-                            col: 0,
-                        },
-                        end: Location {
-                            line: 0,
-                            col: 37,
-                        },
-                    },
-                },
-            ),
-            error: get http://localhost { header "name" }
-                                                 ≈
-                                                 ↳ [1:38] expected either one of 'string','identifier','string' but got }
-            ,
-        },
-    ],
-}
+[
+    get http://localhost { header "name" }
+                                         ≈
+                                         ↳ [1:38] expected either one of 'string','identifier','string' but got }
+    ,
+]

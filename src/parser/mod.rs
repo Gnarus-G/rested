@@ -1,18 +1,15 @@
 pub mod ast;
+mod ast_errors;
 mod ast_queries;
 mod ast_span;
 pub mod error;
-mod error_recovering;
 
 use std::collections::BTreeMap;
-use std::result;
 
-use ast::Block;
-use ast::{Endpoint, Expression, Item, Program, RequestMethod, Statement};
-use error::ParserErrors;
+use ast::{Endpoint, Expression, Item, RequestMethod, Statement};
 
+use self::ast::Block;
 use self::error::{ParseError, ParseErrorConstructor};
-use self::error_recovering::{RecoveredBlock, RecoveredItem};
 
 use crate::error_meta::ContextualError;
 use crate::lexer::locations::{GetSpan, Location, Span};
@@ -103,16 +100,15 @@ impl<'i> Parser<'i> {
         start.to_end_of(self.curr_token().span())
     }
 
-    pub fn parse(&mut self) -> std::result::Result<Program<'i>, ParserErrors<'i>> {
-        let mut items = vec![];
-        let mut errors = vec![];
+    pub fn parse(&mut self) -> ast::Program<'i> {
+        let mut items: Vec<_> = vec![];
 
         use crate::lexer::TokenKind::*;
 
         self.next_token();
 
         while self.curr_token().kind != End {
-            let result = match self.curr_token().kind {
+            let result: std::result::Result<ast::Item<'_>, _> = match self.curr_token().kind {
                 Get => self.parse_request(RequestMethod::GET),
                 Post => self.parse_request(RequestMethod::POST),
                 Put => self.parse_request(RequestMethod::PUT),
@@ -128,7 +124,7 @@ impl<'i> Parser<'i> {
                             [Get, Post, Put, Patch, Delete, AttributePrefix, Linecomment];
 
                         if let Err(err) = self.expect_peek_one_of(&valid_after_attribute) {
-                            errors.push(
+                            items.push(
                                 err.with_message(
                                     "after attributes should come requests or more attributes",
                                 )
@@ -143,14 +139,14 @@ impl<'i> Parser<'i> {
                 Let => self.parse_let_statement(),
                 _ => match self.parse_expression() {
                     Ok(exp) => Ok(Item::Expr(exp)),
-                    Err(err) => Err(err.into()),
+                    Err(err) => Err(err),
                 },
             };
 
             match result {
                 Ok(item) => items.push(item),
                 Err(error) => {
-                    errors.push(error);
+                    items.push(error.into());
                     self.eat_till_next_top_level_peek_token();
                 }
             }
@@ -158,17 +154,10 @@ impl<'i> Parser<'i> {
             self.next_token();
         }
 
-        if errors.is_empty() {
-            return Ok(Program::new(items.into()));
-        }
-
-        return Err(ParserErrors::new(errors));
+        return ast::Program { items };
     }
 
-    fn parse_request(
-        &mut self,
-        method: RequestMethod,
-    ) -> result::Result<Item<'i>, RecoveredItem<'i>> {
+    fn parse_request(&mut self, method: RequestMethod) -> Result<'i, Item<'i>> {
         let start = self.curr_token().start;
 
         let url = self.next_expecting_one_of(&[Url, Pathname])?;
@@ -181,20 +170,7 @@ impl<'i> Parser<'i> {
 
         let url_span: Span = url.span();
 
-        let block = match self.parse_block() {
-            Ok(b) => b,
-            Err(recovered) => {
-                return Err(RecoveredItem::new(
-                    recovered.error,
-                    Item::Request {
-                        span: start.to_end_of(recovered.block.span),
-                        method,
-                        endpoint,
-                        block: Some(recovered.block),
-                    },
-                ))
-            }
-        };
+        let block = self.parse_block();
 
         let span_next = if let Some(b) = block.as_ref() {
             b.span
@@ -210,7 +186,7 @@ impl<'i> Parser<'i> {
         })
     }
 
-    fn parse_set_statement(&mut self) -> result::Result<Item<'i>, RecoveredItem<'i>> {
+    fn parse_set_statement(&mut self) -> Result<'i, Item<'i>> {
         let identifier = self.expect_peek(TokenKind::Ident)?.into();
 
         self.next_expecting_one_of(&[
@@ -225,36 +201,28 @@ impl<'i> Parser<'i> {
         })
     }
 
-    fn parse_block(&mut self) -> result::Result<Option<Block<'i>>, RecoveredBlock<'i>> {
+    fn parse_block(&mut self) -> Option<Block<'i>> {
         let LBracket = self.peek_token().kind else {
-            return Ok(None);
+            return None;
         };
 
         let span_start = self.next_token().start; // remember LBracket's location
         self.next_token();
-        let mut statements = vec![];
+        let mut statements: Vec<Statement<'i>> = vec![];
 
         while self.curr_token().kind != RBracket && self.curr_token().kind != End {
             let statement = match self.parse_statement() {
                 Ok(s) => s,
-                Err(error) => {
-                    return Err(RecoveredBlock::new(
-                        error,
-                        Block {
-                            statements: statements.into(),
-                            span: Span::new(span_start, self.curr_token().start), // span to RBracket's location
-                        },
-                    ));
-                }
+                Err(error) => error.into(),
             };
             statements.push(statement);
             self.next_token();
         }
 
-        return Ok(Some(Block {
-            statements: statements.into(),
+        return Some(Block {
+            statements,
             span: Span::new(span_start, self.curr_token().start), // span to RBracket's location
-        }));
+        });
     }
 
     fn parse_statement(&mut self) -> Result<'i, Statement<'i>> {
@@ -371,7 +339,7 @@ impl<'i> Parser<'i> {
 
                 let span = start.to_end_of(self.curr_token().span());
 
-                Expression::Array((span, list.into()))
+                Expression::Array((span, list))
             }
             _ => self.parse_expression()?,
         };
@@ -409,7 +377,7 @@ impl<'i> Parser<'i> {
 
         Ok(Expression::Call {
             identifier,
-            arguments: arguments.into(),
+            arguments,
         })
     }
 
@@ -454,7 +422,7 @@ impl<'i> Parser<'i> {
 
         Ok(Expression::TemplateSringLiteral {
             span: Span::new(start, end),
-            parts: parts.into(),
+            parts,
         })
     }
 
@@ -490,7 +458,7 @@ impl<'i> Parser<'i> {
         ParseErrorConstructor::new(self.lexer.input())
     }
 
-    fn parse_attribute(&mut self) -> result::Result<Item<'i>, RecoveredItem<'i>> {
+    fn parse_attribute(&mut self) -> Result<'i, Item<'i>> {
         let location = self.curr_token().start;
 
         let identifier = self.expect_peek(TokenKind::Ident)?.into();
@@ -513,11 +481,11 @@ impl<'i> Parser<'i> {
         Ok(Item::Attribute {
             location,
             identifier,
-            parameters: params.into(),
+            parameters: params,
         })
     }
 
-    fn parse_let_statement(&mut self) -> result::Result<Item<'i>, RecoveredItem<'i>> {
+    fn parse_let_statement(&mut self) -> Result<'i, Item<'i>> {
         let identifier = self.next_token().into();
 
         self.expect_peek(TokenKind::Assign)?;

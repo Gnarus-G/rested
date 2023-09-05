@@ -1,15 +1,10 @@
 ---
 source: src/parser/error.rs
-expression: error
+expression: parser.parse().errors()
 ---
-ParserErrors {
-    errors: [
-        RecoveredItem {
-            item: None,
-            error: post
-               
-               ↳ [1:4] expected either one of 'url','pathname' but got Eof
-            ,
-        },
-    ],
-}
+[
+    post
+       
+       ↳ [1:4] expected either one of 'url','pathname' but got Eof
+    ,
+]

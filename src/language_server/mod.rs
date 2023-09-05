@@ -5,7 +5,7 @@ mod completions;
 use crate::lexer::locations::{GetSpan, Location};
 use crate::lexer::Token;
 use crate::parser::ast::{self, Program};
-use crate::parser::Parser;
+use crate::parser::{self, Parser};
 use completions::*;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::{lsp_types::*, LspService, Server};
@@ -66,27 +66,22 @@ struct ChangedDocumentItem {
 
 impl Backend {
     async fn on_change(&self, params: ChangedDocumentItem) {
-        let result = Parser::new(&params.text).parse();
+        let program = Parser::new(&params.text).parse();
 
         let mut diagnostics = vec![];
 
-        if let Err(error) = result {
-            for err in error.errors.iter() {
-                let range = Range {
-                    start: err.error.span.start.into_position(),
-                    end: err.error.span.end.into_position(),
-                };
+        for err in program.errors().iter() {
+            let range = Range {
+                start: err.span.start.into_position(),
+                end: err.span.end.into_position(),
+            };
 
-                diagnostics.push(Diagnostic::new_simple(
-                    range,
-                    err.error.inner_error.to_string(),
-                ));
+            diagnostics.push(Diagnostic::new_simple(range, err.inner_error.to_string()));
 
-                if let Some(msg) = err.error.message.clone() {
-                    diagnostics.push(Diagnostic::new_simple(range, msg))
-                }
+            if let Some(msg) = err.message.clone() {
+                diagnostics.push(Diagnostic::new_simple(range, msg))
             }
-        };
+        }
 
         self.documents.put(params.uri.clone(), params.text);
 
@@ -162,16 +157,7 @@ impl LanguageServer for Backend {
                 .collect();
         };
 
-        let program = match crate::parser::Parser::new(&text).parse() {
-            Ok(ast) => ast,
-            Err(err) => {
-                let errors: Vec<_> = err.errors.into_iter().collect();
-
-                Program {
-                    items: errors.into_iter().filter_map(|e| e.item).collect(),
-                }
-            }
-        };
+        let program = parser::Parser::new(&text).parse();
 
         let variables = get_variables(&program);
 
@@ -225,6 +211,40 @@ impl LanguageServer for Backend {
                                         }
                                     }
                                     ast::Statement::LineComment(_) => {}
+                                    ast::Statement::Error(err) => {
+                                        if err.span.contains(&position) {
+                                            match &err.inner_error {
+                                                parser::error::ParseError::ExpectedToken { found, expected } => {
+                                                     match expected {
+                                                        Ident | StringLiteral | MultiLineStringLiteral => {
+                                                            return Ok(Some(CompletionResponse::Array(
+                                                                [builtin_functions, variables].concat(),
+                                                            )));
+                                                        },
+                                                        _ => {}
+                                                     }
+                                                },
+                                                parser::error::ParseError::ExpectedEitherOfTokens { found, expected } => {
+                                                    let mut comp = vec![];
+                                                    for token in expected.iter() {
+                                                     match token {
+                                                        Ident | StringLiteral | MultiLineStringLiteral => {
+                                                            comp.push(CompletionResponse::Array(
+                                                                [builtin_functions.clone(), variables.clone()].concat(),
+                                                            ));
+                                                        },
+                                                        _ => {}
+                                                     }
+                                                    }
+
+                                                    return Ok(Some(CompletionResponse::Array(
+                                                                [builtin_functions.clone(), variables.clone()].concat(),
+                                                            )));
+                                                    
+                                                },
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }

@@ -1,7 +1,7 @@
 ---
-source: lexer/tests/lexer.rs
+source: tests/lexer.rs
 description: "`a${\"temp\"}` }}"
-expression: "lexer.into_iter().collect::<Vec<Token>>()"
+expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
     MultiLineStringLiteral("`a") at Location { line: 0, col: 0 },

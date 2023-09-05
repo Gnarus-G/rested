@@ -1,6 +1,8 @@
 use crate::lexer::locations::{Location, Span};
 use std::{fmt::Display, ops::Deref};
 
+use serde::Serialize;
+
 pub trait ErrorDisplay<D: Display + Deref<Target = str>> {
     fn formatted_error(&self) -> D;
     fn location(&self) -> D;
@@ -50,6 +52,7 @@ pub trait ErrorDisplay<D: Display + Deref<Target = str>> {
     }
 }
 
+#[derive(Clone, PartialEq, Serialize)]
 pub struct ErrorSourceContext {
     above: Option<String>,
     pub line: String,
@@ -72,20 +75,21 @@ impl ErrorSourceContext {
     }
 }
 
-pub struct ContextualError<EK: Display + std::error::Error> {
+#[derive(Clone, PartialEq, Serialize)]
+pub struct ContextualError<EK: Display + std::error::Error + Clone> {
     pub inner_error: EK,
     pub span: Span,
     pub message: Option<String>,
     pub context: ErrorSourceContext,
 }
 
-impl<E: Display + std::error::Error> std::fmt::Debug for ContextualError<E> {
+impl<E: Display + std::error::Error + Clone> std::fmt::Debug for ContextualError<E> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{self}")
     }
 }
 
-impl<E: Display + std::error::Error> ContextualError<E> {
+impl<E: Display + std::error::Error + Clone> ContextualError<E> {
     pub fn new(inner_error: E, span: Span, source_code: &str) -> Self {
         Self {
             inner_error,
@@ -101,7 +105,7 @@ impl<E: Display + std::error::Error> ContextualError<E> {
     }
 }
 
-impl<E: Display + std::error::Error> ErrorDisplay<String> for ContextualError<E> {
+impl<E: Display + std::error::Error + Clone> ErrorDisplay<String> for ContextualError<E> {
     fn formatted_error(&self) -> String {
         self.inner_error.to_string()
     }
@@ -135,9 +139,9 @@ impl<E: Display + std::error::Error> ErrorDisplay<String> for ContextualError<E>
     }
 }
 
-impl<E: Display + std::error::Error> std::error::Error for ContextualError<E> {}
+impl<E: Display + std::error::Error + Clone> std::error::Error for ContextualError<E> {}
 
-impl<E: Display + std::error::Error> std::fmt::Display for ContextualError<E> {
+impl<E: Display + std::error::Error + Clone> std::fmt::Display for ContextualError<E> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.format(f)
     }

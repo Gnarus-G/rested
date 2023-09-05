@@ -3,7 +3,7 @@ use crate::lexer::locations::Span;
 use crate::parser::ast::Identifier;
 use crate::parser::error::ParserErrors;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum InterpreterErrorKind {
     UnknownConstant { constant: String },
     RequiredArguments { required: usize, recieved: usize },

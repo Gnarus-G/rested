@@ -2,18 +2,23 @@ use std::{collections::BTreeMap, fmt::Display};
 
 use serde::Serialize;
 
-use crate::lexer::{
-    locations::{Location, Span},
-    Array, Token,
+use crate::{
+    error_meta::ContextualError,
+    lexer::{
+        locations::{Location, Span},
+        Array, Token,
+    },
 };
+
+use super::error::ParseError;
 
 #[derive(Debug, PartialEq, Serialize)]
 pub struct Program<'i> {
-    pub items: Array<Item<'i>>,
+    pub items: Vec<Item<'i>>,
 }
 
 impl<'i> Program<'i> {
-    pub fn new(items: Array<Item<'i>>) -> Self {
+    pub fn new(items: Vec<Item<'i>>) -> Self {
         Self { items }
     }
 }
@@ -75,7 +80,7 @@ impl<'i> From<&Token<'i>> for StringLiteral<'i> {
 
 #[derive(Debug, PartialEq, Serialize)]
 pub struct Block<'source> {
-    pub statements: Array<Statement<'source>>,
+    pub statements: Vec<Statement<'source>>,
     pub span: Span,
 }
 
@@ -100,8 +105,9 @@ pub enum Item<'source> {
     Attribute {
         location: Location,
         identifier: Identifier<'source>,
-        parameters: Array<Expression<'source>>,
+        parameters: Vec<Expression<'source>>,
     },
+    Error(ContextualError<ParseError<'source>>),
 }
 
 #[derive(Debug, PartialEq, Clone, Copy, Serialize)]
@@ -130,6 +136,7 @@ pub enum Statement<'i> {
         start: Location,
     },
     LineComment(Literal<'i>),
+    Error(ContextualError<ParseError<'i>>),
 }
 
 pub type Spanned<T> = (Span, T);
@@ -142,21 +149,40 @@ pub enum Expression<'source> {
     Number(Literal<'source>),
     Call {
         identifier: Identifier<'source>,
-        arguments: Array<Expression<'source>>,
+        arguments: Vec<Expression<'source>>,
     },
-    Array(Spanned<Array<Expression<'source>>>),
+    Array(Spanned<Vec<Expression<'source>>>),
     Object(Spanned<BTreeMap<&'source str, Expression<'source>>>),
     Null(Span),
     EmptyArray(Span),
     EmptyObject(Span),
     TemplateSringLiteral {
         span: Span,
-        parts: Array<Expression<'source>>,
+        parts: Vec<Expression<'source>>,
     },
+    Error(ContextualError<ParseError<'source>>),
 }
 
 #[derive(Debug, PartialEq, Serialize)]
 pub enum Endpoint<'i> {
     Url(Literal<'i>),
     Pathname(Literal<'i>),
+}
+
+impl<'source> From<ContextualError<ParseError<'source>>> for Expression<'source> {
+    fn from(value: ContextualError<ParseError<'source>>) -> Self {
+        Self::Error(value)
+    }
+}
+
+impl<'source> From<ContextualError<ParseError<'source>>> for Statement<'source> {
+    fn from(value: ContextualError<ParseError<'source>>) -> Self {
+        Self::Error(value)
+    }
+}
+
+impl<'source> From<ContextualError<ParseError<'source>>> for Item<'source> {
+    fn from(value: ContextualError<ParseError<'source>>) -> Self {
+        Self::Error(value)
+    }
 }

@@ -1,15 +1,10 @@
 ---
 source: src/parser/error.rs
-expression: error
+expression: parser.parse().errors()
 ---
-ParserErrors {
-    errors: [
-        RecoveredItem {
-            item: None,
-            error:  let o = ["joe" "world"] 
-                            ≈≈≈≈≈≈≈
-                            ↳ [1:17] expected ',' but got string
-            ,
-        },
-    ],
-}
+[
+     let o = ["joe" "world"] 
+                    ≈≈≈≈≈≈≈
+                    ↳ [1:17] expected ',' but got string
+    ,
+]

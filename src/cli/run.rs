@@ -48,7 +48,7 @@ impl RunArgs {
                     let error_string: String = p
                         .errors
                         .iter()
-                        .map(|e| ColoredMetaError(&e.error).to_string())
+                        .map(|e| ColoredMetaError(e).to_string())
                         .collect();
 
                     return anyhow!(error_string);

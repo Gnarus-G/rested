@@ -5,7 +5,7 @@ use rested::parser::Parser;
 macro_rules! assert_ast {
     ($input:literal) => {
         let mut parser = Parser::new($input);
-        let ast = parser.parse().unwrap();
+        let ast = parser.parse();
 
         insta::with_settings!({
              description => $input
@@ -44,12 +44,6 @@ patch /api {}
 delete /api {}
 "#
     );
-}
-
-use rested::lexer::locations::Location;
-
-pub fn at(line: usize, col: usize) -> Location {
-    Location { line, col }
 }
 
 #[test]

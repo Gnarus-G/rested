@@ -1,5 +1,12 @@
-use super::ast::{Identifier, Program};
-use crate::lexer::{locations::Location, Array};
+use super::{
+    ast::{Identifier, Program},
+    ast_errors::GetErrors,
+    error::ParseError,
+};
+use crate::{
+    error_meta::ContextualError,
+    lexer::{locations::Location, Array},
+};
 
 impl<'source> Program<'source> {
     pub fn variables(&self) -> impl Iterator<Item = &Identifier<'source>> {
@@ -13,5 +20,14 @@ impl<'source> Program<'source> {
         self.variables()
             .filter(|i| i.span.start.is_before(location))
             .collect()
+    }
+
+    pub fn errors(&self) -> Vec<ContextualError<ParseError<'source>>> {
+        let mut errors = vec![];
+        for item in &self.items {
+            errors.extend(item.errors())
+        }
+
+        errors
     }
 }
