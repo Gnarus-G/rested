@@ -6,7 +6,7 @@ use crate::{
     error_meta::ContextualError,
     lexer::{
         locations::{Location, Span},
-        Array, Token,
+        Token,
     },
 };
 

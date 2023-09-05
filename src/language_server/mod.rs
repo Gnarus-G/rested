@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
 mod completions;
+mod position;
 
-use crate::lexer::locations::{GetSpan, Location};
-use crate::lexer::Token;
-use crate::parser::ast::{self, Program};
+use crate::lexer::locations::Location;
+use crate::parser::ast::Program;
 use crate::parser::{self, Parser};
 use completions::*;
 use tower_lsp::jsonrpc::Result;
@@ -161,162 +161,27 @@ impl LanguageServer for Backend {
 
         let variables = get_variables(&program);
 
-        for item in program.items.iter() {
-            match item {
-                ast::Item::Set { identifier, value } => {
-                    if identifier.span.contains(&position) {
-                        return Ok(Some(CompletionResponse::Array(vec![CompletionItem {
-                            label: "BASE_URL".to_string(),
-                            kind: Some(CompletionItemKind::CONSTANT),
-                            ..CompletionItem::default()
-                        }])));
-                    }
+        let completions_store = CompletionsStore {
+            functions: builtin_functions,
+            methods,
+            header_body: header_body_keyword_completions(),
+            attributes: attributes_completions(),
+            variables,
+        };
 
-                    if value.span().contains(&position) {
-                        return Ok(Some(CompletionResponse::Array(
-                            [builtin_functions, variables].concat(),
-                        )));
-                    }
-                }
-                ast::Item::Let { value, .. } => {
-                    if value.span().contains(&position) {
-                        return Ok(Some(CompletionResponse::Array(
-                            [builtin_functions, variables].concat(),
-                        )));
-                    }
-                }
-                ast::Item::Request {
-                    block: Some(block), ..
-                } => {
-                    let contains_position = block.span.contains(&position);
-                    if contains_position {
-                        let header_or_body = header_body_keyword_completions();
-
-                        for statement in block.statements.iter() {
-                            if statement.span().contains(&position) {
-                                match statement {
-                                    ast::Statement::Header { value, .. } => {
-                                        if value.span().contains(&position) {
-                                            return Ok(Some(CompletionResponse::Array(
-                                                [builtin_functions, variables].concat(),
-                                            )));
-                                        }
-                                        return Ok(None);
-                                    }
-                                    ast::Statement::Body { value, .. } => {
-                                        if value.span().contains(&position) {
-                                            return Ok(Some(CompletionResponse::Array(
-                                                [builtin_functions, variables].concat(),
-                                            )));
-                                        }
-                                    }
-                                    ast::Statement::LineComment(_) => {}
-                                    ast::Statement::Error(err) => {
-                                        if err.span.contains(&position) {
-                                            match &err.inner_error {
-                                                parser::error::ParseError::ExpectedToken { found, expected } => {
-                                                     match expected {
-                                                        Ident | StringLiteral | MultiLineStringLiteral => {
-                                                            return Ok(Some(CompletionResponse::Array(
-                                                                [builtin_functions, variables].concat(),
-                                                            )));
-                                                        },
-                                                        _ => {}
-                                                     }
-                                                },
-                                                parser::error::ParseError::ExpectedEitherOfTokens { found, expected } => {
-                                                    let mut comp = vec![];
-                                                    for token in expected.iter() {
-                                                     match token {
-                                                        Ident | StringLiteral | MultiLineStringLiteral => {
-                                                            comp.push(CompletionResponse::Array(
-                                                                [builtin_functions.clone(), variables.clone()].concat(),
-                                                            ));
-                                                        },
-                                                        _ => {}
-                                                     }
-                                                    }
-
-                                                    return Ok(Some(CompletionResponse::Array(
-                                                                [builtin_functions.clone(), variables.clone()].concat(),
-                                                            )));
-                                                    
-                                                },
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        return Ok(Some(CompletionResponse::Array([header_or_body].concat())));
-                    }
-                }
-                ast::Item::Expr(expr) => {
-                    if expr.span().contains(&position) {
-                        return Ok(Some(CompletionResponse::Array(
-                            [builtin_functions, variables].concat(),
-                        )));
-                    }
-                }
-                ast::Item::Attribute {
-                    identifier,
-                    parameters,
-                    ..
-                } => {
-                    if identifier.span.contains(&position) {
-                        return Ok(Some(CompletionResponse::Array(attributes_completions())));
-                    }
-
-                    for param in parameters.iter() {
-                        if param.span().contains(&position) {
-                            return Ok(Some(CompletionResponse::Array(
-                                [builtin_functions, variables].concat(),
-                            )));
-                        }
-                    }
-                }
-                _ => {}
+        for item in program.items {
+            if let Some(comps) = item.completions(&position, &completions_store) {
+                return Ok(Some(CompletionResponse::Array(comps)));
             }
-        }
-
-        let mut tokens = crate::lexer::Lexer::new(&text)
-            .filter(|t| {
-                t.start.is_before(Location {
-                    line: position.line as usize,
-                    col: position.character as usize,
-                })
-            })
-            .collect::<Vec<_>>();
-
-        tokens.reverse();
-
-        use crate::lexer::TokenKind::*;
-
-        match tokens.as_slice() {
-            [Token {
-                kind: StringLiteral,
-                ..
-            }, Token { kind: Header, .. }, ..]
-            | [Token { kind: Assign, .. }, _, _]
-            | [Token { kind: Body, .. }, ..]
-            | [Token { kind: Colon, .. }, Token { kind: Ident, .. }, ..] => {
-                return Ok(Some(CompletionResponse::Array(
-                    [builtin_functions, variables].concat(),
-                )));
-            }
-            [Token { kind: Set, .. }, ..] => {
-                return Ok(Some(CompletionResponse::Array(vec![CompletionItem {
-                    label: "BASE_URL".to_string(),
-                    kind: Some(CompletionItemKind::CONSTANT),
-                    ..CompletionItem::default()
-                }])));
-            }
-            _ => {}
         }
 
         return Ok(Some(CompletionResponse::Array(
-            [methods, builtin_functions, variables].concat(),
+            [
+                completions_store.variables.clone(),
+                completions_store.methods,
+                completions_store.functions,
+            ]
+            .concat(),
         )));
     }
 
