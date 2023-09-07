@@ -1,5 +1,5 @@
 ---
-source: parser/tests/parser.rs
+source: tests/parser.rs
 description: "post http://localhost"
 expression: ast
 ---
@@ -10,11 +10,13 @@ Program(
       endpoint: Url(Literal(
         value: "http://localhost",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 5,
             line: 0,
             col: 5,
           ),
-          end: Location(
+          end: Position(
+            value: 21,
             line: 0,
             col: 21,
           ),
@@ -22,11 +24,13 @@ Program(
       )),
       block: None,
       span: Span(
-        start: Location(
+        start: Position(
+          value: 0,
           line: 0,
           col: 0,
         ),
-        end: Location(
+        end: Position(
+          value: 21,
           line: 0,
           col: 21,
         ),

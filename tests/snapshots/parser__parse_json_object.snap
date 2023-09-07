@@ -9,22 +9,26 @@ Program(
       identifier: Identifier(
         name: "o",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 5,
             line: 1,
             col: 4,
           ),
-          end: Location(
+          end: Position(
+            value: 6,
             line: 1,
             col: 5,
           ),
         ),
       ),
       value: Object((Span(
-        start: Location(
+        start: Position(
+          value: 9,
           line: 1,
           col: 8,
         ),
-        end: Location(
+        end: Position(
+          value: 60,
           line: 5,
           col: 1,
         ),
@@ -32,11 +36,13 @@ Program(
         "akey": Number(Literal(
           value: "123",
           span: Span(
-            start: Location(
+            start: Position(
+              value: 39,
               line: 3,
               col: 10,
             ),
-            end: Location(
+            end: Position(
+              value: 42,
               line: 3,
               col: 13,
             ),
@@ -46,11 +52,13 @@ Program(
           raw: "\"value\"",
           value: "value",
           span: Span(
-            start: Location(
+            start: Position(
+              value: 20,
               line: 2,
               col: 9,
             ),
-            end: Location(
+            end: Position(
+              value: 27,
               line: 2,
               col: 16,
             ),
@@ -60,11 +68,13 @@ Program(
           raw: "\"me\"",
           value: "me",
           span: Span(
-            start: Location(
+            start: Position(
+              value: 54,
               line: 4,
               col: 10,
             ),
-            end: Location(
+            end: Position(
+              value: 58,
               line: 4,
               col: 14,
             ),

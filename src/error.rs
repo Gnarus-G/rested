@@ -29,7 +29,10 @@ impl<'e, EK: Display + std::error::Error + std::clone::Clone>
     }
 
     fn location(&self) -> ColoredString {
-        self.0.span.start.to_string().dimmed().bold()
+        Location::from(self.0.span.start)
+            .to_string()
+            .dimmed()
+            .bold()
     }
 
     fn line(&self) -> ColoredString {

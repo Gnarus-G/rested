@@ -4,6 +4,6 @@ description: true false
 expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
-    Boolean("true") at Location { line: 0, col: 0 },
-    Boolean("false") at Location { line: 0, col: 5 },
+    Boolean("true") at Position { value: 0, line: 0, col: 0 },
+    Boolean("false") at Position { value: 5, line: 0, col: 5 },
 ]

@@ -9,11 +9,13 @@ Program(
       endpoint: Pathname(Literal(
         value: "/hello",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 4,
             line: 0,
             col: 4,
           ),
-          end: Location(
+          end: Position(
+            value: 10,
             line: 0,
             col: 10,
           ),
@@ -26,11 +28,13 @@ Program(
               raw: "\"test\"",
               value: "test",
               span: Span(
-                start: Location(
+                start: Position(
+                  value: 20,
                   line: 0,
                   col: 20,
                 ),
-                end: Location(
+                end: Position(
+                  value: 26,
                   line: 0,
                   col: 26,
                 ),
@@ -40,11 +44,13 @@ Program(
               raw: "\"value\"",
               value: "value",
               span: Span(
-                start: Location(
+                start: Position(
+                  value: 27,
                   line: 0,
                   col: 27,
                 ),
-                end: Location(
+                end: Position(
+                  value: 34,
                   line: 0,
                   col: 34,
                 ),
@@ -60,11 +66,13 @@ Program(
               expected: StringLiteral,
             ),
             span: Span(
-              start: Location(
+              start: Position(
+                value: 35,
                 line: 0,
                 col: 35,
               ),
-              end: Location(
+              end: Position(
+                value: 43,
                 line: 0,
                 col: 43,
               ),
@@ -75,25 +83,30 @@ Program(
               line: "get /hello { header \"test\" \"value\" header }",
               below: None,
             ),
+            text: "header }",
           )),
         ],
         span: Span(
-          start: Location(
+          start: Position(
+            value: 11,
             line: 0,
             col: 11,
           ),
-          end: Location(
+          end: Position(
+            value: 43,
             line: 0,
             col: 42,
           ),
         ),
       )),
       span: Span(
-        start: Location(
+        start: Position(
+          value: 0,
           line: 0,
           col: 0,
         ),
-        end: Location(
+        end: Position(
+          value: 43,
           line: 0,
           col: 42,
         ),

@@ -1,5 +1,5 @@
 ---
-source: parser/tests/parser.rs
+source: tests/parser.rs
 description: "\n        post http://localhost {\n        header \"Authorization\" \"Bearer token\"\n        body `\n        {\"neet\": 1337}\n        `\n        }"
 expression: ast
 ---
@@ -10,11 +10,13 @@ Program(
       endpoint: Url(Literal(
         value: "http://localhost",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 14,
             line: 1,
             col: 13,
           ),
-          end: Location(
+          end: Position(
+            value: 30,
             line: 1,
             col: 29,
           ),
@@ -27,11 +29,13 @@ Program(
               raw: "\"Authorization\"",
               value: "Authorization",
               span: Span(
-                start: Location(
+                start: Position(
+                  value: 48,
                   line: 2,
                   col: 15,
                 ),
-                end: Location(
+                end: Position(
+                  value: 63,
                   line: 2,
                   col: 30,
                 ),
@@ -41,11 +45,13 @@ Program(
               raw: "\"Bearer token\"",
               value: "Bearer token",
               span: Span(
-                start: Location(
+                start: Position(
+                  value: 64,
                   line: 2,
                   col: 31,
                 ),
-                end: Location(
+                end: Position(
+                  value: 78,
                   line: 2,
                   col: 45,
                 ),
@@ -57,39 +63,46 @@ Program(
               raw: "`\n        {\"neet\": 1337}\n        `",
               value: "\n        {\"neet\": 1337}\n        ",
               span: Span(
-                start: Location(
+                start: Position(
+                  value: 92,
                   line: 3,
                   col: 13,
                 ),
-                end: Location(
+                end: Position(
+                  value: 126,
                   line: 3,
                   col: 47,
                 ),
               ),
             )),
-            start: Location(
+            start: Position(
+              value: 87,
               line: 3,
               col: 8,
             ),
           ),
         ],
         span: Span(
-          start: Location(
+          start: Position(
+            value: 31,
             line: 1,
             col: 30,
           ),
-          end: Location(
+          end: Position(
+            value: 135,
             line: 6,
             col: 8,
           ),
         ),
       )),
       span: Span(
-        start: Location(
+        start: Position(
+          value: 9,
           line: 1,
           col: 8,
         ),
-        end: Location(
+        end: Position(
+          value: 135,
           line: 6,
           col: 8,
         ),

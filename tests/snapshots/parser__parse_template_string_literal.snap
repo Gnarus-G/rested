@@ -1,5 +1,5 @@
 ---
-source: parser/tests/parser.rs
+source: tests/parser.rs
 description: "\n        post /api {\n            body `{\"neet\": ${env(\"love\")}, 2: ${\"two\"}}`\n        }"
 expression: ast
 ---
@@ -10,11 +10,13 @@ Program(
       endpoint: Pathname(Literal(
         value: "/api",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 14,
             line: 1,
             col: 13,
           ),
-          end: Location(
+          end: Position(
+            value: 18,
             line: 1,
             col: 17,
           ),
@@ -25,11 +27,13 @@ Program(
           Body(
             value: TemplateSringLiteral(
               span: Span(
-                start: Location(
+                start: Position(
+                  value: 38,
                   line: 2,
                   col: 17,
                 ),
-                end: Location(
+                end: Position(
+                  value: 77,
                   line: 2,
                   col: 56,
                 ),
@@ -39,11 +43,13 @@ Program(
                   raw: "`{\"neet\": ",
                   value: "{\"neet\": ",
                   span: Span(
-                    start: Location(
+                    start: Position(
+                      value: 38,
                       line: 2,
                       col: 17,
                     ),
-                    end: Location(
+                    end: Position(
+                      value: 48,
                       line: 2,
                       col: 27,
                     ),
@@ -53,11 +59,13 @@ Program(
                   identifier: Identifier(
                     name: "env",
                     span: Span(
-                      start: Location(
+                      start: Position(
+                        value: 50,
                         line: 2,
                         col: 29,
                       ),
-                      end: Location(
+                      end: Position(
+                        value: 53,
                         line: 2,
                         col: 32,
                       ),
@@ -68,11 +76,13 @@ Program(
                       raw: "\"love\"",
                       value: "love",
                       span: Span(
-                        start: Location(
+                        start: Position(
+                          value: 54,
                           line: 2,
                           col: 33,
                         ),
-                        end: Location(
+                        end: Position(
+                          value: 60,
                           line: 2,
                           col: 39,
                         ),
@@ -84,11 +94,13 @@ Program(
                   raw: ", 2: ",
                   value: ", 2: ",
                   span: Span(
-                    start: Location(
+                    start: Position(
+                      value: 62,
                       line: 2,
                       col: 41,
                     ),
-                    end: Location(
+                    end: Position(
+                      value: 67,
                       line: 2,
                       col: 46,
                     ),
@@ -98,11 +110,13 @@ Program(
                   raw: "\"two\"",
                   value: "two",
                   span: Span(
-                    start: Location(
+                    start: Position(
+                      value: 69,
                       line: 2,
                       col: 48,
                     ),
-                    end: Location(
+                    end: Position(
+                      value: 74,
                       line: 2,
                       col: 53,
                     ),
@@ -112,11 +126,13 @@ Program(
                   raw: "}`",
                   value: "}",
                   span: Span(
-                    start: Location(
+                    start: Position(
+                      value: 75,
                       line: 2,
                       col: 54,
                     ),
-                    end: Location(
+                    end: Position(
+                      value: 77,
                       line: 2,
                       col: 56,
                     ),
@@ -124,29 +140,34 @@ Program(
                 )),
               ],
             ),
-            start: Location(
+            start: Position(
+              value: 33,
               line: 2,
               col: 12,
             ),
           ),
         ],
         span: Span(
-          start: Location(
+          start: Position(
+            value: 19,
             line: 1,
             col: 18,
           ),
-          end: Location(
+          end: Position(
+            value: 86,
             line: 3,
             col: 8,
           ),
         ),
       )),
       span: Span(
-        start: Location(
+        start: Position(
+          value: 9,
           line: 1,
           col: 8,
         ),
-        end: Location(
+        end: Position(
+          value: 86,
           line: 3,
           col: 8,
         ),

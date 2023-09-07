@@ -81,6 +81,7 @@ pub struct ContextualError<EK: Display + std::error::Error + Clone> {
     pub span: Span,
     pub message: Option<String>,
     pub context: ErrorSourceContext,
+    pub text: String,
 }
 
 impl<E: Display + std::error::Error + Clone> std::fmt::Debug for ContextualError<E> {
@@ -94,8 +95,9 @@ impl<E: Display + std::error::Error + Clone> ContextualError<E> {
         Self {
             inner_error,
             message: None,
-            context: ErrorSourceContext::new(&span.end, source_code),
+            context: ErrorSourceContext::new(&span.end.into(), source_code),
             span,
+            text: source_code[span.start.value..span.end.value].to_string(),
         }
     }
 
@@ -111,7 +113,7 @@ impl<E: Display + std::error::Error + Clone> ErrorDisplay<String> for Contextual
     }
 
     fn location(&self) -> String {
-        self.span.start.to_string()
+        Location::from(self.span.start).to_string()
     }
 
     fn line(&self) -> String {
@@ -135,7 +137,7 @@ impl<E: Display + std::error::Error + Clone> ErrorDisplay<String> for Contextual
     }
 
     fn error_start(&self) -> Location {
-        self.span.start
+        self.span.start.into()
     }
 }
 

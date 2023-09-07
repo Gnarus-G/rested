@@ -4,7 +4,7 @@ description: " \"\" \"\" ``"
 expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
-    StringLiteral("") at Location { line: 0, col: 1 },
-    StringLiteral("") at Location { line: 0, col: 4 },
-    StringLiteral("") at Location { line: 0, col: 7 },
+    StringLiteral("") at Position { value: 1, line: 0, col: 1 },
+    StringLiteral("") at Position { value: 4, line: 0, col: 4 },
+    StringLiteral("") at Position { value: 7, line: 0, col: 7 },
 ]

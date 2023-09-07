@@ -18,7 +18,7 @@ impl<'source> Program<'source> {
 
     pub fn variables_before(&self, location: Location) -> Array<&Identifier<'source>> {
         self.variables()
-            .filter(|i| i.span.start.is_before(location))
+            .filter(|i| Into::<Location>::into(i.span.start).is_before(location))
             .collect()
     }
 

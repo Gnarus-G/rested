@@ -5,6 +5,8 @@ use std::sync::Arc;
 
 use locations::Location;
 
+use self::locations::Position;
+
 #[derive(Debug, PartialEq, Clone, Copy, serde::Serialize)]
 pub enum TokenKind {
     // keywords
@@ -58,13 +60,21 @@ pub enum TokenKind {
 pub struct Token<'t> {
     pub kind: TokenKind,
     pub text: &'t str,
-    pub start: Location,
+    pub start: Position,
 }
 
 impl<'source> Token<'source> {
     pub fn end_location(&self) -> Location {
         Location {
             line: self.start.line,
+            col: self.start.col + self.text.len(),
+        }
+    }
+
+    pub fn end_position(&self) -> Position {
+        Position {
+            line: self.start.line,
+            value: self.start.value + self.text.len(),
             col: self.start.col + self.text.len(),
         }
     }
@@ -95,8 +105,7 @@ impl CharaterTest for Option<&u8> {
 #[derive(Debug)]
 pub struct Lexer<'i> {
     input: &'i [u8],
-    position: usize,
-    cursor: Location,
+    position: Position,
     inside_multiline_string: bool,
 }
 
@@ -104,8 +113,7 @@ impl<'i> Lexer<'i> {
     pub fn new(input: &'i str) -> Self {
         Self {
             input: input.as_bytes(),
-            position: 0,
-            cursor: Location { line: 0, col: 0 },
+            position: Default::default(),
             inside_multiline_string: false,
         }
     }
@@ -126,28 +134,27 @@ impl<'i> Lexer<'i> {
     }
 
     fn ch(&self) -> Option<&u8> {
-        self.char_at(self.position)
+        self.char_at(self.position.value)
     }
 
     fn step(&mut self) {
-        if self.peek_char().is_none() {
-            return self.position += 1;
+        if self.peek_char().is_some() {
+            self.check_and_bump_new_line();
         }
-        self.check_and_bump_new_line();
-        self.position += 1;
+        self.position.value += 1;
     }
 
     fn check_and_bump_new_line(&mut self) {
         if let Some(b'\n') = self.ch() {
-            self.cursor.line += 1;
-            self.cursor.col = 0;
+            self.position.line += 1;
+            self.position.col = 0;
         } else {
-            self.cursor.col += 1;
+            self.position.col += 1;
         };
     }
 
     fn peek_n_char(&self, n: usize) -> Option<&u8> {
-        self.char_at(self.position + n)
+        self.char_at(self.position.value + n)
     }
 
     fn peek_char(&self) -> Option<&u8> {
@@ -157,13 +164,13 @@ impl<'i> Lexer<'i> {
     /// Assumes that the character at the current position, immediately before calling
     /// this function is also true for the predicate function given.
     fn read_while<P: Fn(&u8) -> bool>(&mut self, predicate: P) -> (usize, usize) {
-        let start_pos = self.position;
+        let start_pos = self.position.value;
 
         while self.peek_char().passes(&predicate) {
             self.step();
         }
 
-        (start_pos, self.position + 1)
+        (start_pos, self.position.value + 1)
     }
 
     fn skip_whitespace(&mut self) {
@@ -182,7 +189,7 @@ impl<'i> Lexer<'i> {
             None => {
                 return Token {
                     kind: TokenKind::End,
-                    start: self.cursor,
+                    start: self.position,
                     text: "",
                 }
             }
@@ -197,7 +204,7 @@ impl<'i> Lexer<'i> {
                 let token = Token {
                     kind: DollarSignLBracket,
                     text: "${",
-                    start: self.cursor,
+                    start: self.position,
                 };
                 self.step();
                 token
@@ -214,53 +221,53 @@ impl<'i> Lexer<'i> {
             }
             b'(' => Token {
                 kind: LParen,
-                start: self.cursor,
+                start: self.position,
                 text: "(",
             },
             b')' => Token {
                 kind: RParen,
-                start: self.cursor,
+                start: self.position,
                 text: ")",
             },
             b'{' => Token {
                 kind: LBracket,
-                start: self.cursor,
+                start: self.position,
                 text: "{",
             },
             b'}' => Token {
                 kind: RBracket,
-                start: self.cursor,
+                start: self.position,
                 text: "}",
             },
             b'[' => Token {
                 kind: LSquare,
-                start: self.cursor,
+                start: self.position,
                 text: "[",
             },
             b']' => Token {
                 kind: RSquare,
-                start: self.cursor,
+                start: self.position,
                 text: "]",
             },
             b',' => Token {
                 kind: Comma,
                 text: ",",
-                start: self.cursor,
+                start: self.position,
             },
             b':' => Token {
                 kind: Colon,
                 text: ":",
-                start: self.cursor,
+                start: self.position,
             },
             b'=' => Token {
                 kind: Assign,
                 text: "=",
-                start: self.cursor,
+                start: self.position,
             },
             b'@' => Token {
                 kind: AttributePrefix,
                 text: "@",
-                start: self.cursor,
+                start: self.position,
             },
             b'/' if self.peek_char().is(b'/') => self.line_comment(),
             b'/' => self.pathname(),
@@ -269,8 +276,11 @@ impl<'i> Lexer<'i> {
             c if c.is_ascii_digit() => self.number(),
             _ => Token {
                 kind: IllegalToken,
-                text: std::str::from_utf8(&self.input[self.position..self.position + 1]).unwrap(),
-                start: self.cursor,
+                text: std::str::from_utf8(
+                    &self.input[self.position.value..self.position.value + 1],
+                )
+                .unwrap(),
+                start: self.position,
             },
         };
 
@@ -281,8 +291,8 @@ impl<'i> Lexer<'i> {
 
     fn multiline_string_literal(&mut self) -> Token<'i> {
         self.inside_multiline_string = true;
-        let location = self.cursor;
-        let start_pos = self.position;
+        let location = self.position;
+        let start_pos = self.position.value;
 
         self.step();
 
@@ -291,19 +301,19 @@ impl<'i> Lexer<'i> {
             let dollar_curly_ahead = self.peek_char().is(b'$') && self.peek_n_char(2).is(b'{');
 
             if dollar_curly_ahead {
-                break (start_pos, self.position + 1);
+                break (start_pos, self.position.value + 1);
             }
 
             if is_at_end {
                 self.inside_multiline_string = false;
-                break (start_pos, self.position + 1);
+                break (start_pos, self.position.value + 1);
             }
 
             if self.ch().is_none() {
                 return Token {
                     kind: TokenKind::UnfinishedMultiLineStringLiteral,
                     start: location,
-                    text: self.input_slice(start_pos..self.position),
+                    text: self.input_slice(start_pos..self.position.value),
                 };
             }
 
@@ -320,7 +330,7 @@ impl<'i> Lexer<'i> {
     }
 
     fn string_literal(&mut self) -> Token<'i> {
-        let location = self.cursor;
+        let location = self.position;
 
         let (s, e) = self.read_while(|&c| c != b'"' && c != b'\n');
 
@@ -347,7 +357,7 @@ impl<'i> Lexer<'i> {
     }
 
     fn empty_string_literal(&mut self) -> Token<'i> {
-        let location = self.cursor;
+        let location = self.position;
         self.step();
         Token {
             kind: TokenKind::StringLiteral,
@@ -357,7 +367,7 @@ impl<'i> Lexer<'i> {
     }
 
     fn keyword_or_identifier(&mut self) -> Token<'i> {
-        let location = self.cursor;
+        let location = self.position;
         let (s, e) = self.read_while(|&c| c.is_ascii_alphabetic() || c == b'_');
         let string = self.input_slice(s..e);
 
@@ -442,7 +452,7 @@ impl<'i> Lexer<'i> {
     }
 
     fn pathname(&mut self) -> Token<'i> {
-        let location = self.cursor;
+        let location = self.position;
         let (s, e) = self.read_while(|&c| !c.is_ascii_whitespace());
         let string = self.input_slice(s..e);
 
@@ -454,7 +464,7 @@ impl<'i> Lexer<'i> {
     }
 
     fn number(&mut self) -> Token<'i> {
-        let location = self.cursor;
+        let location = self.position;
         let (s, e) = self.read_while(|&c| c.is_ascii_digit());
         let string = self.input_slice(s..e);
 
@@ -481,7 +491,7 @@ impl<'i> Lexer<'i> {
     }
 
     fn shebang(&mut self) -> Token<'i> {
-        let location = self.cursor;
+        let location = self.position;
         let (s, e) = self.read_while(|&c| c != b'\n');
         let string = self.input_slice(s..e);
         Token {
@@ -492,7 +502,7 @@ impl<'i> Lexer<'i> {
     }
 
     fn line_comment(&mut self) -> Token<'i> {
-        let location = self.cursor;
+        let location = self.position;
         let (s, e) = self.read_while(|&c| c != b'\n');
         let string = self.input_slice(s..e);
         Token {

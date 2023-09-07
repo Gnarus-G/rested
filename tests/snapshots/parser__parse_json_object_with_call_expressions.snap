@@ -1,5 +1,5 @@
 ---
-source: parser/tests/parser.rs
+source: tests/parser.rs
 description: "\nlet o = {\n    key: read(\"test\"),\n    akey: env(\"url\")\n}"
 expression: ast
 ---
@@ -9,22 +9,26 @@ Program(
       identifier: Identifier(
         name: "o",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 5,
             line: 1,
             col: 4,
           ),
-          end: Location(
+          end: Position(
+            value: 6,
             line: 1,
             col: 5,
           ),
         ),
       ),
       value: Object((Span(
-        start: Location(
+        start: Position(
+          value: 9,
           line: 1,
           col: 8,
         ),
-        end: Location(
+        end: Position(
+          value: 56,
           line: 4,
           col: 1,
         ),
@@ -33,11 +37,13 @@ Program(
           identifier: Identifier(
             name: "env",
             span: Span(
-              start: Location(
+              start: Position(
+                value: 44,
                 line: 3,
                 col: 10,
               ),
-              end: Location(
+              end: Position(
+                value: 47,
                 line: 3,
                 col: 13,
               ),
@@ -48,11 +54,13 @@ Program(
               raw: "\"url\"",
               value: "url",
               span: Span(
-                start: Location(
+                start: Position(
+                  value: 48,
                   line: 3,
                   col: 14,
                 ),
-                end: Location(
+                end: Position(
+                  value: 53,
                   line: 3,
                   col: 19,
                 ),
@@ -64,11 +72,13 @@ Program(
           identifier: Identifier(
             name: "read",
             span: Span(
-              start: Location(
+              start: Position(
+                value: 20,
                 line: 2,
                 col: 9,
               ),
-              end: Location(
+              end: Position(
+                value: 24,
                 line: 2,
                 col: 13,
               ),
@@ -79,11 +89,13 @@ Program(
               raw: "\"test\"",
               value: "test",
               span: Span(
-                start: Location(
+                start: Position(
+                  value: 25,
                   line: 2,
                   col: 14,
                 ),
-                end: Location(
+                end: Position(
+                  value: 31,
                   line: 2,
                   col: 20,
                 ),

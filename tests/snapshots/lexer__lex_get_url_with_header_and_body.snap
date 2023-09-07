@@ -4,13 +4,13 @@ description: "\npost http://localhost { \n    header \"Authorization\" \"Bearer 
 expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
-    Post("post") at Location { line: 1, col: 0 },
-    Url("http://localhost") at Location { line: 1, col: 5 },
-    LBracket("{") at Location { line: 1, col: 22 },
-    Header("header") at Location { line: 2, col: 4 },
-    StringLiteral("\"Authorization\"") at Location { line: 2, col: 11 },
-    StringLiteral("\"Bearer token\"") at Location { line: 2, col: 27 },
-    Body("body") at Location { line: 3, col: 4 },
-    StringLiteral("\"{neet: 1337}\"") at Location { line: 3, col: 9 },
-    RBracket("}") at Location { line: 4, col: 0 },
+    Post("post") at Position { value: 1, line: 1, col: 0 },
+    Url("http://localhost") at Position { value: 6, line: 1, col: 5 },
+    LBracket("{") at Position { value: 23, line: 1, col: 22 },
+    Header("header") at Position { value: 30, line: 2, col: 4 },
+    StringLiteral("\"Authorization\"") at Position { value: 37, line: 2, col: 11 },
+    StringLiteral("\"Bearer token\"") at Position { value: 53, line: 2, col: 27 },
+    Body("body") at Position { value: 73, line: 3, col: 4 },
+    StringLiteral("\"{neet: 1337}\"") at Position { value: 78, line: 3, col: 9 },
+    RBracket("}") at Position { value: 94, line: 4, col: 0 },
 ]

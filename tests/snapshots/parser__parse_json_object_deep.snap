@@ -1,5 +1,5 @@
 ---
-source: parser/tests/parser.rs
+source: tests/parser.rs
 description: "\nlet o = {\n    key: \"value\",\n    akey: false,\n    love: {\n        hello: {\n            w: \"1\",\n            o: {\n                two: 2.123,\n                and: {}\n            }\n        }\n    }\n}"
 expression: ast
 ---
@@ -9,22 +9,26 @@ Program(
       identifier: Identifier(
         name: "o",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 5,
             line: 1,
             col: 4,
           ),
-          end: Location(
+          end: Position(
+            value: 6,
             line: 1,
             col: 5,
           ),
         ),
       ),
       value: Object((Span(
-        start: Location(
+        start: Position(
+          value: 9,
           line: 1,
           col: 8,
         ),
-        end: Location(
+        end: Position(
+          value: 195,
           line: 13,
           col: 1,
         ),
@@ -32,11 +36,13 @@ Program(
         "akey": Bool(Literal(
           value: "false",
           span: Span(
-            start: Location(
+            start: Position(
+              value: 39,
               line: 3,
               col: 10,
             ),
-            end: Location(
+            end: Position(
+              value: 44,
               line: 3,
               col: 15,
             ),
@@ -46,52 +52,62 @@ Program(
           raw: "\"value\"",
           value: "value",
           span: Span(
-            start: Location(
+            start: Position(
+              value: 20,
               line: 2,
               col: 9,
             ),
-            end: Location(
+            end: Position(
+              value: 27,
               line: 2,
               col: 16,
             ),
           ),
         )),
         "love": Object((Span(
-          start: Location(
+          start: Position(
+            value: 56,
             line: 4,
             col: 10,
           ),
-          end: Location(
+          end: Position(
+            value: 193,
             line: 12,
             col: 5,
           ),
         ), {
           "hello": Object((Span(
-            start: Location(
+            start: Position(
+              value: 73,
               line: 5,
               col: 15,
             ),
-            end: Location(
+            end: Position(
+              value: 187,
               line: 11,
               col: 9,
             ),
           ), {
             "o": Object((Span(
-              start: Location(
+              start: Position(
+                value: 110,
                 line: 7,
                 col: 15,
               ),
-              end: Location(
+              end: Position(
+                value: 177,
                 line: 10,
                 col: 13,
               ),
             ), {
               "and": EmptyObject(Span(
-                start: Location(
+                start: Position(
+                  value: 161,
                   line: 9,
                   col: 21,
                 ),
-                end: Location(
+                end: Position(
+                  value: 163,
                   line: 9,
                   col: 23,
                 ),
@@ -99,11 +115,13 @@ Program(
               "two": Number(Literal(
                 value: "2.123",
                 span: Span(
-                  start: Location(
+                  start: Position(
+                    value: 133,
                     line: 8,
                     col: 21,
                   ),
-                  end: Location(
+                  end: Position(
+                    value: 138,
                     line: 8,
                     col: 26,
                   ),
@@ -114,11 +132,13 @@ Program(
               raw: "\"1\"",
               value: "1",
               span: Span(
-                start: Location(
+                start: Position(
+                  value: 90,
                   line: 6,
                   col: 15,
                 ),
-                end: Location(
+                end: Position(
+                  value: 93,
                   line: 6,
                   col: 18,
                 ),

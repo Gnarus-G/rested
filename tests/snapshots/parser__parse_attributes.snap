@@ -6,18 +6,21 @@ expression: ast
 Program(
   items: [
     Attribute(
-      location: Location(
+      location: Position(
+        value: 0,
         line: 0,
         col: 0,
       ),
       identifier: Identifier(
         name: "log",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 1,
             line: 0,
             col: 1,
           ),
-          end: Location(
+          end: Position(
+            value: 4,
             line: 0,
             col: 4,
           ),
@@ -28,11 +31,13 @@ Program(
           raw: "\"path/to/file\"",
           value: "path/to/file",
           span: Span(
-            start: Location(
+            start: Position(
+              value: 5,
               line: 0,
               col: 5,
             ),
-            end: Location(
+            end: Position(
+              value: 19,
               line: 0,
               col: 19,
             ),
@@ -45,11 +50,13 @@ Program(
       endpoint: Pathname(Literal(
         value: "/api",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 25,
             line: 0,
             col: 25,
           ),
-          end: Location(
+          end: Position(
+            value: 29,
             line: 0,
             col: 29,
           ),
@@ -57,11 +64,13 @@ Program(
       )),
       block: None,
       span: Span(
-        start: Location(
+        start: Position(
+          value: 21,
           line: 0,
           col: 21,
         ),
-        end: Location(
+        end: Position(
+          value: 29,
           line: 0,
           col: 29,
         ),

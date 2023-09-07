@@ -4,8 +4,8 @@ description: "get \n    http://localhost \n{\n}"
 expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
-    Get("get") at Location { line: 0, col: 0 },
-    Url("http://localhost") at Location { line: 1, col: 4 },
-    LBracket("{") at Location { line: 2, col: 0 },
-    RBracket("}") at Location { line: 3, col: 0 },
+    Get("get") at Position { value: 0, line: 0, col: 0 },
+    Url("http://localhost") at Position { value: 9, line: 1, col: 4 },
+    LBracket("{") at Position { value: 27, line: 2, col: 0 },
+    RBracket("}") at Position { value: 29, line: 3, col: 0 },
 ]

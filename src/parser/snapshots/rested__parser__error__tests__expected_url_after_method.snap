@@ -16,11 +16,13 @@ Program(
         ],
       ),
       span: Span(
-        start: Location(
+        start: Position(
+          value: 0,
           line: 0,
           col: 0,
         ),
-        end: Location(
+        end: Position(
+          value: 5,
           line: 0,
           col: 5,
         ),
@@ -31,6 +33,7 @@ Program(
         line: "get {}",
         below: None,
       ),
+      text: "get {",
     )),
   ],
 )

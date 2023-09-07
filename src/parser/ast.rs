@@ -5,7 +5,7 @@ use serde::Serialize;
 use crate::{
     error_meta::ContextualError,
     lexer::{
-        locations::{Location, Span},
+        locations::{Position, Span},
         Token,
     },
 };
@@ -103,7 +103,7 @@ pub enum Item<'source> {
     },
     Expr(Expression<'source>),
     Attribute {
-        location: Location,
+        location: Position,
         identifier: Identifier<'source>,
         parameters: Vec<Expression<'source>>,
     },
@@ -133,7 +133,7 @@ pub enum Statement<'i> {
     },
     Body {
         value: Expression<'i>,
-        start: Location,
+        start: Position,
     },
     LineComment(Literal<'i>),
     Error(ContextualError<ParseError<'i>>),

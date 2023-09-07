@@ -4,5 +4,5 @@ description: "\"hello\""
 expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
-    StringLiteral("\"hello\"") at Location { line: 0, col: 0 },
+    StringLiteral("\"hello\"") at Position { value: 0, line: 0, col: 0 },
 ]

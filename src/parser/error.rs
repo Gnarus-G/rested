@@ -1,4 +1,4 @@
-use crate::lexer::locations::Location;
+use crate::lexer::locations::Position;
 use crate::lexer::{locations::GetSpan, Array, Token, TokenKind};
 
 use crate::error_meta::ContextualError;
@@ -35,7 +35,7 @@ impl<'source> std::fmt::Display for ErroneousToken<'source> {
 #[derive(Debug)]
 pub struct Expectations<'i> {
     source_code: &'i str,
-    pub start: Location,
+    pub start: Position,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize)]

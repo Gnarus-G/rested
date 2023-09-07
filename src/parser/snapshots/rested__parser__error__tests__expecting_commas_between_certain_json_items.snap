@@ -13,11 +13,13 @@ Program(
         expected: Comma,
       ),
       span: Span(
-        start: Location(
+        start: Position(
+          value: 8,
           line: 0,
           col: 8,
         ),
-        end: Location(
+        end: Position(
+          value: 59,
           line: 2,
           col: 22,
         ),
@@ -28,6 +30,7 @@ Program(
         line: "                 hello: \"world\"",
         below: Some("               }"),
       ),
+      text: "{\n                 yo: \"joe\"\n                 hello",
     )),
   ],
 )

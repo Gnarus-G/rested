@@ -1,5 +1,5 @@
 ---
-source: parser/tests/parser.rs
+source: tests/parser.rs
 description: "set BASE_URL \"stuff\""
 expression: ast
 ---
@@ -9,11 +9,13 @@ Program(
       identifier: Identifier(
         name: "BASE_URL",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 4,
             line: 0,
             col: 4,
           ),
-          end: Location(
+          end: Position(
+            value: 12,
             line: 0,
             col: 12,
           ),
@@ -23,11 +25,13 @@ Program(
         raw: "\"stuff\"",
         value: "stuff",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 13,
             line: 0,
             col: 13,
           ),
-          end: Location(
+          end: Position(
+            value: 20,
             line: 0,
             col: 20,
           ),

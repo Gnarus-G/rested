@@ -1,5 +1,5 @@
 ---
-source: parser/tests/parser.rs
+source: tests/parser.rs
 description: "\n        get http://localhost {\n        header \"Authorization\" \"Bearer token\"\n        header \"random\" \"tokener Bear\"\n        }"
 expression: ast
 ---
@@ -10,11 +10,13 @@ Program(
       endpoint: Url(Literal(
         value: "http://localhost",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 13,
             line: 1,
             col: 12,
           ),
-          end: Location(
+          end: Position(
+            value: 29,
             line: 1,
             col: 28,
           ),
@@ -27,11 +29,13 @@ Program(
               raw: "\"Authorization\"",
               value: "Authorization",
               span: Span(
-                start: Location(
+                start: Position(
+                  value: 47,
                   line: 2,
                   col: 15,
                 ),
-                end: Location(
+                end: Position(
+                  value: 62,
                   line: 2,
                   col: 30,
                 ),
@@ -41,11 +45,13 @@ Program(
               raw: "\"Bearer token\"",
               value: "Bearer token",
               span: Span(
-                start: Location(
+                start: Position(
+                  value: 63,
                   line: 2,
                   col: 31,
                 ),
-                end: Location(
+                end: Position(
+                  value: 77,
                   line: 2,
                   col: 45,
                 ),
@@ -57,11 +63,13 @@ Program(
               raw: "\"random\"",
               value: "random",
               span: Span(
-                start: Location(
+                start: Position(
+                  value: 93,
                   line: 3,
                   col: 15,
                 ),
-                end: Location(
+                end: Position(
+                  value: 101,
                   line: 3,
                   col: 23,
                 ),
@@ -71,11 +79,13 @@ Program(
               raw: "\"tokener Bear\"",
               value: "tokener Bear",
               span: Span(
-                start: Location(
+                start: Position(
+                  value: 102,
                   line: 3,
                   col: 24,
                 ),
-                end: Location(
+                end: Position(
+                  value: 116,
                   line: 3,
                   col: 38,
                 ),
@@ -84,22 +94,26 @@ Program(
           ),
         ],
         span: Span(
-          start: Location(
+          start: Position(
+            value: 30,
             line: 1,
             col: 29,
           ),
-          end: Location(
+          end: Position(
+            value: 125,
             line: 4,
             col: 8,
           ),
         ),
       )),
       span: Span(
-        start: Location(
+        start: Position(
+          value: 9,
           line: 1,
           col: 8,
         ),
-        end: Location(
+        end: Position(
+          value: 125,
           line: 4,
           col: 8,
         ),

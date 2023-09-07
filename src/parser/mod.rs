@@ -12,7 +12,7 @@ use self::ast::Block;
 use self::error::{Expectations, ParseError};
 
 use crate::error_meta::ContextualError;
-use crate::lexer::locations::{GetSpan, Location, Span};
+use crate::lexer::locations::{GetSpan, Position, Span};
 use crate::lexer::TokenKind;
 use crate::lexer::TokenKind::*;
 use crate::lexer::{Lexer, Token};
@@ -96,7 +96,7 @@ impl<'i> Parser<'i> {
         }
     }
 
-    fn span_from(&self, start: Location) -> Span {
+    fn span_from(&self, start: Position) -> Span {
         start.to_end_of(self.curr_token().span())
     }
 
@@ -270,7 +270,10 @@ impl<'i> Parser<'i> {
 
         let value = self.parse_expression()?;
 
-        Ok(Statement::Body { value, start })
+        Ok(Statement::Body {
+            value,
+            start: start.into(),
+        })
     }
 
     fn parse_expression(&mut self) -> Result<'i, Expression<'i>> {
@@ -416,14 +419,14 @@ impl<'i> Parser<'i> {
                     parts.push(self.parse_expression()?);
                 }
                 End => {
-                    end = self.curr_token().end_location();
+                    end = self.curr_token().end_position();
                     break;
                 },
                 MultiLineStringLiteral if parts.is_empty() => {
                     return Ok(Expression::String(self.curr_token().into()));
                 }
                 MultiLineStringLiteral => {
-                    end = self.curr_token().end_location();
+                    end = self.curr_token().end_position();
                     parts.push(Expression::String(self.curr_token().into()));
                     break;
                 }
@@ -459,7 +462,7 @@ impl<'i> Parser<'i> {
         }
 
         Ok(Item::Attribute {
-            location: e.start,
+            location: e.start.into(),
             identifier,
             parameters: params,
         })

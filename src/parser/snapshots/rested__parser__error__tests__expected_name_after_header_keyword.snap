@@ -9,11 +9,13 @@ Program(
       endpoint: Url(Literal(
         value: "http://localhost",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 5,
             line: 0,
             col: 5,
           ),
-          end: Location(
+          end: Position(
+            value: 21,
             line: 0,
             col: 21,
           ),
@@ -30,11 +32,13 @@ Program(
               expected: StringLiteral,
             ),
             span: Span(
-              start: Location(
+              start: Position(
+                value: 23,
                 line: 0,
                 col: 23,
               ),
-              end: Location(
+              end: Position(
+                value: 30,
                 line: 0,
                 col: 30,
               ),
@@ -45,25 +49,30 @@ Program(
               line: "post http://localhost {header}",
               below: None,
             ),
+            text: "header}",
           )),
         ],
         span: Span(
-          start: Location(
+          start: Position(
+            value: 22,
             line: 0,
             col: 22,
           ),
-          end: Location(
+          end: Position(
+            value: 30,
             line: 0,
             col: 29,
           ),
         ),
       )),
       span: Span(
-        start: Location(
+        start: Position(
+          value: 0,
           line: 0,
           col: 0,
         ),
-        end: Location(
+        end: Position(
+          value: 30,
           line: 0,
           col: 29,
         ),

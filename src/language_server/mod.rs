@@ -3,6 +3,7 @@ use std::sync::Mutex;
 mod completions;
 mod position;
 
+use crate::lexer;
 use crate::lexer::locations::Location;
 use crate::parser::ast::Program;
 use crate::parser::{self, Parser};
@@ -16,6 +17,15 @@ trait IntoPosition {
 }
 
 impl IntoPosition for Location {
+    fn into_position(self) -> Position {
+        Position {
+            line: self.line as u32,
+            character: self.col as u32,
+        }
+    }
+}
+
+impl IntoPosition for lexer::locations::Position {
     fn into_position(self) -> Position {
         Position {
             line: self.line as u32,
@@ -71,10 +81,22 @@ impl Backend {
         let mut diagnostics = vec![];
 
         for err in program.errors().iter() {
-            let range = Range {
-                start: err.span.start.into_position(),
-                end: err.span.end.into_position(),
-            };
+            let last_token = lexer::Lexer::new(&err.text).last();
+
+            let range = last_token
+                .as_ref()
+                .map(|token| Range {
+                    start: lexer::locations::Location {
+                        col: token.start.col,
+                        line: err.span.end.line,
+                    }
+                    .into_position(),
+                    end: err.span.end.into_position(),
+                })
+                .unwrap_or(Range {
+                    start: err.span.start.into_position(),
+                    end: err.span.end.into_position(),
+                });
 
             diagnostics.push(Diagnostic::new_simple(range, err.inner_error.to_string()));
 

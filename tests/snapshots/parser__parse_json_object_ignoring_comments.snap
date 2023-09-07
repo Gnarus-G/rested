@@ -1,5 +1,5 @@
 ---
-source: parser/tests/parser.rs
+source: tests/parser.rs
 description: "\nlet o = {\n    key: \"value\",\n    // akey: 123,\n    love: [\n        \"asdf\",\n        // asdf,\n        12\n    ]\n}"
 expression: ast
 ---
@@ -9,22 +9,26 @@ Program(
       identifier: Identifier(
         name: "o",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 5,
             line: 1,
             col: 4,
           ),
-          end: Location(
+          end: Position(
+            value: 6,
             line: 1,
             col: 5,
           ),
         ),
       ),
       value: Object((Span(
-        start: Location(
+        start: Position(
+          value: 9,
           line: 1,
           col: 8,
         ),
-        end: Location(
+        end: Position(
+          value: 110,
           line: 9,
           col: 1,
         ),
@@ -33,22 +37,26 @@ Program(
           raw: "\"value\"",
           value: "value",
           span: Span(
-            start: Location(
+            start: Position(
+              value: 20,
               line: 2,
               col: 9,
             ),
-            end: Location(
+            end: Position(
+              value: 27,
               line: 2,
               col: 16,
             ),
           ),
         )),
         "love": Array((Span(
-          start: Location(
+          start: Position(
+            value: 57,
             line: 4,
             col: 10,
           ),
-          end: Location(
+          end: Position(
+            value: 108,
             line: 8,
             col: 5,
           ),
@@ -57,11 +65,13 @@ Program(
             raw: "\"asdf\"",
             value: "asdf",
             span: Span(
-              start: Location(
+              start: Position(
+                value: 67,
                 line: 5,
                 col: 8,
               ),
-              end: Location(
+              end: Position(
+                value: 73,
                 line: 5,
                 col: 14,
               ),
@@ -70,11 +80,13 @@ Program(
           Number(Literal(
             value: "12",
             span: Span(
-              start: Location(
+              start: Position(
+                value: 100,
                 line: 7,
                 col: 8,
               ),
-              end: Location(
+              end: Position(
+                value: 102,
                 line: 7,
                 col: 10,
               ),

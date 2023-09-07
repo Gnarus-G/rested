@@ -5,18 +5,21 @@ expression: parser.parse()
 Program(
   items: [
     Attribute(
-      location: Location(
+      location: Position(
+        value: 13,
         line: 1,
         col: 12,
       ),
       identifier: Identifier(
         name: "skip",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 14,
             line: 1,
             col: 13,
           ),
-          end: Location(
+          end: Position(
+            value: 18,
             line: 1,
             col: 17,
           ),
@@ -41,11 +44,13 @@ Program(
         ],
       ),
       span: Span(
-        start: Location(
+        start: Position(
+          value: 31,
           line: 2,
           col: 12,
         ),
-        end: Location(
+        end: Position(
+          value: 51,
           line: 3,
           col: 15,
         ),
@@ -56,16 +61,19 @@ Program(
         line: "            let k = \"v\"",
         below: Some("            get http://localhost { header \"name\" k }"),
       ),
+      text: "@dbg\n            let",
     )),
     Let(
       identifier: Identifier(
         name: "k",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 52,
             line: 3,
             col: 16,
           ),
-          end: Location(
+          end: Position(
+            value: 53,
             line: 3,
             col: 17,
           ),
@@ -75,11 +83,13 @@ Program(
         raw: "\"v\"",
         value: "v",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 56,
             line: 3,
             col: 20,
           ),
-          end: Location(
+          end: Position(
+            value: 59,
             line: 3,
             col: 23,
           ),
@@ -91,11 +101,13 @@ Program(
       endpoint: Url(Literal(
         value: "http://localhost",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 76,
             line: 4,
             col: 16,
           ),
-          end: Location(
+          end: Position(
+            value: 92,
             line: 4,
             col: 32,
           ),
@@ -108,11 +120,13 @@ Program(
               raw: "\"name\"",
               value: "name",
               span: Span(
-                start: Location(
+                start: Position(
+                  value: 102,
                   line: 4,
                   col: 42,
                 ),
-                end: Location(
+                end: Position(
+                  value: 108,
                   line: 4,
                   col: 48,
                 ),
@@ -121,11 +135,13 @@ Program(
             value: Identifier(Identifier(
               name: "k",
               span: Span(
-                start: Location(
+                start: Position(
+                  value: 109,
                   line: 4,
                   col: 49,
                 ),
-                end: Location(
+                end: Position(
+                  value: 110,
                   line: 4,
                   col: 50,
                 ),
@@ -134,22 +150,26 @@ Program(
           ),
         ],
         span: Span(
-          start: Location(
+          start: Position(
+            value: 93,
             line: 4,
             col: 33,
           ),
-          end: Location(
+          end: Position(
+            value: 111,
             line: 4,
             col: 51,
           ),
         ),
       )),
       span: Span(
-        start: Location(
+        start: Position(
+          value: 72,
           line: 4,
           col: 12,
         ),
-        end: Location(
+        end: Position(
+          value: 111,
           line: 4,
           col: 51,
         ),

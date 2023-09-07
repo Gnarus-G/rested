@@ -1,5 +1,5 @@
 ---
-source: parser/tests/parser.rs
+source: tests/parser.rs
 description: "post http://localhost { header \"name\" env(\"auth\") body env(\"data\") }"
 expression: ast
 ---
@@ -10,11 +10,13 @@ Program(
       endpoint: Url(Literal(
         value: "http://localhost",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 5,
             line: 0,
             col: 5,
           ),
-          end: Location(
+          end: Position(
+            value: 21,
             line: 0,
             col: 21,
           ),
@@ -27,11 +29,13 @@ Program(
               raw: "\"name\"",
               value: "name",
               span: Span(
-                start: Location(
+                start: Position(
+                  value: 31,
                   line: 0,
                   col: 31,
                 ),
-                end: Location(
+                end: Position(
+                  value: 37,
                   line: 0,
                   col: 37,
                 ),
@@ -41,11 +45,13 @@ Program(
               identifier: Identifier(
                 name: "env",
                 span: Span(
-                  start: Location(
+                  start: Position(
+                    value: 38,
                     line: 0,
                     col: 38,
                   ),
-                  end: Location(
+                  end: Position(
+                    value: 41,
                     line: 0,
                     col: 41,
                   ),
@@ -56,11 +62,13 @@ Program(
                   raw: "\"auth\"",
                   value: "auth",
                   span: Span(
-                    start: Location(
+                    start: Position(
+                      value: 42,
                       line: 0,
                       col: 42,
                     ),
-                    end: Location(
+                    end: Position(
+                      value: 48,
                       line: 0,
                       col: 48,
                     ),
@@ -74,11 +82,13 @@ Program(
               identifier: Identifier(
                 name: "env",
                 span: Span(
-                  start: Location(
+                  start: Position(
+                    value: 55,
                     line: 0,
                     col: 55,
                   ),
-                  end: Location(
+                  end: Position(
+                    value: 58,
                     line: 0,
                     col: 58,
                   ),
@@ -89,11 +99,13 @@ Program(
                   raw: "\"data\"",
                   value: "data",
                   span: Span(
-                    start: Location(
+                    start: Position(
+                      value: 59,
                       line: 0,
                       col: 59,
                     ),
-                    end: Location(
+                    end: Position(
+                      value: 65,
                       line: 0,
                       col: 65,
                     ),
@@ -101,29 +113,34 @@ Program(
                 )),
               ],
             ),
-            start: Location(
+            start: Position(
+              value: 50,
               line: 0,
               col: 50,
             ),
           ),
         ],
         span: Span(
-          start: Location(
+          start: Position(
+            value: 22,
             line: 0,
             col: 22,
           ),
-          end: Location(
+          end: Position(
+            value: 67,
             line: 0,
             col: 67,
           ),
         ),
       )),
       span: Span(
-        start: Location(
+        start: Position(
+          value: 0,
           line: 0,
           col: 0,
         ),
-        end: Location(
+        end: Position(
+          value: 67,
           line: 0,
           col: 67,
         ),
