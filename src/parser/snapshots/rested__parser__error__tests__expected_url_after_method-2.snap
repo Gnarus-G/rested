@@ -1,10 +1,36 @@
 ---
 source: src/parser/error.rs
-expression: parser.parse().errors()
+expression: parser.parse()
 ---
-[
-    post
-       
-       ↳ [1:4] expected either one of 'url','pathname' but got Eof
-    ,
-]
+Program(
+  items: [
+    Error(ContextualError(
+      inner_error: ExpectedEitherOfTokens(
+        found: ErroneousToken(
+          kind: End,
+          text: "",
+        ),
+        expected: [
+          Url,
+          Pathname,
+        ],
+      ),
+      span: Span(
+        start: Location(
+          line: 0,
+          col: 0,
+        ),
+        end: Location(
+          line: 0,
+          col: 3,
+        ),
+      ),
+      message: None,
+      context: ErrorSourceContext(
+        above: None,
+        line: "post",
+        below: None,
+      ),
+    )),
+  ],
+)

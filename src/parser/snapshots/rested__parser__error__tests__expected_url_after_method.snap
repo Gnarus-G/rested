@@ -1,10 +1,36 @@
 ---
 source: src/parser/error.rs
-expression: parser.parse().errors()
+expression: parser.parse()
 ---
-[
-    get {}
-        ≈
-        ↳ [1:5] expected either one of 'url','pathname' but got {
-    ,
-]
+Program(
+  items: [
+    Error(ContextualError(
+      inner_error: ExpectedEitherOfTokens(
+        found: ErroneousToken(
+          kind: LBracket,
+          text: "{",
+        ),
+        expected: [
+          Url,
+          Pathname,
+        ],
+      ),
+      span: Span(
+        start: Location(
+          line: 0,
+          col: 0,
+        ),
+        end: Location(
+          line: 0,
+          col: 5,
+        ),
+      ),
+      message: None,
+      context: ErrorSourceContext(
+        above: None,
+        line: "get {}",
+        below: None,
+      ),
+    )),
+  ],
+)

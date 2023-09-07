@@ -94,7 +94,7 @@ impl<E: Display + std::error::Error + Clone> ContextualError<E> {
         Self {
             inner_error,
             message: None,
-            context: ErrorSourceContext::new(&span.start, source_code),
+            context: ErrorSourceContext::new(&span.end, source_code),
             span,
         }
     }

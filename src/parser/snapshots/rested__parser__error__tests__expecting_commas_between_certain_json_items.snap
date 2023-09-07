@@ -1,12 +1,33 @@
 ---
 source: src/parser/error.rs
-expression: parser.parse().errors()
+expression: parser.parse()
 ---
-[
-                     yo: "joe"
-                     hello: "world"
-                     ≈≈≈≈≈
-                     ↳ [3:18] expected ',' but got identifier
-                   }
-    ,
-]
+Program(
+  items: [
+    Error(ContextualError(
+      inner_error: ExpectedToken(
+        found: ErroneousToken(
+          kind: Ident,
+          text: "hello",
+        ),
+        expected: Comma,
+      ),
+      span: Span(
+        start: Location(
+          line: 0,
+          col: 8,
+        ),
+        end: Location(
+          line: 2,
+          col: 22,
+        ),
+      ),
+      message: None,
+      context: ErrorSourceContext(
+        above: Some("                 yo: \"joe\""),
+        line: "                 hello: \"world\"",
+        below: Some("               }"),
+      ),
+    )),
+  ],
+)

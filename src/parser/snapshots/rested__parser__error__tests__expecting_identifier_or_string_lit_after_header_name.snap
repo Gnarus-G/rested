@@ -1,10 +1,77 @@
 ---
 source: src/parser/error.rs
-expression: parser.parse().errors()
+expression: parser.parse()
 ---
-[
-    get http://localhost { header "name" }
-                                         ≈
-                                         ↳ [1:38] expected either one of 'string','identifier','string' but got }
-    ,
-]
+Program(
+  items: [
+    Request(
+      method: GET,
+      endpoint: Url(Literal(
+        value: "http://localhost",
+        span: Span(
+          start: Location(
+            line: 0,
+            col: 4,
+          ),
+          end: Location(
+            line: 0,
+            col: 20,
+          ),
+        ),
+      )),
+      block: Some(Block(
+        statements: [
+          Error(ContextualError(
+            inner_error: ExpectedEitherOfTokens(
+              found: ErroneousToken(
+                kind: RBracket,
+                text: "}",
+              ),
+              expected: [
+                StringLiteral,
+                Ident,
+                MultiLineStringLiteral,
+              ],
+            ),
+            span: Span(
+              start: Location(
+                line: 0,
+                col: 23,
+              ),
+              end: Location(
+                line: 0,
+                col: 38,
+              ),
+            ),
+            message: None,
+            context: ErrorSourceContext(
+              above: None,
+              line: "get http://localhost { header \"name\" }",
+              below: None,
+            ),
+          )),
+        ],
+        span: Span(
+          start: Location(
+            line: 0,
+            col: 21,
+          ),
+          end: Location(
+            line: 0,
+            col: 37,
+          ),
+        ),
+      )),
+      span: Span(
+        start: Location(
+          line: 0,
+          col: 0,
+        ),
+        end: Location(
+          line: 0,
+          col: 37,
+        ),
+      ),
+    ),
+  ],
+)

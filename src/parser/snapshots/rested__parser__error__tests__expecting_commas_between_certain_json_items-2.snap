@@ -1,10 +1,33 @@
 ---
 source: src/parser/error.rs
-expression: parser.parse().errors()
+expression: parser.parse()
 ---
-[
-     let o = ["joe" "world"] 
-                    ≈≈≈≈≈≈≈
-                    ↳ [1:17] expected ',' but got string
-    ,
-]
+Program(
+  items: [
+    Error(ContextualError(
+      inner_error: ExpectedToken(
+        found: ErroneousToken(
+          kind: StringLiteral,
+          text: "\"world\"",
+        ),
+        expected: Comma,
+      ),
+      span: Span(
+        start: Location(
+          line: 0,
+          col: 9,
+        ),
+        end: Location(
+          line: 0,
+          col: 23,
+        ),
+      ),
+      message: None,
+      context: ErrorSourceContext(
+        above: None,
+        line: " let o = [\"joe\" \"world\"] ",
+        below: None,
+      ),
+    )),
+  ],
+)

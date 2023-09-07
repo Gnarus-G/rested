@@ -1,6 +1,9 @@
+use crate::lexer::locations::Location;
 use crate::lexer::{locations::GetSpan, Array, Token, TokenKind};
 
 use crate::error_meta::ContextualError;
+
+use super::{Parser, Result, TokenCheck};
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct ErroneousToken<'source> {
@@ -30,8 +33,9 @@ impl<'source> std::fmt::Display for ErroneousToken<'source> {
 }
 
 #[derive(Debug)]
-pub struct ParseErrorConstructor<'i> {
+pub struct Expectations<'i> {
     source_code: &'i str,
+    pub start: Location,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize)]
@@ -90,11 +94,50 @@ impl<'source> std::fmt::Display for ParserErrors<'source> {
     }
 }
 
-impl<'i> ParseErrorConstructor<'i> {
-    pub fn new(source: &'i str) -> Self {
+#[allow(clippy::result_large_err)]
+impl<'i> Expectations<'i> {
+    pub fn new(parser: &Parser<'i>) -> Self {
         Self {
-            source_code: source,
+            source_code: parser.lexer.input(),
+            start: parser.curr_token().start,
         }
+    }
+
+    pub fn expect_peek<'p>(
+        &self,
+        parser: &'p mut Parser<'i>,
+        expected_kind: TokenKind,
+    ) -> Result<'i, &'p Token<'i>> {
+        if parser.peek_token().is(expected_kind) {
+            return Ok(parser.next_token());
+        }
+
+        let error = self.expected_token(parser.next_token(), expected_kind);
+
+        Err(error)
+    }
+
+    pub fn next_expecting_one_of<'p>(
+        &self,
+        parser: &'p mut Parser<'i>,
+        expected_kinds: &[TokenKind],
+    ) -> Result<'i, &'p Token<'i>> {
+        self.expect_peek_one_of(parser, expected_kinds)
+            .map(|_| parser.next_token())
+    }
+
+    pub fn expect_peek_one_of(
+        &self,
+        parser: &mut Parser<'i>,
+        expected_kinds: &[TokenKind],
+    ) -> Result<'i, ()> {
+        if parser.peek_token().is_one_of(expected_kinds) {
+            return Ok(());
+        }
+
+        let error = self.expected_one_of_tokens(parser.next_token(), expected_kinds);
+
+        Err(error)
     }
 
     pub fn expected_token(
@@ -110,7 +153,7 @@ impl<'i> ParseErrorConstructor<'i> {
                 },
                 expected,
             },
-            token.into(),
+            self.start.to_end_of(token.span()),
             self.source_code,
         )
     }
@@ -133,7 +176,7 @@ impl<'i> ParseErrorConstructor<'i> {
                 found: token.into(),
                 expected: expected_dedpuded.into(),
             },
-            token.span(),
+            self.start.to_end_of(token.span()),
             self.source_code,
         )
     }
@@ -143,35 +186,35 @@ impl<'i> ParseErrorConstructor<'i> {
 mod tests {
     use crate::parser::Parser;
 
-    use insta::assert_debug_snapshot;
+    use insta::assert_ron_snapshot;
 
-    macro_rules! assert_errs {
+    macro_rules! assert_ast {
         ($input:literal) => {
             let mut parser = Parser::new($input);
-            assert_debug_snapshot!(parser.parse().errors())
+            assert_ron_snapshot!(parser.parse())
         };
     }
 
     #[test]
     fn expected_url_after_method() {
-        assert_errs!("get {}");
+        assert_ast!("get {}");
 
-        assert_errs!("post");
+        assert_ast!("post");
     }
 
     #[test]
     fn expected_name_after_header_keyword() {
-        assert_errs!("post http://localhost {header}");
+        assert_ast!("post http://localhost {header}");
     }
 
     #[test]
     fn expecting_identifier_or_string_lit_after_header_name() {
-        assert_errs!(r#"get http://localhost { header "name" }"#);
+        assert_ast!(r#"get http://localhost { header "name" }"#);
     }
 
     #[test]
     fn expecting_request_or_other_attribute_after_attributes() {
-        assert_errs!(
+        assert_ast!(
             r#"
             @skip
             @dbg
@@ -182,17 +225,17 @@ mod tests {
 
     #[test]
     fn expecting_commas_between_certain_json_items() {
-        assert_errs!(
+        assert_ast!(
             r#"let o = {
                  yo: "joe"
                  hello: "world"
                }"#
         );
-        assert_errs!(r#" let o = ["joe" "world"] "#);
+        assert_ast!(r#" let o = ["joe" "world"] "#);
     }
 
     #[test]
     fn expecting_partial_block_with_error() {
-        assert_errs!(r#"get /hello { header "test" "value" header }"#);
+        assert_ast!(r#"get /hello { header "test" "value" header }"#);
     }
 }

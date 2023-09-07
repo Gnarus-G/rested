@@ -1,10 +1,103 @@
 ---
 source: src/parser/error.rs
-expression: parser.parse().errors()
+expression: parser.parse()
 ---
-[
-    get /hello { header "test" "value" header }
-                                              ≈
-                                              ↳ [1:43] expected 'string' but got }
-    ,
-]
+Program(
+  items: [
+    Request(
+      method: GET,
+      endpoint: Pathname(Literal(
+        value: "/hello",
+        span: Span(
+          start: Location(
+            line: 0,
+            col: 4,
+          ),
+          end: Location(
+            line: 0,
+            col: 10,
+          ),
+        ),
+      )),
+      block: Some(Block(
+        statements: [
+          Header(
+            name: StringLiteral(
+              raw: "\"test\"",
+              value: "test",
+              span: Span(
+                start: Location(
+                  line: 0,
+                  col: 20,
+                ),
+                end: Location(
+                  line: 0,
+                  col: 26,
+                ),
+              ),
+            ),
+            value: String(StringLiteral(
+              raw: "\"value\"",
+              value: "value",
+              span: Span(
+                start: Location(
+                  line: 0,
+                  col: 27,
+                ),
+                end: Location(
+                  line: 0,
+                  col: 34,
+                ),
+              ),
+            )),
+          ),
+          Error(ContextualError(
+            inner_error: ExpectedToken(
+              found: ErroneousToken(
+                kind: RBracket,
+                text: "}",
+              ),
+              expected: StringLiteral,
+            ),
+            span: Span(
+              start: Location(
+                line: 0,
+                col: 35,
+              ),
+              end: Location(
+                line: 0,
+                col: 43,
+              ),
+            ),
+            message: None,
+            context: ErrorSourceContext(
+              above: None,
+              line: "get /hello { header \"test\" \"value\" header }",
+              below: None,
+            ),
+          )),
+        ],
+        span: Span(
+          start: Location(
+            line: 0,
+            col: 11,
+          ),
+          end: Location(
+            line: 0,
+            col: 42,
+          ),
+        ),
+      )),
+      span: Span(
+        start: Location(
+          line: 0,
+          col: 0,
+        ),
+        end: Location(
+          line: 0,
+          col: 42,
+        ),
+      ),
+    ),
+  ],
+)

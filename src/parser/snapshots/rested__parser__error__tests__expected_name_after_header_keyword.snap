@@ -1,10 +1,73 @@
 ---
 source: src/parser/error.rs
-expression: parser.parse().errors()
+expression: parser.parse()
 ---
-[
-    post http://localhost {header}
-                                 ≈
-                                 ↳ [1:30] expected 'string' but got }
-    ,
-]
+Program(
+  items: [
+    Request(
+      method: POST,
+      endpoint: Url(Literal(
+        value: "http://localhost",
+        span: Span(
+          start: Location(
+            line: 0,
+            col: 5,
+          ),
+          end: Location(
+            line: 0,
+            col: 21,
+          ),
+        ),
+      )),
+      block: Some(Block(
+        statements: [
+          Error(ContextualError(
+            inner_error: ExpectedToken(
+              found: ErroneousToken(
+                kind: RBracket,
+                text: "}",
+              ),
+              expected: StringLiteral,
+            ),
+            span: Span(
+              start: Location(
+                line: 0,
+                col: 23,
+              ),
+              end: Location(
+                line: 0,
+                col: 30,
+              ),
+            ),
+            message: None,
+            context: ErrorSourceContext(
+              above: None,
+              line: "post http://localhost {header}",
+              below: None,
+            ),
+          )),
+        ],
+        span: Span(
+          start: Location(
+            line: 0,
+            col: 22,
+          ),
+          end: Location(
+            line: 0,
+            col: 29,
+          ),
+        ),
+      )),
+      span: Span(
+        start: Location(
+          line: 0,
+          col: 0,
+        ),
+        end: Location(
+          line: 0,
+          col: 29,
+        ),
+      ),
+    ),
+  ],
+)
