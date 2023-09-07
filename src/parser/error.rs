@@ -238,4 +238,15 @@ mod tests {
     fn expecting_partial_block_with_error() {
         assert_ast!(r#"get /hello { header "test" "value" header }"#);
     }
+
+    #[test]
+    fn expecting_partial_block_with_missing_body_expr() {
+        assert_ast!(
+            r#"
+get /sdf {
+   header "" s
+   body  }
+"#
+        );
+    }
 }

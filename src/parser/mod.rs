@@ -268,12 +268,12 @@ impl<'i> Parser<'i> {
 
         self.next_token();
 
-        let value = self.parse_expression()?;
+        let value = self.parse_expression().map_err(|error| ContextualError {
+            span: start.to_end_of(error.span),
+            ..error
+        })?;
 
-        Ok(Statement::Body {
-            value,
-            start: start.into(),
-        })
+        Ok(Statement::Body { value, start })
     }
 
     fn parse_expression(&mut self) -> Result<'i, Expression<'i>> {
@@ -462,7 +462,7 @@ impl<'i> Parser<'i> {
         }
 
         Ok(Item::Attribute {
-            location: e.start.into(),
+            location: e.start,
             identifier,
             parameters: params,
         })
