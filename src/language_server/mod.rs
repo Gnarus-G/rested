@@ -81,22 +81,10 @@ impl Backend {
         let mut diagnostics = vec![];
 
         for err in program.errors().iter() {
-            let last_token = lexer::Lexer::new(&err.text).last();
-
-            let range = last_token
-                .as_ref()
-                .map(|token| Range {
-                    start: lexer::locations::Location {
-                        col: token.start.col,
-                        line: err.span.end.line,
-                    }
-                    .into_position(),
-                    end: err.span.end.into_position(),
-                })
-                .unwrap_or(Range {
-                    start: err.span.start.into_position(),
-                    end: err.span.end.into_position(),
-                });
+            let range = Range {
+                start: err.bad_token_at.start.into_position(),
+                end: err.bad_token_at.end.into_position(),
+            };
 
             diagnostics.push(Diagnostic::new_simple(range, err.inner_error.to_string()));
 

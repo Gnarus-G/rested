@@ -111,6 +111,7 @@ impl<'i> InterpErrorFactory<'i> {
             },
             token.span,
             self.source_code,
+            token.span,
         )
     }
 
@@ -123,6 +124,7 @@ impl<'i> InterpErrorFactory<'i> {
             InterpreterErrorKind::EnvVariableNotFound { name: variable },
             span,
             self.source_code,
+            span,
         )
     }
 
@@ -136,6 +138,7 @@ impl<'i> InterpErrorFactory<'i> {
             InterpreterErrorKind::RequiredArguments { required, recieved },
             at,
             self.source_code,
+            at,
         )
     }
 
@@ -149,6 +152,7 @@ impl<'i> InterpErrorFactory<'i> {
             },
             token.span,
             self.source_code,
+            token.span,
         )
     }
 
@@ -162,6 +166,7 @@ impl<'i> InterpErrorFactory<'i> {
             },
             token.span,
             self.source_code,
+            token.span,
         )
     }
 
@@ -172,6 +177,7 @@ impl<'i> InterpErrorFactory<'i> {
             },
             token.span,
             self.source_code,
+            token.span,
         )
     }
 
@@ -182,6 +188,7 @@ impl<'i> InterpErrorFactory<'i> {
             },
             token.span,
             self.source_code,
+            token.span,
         )
     }
 
@@ -190,6 +197,7 @@ impl<'i> InterpErrorFactory<'i> {
             InterpreterErrorKind::RequestWithPathnameWithoutBaseUrl,
             at,
             self.source_code,
+            at,
         )
     }
 
@@ -204,6 +212,7 @@ impl<'i> InterpErrorFactory<'i> {
             },
             span,
             self.source_code,
+            span,
         )
     }
 }

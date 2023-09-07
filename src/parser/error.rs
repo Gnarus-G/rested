@@ -155,6 +155,7 @@ impl<'i> Expectations<'i> {
             },
             self.start.to_end_of(token.span()),
             self.source_code,
+            token.span(),
         )
     }
 
@@ -178,6 +179,7 @@ impl<'i> Expectations<'i> {
             },
             self.start.to_end_of(token.span()),
             self.source_code,
+            token.span(),
         )
     }
 }
