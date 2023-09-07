@@ -82,7 +82,6 @@ pub struct ContextualError<EK: Display + std::error::Error + Clone> {
     pub bad_token_at: Span,
     pub message: Option<String>,
     pub context: ErrorSourceContext,
-    pub text: String,
 }
 
 impl<E: Display + std::error::Error + Clone> std::fmt::Debug for ContextualError<E> {
@@ -98,7 +97,6 @@ impl<E: Display + std::error::Error + Clone> ContextualError<E> {
             message: None,
             context: ErrorSourceContext::new(&span.end.into(), source_code),
             span,
-            text: source_code[span.start.value..span.end.value].to_string(),
             bad_token_at,
         }
     }
