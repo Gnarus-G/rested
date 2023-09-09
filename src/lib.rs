@@ -1,3 +1,4 @@
+mod array;
 pub mod error;
 pub mod error_meta;
 pub mod interpreter;

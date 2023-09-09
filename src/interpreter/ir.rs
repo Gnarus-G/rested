@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use crate::lexer::Array;
+use crate::array::Array;
 pub use crate::parser::ast::RequestMethod;
 
 #[derive(Debug)]

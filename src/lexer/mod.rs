@@ -1,8 +1,6 @@
 mod display;
 pub mod locations;
 
-use std::sync::Arc;
-
 use locations::Location;
 
 use self::locations::Position;
@@ -526,5 +524,3 @@ impl<'source> Iterator for Lexer<'source> {
         Some(token)
     }
 }
-
-pub type Array<T> = Arc<[T]>;

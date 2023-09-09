@@ -1,6 +1,7 @@
+use crate::array::Array;
 use crate::lexer;
 use crate::lexer::locations::Position;
-use crate::lexer::{locations::GetSpan, Array, Token, TokenKind};
+use crate::lexer::{locations::GetSpan, Token, TokenKind};
 
 use crate::error_meta::ContextualError;
 
