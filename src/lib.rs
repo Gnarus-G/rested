@@ -8,4 +8,5 @@ pub mod parser;
 mod utils {
     use std::sync::Arc;
     pub type Array<T> = Arc<[T]>;
+    pub type String = Arc<str>;
 }

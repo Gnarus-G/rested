@@ -101,7 +101,7 @@ impl Backend {
             diagnostics.push(Diagnostic::new_simple(range, err.inner_error.to_string()));
 
             if let Some(msg) = err.message.clone() {
-                diagnostics.push(Diagnostic::new_simple(range, msg))
+                diagnostics.push(Diagnostic::new_simple(range, msg.to_string()))
             }
         }
 

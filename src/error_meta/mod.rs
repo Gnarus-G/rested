@@ -1,4 +1,7 @@
-use crate::lexer::locations::{Location, Span};
+use crate::{
+    lexer::locations::{Location, Span},
+    utils,
+};
 use std::{fmt::Display, ops::Deref};
 
 use serde::Serialize;
@@ -54,9 +57,9 @@ pub trait ErrorDisplay<D: Display + Deref<Target = str>> {
 
 #[derive(Clone, PartialEq, Serialize)]
 pub struct ErrorSourceContext {
-    above: Option<String>,
-    pub line: String,
-    below: Option<String>,
+    above: Option<utils::String>,
+    pub line: utils::String,
+    below: Option<utils::String>,
 }
 
 impl ErrorSourceContext {
@@ -68,9 +71,11 @@ impl ErrorSourceContext {
         let get_line = |lnum: usize| code.lines().nth(lnum).map(|s| s.to_string());
 
         ErrorSourceContext {
-            above: line_before.map(|lnum| get_line(lnum).expect("code should not be empty")),
-            line: get_line(line_of_token).expect("code should not be empty"),
-            below: get_line(line_after),
+            above: line_before.map(|lnum| get_line(lnum).expect("code should not be empty").into()),
+            line: get_line(line_of_token)
+                .expect("code should not be empty")
+                .into(),
+            below: get_line(line_after).map(|l| l.into()),
         }
     }
 }
@@ -79,7 +84,7 @@ impl ErrorSourceContext {
 pub struct ContextualError<EK: Display + std::error::Error> {
     pub inner_error: EK,
     pub span: Span,
-    pub message: Option<String>,
+    pub message: Option<utils::String>,
     pub context: ErrorSourceContext,
 }
 
@@ -100,37 +105,37 @@ impl<E: Display + std::error::Error + Clone> ContextualError<E> {
     }
 
     pub fn with_message(mut self, msg: &str) -> Self {
-        self.message = Some(msg.to_owned());
+        self.message = Some(msg.into());
         self
     }
 }
 
-impl<E: Display + std::error::Error + Clone> ErrorDisplay<String> for ContextualError<E> {
-    fn formatted_error(&self) -> String {
-        self.inner_error.to_string()
+impl<E: Display + std::error::Error + Clone> ErrorDisplay<utils::String> for ContextualError<E> {
+    fn formatted_error(&self) -> utils::String {
+        self.inner_error.to_string().into()
     }
 
-    fn location(&self) -> String {
-        Location::from(self.span.start).to_string()
+    fn location(&self) -> utils::String {
+        Location::from(self.span.start).to_string().into()
     }
 
-    fn line(&self) -> String {
+    fn line(&self) -> utils::String {
         self.context.line.clone()
     }
 
-    fn squiggle(&self) -> String {
-        "\u{2248}".repeat(self.span.width())
+    fn squiggle(&self) -> utils::String {
+        "\u{2248}".repeat(self.span.width()).into()
     }
 
-    fn message(&self) -> Option<String> {
-        self.message.clone()
+    fn message(&self) -> Option<utils::String> {
+        self.message.clone().map(|m| m.into())
     }
 
-    fn line_above(&self) -> Option<String> {
+    fn line_above(&self) -> Option<utils::String> {
         self.context.above.clone()
     }
 
-    fn line_below(&self) -> Option<String> {
+    fn line_below(&self) -> Option<utils::String> {
         self.context.below.clone()
     }
 
