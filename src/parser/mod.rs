@@ -52,8 +52,6 @@ pub struct Parser<'i> {
     peeked: Option<Token<'i>>,
 }
 
-#[allow(clippy::result_large_err)]
-
 impl<'i> Parser<'i> {
     pub fn new(code: &'i str) -> Self {
         Self {
@@ -193,7 +191,7 @@ impl<'i> Parser<'i> {
             Ok(i) => i.into(),
             Err(error) => {
                 return Ok(Item::Set {
-                    identifier: ast::MaybeNode::Error(error.clone()),
+                    identifier: ast::TokenNode::Error(error.clone().into()),
                     value: Expression::Error(error),
                 })
             }

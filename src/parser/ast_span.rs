@@ -74,11 +74,11 @@ impl<'source> GetSpan for StringLiteral<'source> {
     }
 }
 
-impl<'source, T: GetSpan> GetSpan for ast::MaybeNode<'source, T> {
+impl<'source, T: GetSpan> GetSpan for ast::TokenNode<'source, T> {
     fn span(&self) -> Span {
         match self {
-            ast::MaybeNode::Node(ok) => ok.span(),
-            ast::MaybeNode::Error(error) => error.span,
+            ast::TokenNode::Ok(ok) => ok.span(),
+            ast::TokenNode::Error(error) => error.span,
         }
     }
 }

@@ -59,7 +59,7 @@ impl<'source> GetCompletions for Statement<'source> {
         match self {
             Statement::Header { name, value } => {
                 if name.span().is_on_or_after(position) {
-                    if matches!(name, ast::MaybeNode::Error(..)) {
+                    if matches!(name, ast::TokenNode::Error(..)) {
                         return Some(vec![]);
                     }
                     return None;

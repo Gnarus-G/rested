@@ -85,7 +85,6 @@ impl<'source> std::fmt::Display for ParserErrors<'source> {
     }
 }
 
-#[allow(clippy::result_large_err)]
 impl<'i> Expectations<'i> {
     pub fn new(parser: &Parser<'i>) -> Self {
         Self {

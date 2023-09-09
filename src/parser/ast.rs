@@ -25,9 +25,9 @@ impl<'i> Program<'i> {
     }
 }
 
-impl<'i> From<&Token<'i>> for MaybeNode<'i, Token<'i>> {
+impl<'i> From<&Token<'i>> for TokenNode<'i, Token<'i>> {
     fn from(token: &Token<'i>) -> Self {
-        Self::Node(Token {
+        Self::Ok(Token {
             kind: token.kind,
             text: token.text,
             start: token.start,
@@ -84,11 +84,11 @@ pub struct Block<'source> {
 #[derive(Debug, PartialEq, Serialize)]
 pub enum Item<'source> {
     Set {
-        identifier: MaybeNode<'source, Token<'source>>,
+        identifier: TokenNode<'source, Token<'source>>,
         value: Expression<'source>,
     },
     Let {
-        identifier: MaybeNode<'source, Token<'source>>,
+        identifier: TokenNode<'source, Token<'source>>,
         value: Expression<'source>,
     },
     LineComment(Literal<'source>),
@@ -101,7 +101,7 @@ pub enum Item<'source> {
     Expr(Expression<'source>),
     Attribute {
         location: Position,
-        identifier: MaybeNode<'source, Token<'source>>,
+        identifier: TokenNode<'source, Token<'source>>,
         parameters: Option<Arguments<'source>>,
     },
     Error(Error<'source>),
@@ -125,7 +125,7 @@ impl Display for RequestMethod {
 #[derive(Debug, PartialEq, Serialize)]
 pub enum Statement<'i> {
     Header {
-        name: MaybeNode<'i, StringLiteral<'i>>,
+        name: TokenNode<'i, StringLiteral<'i>>,
         value: Expression<'i>,
     },
     Body {
@@ -152,12 +152,12 @@ pub type Spanned<T> = (Span, T);
 
 #[derive(Debug, PartialEq, Serialize)]
 pub enum Expression<'source> {
-    Identifier(MaybeNode<'source, Token<'source>>),
+    Identifier(TokenNode<'source, Token<'source>>),
     String(StringLiteral<'source>),
     Bool(Literal<'source>),
     Number(Literal<'source>),
     Call {
-        identifier: MaybeNode<'source, Token<'source>>,
+        identifier: TokenNode<'source, Token<'source>>,
         arguments: Vec<Expression<'source>>,
     },
     Array(Spanned<Vec<Expression<'source>>>),
@@ -179,25 +179,25 @@ pub enum Endpoint<'i> {
 }
 
 #[derive(Debug, PartialEq, serde::Serialize)]
-pub enum MaybeNode<'i, T: GetSpan> {
-    Node(T),
-    Error(Error<'i>),
+pub enum TokenNode<'i, T: GetSpan> {
+    Ok(T),
+    Error(Box<Error<'i>>),
 }
 
-impl<'source, T: GetSpan> MaybeNode<'source, T> {
-    pub fn get(&self) -> std::result::Result<&T, Error<'source>> {
+impl<'source, T: GetSpan> TokenNode<'source, T> {
+    pub fn get(&self) -> std::result::Result<&T, Box<Error<'source>>> {
         match self {
-            MaybeNode::Node(node) => Ok(node),
-            MaybeNode::Error(error) => Err(error.clone()),
+            TokenNode::Ok(node) => Ok(node),
+            TokenNode::Error(error) => Err(error.clone()),
         }
     }
 }
 
-impl<'source, T: GetSpan> From<std::result::Result<T, Error<'source>>> for MaybeNode<'source, T> {
+impl<'source, T: GetSpan> From<std::result::Result<T, Error<'source>>> for TokenNode<'source, T> {
     fn from(value: std::result::Result<T, Error<'source>>) -> Self {
         match value {
-            Ok(value) => MaybeNode::Node(value),
-            Err(error) => MaybeNode::Error(error),
+            Ok(value) => TokenNode::Ok(value),
+            Err(error) => TokenNode::Error(error.into()),
         }
     }
 }

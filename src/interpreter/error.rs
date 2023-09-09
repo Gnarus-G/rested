@@ -57,7 +57,7 @@ impl std::fmt::Display for InterpreterErrorKind {
 
 pub enum InterpreterError<'source> {
     ParseErrors(ParserErrors<'source>),
-    Error(ContextualError<InterpreterErrorKind>),
+    Error(Box<ContextualError<InterpreterErrorKind>>),
 }
 
 impl<'source> std::error::Error for InterpreterError<'source> {}
@@ -84,20 +84,23 @@ impl<'source> std::fmt::Display for InterpreterError<'source> {
 
 impl<'source> From<ContextualError<InterpreterErrorKind>> for InterpreterError<'source> {
     fn from(value: ContextualError<InterpreterErrorKind>) -> Self {
-        Self::Error(value)
+        Self::Error(value.into())
     }
 }
 
-impl<'source> From<ContextualError<ParseError<'source>>> for InterpreterError<'source> {
-    fn from(value: ContextualError<ParseError<'source>>) -> Self {
-        Self::Error(ContextualError {
-            inner_error: InterpreterErrorKind::Other {
-                error: value.inner_error.to_string(),
-            },
-            span: value.span,
-            message: value.message,
-            context: value.context,
-        })
+impl<'source> From<Box<ContextualError<ParseError<'source>>>> for InterpreterError<'source> {
+    fn from(value: Box<ContextualError<ParseError<'source>>>) -> Self {
+        Self::Error(
+            ContextualError {
+                inner_error: InterpreterErrorKind::Other {
+                    error: value.inner_error.to_string(),
+                },
+                span: value.span,
+                message: value.message,
+                context: value.context,
+            }
+            .into(),
+        )
     }
 }
 

@@ -14,14 +14,14 @@ impl<'source> GetErrors<'source> for Item<'source> {
 
         match &self {
             Item::Set { identifier, value } => {
-                if let ast::MaybeNode::Error(error) = identifier {
-                    errors.push(error.clone());
+                if let ast::TokenNode::Error(error) = identifier {
+                    errors.push(*error.clone());
                 }
                 errors.extend(value.errors());
             }
             Item::Let { value, identifier } => {
-                if let ast::MaybeNode::Error(error) = identifier {
-                    errors.push(error.clone());
+                if let ast::TokenNode::Error(error) = identifier {
+                    errors.push(*error.clone());
                 }
                 errors.extend(value.errors())
             }
@@ -35,7 +35,7 @@ impl<'source> GetErrors<'source> for Item<'source> {
                     errors.extend(args.parameters.iter().flat_map(|expr| expr.errors()))
                 }
             }
-            Item::Error(e) => errors.push(e.to_owned()),
+            Item::Error(e) => errors.push(e.clone()),
             _ => {}
         }
 
@@ -49,8 +49,8 @@ impl<'source> GetErrors<'source> for Statement<'source> {
 
         match &self {
             Statement::Header { value, name } => {
-                if let ast::MaybeNode::Error(error) = name {
-                    errors.push(error.clone());
+                if let ast::TokenNode::Error(error) = name {
+                    errors.push(*error.clone());
                 }
                 errors.extend(value.errors())
             }

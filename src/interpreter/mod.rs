@@ -49,8 +49,6 @@ pub struct Interpreter<'source, R: ir::Runner> {
     runner: R,
 }
 
-#[allow(clippy::result_large_err)]
-
 impl<'source, R: ir::Runner> Interpreter<'source, R> {
     pub fn new(code: &'source str, env: Environment, runner: R) -> Self {
         Self {
