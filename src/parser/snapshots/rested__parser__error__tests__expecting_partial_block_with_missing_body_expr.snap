@@ -25,7 +25,7 @@ Program(
       block: Some(Block(
         statements: [
           Header(
-            name: Node(StringLiteral(
+            name: Ok(StringLiteral(
               raw: "",
               value: "",
               span: Span(
@@ -41,7 +41,7 @@ Program(
                 ),
               ),
             )),
-            value: Identifier(Node(Token(
+            value: Identifier(Ok(Token(
               kind: Ident,
               text: "s",
               start: Position(
@@ -54,9 +54,14 @@ Program(
           Body(
             value: Error(ContextualError(
               inner_error: ExpectedEitherOfTokens(
-                found: ErroneousToken(
+                found: Token(
                   kind: RBracket,
                   text: "}",
+                  start: Position(
+                    value: 36,
+                    line: 3,
+                    col: 9,
+                  ),
                 ),
                 expected: [
                   Ident,
@@ -70,18 +75,6 @@ Program(
                 ],
               ),
               span: Span(
-                start: Position(
-                  value: 36,
-                  line: 3,
-                  col: 9,
-                ),
-                end: Position(
-                  value: 37,
-                  line: 3,
-                  col: 10,
-                ),
-              ),
-              bad_token_at: Span(
                 start: Position(
                   value: 36,
                   line: 3,

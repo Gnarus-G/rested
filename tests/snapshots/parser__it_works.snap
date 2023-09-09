@@ -6,7 +6,7 @@ expression: ast
 Program(
   items: [
     Set(
-      identifier: Node(Token(
+      identifier: Ok(Token(
         kind: Ident,
         text: "BASE_URL",
         start: Position(
@@ -93,7 +93,7 @@ Program(
       ),
     )),
     Let(
-      identifier: Node(Token(
+      identifier: Ok(Token(
         kind: Ident,
         text: "output_file",
         start: Position(
@@ -120,7 +120,7 @@ Program(
       )),
     ),
     Let(
-      identifier: Node(Token(
+      identifier: Ok(Token(
         kind: Ident,
         text: "token",
         start: Position(
@@ -130,7 +130,7 @@ Program(
         ),
       )),
       value: Call(
-        identifier: Node(Token(
+        identifier: Ok(Token(
           kind: Ident,
           text: "env",
           start: Position(
@@ -165,7 +165,7 @@ Program(
         line: 8,
         col: 0,
       ),
-      identifier: Node(Token(
+      identifier: Ok(Token(
         kind: Ident,
         text: "log",
         start: Position(
@@ -188,7 +188,7 @@ Program(
           ),
         ),
         parameters: [
-          Identifier(Node(Token(
+          Identifier(Ok(Token(
             kind: Ident,
             text: "output_file",
             start: Position(
@@ -235,7 +235,7 @@ Program(
             ),
           )),
           Header(
-            name: Node(StringLiteral(
+            name: Ok(StringLiteral(
               raw: "\"Authorization\"",
               value: "Authorization",
               span: Span(
@@ -251,7 +251,7 @@ Program(
                 ),
               ),
             )),
-            value: Identifier(Node(Token(
+            value: Identifier(Ok(Token(
               kind: Ident,
               text: "token",
               start: Position(
@@ -293,7 +293,7 @@ Program(
                   ),
                 )),
                 Call(
-                  identifier: Node(Token(
+                  identifier: Ok(Token(
                     kind: Ident,
                     text: "env",
                     start: Position(
@@ -337,7 +337,7 @@ Program(
                     ),
                   ),
                 )),
-                Identifier(Node(Token(
+                Identifier(Ok(Token(
                   kind: Ident,
                   text: "output_file",
                   start: Position(
@@ -403,7 +403,7 @@ Program(
         line: 18,
         col: 0,
       ),
-      identifier: Node(Token(
+      identifier: Ok(Token(
         kind: Ident,
         text: "skip",
         start: Position(

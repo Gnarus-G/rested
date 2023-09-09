@@ -7,9 +7,14 @@ Program(
   items: [
     Error(ContextualError(
       inner_error: ExpectedEitherOfTokens(
-        found: ErroneousToken(
+        found: Token(
           kind: LBracket,
           text: "{",
+          start: Position(
+            value: 4,
+            line: 0,
+            col: 4,
+          ),
         ),
         expected: [
           Url,
@@ -21,18 +26,6 @@ Program(
           value: 0,
           line: 0,
           col: 0,
-        ),
-        end: Position(
-          value: 5,
-          line: 0,
-          col: 5,
-        ),
-      ),
-      bad_token_at: Span(
-        start: Position(
-          value: 4,
-          line: 0,
-          col: 4,
         ),
         end: Position(
           value: 5,

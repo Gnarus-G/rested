@@ -27,9 +27,14 @@ Program(
           Header(
             name: Error(ContextualError(
               inner_error: ExpectedToken(
-                found: ErroneousToken(
+                found: Token(
                   kind: RBracket,
                   text: "}",
+                  start: Position(
+                    value: 29,
+                    line: 0,
+                    col: 29,
+                  ),
                 ),
                 expected: StringLiteral,
               ),
@@ -38,18 +43,6 @@ Program(
                   value: 23,
                   line: 0,
                   col: 23,
-                ),
-                end: Position(
-                  value: 30,
-                  line: 0,
-                  col: 30,
-                ),
-              ),
-              bad_token_at: Span(
-                start: Position(
-                  value: 29,
-                  line: 0,
-                  col: 29,
                 ),
                 end: Position(
                   value: 30,
@@ -66,9 +59,14 @@ Program(
             )),
             value: Error(ContextualError(
               inner_error: ExpectedEitherOfTokens(
-                found: ErroneousToken(
+                found: Token(
                   kind: End,
                   text: "",
+                  start: Position(
+                    value: 30,
+                    line: 0,
+                    col: 29,
+                  ),
                 ),
                 expected: [
                   Ident,
@@ -82,18 +80,6 @@ Program(
                 ],
               ),
               span: Span(
-                start: Position(
-                  value: 30,
-                  line: 0,
-                  col: 29,
-                ),
-                end: Position(
-                  value: 30,
-                  line: 0,
-                  col: 29,
-                ),
-              ),
-              bad_token_at: Span(
                 start: Position(
                   value: 30,
                   line: 0,

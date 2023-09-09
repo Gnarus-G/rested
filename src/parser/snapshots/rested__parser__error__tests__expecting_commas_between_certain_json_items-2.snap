@@ -6,7 +6,7 @@ expression: ast
 Program(
   items: [
     Let(
-      identifier: Node(Token(
+      identifier: Ok(Token(
         kind: Ident,
         text: "o",
         start: Position(
@@ -17,9 +17,14 @@ Program(
       )),
       value: Error(ContextualError(
         inner_error: ExpectedToken(
-          found: ErroneousToken(
+          found: Token(
             kind: StringLiteral,
             text: "\"world\"",
+            start: Position(
+              value: 16,
+              line: 0,
+              col: 16,
+            ),
           ),
           expected: Comma,
         ),
@@ -28,18 +33,6 @@ Program(
             value: 9,
             line: 0,
             col: 9,
-          ),
-          end: Position(
-            value: 23,
-            line: 0,
-            col: 23,
-          ),
-        ),
-        bad_token_at: Span(
-          start: Position(
-            value: 16,
-            line: 0,
-            col: 16,
           ),
           end: Position(
             value: 23,
@@ -57,9 +50,14 @@ Program(
     ),
     Error(ContextualError(
       inner_error: ExpectedEitherOfTokens(
-        found: ErroneousToken(
+        found: Token(
           kind: RSquare,
           text: "]",
+          start: Position(
+            value: 23,
+            line: 0,
+            col: 23,
+          ),
         ),
         expected: [
           Ident,
@@ -73,18 +71,6 @@ Program(
         ],
       ),
       span: Span(
-        start: Position(
-          value: 23,
-          line: 0,
-          col: 23,
-        ),
-        end: Position(
-          value: 24,
-          line: 0,
-          col: 24,
-        ),
-      ),
-      bad_token_at: Span(
         start: Position(
           value: 23,
           line: 0,

@@ -27,9 +27,14 @@ Program(
           Header(
             name: Error(ContextualError(
               inner_error: ExpectedToken(
-                found: ErroneousToken(
+                found: Token(
                   kind: Body,
                   text: "body",
+                  start: Position(
+                    value: 24,
+                    line: 3,
+                    col: 2,
+                  ),
                 ),
                 expected: StringLiteral,
               ),
@@ -45,18 +50,6 @@ Program(
                   col: 6,
                 ),
               ),
-              bad_token_at: Span(
-                start: Position(
-                  value: 24,
-                  line: 3,
-                  col: 2,
-                ),
-                end: Position(
-                  value: 28,
-                  line: 3,
-                  col: 6,
-                ),
-              ),
               message: None,
               context: ErrorSourceContext(
                 above: Some("  header"),
@@ -64,7 +57,7 @@ Program(
                 below: Some("}"),
               ),
             )),
-            value: Identifier(Node(Token(
+            value: Identifier(Ok(Token(
               kind: Ident,
               text: "a",
               start: Position(

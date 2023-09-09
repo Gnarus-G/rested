@@ -11,7 +11,7 @@ Program(
         line: 0,
         col: 0,
       ),
-      identifier: Node(Token(
+      identifier: Ok(Token(
         kind: Ident,
         text: "log",
         start: Position(

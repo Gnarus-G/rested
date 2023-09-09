@@ -25,7 +25,7 @@ Program(
       block: Some(Block(
         statements: [
           Header(
-            name: Node(StringLiteral(
+            name: Ok(StringLiteral(
               raw: "\"test\"",
               value: "test",
               span: Span(
@@ -61,9 +61,14 @@ Program(
           Header(
             name: Error(ContextualError(
               inner_error: ExpectedToken(
-                found: ErroneousToken(
+                found: Token(
                   kind: RBracket,
                   text: "}",
+                  start: Position(
+                    value: 42,
+                    line: 0,
+                    col: 42,
+                  ),
                 ),
                 expected: StringLiteral,
               ),
@@ -72,18 +77,6 @@ Program(
                   value: 35,
                   line: 0,
                   col: 35,
-                ),
-                end: Position(
-                  value: 43,
-                  line: 0,
-                  col: 43,
-                ),
-              ),
-              bad_token_at: Span(
-                start: Position(
-                  value: 42,
-                  line: 0,
-                  col: 42,
                 ),
                 end: Position(
                   value: 43,
@@ -100,9 +93,14 @@ Program(
             )),
             value: Error(ContextualError(
               inner_error: ExpectedEitherOfTokens(
-                found: ErroneousToken(
+                found: Token(
                   kind: End,
                   text: "",
+                  start: Position(
+                    value: 43,
+                    line: 0,
+                    col: 42,
+                  ),
                 ),
                 expected: [
                   Ident,
@@ -116,18 +114,6 @@ Program(
                 ],
               ),
               span: Span(
-                start: Position(
-                  value: 43,
-                  line: 0,
-                  col: 42,
-                ),
-                end: Position(
-                  value: 43,
-                  line: 0,
-                  col: 42,
-                ),
-              ),
-              bad_token_at: Span(
                 start: Position(
                   value: 43,
                   line: 0,

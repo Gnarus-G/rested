@@ -6,7 +6,7 @@ expression: ast
 Program(
   items: [
     Let(
-      identifier: Node(Token(
+      identifier: Ok(Token(
         kind: Ident,
         text: "o",
         start: Position(

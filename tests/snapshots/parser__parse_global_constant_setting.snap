@@ -6,7 +6,7 @@ expression: ast
 Program(
   items: [
     Set(
-      identifier: Node(Token(
+      identifier: Ok(Token(
         kind: Ident,
         text: "BASE_URL",
         start: Position(

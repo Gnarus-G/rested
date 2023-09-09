@@ -11,7 +11,7 @@ Program(
         line: 1,
         col: 12,
       ),
-      identifier: Node(Token(
+      identifier: Ok(Token(
         kind: Ident,
         text: "skip",
         start: Position(
@@ -24,9 +24,14 @@ Program(
     ),
     Error(ContextualError(
       inner_error: ExpectedEitherOfTokens(
-        found: ErroneousToken(
+        found: Token(
           kind: Let,
           text: "let",
+          start: Position(
+            value: 48,
+            line: 3,
+            col: 12,
+          ),
         ),
         expected: [
           Get,
@@ -50,18 +55,6 @@ Program(
           col: 15,
         ),
       ),
-      bad_token_at: Span(
-        start: Position(
-          value: 48,
-          line: 3,
-          col: 12,
-        ),
-        end: Position(
-          value: 51,
-          line: 3,
-          col: 15,
-        ),
-      ),
       message: Some("after attributes should come requests or more attributes"),
       context: ErrorSourceContext(
         above: Some("            @dbg"),
@@ -70,7 +63,7 @@ Program(
       ),
     )),
     Let(
-      identifier: Node(Token(
+      identifier: Ok(Token(
         kind: Ident,
         text: "k",
         start: Position(
@@ -116,7 +109,7 @@ Program(
       block: Some(Block(
         statements: [
           Header(
-            name: Node(StringLiteral(
+            name: Ok(StringLiteral(
               raw: "\"name\"",
               value: "name",
               span: Span(
@@ -132,7 +125,7 @@ Program(
                 ),
               ),
             )),
-            value: Identifier(Node(Token(
+            value: Identifier(Ok(Token(
               kind: Ident,
               text: "k",
               start: Position(

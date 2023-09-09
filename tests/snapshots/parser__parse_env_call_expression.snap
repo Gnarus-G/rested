@@ -25,7 +25,7 @@ Program(
       block: Some(Block(
         statements: [
           Header(
-            name: Node(StringLiteral(
+            name: Ok(StringLiteral(
               raw: "\"name\"",
               value: "name",
               span: Span(
@@ -42,7 +42,7 @@ Program(
               ),
             )),
             value: Call(
-              identifier: Node(Token(
+              identifier: Ok(Token(
                 kind: Ident,
                 text: "env",
                 start: Position(
@@ -73,7 +73,7 @@ Program(
           ),
           Body(
             value: Call(
-              identifier: Node(Token(
+              identifier: Ok(Token(
                 kind: Ident,
                 text: "env",
                 start: Position(
