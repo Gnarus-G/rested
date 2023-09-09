@@ -1,7 +1,7 @@
 use std::error::Error;
 
-use crate::array::Array;
 pub use crate::parser::ast::RequestMethod;
+use crate::utils::Array;
 
 #[derive(Debug)]
 pub struct Header {

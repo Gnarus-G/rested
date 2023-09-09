@@ -14,9 +14,9 @@ use colored::Colorize;
 use environment::Environment;
 use error::InterpreterError;
 
-use crate::array::Array;
 use crate::lexer;
 use crate::parser::ast::{self, Endpoint, Expression, Literal};
+use crate::utils::Array;
 
 use crate::lexer::locations::{GetSpan, Span};
 use crate::parser::error::ParserErrors;

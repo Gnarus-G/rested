@@ -4,12 +4,12 @@ use super::{
     error::ParseError,
 };
 use crate::{
-    array::Array,
     error_meta::ContextualError,
     lexer::{
         locations::{GetSpan, Location},
         Token,
     },
+    utils::Array,
 };
 
 impl<'source> Program<'source> {
