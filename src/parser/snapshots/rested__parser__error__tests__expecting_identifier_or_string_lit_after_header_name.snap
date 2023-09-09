@@ -1,6 +1,7 @@
 ---
 source: src/parser/error.rs
-expression: parser.parse()
+description: "get http://localhost { header \"name\" }"
+expression: ast
 ---
 Program(
   items: [
@@ -23,38 +24,72 @@ Program(
       )),
       block: Some(Block(
         statements: [
-          Error(ContextualError(
-            inner_error: ExpectedEitherOfTokens(
-              found: ErroneousToken(
-                kind: RBracket,
-                text: "}",
+          Header(
+            name: Node(StringLiteral(
+              raw: "\"name\"",
+              value: "name",
+              span: Span(
+                start: Position(
+                  value: 30,
+                  line: 0,
+                  col: 30,
+                ),
+                end: Position(
+                  value: 36,
+                  line: 0,
+                  col: 36,
+                ),
               ),
-              expected: [
-                StringLiteral,
-                Ident,
-                MultiLineStringLiteral,
-              ],
-            ),
-            span: Span(
-              start: Position(
-                value: 23,
-                line: 0,
-                col: 23,
+            )),
+            value: Error(ContextualError(
+              inner_error: ExpectedEitherOfTokens(
+                found: ErroneousToken(
+                  kind: RBracket,
+                  text: "}",
+                ),
+                expected: [
+                  Ident,
+                  StringLiteral,
+                  Boolean,
+                  Number,
+                  MultiLineStringLiteral,
+                  LBracket,
+                  LSquare,
+                  Null,
+                ],
               ),
-              end: Position(
-                value: 38,
-                line: 0,
-                col: 38,
+              span: Span(
+                start: Position(
+                  value: 37,
+                  line: 0,
+                  col: 37,
+                ),
+                end: Position(
+                  value: 38,
+                  line: 0,
+                  col: 38,
+                ),
               ),
-            ),
-            message: None,
-            context: ErrorSourceContext(
-              above: None,
-              line: "get http://localhost { header \"name\" }",
-              below: None,
-            ),
-            text: "header \"name\" }",
-          )),
+              bad_token_at: Span(
+                start: Position(
+                  value: 37,
+                  line: 0,
+                  col: 37,
+                ),
+                end: Position(
+                  value: 38,
+                  line: 0,
+                  col: 38,
+                ),
+              ),
+              message: None,
+              context: ErrorSourceContext(
+                above: None,
+                line: "get http://localhost { header \"name\" }",
+                below: None,
+              ),
+            )),
+          ),
         ],
         span: Span(
           start: Position(

@@ -5,12 +5,14 @@ use serde::Serialize;
 use crate::{
     error_meta::ContextualError,
     lexer::{
-        locations::{Position, Span},
+        locations::{GetSpan, Position, Span},
         Token,
     },
 };
 
 use super::error::ParseError;
+
+type Error<'source> = ContextualError<ParseError<'source>>;
 
 #[derive(Debug, PartialEq, Serialize)]
 pub struct Program<'i> {
@@ -23,18 +25,13 @@ impl<'i> Program<'i> {
     }
 }
 
-#[derive(Debug, PartialEq, Serialize)]
-pub struct Identifier<'i> {
-    pub name: &'i str,
-    pub span: Span,
-}
-
-impl<'i> From<&Token<'i>> for Identifier<'i> {
+impl<'i> From<&Token<'i>> for MaybeNode<'i, Token<'i>> {
     fn from(token: &Token<'i>) -> Self {
-        Self {
-            name: token.text,
-            span: token.into(),
-        }
+        Self::Node(Token {
+            kind: token.kind,
+            text: token.text,
+            start: token.start,
+        })
     }
 }
 
@@ -48,7 +45,7 @@ impl<'i> From<&Token<'i>> for Literal<'i> {
     fn from(token: &Token<'i>) -> Self {
         Self {
             value: token.text,
-            span: token.into(),
+            span: token.span(),
         }
     }
 }
@@ -73,7 +70,7 @@ impl<'i> From<&Token<'i>> for StringLiteral<'i> {
         Self {
             raw: token.text,
             value,
-            span: token.into(),
+            span: token.span(),
         }
     }
 }
@@ -87,11 +84,11 @@ pub struct Block<'source> {
 #[derive(Debug, PartialEq, Serialize)]
 pub enum Item<'source> {
     Set {
-        identifier: Identifier<'source>,
+        identifier: MaybeNode<'source, Token<'source>>,
         value: Expression<'source>,
     },
     Let {
-        identifier: Identifier<'source>,
+        identifier: MaybeNode<'source, Token<'source>>,
         value: Expression<'source>,
     },
     LineComment(Literal<'source>),
@@ -104,10 +101,10 @@ pub enum Item<'source> {
     Expr(Expression<'source>),
     Attribute {
         location: Position,
-        identifier: Identifier<'source>,
-        parameters: Vec<Expression<'source>>,
+        identifier: MaybeNode<'source, Token<'source>>,
+        parameters: Option<Arguments<'source>>,
     },
-    Error(ContextualError<ParseError<'source>>),
+    Error(Error<'source>),
 }
 
 #[derive(Debug, PartialEq, Clone, Copy, Serialize)]
@@ -128,7 +125,7 @@ impl Display for RequestMethod {
 #[derive(Debug, PartialEq, Serialize)]
 pub enum Statement<'i> {
     Header {
-        name: StringLiteral<'i>,
+        name: MaybeNode<'i, StringLiteral<'i>>,
         value: Expression<'i>,
     },
     Body {
@@ -136,19 +133,31 @@ pub enum Statement<'i> {
         start: Position,
     },
     LineComment(Literal<'i>),
-    Error(ContextualError<ParseError<'i>>),
+    Error(Error<'i>),
+}
+
+#[derive(Debug, PartialEq, Serialize)]
+pub struct Arguments<'source> {
+    pub span: Span,
+    pub parameters: Vec<Expression<'source>>,
+}
+
+impl<'source> Arguments<'source> {
+    pub fn iter(&self) -> impl Iterator<Item = &Expression<'source>> {
+        self.parameters.iter()
+    }
 }
 
 pub type Spanned<T> = (Span, T);
 
 #[derive(Debug, PartialEq, Serialize)]
 pub enum Expression<'source> {
-    Identifier(Identifier<'source>),
+    Identifier(MaybeNode<'source, Token<'source>>),
     String(StringLiteral<'source>),
     Bool(Literal<'source>),
     Number(Literal<'source>),
     Call {
-        identifier: Identifier<'source>,
+        identifier: MaybeNode<'source, Token<'source>>,
         arguments: Vec<Expression<'source>>,
     },
     Array(Spanned<Vec<Expression<'source>>>),
@@ -160,7 +169,7 @@ pub enum Expression<'source> {
         span: Span,
         parts: Vec<Expression<'source>>,
     },
-    Error(ContextualError<ParseError<'source>>),
+    Error(Error<'source>),
 }
 
 #[derive(Debug, PartialEq, Serialize)]
@@ -169,20 +178,44 @@ pub enum Endpoint<'i> {
     Pathname(Literal<'i>),
 }
 
-impl<'source> From<ContextualError<ParseError<'source>>> for Expression<'source> {
-    fn from(value: ContextualError<ParseError<'source>>) -> Self {
+#[derive(Debug, PartialEq, serde::Serialize)]
+pub enum MaybeNode<'i, T: GetSpan> {
+    Node(T),
+    Error(Error<'i>),
+}
+
+impl<'source, T: GetSpan> MaybeNode<'source, T> {
+    pub fn get(&self) -> std::result::Result<&T, Error<'source>> {
+        match self {
+            MaybeNode::Node(node) => Ok(node),
+            MaybeNode::Error(error) => Err(error.clone()),
+        }
+    }
+}
+
+impl<'source, T: GetSpan> From<std::result::Result<T, Error<'source>>> for MaybeNode<'source, T> {
+    fn from(value: std::result::Result<T, Error<'source>>) -> Self {
+        match value {
+            Ok(value) => MaybeNode::Node(value),
+            Err(error) => MaybeNode::Error(error),
+        }
+    }
+}
+
+impl<'source> From<Error<'source>> for Expression<'source> {
+    fn from(value: Error<'source>) -> Self {
         Self::Error(value)
     }
 }
 
-impl<'source> From<ContextualError<ParseError<'source>>> for Statement<'source> {
-    fn from(value: ContextualError<ParseError<'source>>) -> Self {
+impl<'source> From<Error<'source>> for Statement<'source> {
+    fn from(value: Error<'source>) -> Self {
         Self::Error(value)
     }
 }
 
-impl<'source> From<ContextualError<ParseError<'source>>> for Item<'source> {
-    fn from(value: ContextualError<ParseError<'source>>) -> Self {
+impl<'source> From<Error<'source>> for Item<'source> {
+    fn from(value: Error<'source>) -> Self {
         Self::Error(value)
     }
 }

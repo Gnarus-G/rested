@@ -4,13 +4,15 @@ mod completions;
 mod position;
 
 use crate::lexer;
-use crate::lexer::locations::Location;
-use crate::parser::ast::Program;
+use crate::lexer::locations::{GetSpan, Location};
+use crate::parser::ast::{self, Program};
 use crate::parser::{self, Parser};
 use completions::*;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::{lsp_types::*, LspService, Server};
 use tower_lsp::{Client, LanguageServer};
+
+use self::position::ContainsPosition;
 
 trait IntoPosition {
     fn into_position(self) -> Position;
@@ -82,8 +84,18 @@ impl Backend {
 
         for err in program.errors().iter() {
             let range = Range {
-                start: err.bad_token_at.start.into_position(),
-                end: err.bad_token_at.end.into_position(),
+                start: match &err.inner_error {
+                    parser::error::ParseError::ExpectedToken { found, .. }
+                    | parser::error::ParseError::ExpectedEitherOfTokens { found, .. } => {
+                        found.start.into_position()
+                    }
+                },
+                end: match &err.inner_error {
+                    parser::error::ParseError::ExpectedToken { found, .. }
+                    | parser::error::ParseError::ExpectedEitherOfTokens { found, .. } => {
+                        found.span().end.into_position()
+                    }
+                },
             };
 
             diagnostics.push(Diagnostic::new_simple(range, err.inner_error.to_string()));
@@ -158,10 +170,14 @@ impl LanguageServer for Backend {
                     col: position.character as usize,
                 })
                 .iter()
+                .filter_map(|v| match v {
+                    ast::MaybeNode::Node(t) => Some(t.text),
+                    _ => None,
+                })
                 .map(|var| CompletionItem {
-                    label: var.name.to_string(),
+                    label: var.to_string(),
                     kind: Some(CompletionItemKind::VARIABLE),
-                    insert_text: Some(var.name.to_string()),
+                    insert_text: Some(var.to_string()),
                     ..CompletionItem::default()
                 })
                 .collect();
@@ -179,20 +195,17 @@ impl LanguageServer for Backend {
             variables,
         };
 
-        for item in program.items {
-            if let Some(comps) = item.completions(&position, &completions_store) {
-                return Ok(Some(CompletionResponse::Array(comps)));
-            }
-        }
+        let Some(current_item) = program
+            .items
+            .into_iter()
+            .find(|i| i.span().contains(&position))
+        else {
+            return Ok(Some(CompletionResponse::Array(completions_store.methods)));
+        };
 
-        return Ok(Some(CompletionResponse::Array(
-            [
-                completions_store.variables.clone(),
-                completions_store.methods,
-                completions_store.functions,
-            ]
-            .concat(),
-        )));
+        return Ok(current_item
+            .completions(&position, &completions_store)
+            .map(CompletionResponse::Array));
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {

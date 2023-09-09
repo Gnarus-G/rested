@@ -1,5 +1,5 @@
 use super::{
-    ast::{Expression, Item, Statement},
+    ast::{self, Expression, Item, Statement},
     error::ParseError,
 };
 use crate::error_meta::ContextualError;
@@ -13,14 +13,27 @@ impl<'source> GetErrors<'source> for Item<'source> {
         let mut errors = vec![];
 
         match &self {
-            Item::Set { value, .. } | Item::Let { value, .. } => errors.extend(value.errors()),
+            Item::Set { identifier, value } => {
+                if let ast::MaybeNode::Error(error) = identifier {
+                    errors.push(error.clone());
+                }
+                errors.extend(value.errors());
+            }
+            Item::Let { value, identifier } => {
+                if let ast::MaybeNode::Error(error) = identifier {
+                    errors.push(error.clone());
+                }
+                errors.extend(value.errors())
+            }
             Item::LineComment(_) => {}
             Item::Request {
                 block: Some(block), ..
             } => errors.extend(block.statements.iter().flat_map(|s| s.errors())),
             Item::Expr(expr) => errors.extend(expr.errors()),
             Item::Attribute { parameters, .. } => {
-                errors.extend(parameters.into_iter().flat_map(|expr| expr.errors()))
+                if let Some(args) = parameters.as_ref() {
+                    errors.extend(args.parameters.iter().flat_map(|expr| expr.errors()))
+                }
             }
             Item::Error(e) => errors.push(e.to_owned()),
             _ => {}
@@ -35,7 +48,12 @@ impl<'source> GetErrors<'source> for Statement<'source> {
         let mut errors = vec![];
 
         match &self {
-            Statement::Header { value, .. } => errors.extend(value.errors()),
+            Statement::Header { value, name } => {
+                if let ast::MaybeNode::Error(error) = name {
+                    errors.push(error.clone());
+                }
+                errors.extend(value.errors())
+            }
             Statement::Body { value, .. } => errors.extend(value.errors()),
             Statement::LineComment(_) => {}
             Statement::Error(e) => errors.push(e.to_owned()),
@@ -50,15 +68,13 @@ impl<'source> GetErrors<'source> for Expression<'source> {
         let mut errors = vec![];
         match &self {
             Expression::Call { arguments, .. } => {
-                errors.extend(arguments.into_iter().map(|e| e.errors()).flatten())
+                errors.extend(arguments.iter().flat_map(|e| e.errors()))
             }
-            Expression::Array((_, arr)) => {
-                errors.extend(arr.into_iter().map(|e| e.errors()).flatten())
+            Expression::Array((_, arr)) => errors.extend(arr.iter().flat_map(|e| e.errors())),
+            Expression::Object((_, o)) => errors.extend(o.values().flat_map(|e| e.errors())),
+            Expression::TemplateSringLiteral { parts, .. } => {
+                parts.iter().for_each(|expr| errors.extend(expr.errors()))
             }
-            Expression::Object((_, o)) => errors.extend(o.values().map(|e| e.errors()).flatten()),
-            Expression::TemplateSringLiteral { parts, .. } => parts
-                .into_iter()
-                .for_each(|expr| errors.extend(expr.errors())),
             Expression::Error(e) => errors.push(e.to_owned()),
             _ => {}
         }

@@ -6,21 +6,15 @@ expression: ast
 Program(
   items: [
     Let(
-      identifier: Identifier(
-        name: "o",
-        span: Span(
-          start: Position(
-            value: 5,
-            line: 1,
-            col: 4,
-          ),
-          end: Position(
-            value: 6,
-            line: 1,
-            col: 5,
-          ),
+      identifier: Node(Token(
+        kind: Ident,
+        text: "o",
+        start: Position(
+          value: 5,
+          line: 1,
+          col: 4,
         ),
-      ),
+      )),
       value: Object((Span(
         start: Position(
           value: 9,

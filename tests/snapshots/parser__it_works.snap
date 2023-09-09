@@ -6,21 +6,15 @@ expression: ast
 Program(
   items: [
     Set(
-      identifier: Identifier(
-        name: "BASE_URL",
-        span: Span(
-          start: Position(
-            value: 5,
-            line: 1,
-            col: 4,
-          ),
-          end: Position(
-            value: 13,
-            line: 1,
-            col: 12,
-          ),
+      identifier: Node(Token(
+        kind: Ident,
+        text: "BASE_URL",
+        start: Position(
+          value: 5,
+          line: 1,
+          col: 4,
         ),
-      ),
+      )),
       value: String(StringLiteral(
         raw: "\"httas...\"",
         value: "httas...",
@@ -99,21 +93,15 @@ Program(
       ),
     )),
     Let(
-      identifier: Identifier(
-        name: "output_file",
-        span: Span(
-          start: Position(
-            value: 65,
-            line: 5,
-            col: 4,
-          ),
-          end: Position(
-            value: 76,
-            line: 5,
-            col: 15,
-          ),
+      identifier: Node(Token(
+        kind: Ident,
+        text: "output_file",
+        start: Position(
+          value: 65,
+          line: 5,
+          col: 4,
         ),
-      ),
+      )),
       value: String(StringLiteral(
         raw: "\"output/file.json\"",
         value: "output/file.json",
@@ -132,37 +120,25 @@ Program(
       )),
     ),
     Let(
-      identifier: Identifier(
-        name: "token",
-        span: Span(
-          start: Position(
-            value: 102,
-            line: 6,
-            col: 4,
-          ),
-          end: Position(
-            value: 107,
-            line: 6,
-            col: 9,
-          ),
+      identifier: Node(Token(
+        kind: Ident,
+        text: "token",
+        start: Position(
+          value: 102,
+          line: 6,
+          col: 4,
         ),
-      ),
+      )),
       value: Call(
-        identifier: Identifier(
-          name: "env",
-          span: Span(
-            start: Position(
-              value: 110,
-              line: 6,
-              col: 12,
-            ),
-            end: Position(
-              value: 113,
-              line: 6,
-              col: 15,
-            ),
+        identifier: Node(Token(
+          kind: Ident,
+          text: "env",
+          start: Position(
+            value: 110,
+            line: 6,
+            col: 12,
           ),
-        ),
+        )),
         arguments: [
           String(StringLiteral(
             raw: "\"auth-token\"",
@@ -189,38 +165,40 @@ Program(
         line: 8,
         col: 0,
       ),
-      identifier: Identifier(
-        name: "log",
+      identifier: Node(Token(
+        kind: Ident,
+        text: "log",
+        start: Position(
+          value: 130,
+          line: 8,
+          col: 1,
+        ),
+      )),
+      parameters: Some(Arguments(
         span: Span(
           start: Position(
-            value: 130,
-            line: 8,
-            col: 1,
-          ),
-          end: Position(
             value: 133,
             line: 8,
             col: 4,
           ),
+          end: Position(
+            value: 146,
+            line: 8,
+            col: 17,
+          ),
         ),
-      ),
-      parameters: [
-        Identifier(Identifier(
-          name: "output_file",
-          span: Span(
+        parameters: [
+          Identifier(Node(Token(
+            kind: Ident,
+            text: "output_file",
             start: Position(
               value: 134,
               line: 8,
               col: 5,
             ),
-            end: Position(
-              value: 145,
-              line: 8,
-              col: 16,
-            ),
-          ),
-        )),
-      ],
+          ))),
+        ],
+      )),
     ),
     Request(
       method: POST,
@@ -257,7 +235,7 @@ Program(
             ),
           )),
           Header(
-            name: StringLiteral(
+            name: Node(StringLiteral(
               raw: "\"Authorization\"",
               value: "Authorization",
               span: Span(
@@ -272,22 +250,16 @@ Program(
                   col: 24,
                 ),
               ),
-            ),
-            value: Identifier(Identifier(
-              name: "token",
-              span: Span(
-                start: Position(
-                  value: 197,
-                  line: 11,
-                  col: 25,
-                ),
-                end: Position(
-                  value: 202,
-                  line: 11,
-                  col: 30,
-                ),
-              ),
             )),
+            value: Identifier(Node(Token(
+              kind: Ident,
+              text: "token",
+              start: Position(
+                value: 197,
+                line: 11,
+                col: 25,
+              ),
+            ))),
           ),
           Body(
             value: TemplateSringLiteral(
@@ -321,21 +293,15 @@ Program(
                   ),
                 )),
                 Call(
-                  identifier: Identifier(
-                    name: "env",
-                    span: Span(
-                      start: Position(
-                        value: 230,
-                        line: 13,
-                        col: 17,
-                      ),
-                      end: Position(
-                        value: 233,
-                        line: 13,
-                        col: 20,
-                      ),
+                  identifier: Node(Token(
+                    kind: Ident,
+                    text: "env",
+                    start: Position(
+                      value: 230,
+                      line: 13,
+                      col: 17,
                     ),
-                  ),
+                  )),
                   arguments: [
                     String(StringLiteral(
                       raw: "\"var\"",
@@ -371,21 +337,15 @@ Program(
                     ),
                   ),
                 )),
-                Identifier(Identifier(
-                  name: "output_file",
-                  span: Span(
-                    start: Position(
-                      value: 261,
-                      line: 14,
-                      col: 17,
-                    ),
-                    end: Position(
-                      value: 272,
-                      line: 14,
-                      col: 28,
-                    ),
+                Identifier(Node(Token(
+                  kind: Ident,
+                  text: "output_file",
+                  start: Position(
+                    value: 261,
+                    line: 14,
+                    col: 17,
                   ),
-                )),
+                ))),
                 String(StringLiteral(
                   raw: "\",\n  }`",
                   value: "\",\n  }",
@@ -443,22 +403,16 @@ Program(
         line: 18,
         col: 0,
       ),
-      identifier: Identifier(
-        name: "skip",
-        span: Span(
-          start: Position(
-            value: 285,
-            line: 18,
-            col: 1,
-          ),
-          end: Position(
-            value: 289,
-            line: 18,
-            col: 5,
-          ),
+      identifier: Node(Token(
+        kind: Ident,
+        text: "skip",
+        start: Position(
+          value: 285,
+          line: 18,
+          col: 1,
         ),
-      ),
-      parameters: [],
+      )),
+      parameters: None,
     ),
     Request(
       method: GET,

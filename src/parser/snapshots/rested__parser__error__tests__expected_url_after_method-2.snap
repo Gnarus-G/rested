@@ -1,6 +1,7 @@
 ---
 source: src/parser/error.rs
-expression: parser.parse()
+description: post
+expression: ast
 ---
 Program(
   items: [
@@ -27,13 +28,24 @@ Program(
           col: 3,
         ),
       ),
-      message: None,
+      bad_token_at: Span(
+        start: Position(
+          value: 4,
+          line: 0,
+          col: 3,
+        ),
+        end: Position(
+          value: 4,
+          line: 0,
+          col: 3,
+        ),
+      ),
+      message: Some("expecting only a url and pathname here"),
       context: ErrorSourceContext(
         above: None,
         line: "post",
         below: None,
       ),
-      text: "post",
     )),
   ],
 )

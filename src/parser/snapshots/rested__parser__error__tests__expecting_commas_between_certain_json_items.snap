@@ -1,27 +1,99 @@
 ---
 source: src/parser/error.rs
-expression: parser.parse()
+description: "let o = {\n                 yo: \"joe\"\n                 hello: \"world\"\n               }"
+expression: ast
 ---
 Program(
   items: [
-    Error(ContextualError(
-      inner_error: ExpectedToken(
-        found: ErroneousToken(
-          kind: Ident,
-          text: "hello",
+    Let(
+      identifier: Node(Token(
+        kind: Ident,
+        text: "o",
+        start: Position(
+          value: 4,
+          line: 0,
+          col: 4,
         ),
-        expected: Comma,
+      )),
+      value: Error(ContextualError(
+        inner_error: ExpectedToken(
+          found: ErroneousToken(
+            kind: Ident,
+            text: "hello",
+          ),
+          expected: Comma,
+        ),
+        span: Span(
+          start: Position(
+            value: 8,
+            line: 0,
+            col: 8,
+          ),
+          end: Position(
+            value: 59,
+            line: 2,
+            col: 22,
+          ),
+        ),
+        bad_token_at: Span(
+          start: Position(
+            value: 54,
+            line: 2,
+            col: 17,
+          ),
+          end: Position(
+            value: 59,
+            line: 2,
+            col: 22,
+          ),
+        ),
+        message: None,
+        context: ErrorSourceContext(
+          above: Some("                 yo: \"joe\""),
+          line: "                 hello: \"world\"",
+          below: Some("               }"),
+        ),
+      )),
+    ),
+    Error(ContextualError(
+      inner_error: ExpectedEitherOfTokens(
+        found: ErroneousToken(
+          kind: Colon,
+          text: ":",
+        ),
+        expected: [
+          Ident,
+          StringLiteral,
+          Boolean,
+          Number,
+          MultiLineStringLiteral,
+          LBracket,
+          LSquare,
+          Null,
+        ],
       ),
       span: Span(
         start: Position(
-          value: 8,
-          line: 0,
-          col: 8,
-        ),
-        end: Position(
           value: 59,
           line: 2,
           col: 22,
+        ),
+        end: Position(
+          value: 60,
+          line: 2,
+          col: 23,
+        ),
+      ),
+      bad_token_at: Span(
+        start: Position(
+          value: 59,
+          line: 2,
+          col: 22,
+        ),
+        end: Position(
+          value: 60,
+          line: 2,
+          col: 23,
         ),
       ),
       message: None,
@@ -30,7 +102,6 @@ Program(
         line: "                 hello: \"world\"",
         below: Some("               }"),
       ),
-      text: "{\n                 yo: \"joe\"\n                 hello",
     )),
   ],
 )

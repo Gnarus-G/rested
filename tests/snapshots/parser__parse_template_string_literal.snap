@@ -56,21 +56,15 @@ Program(
                   ),
                 )),
                 Call(
-                  identifier: Identifier(
-                    name: "env",
-                    span: Span(
-                      start: Position(
-                        value: 50,
-                        line: 2,
-                        col: 29,
-                      ),
-                      end: Position(
-                        value: 53,
-                        line: 2,
-                        col: 32,
-                      ),
+                  identifier: Node(Token(
+                    kind: Ident,
+                    text: "env",
+                    start: Position(
+                      value: 50,
+                      line: 2,
+                      col: 29,
                     ),
-                  ),
+                  )),
                   arguments: [
                     String(StringLiteral(
                       raw: "\"love\"",

@@ -11,39 +11,47 @@ Program(
         line: 0,
         col: 0,
       ),
-      identifier: Identifier(
-        name: "log",
+      identifier: Node(Token(
+        kind: Ident,
+        text: "log",
+        start: Position(
+          value: 1,
+          line: 0,
+          col: 1,
+        ),
+      )),
+      parameters: Some(Arguments(
         span: Span(
           start: Position(
-            value: 1,
-            line: 0,
-            col: 1,
-          ),
-          end: Position(
             value: 4,
             line: 0,
             col: 4,
           ),
-        ),
-      ),
-      parameters: [
-        String(StringLiteral(
-          raw: "\"path/to/file\"",
-          value: "path/to/file",
-          span: Span(
-            start: Position(
-              value: 5,
-              line: 0,
-              col: 5,
-            ),
-            end: Position(
-              value: 19,
-              line: 0,
-              col: 19,
-            ),
+          end: Position(
+            value: 20,
+            line: 0,
+            col: 20,
           ),
-        )),
-      ],
+        ),
+        parameters: [
+          String(StringLiteral(
+            raw: "\"path/to/file\"",
+            value: "path/to/file",
+            span: Span(
+              start: Position(
+                value: 5,
+                line: 0,
+                col: 5,
+              ),
+              end: Position(
+                value: 19,
+                line: 0,
+                col: 19,
+              ),
+            ),
+          )),
+        ],
+      )),
     ),
     Request(
       method: GET,

@@ -6,21 +6,15 @@ expression: ast
 Program(
   items: [
     Let(
-      identifier: Identifier(
-        name: "o",
-        span: Span(
-          start: Position(
-            value: 5,
-            line: 1,
-            col: 4,
-          ),
-          end: Position(
-            value: 6,
-            line: 1,
-            col: 5,
-          ),
+      identifier: Node(Token(
+        kind: Ident,
+        text: "o",
+        start: Position(
+          value: 5,
+          line: 1,
+          col: 4,
         ),
-      ),
+      )),
       value: Object((Span(
         start: Position(
           value: 9,
@@ -34,21 +28,15 @@ Program(
         ),
       ), {
         "akey": Call(
-          identifier: Identifier(
-            name: "env",
-            span: Span(
-              start: Position(
-                value: 44,
-                line: 3,
-                col: 10,
-              ),
-              end: Position(
-                value: 47,
-                line: 3,
-                col: 13,
-              ),
+          identifier: Node(Token(
+            kind: Ident,
+            text: "env",
+            start: Position(
+              value: 44,
+              line: 3,
+              col: 10,
             ),
-          ),
+          )),
           arguments: [
             String(StringLiteral(
               raw: "\"url\"",
@@ -69,21 +57,15 @@ Program(
           ],
         ),
         "key": Call(
-          identifier: Identifier(
-            name: "read",
-            span: Span(
-              start: Position(
-                value: 20,
-                line: 2,
-                col: 9,
-              ),
-              end: Position(
-                value: 24,
-                line: 2,
-                col: 13,
-              ),
+          identifier: Node(Token(
+            kind: Ident,
+            text: "read",
+            start: Position(
+              value: 20,
+              line: 2,
+              col: 9,
             ),
-          ),
+          )),
           arguments: [
             String(StringLiteral(
               raw: "\"test\"",

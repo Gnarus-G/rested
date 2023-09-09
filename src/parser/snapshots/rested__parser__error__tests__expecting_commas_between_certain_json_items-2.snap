@@ -1,27 +1,99 @@
 ---
 source: src/parser/error.rs
-expression: parser.parse()
+description: " let o = [\"joe\" \"world\"] "
+expression: ast
 ---
 Program(
   items: [
-    Error(ContextualError(
-      inner_error: ExpectedToken(
-        found: ErroneousToken(
-          kind: StringLiteral,
-          text: "\"world\"",
+    Let(
+      identifier: Node(Token(
+        kind: Ident,
+        text: "o",
+        start: Position(
+          value: 5,
+          line: 0,
+          col: 5,
         ),
-        expected: Comma,
+      )),
+      value: Error(ContextualError(
+        inner_error: ExpectedToken(
+          found: ErroneousToken(
+            kind: StringLiteral,
+            text: "\"world\"",
+          ),
+          expected: Comma,
+        ),
+        span: Span(
+          start: Position(
+            value: 9,
+            line: 0,
+            col: 9,
+          ),
+          end: Position(
+            value: 23,
+            line: 0,
+            col: 23,
+          ),
+        ),
+        bad_token_at: Span(
+          start: Position(
+            value: 16,
+            line: 0,
+            col: 16,
+          ),
+          end: Position(
+            value: 23,
+            line: 0,
+            col: 23,
+          ),
+        ),
+        message: None,
+        context: ErrorSourceContext(
+          above: None,
+          line: " let o = [\"joe\" \"world\"] ",
+          below: None,
+        ),
+      )),
+    ),
+    Error(ContextualError(
+      inner_error: ExpectedEitherOfTokens(
+        found: ErroneousToken(
+          kind: RSquare,
+          text: "]",
+        ),
+        expected: [
+          Ident,
+          StringLiteral,
+          Boolean,
+          Number,
+          MultiLineStringLiteral,
+          LBracket,
+          LSquare,
+          Null,
+        ],
       ),
       span: Span(
         start: Position(
-          value: 9,
-          line: 0,
-          col: 9,
-        ),
-        end: Position(
           value: 23,
           line: 0,
           col: 23,
+        ),
+        end: Position(
+          value: 24,
+          line: 0,
+          col: 24,
+        ),
+      ),
+      bad_token_at: Span(
+        start: Position(
+          value: 23,
+          line: 0,
+          col: 23,
+        ),
+        end: Position(
+          value: 24,
+          line: 0,
+          col: 24,
         ),
       ),
       message: None,
@@ -30,7 +102,6 @@ Program(
         line: " let o = [\"joe\" \"world\"] ",
         below: None,
       ),
-      text: "[\"joe\" \"world\"",
     )),
   ],
 )

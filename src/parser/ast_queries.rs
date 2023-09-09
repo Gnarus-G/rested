@@ -1,24 +1,34 @@
 use super::{
-    ast::{Identifier, Program},
+    ast::{self, MaybeNode, Program},
     ast_errors::GetErrors,
     error::ParseError,
 };
 use crate::{
     error_meta::ContextualError,
-    lexer::{locations::Location, Array},
+    lexer::{
+        locations::{GetSpan, Location},
+        Array, Token,
+    },
 };
 
 impl<'source> Program<'source> {
-    pub fn variables(&self) -> impl Iterator<Item = &Identifier<'source>> {
+    pub fn variables(&self) -> impl Iterator<Item = &MaybeNode<'source, Token<'source>>> {
         self.items.iter().filter_map(|i| match i {
-            super::ast::Item::Let { identifier, .. } => Some(identifier),
+            ast::Item::Let {
+                value: ast::Expression::Error(..),
+                ..
+            } => None,
+            ast::Item::Let { identifier, .. } => Some(identifier),
             _ => None,
         })
     }
 
-    pub fn variables_before(&self, location: Location) -> Array<&Identifier<'source>> {
+    pub fn variables_before(
+        &self,
+        location: Location,
+    ) -> Array<&MaybeNode<'source, Token<'source>>> {
         self.variables()
-            .filter(|i| Into::<Location>::into(i.span.start).is_before(location))
+            .filter(|i| Into::<Location>::into(i.span().start).is_before(location))
             .collect()
     }
 

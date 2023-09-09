@@ -25,7 +25,7 @@ Program(
       block: Some(Block(
         statements: [
           Header(
-            name: StringLiteral(
+            name: Node(StringLiteral(
               raw: "\"name\"",
               value: "name",
               span: Span(
@@ -40,23 +40,17 @@ Program(
                   col: 37,
                 ),
               ),
-            ),
+            )),
             value: Call(
-              identifier: Identifier(
-                name: "env",
-                span: Span(
-                  start: Position(
-                    value: 38,
-                    line: 0,
-                    col: 38,
-                  ),
-                  end: Position(
-                    value: 41,
-                    line: 0,
-                    col: 41,
-                  ),
+              identifier: Node(Token(
+                kind: Ident,
+                text: "env",
+                start: Position(
+                  value: 38,
+                  line: 0,
+                  col: 38,
                 ),
-              ),
+              )),
               arguments: [
                 String(StringLiteral(
                   raw: "\"auth\"",
@@ -79,21 +73,15 @@ Program(
           ),
           Body(
             value: Call(
-              identifier: Identifier(
-                name: "env",
-                span: Span(
-                  start: Position(
-                    value: 55,
-                    line: 0,
-                    col: 55,
-                  ),
-                  end: Position(
-                    value: 58,
-                    line: 0,
-                    col: 58,
-                  ),
+              identifier: Node(Token(
+                kind: Ident,
+                text: "env",
+                start: Position(
+                  value: 55,
+                  line: 0,
+                  col: 55,
                 ),
-              ),
+              )),
               arguments: [
                 String(StringLiteral(
                   raw: "\"data\"",

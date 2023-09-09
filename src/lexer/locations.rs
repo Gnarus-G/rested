@@ -72,18 +72,6 @@ impl Span {
     }
 }
 
-impl<'source> From<Token<'source>> for Span {
-    fn from(val: Token<'source>) -> Self {
-        val.span()
-    }
-}
-
-impl<'source> From<&Token<'source>> for Span {
-    fn from(val: &Token<'source>) -> Self {
-        val.span()
-    }
-}
-
 pub trait GetSpan {
     fn span(&self) -> Span;
 }

@@ -76,10 +76,9 @@ impl ErrorSourceContext {
 }
 
 #[derive(Clone, PartialEq, Serialize)]
-pub struct ContextualError<EK: Display + std::error::Error + Clone> {
+pub struct ContextualError<EK: Display + std::error::Error> {
     pub inner_error: EK,
     pub span: Span,
-    pub bad_token_at: Span,
     pub message: Option<String>,
     pub context: ErrorSourceContext,
 }
@@ -91,13 +90,12 @@ impl<E: Display + std::error::Error + Clone> std::fmt::Debug for ContextualError
 }
 
 impl<E: Display + std::error::Error + Clone> ContextualError<E> {
-    pub fn new(inner_error: E, span: Span, source_code: &str, bad_token_at: Span) -> Self {
+    pub fn new(inner_error: E, span: Span, source_code: &str) -> Self {
         Self {
             inner_error,
             message: None,
             context: ErrorSourceContext::new(&span.end.into(), source_code),
             span,
-            bad_token_at,
         }
     }
 

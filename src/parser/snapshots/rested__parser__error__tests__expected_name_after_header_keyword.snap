@@ -1,6 +1,7 @@
 ---
 source: src/parser/error.rs
-expression: parser.parse()
+description: "post http://localhost {header}"
+expression: ast
 ---
 Program(
   items: [
@@ -23,34 +24,95 @@ Program(
       )),
       block: Some(Block(
         statements: [
-          Error(ContextualError(
-            inner_error: ExpectedToken(
-              found: ErroneousToken(
-                kind: RBracket,
-                text: "}",
+          Header(
+            name: Error(ContextualError(
+              inner_error: ExpectedToken(
+                found: ErroneousToken(
+                  kind: RBracket,
+                  text: "}",
+                ),
+                expected: StringLiteral,
               ),
-              expected: StringLiteral,
-            ),
-            span: Span(
-              start: Position(
-                value: 23,
-                line: 0,
-                col: 23,
+              span: Span(
+                start: Position(
+                  value: 23,
+                  line: 0,
+                  col: 23,
+                ),
+                end: Position(
+                  value: 30,
+                  line: 0,
+                  col: 30,
+                ),
               ),
-              end: Position(
-                value: 30,
-                line: 0,
-                col: 30,
+              bad_token_at: Span(
+                start: Position(
+                  value: 29,
+                  line: 0,
+                  col: 29,
+                ),
+                end: Position(
+                  value: 30,
+                  line: 0,
+                  col: 30,
+                ),
               ),
-            ),
-            message: None,
-            context: ErrorSourceContext(
-              above: None,
-              line: "post http://localhost {header}",
-              below: None,
-            ),
-            text: "header}",
-          )),
+              message: None,
+              context: ErrorSourceContext(
+                above: None,
+                line: "post http://localhost {header}",
+                below: None,
+              ),
+            )),
+            value: Error(ContextualError(
+              inner_error: ExpectedEitherOfTokens(
+                found: ErroneousToken(
+                  kind: End,
+                  text: "",
+                ),
+                expected: [
+                  Ident,
+                  StringLiteral,
+                  Boolean,
+                  Number,
+                  MultiLineStringLiteral,
+                  LBracket,
+                  LSquare,
+                  Null,
+                ],
+              ),
+              span: Span(
+                start: Position(
+                  value: 30,
+                  line: 0,
+                  col: 29,
+                ),
+                end: Position(
+                  value: 30,
+                  line: 0,
+                  col: 29,
+                ),
+              ),
+              bad_token_at: Span(
+                start: Position(
+                  value: 30,
+                  line: 0,
+                  col: 29,
+                ),
+                end: Position(
+                  value: 30,
+                  line: 0,
+                  col: 29,
+                ),
+              ),
+              message: None,
+              context: ErrorSourceContext(
+                above: None,
+                line: "post http://localhost {header}",
+                below: None,
+              ),
+            )),
+          ),
         ],
         span: Span(
           start: Position(

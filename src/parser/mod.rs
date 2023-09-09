@@ -8,7 +8,7 @@ use std::collections::BTreeMap;
 
 use ast::{Endpoint, Expression, Item, RequestMethod, Statement};
 
-use self::ast::Block;
+use self::ast::{Arguments, Block};
 use self::error::{Expectations, ParseError};
 
 use crate::error_meta::ContextualError;
@@ -161,7 +161,7 @@ impl<'i> Parser<'i> {
     fn parse_request(&mut self, method: RequestMethod) -> Result<'i, Item<'i>> {
         let e = Expectations::new(self);
 
-        let url = e.next_expecting_one_of(self, &[Url, Pathname])?;
+        let url = self.next_token();
 
         let endpoint = match_or_throw! { url.kind; e; self;
             Url => Endpoint::Url(url.into()),
@@ -189,20 +189,29 @@ impl<'i> Parser<'i> {
 
     fn parse_set_statement(&mut self) -> Result<'i, Item<'i>> {
         let e = Expectations::new(self);
-        let identifier = e.expect_peek(self, TokenKind::Ident)?.into();
+        let identifier = match e.expect_peek(self, TokenKind::Ident) {
+            Ok(i) => i.into(),
+            Err(error) => {
+                return Ok(Item::Set {
+                    identifier: ast::MaybeNode::Error(error.clone()),
+                    value: Expression::Error(error),
+                })
+            }
+        };
 
-        e.next_expecting_one_of(
-            self,
-            &[
-                TokenKind::Ident,
-                TokenKind::StringLiteral,
-                TokenKind::MultiLineStringLiteral,
-            ],
-        )?;
+        self.next_token();
 
         Ok(Item::Set {
+            value: match self.parse_expression() {
+                Ok(expr) => expr,
+                Err(error) => {
+                    return Ok(Item::Set {
+                        identifier,
+                        value: Expression::Error(error),
+                    })
+                }
+            },
             identifier,
-            value: self.parse_expression()?,
         })
     }
 
@@ -232,6 +241,7 @@ impl<'i> Parser<'i> {
 
     fn parse_statement(&mut self) -> Result<'i, Statement<'i>> {
         let e = Expectations::new(self);
+
         let statement = match_or_throw! { self.curr_token().kind; e; self;
             Header => self.parse_header()?,
             Body => self.parse_body()?,
@@ -244,18 +254,22 @@ impl<'i> Parser<'i> {
 
     fn parse_header(&mut self) -> Result<'i, Statement<'i>> {
         let e = Expectations::new(self);
-        let header_name = e.expect_peek(self, TokenKind::StringLiteral)?.into();
+        let header_name = e
+            .expect_peek(self, TokenKind::StringLiteral)
+            .map(|t| t.into())
+            .into();
 
-        e.next_expecting_one_of(
-            self,
-            &[
-                TokenKind::StringLiteral,
-                TokenKind::Ident,
-                TokenKind::MultiLineStringLiteral,
-            ],
-        )?;
+        self.next_token();
 
-        let value = self.parse_expression()?;
+        let value = match self.parse_expression() {
+            Ok(e) => e,
+            Err(error) => {
+                return Ok(Statement::Header {
+                    name: header_name,
+                    value: Expression::Error(error),
+                })
+            }
+        };
 
         Ok(Statement::Header {
             name: header_name,
@@ -268,10 +282,15 @@ impl<'i> Parser<'i> {
 
         self.next_token();
 
-        let value = self.parse_expression().map_err(|error| ContextualError {
-            span: start.to_end_of(error.span),
-            ..error
-        })?;
+        let value = match self.parse_expression() {
+            Ok(e) => e,
+            Err(error) => {
+                return Ok(Statement::Body {
+                    value: Expression::Error(error),
+                    start,
+                })
+            }
+        };
 
         Ok(Statement::Body { value, start })
     }
@@ -446,26 +465,51 @@ impl<'i> Parser<'i> {
 
         let identifier = e.expect_peek(self, TokenKind::Ident)?.into();
 
-        let mut params = vec![];
-
-        if let TokenKind::LParen = self.peek_token().kind {
-            self.next_token();
-
-            self.next_token();
-            while self.curr_token().kind != TokenKind::RParen {
-                let exp = self.parse_expression()?;
-
-                params.push(exp);
-
-                self.next_token();
-            }
+        if self.peek_token().kind != TokenKind::LParen {
+            return Ok(Item::Attribute {
+                location: e.start,
+                identifier,
+                parameters: None,
+            });
         }
+
+        self.next_token();
 
         Ok(Item::Attribute {
             location: e.start,
             identifier,
-            parameters: params,
+            parameters: Some(self.parse_parameters()),
         })
+    }
+
+    fn parse_parameters(&mut self) -> Arguments<'i> {
+        let mut params = vec![];
+        let params_start = self.curr_token().start;
+
+        self.next_token();
+
+        while self.curr_token().kind != TokenKind::RParen
+            && self.curr_token().kind != TokenKind::End
+        {
+            let exp = match self.parse_expression() {
+                Ok(exp) => exp,
+                Err(error) => Expression::Error(error),
+            };
+
+            params.push(exp);
+
+            self.next_token();
+        }
+
+        let last_token = self.curr_token(); // should be RParen
+
+        Arguments {
+            span: Span {
+                start: params_start,
+                end: last_token.span().end,
+            },
+            parameters: params,
+        }
     }
 
     fn parse_let_statement(&mut self) -> Result<'i, Item<'i>> {
@@ -477,8 +521,16 @@ impl<'i> Parser<'i> {
         self.next_token();
 
         Ok(Item::Let {
+            value: match self.parse_expression() {
+                Ok(e) => e,
+                Err(error) => {
+                    return Ok(Item::Let {
+                        identifier,
+                        value: Expression::Error(error),
+                    })
+                }
+            },
             identifier,
-            value: self.parse_expression()?,
         })
     }
 }

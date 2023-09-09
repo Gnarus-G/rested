@@ -1,7 +1,7 @@
 use crate::error_meta::ContextualError;
-use crate::lexer::locations::Span;
-use crate::parser::ast::Identifier;
-use crate::parser::error::ParserErrors;
+use crate::lexer::locations::{GetSpan, Span};
+use crate::lexer::Token;
+use crate::parser::error::{ParseError, ParserErrors};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum InterpreterErrorKind {
@@ -88,6 +88,19 @@ impl<'source> From<ContextualError<InterpreterErrorKind>> for InterpreterError<'
     }
 }
 
+impl<'source> From<ContextualError<ParseError<'source>>> for InterpreterError<'source> {
+    fn from(value: ContextualError<ParseError<'source>>) -> Self {
+        Self::Error(ContextualError {
+            inner_error: InterpreterErrorKind::Other {
+                error: value.inner_error.to_string(),
+            },
+            span: value.span,
+            message: value.message,
+            context: value.context,
+        })
+    }
+}
+
 impl<'source> From<ParserErrors<'source>> for InterpreterError<'source> {
     fn from(value: ParserErrors<'source>) -> Self {
         Self::ParseErrors(value)
@@ -104,14 +117,13 @@ impl<'i> InterpErrorFactory<'i> {
             source_code: source,
         }
     }
-    pub fn unknown_constant(&self, token: &Identifier) -> ContextualError<InterpreterErrorKind> {
+    pub fn unknown_constant(&self, token: &Token) -> ContextualError<InterpreterErrorKind> {
         ContextualError::new(
             InterpreterErrorKind::UnknownConstant {
-                constant: token.name.to_string(),
+                constant: token.text.to_string(),
             },
-            token.span,
+            token.span(),
             self.source_code,
-            token.span,
         )
     }
 
@@ -124,7 +136,6 @@ impl<'i> InterpErrorFactory<'i> {
             InterpreterErrorKind::EnvVariableNotFound { name: variable },
             span,
             self.source_code,
-            span,
         )
     }
 
@@ -138,57 +149,46 @@ impl<'i> InterpErrorFactory<'i> {
             InterpreterErrorKind::RequiredArguments { required, recieved },
             at,
             self.source_code,
-            at,
         )
     }
 
-    pub fn undeclared_identifier(
-        &self,
-        token: &Identifier,
-    ) -> ContextualError<InterpreterErrorKind> {
+    pub fn undeclared_identifier(&self, token: &Token) -> ContextualError<InterpreterErrorKind> {
         ContextualError::new(
             InterpreterErrorKind::UndeclaredIdentifier {
-                name: token.name.to_string(),
+                name: token.text.to_string(),
             },
-            token.span,
+            token.span(),
             self.source_code,
-            token.span,
         )
     }
 
-    pub fn unsupported_attribute(
-        &self,
-        token: &Identifier,
-    ) -> ContextualError<InterpreterErrorKind> {
+    pub fn unsupported_attribute(&self, token: &Token) -> ContextualError<InterpreterErrorKind> {
         ContextualError::new(
             InterpreterErrorKind::UnsupportedAttribute {
-                name: token.name.to_string(),
+                name: token.text.to_string(),
             },
-            token.span,
+            token.span(),
             self.source_code,
-            token.span,
         )
     }
 
-    pub fn duplicate_attribute(&self, token: &Identifier) -> ContextualError<InterpreterErrorKind> {
+    pub fn duplicate_attribute(&self, token: &Token) -> ContextualError<InterpreterErrorKind> {
         ContextualError::new(
             InterpreterErrorKind::DuplicateAttribute {
-                name: token.name.to_string(),
+                name: token.text.to_string(),
             },
-            token.span,
+            token.span(),
             self.source_code,
-            token.span,
         )
     }
 
-    pub fn undefined_callable(&self, token: &Identifier) -> ContextualError<InterpreterErrorKind> {
+    pub fn undefined_callable(&self, token: &Token) -> ContextualError<InterpreterErrorKind> {
         ContextualError::new(
             InterpreterErrorKind::UndefinedCallable {
-                name: token.name.to_string(),
+                name: token.text.to_string(),
             },
-            token.span,
+            token.span(),
             self.source_code,
-            token.span,
         )
     }
 
@@ -197,7 +197,6 @@ impl<'i> InterpErrorFactory<'i> {
             InterpreterErrorKind::RequestWithPathnameWithoutBaseUrl,
             at,
             self.source_code,
-            at,
         )
     }
 
@@ -212,7 +211,6 @@ impl<'i> InterpErrorFactory<'i> {
             },
             span,
             self.source_code,
-            span,
         )
     }
 }

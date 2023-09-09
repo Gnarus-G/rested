@@ -1,6 +1,7 @@
 ---
 source: src/parser/error.rs
-expression: parser.parse()
+description: "\n            @skip\n            @dbg\n            let k = \"v\"\n            get http://localhost { header \"name\" k }"
+expression: ast
 ---
 Program(
   items: [
@@ -10,22 +11,16 @@ Program(
         line: 1,
         col: 12,
       ),
-      identifier: Identifier(
-        name: "skip",
-        span: Span(
-          start: Position(
-            value: 14,
-            line: 1,
-            col: 13,
-          ),
-          end: Position(
-            value: 18,
-            line: 1,
-            col: 17,
-          ),
+      identifier: Node(Token(
+        kind: Ident,
+        text: "skip",
+        start: Position(
+          value: 14,
+          line: 1,
+          col: 13,
         ),
-      ),
-      parameters: [],
+      )),
+      parameters: None,
     ),
     Error(ContextualError(
       inner_error: ExpectedEitherOfTokens(
@@ -55,30 +50,35 @@ Program(
           col: 15,
         ),
       ),
+      bad_token_at: Span(
+        start: Position(
+          value: 48,
+          line: 3,
+          col: 12,
+        ),
+        end: Position(
+          value: 51,
+          line: 3,
+          col: 15,
+        ),
+      ),
       message: Some("after attributes should come requests or more attributes"),
       context: ErrorSourceContext(
         above: Some("            @dbg"),
         line: "            let k = \"v\"",
         below: Some("            get http://localhost { header \"name\" k }"),
       ),
-      text: "@dbg\n            let",
     )),
     Let(
-      identifier: Identifier(
-        name: "k",
-        span: Span(
-          start: Position(
-            value: 52,
-            line: 3,
-            col: 16,
-          ),
-          end: Position(
-            value: 53,
-            line: 3,
-            col: 17,
-          ),
+      identifier: Node(Token(
+        kind: Ident,
+        text: "k",
+        start: Position(
+          value: 52,
+          line: 3,
+          col: 16,
         ),
-      ),
+      )),
       value: String(StringLiteral(
         raw: "\"v\"",
         value: "v",
@@ -116,7 +116,7 @@ Program(
       block: Some(Block(
         statements: [
           Header(
-            name: StringLiteral(
+            name: Node(StringLiteral(
               raw: "\"name\"",
               value: "name",
               span: Span(
@@ -131,22 +131,16 @@ Program(
                   col: 48,
                 ),
               ),
-            ),
-            value: Identifier(Identifier(
-              name: "k",
-              span: Span(
-                start: Position(
-                  value: 109,
-                  line: 4,
-                  col: 49,
-                ),
-                end: Position(
-                  value: 110,
-                  line: 4,
-                  col: 50,
-                ),
-              ),
             )),
+            value: Identifier(Node(Token(
+              kind: Ident,
+              text: "k",
+              start: Position(
+                value: 109,
+                line: 4,
+                col: 49,
+              ),
+            ))),
           ),
         ],
         span: Span(

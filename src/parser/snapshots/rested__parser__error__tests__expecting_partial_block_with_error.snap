@@ -1,6 +1,7 @@
 ---
 source: src/parser/error.rs
-expression: parser.parse()
+description: "get /hello { header \"test\" \"value\" header }"
+expression: ast
 ---
 Program(
   items: [
@@ -24,7 +25,7 @@ Program(
       block: Some(Block(
         statements: [
           Header(
-            name: StringLiteral(
+            name: Node(StringLiteral(
               raw: "\"test\"",
               value: "test",
               span: Span(
@@ -39,7 +40,7 @@ Program(
                   col: 26,
                 ),
               ),
-            ),
+            )),
             value: String(StringLiteral(
               raw: "\"value\"",
               value: "value",
@@ -57,34 +58,95 @@ Program(
               ),
             )),
           ),
-          Error(ContextualError(
-            inner_error: ExpectedToken(
-              found: ErroneousToken(
-                kind: RBracket,
-                text: "}",
+          Header(
+            name: Error(ContextualError(
+              inner_error: ExpectedToken(
+                found: ErroneousToken(
+                  kind: RBracket,
+                  text: "}",
+                ),
+                expected: StringLiteral,
               ),
-              expected: StringLiteral,
-            ),
-            span: Span(
-              start: Position(
-                value: 35,
-                line: 0,
-                col: 35,
+              span: Span(
+                start: Position(
+                  value: 35,
+                  line: 0,
+                  col: 35,
+                ),
+                end: Position(
+                  value: 43,
+                  line: 0,
+                  col: 43,
+                ),
               ),
-              end: Position(
-                value: 43,
-                line: 0,
-                col: 43,
+              bad_token_at: Span(
+                start: Position(
+                  value: 42,
+                  line: 0,
+                  col: 42,
+                ),
+                end: Position(
+                  value: 43,
+                  line: 0,
+                  col: 43,
+                ),
               ),
-            ),
-            message: None,
-            context: ErrorSourceContext(
-              above: None,
-              line: "get /hello { header \"test\" \"value\" header }",
-              below: None,
-            ),
-            text: "header }",
-          )),
+              message: None,
+              context: ErrorSourceContext(
+                above: None,
+                line: "get /hello { header \"test\" \"value\" header }",
+                below: None,
+              ),
+            )),
+            value: Error(ContextualError(
+              inner_error: ExpectedEitherOfTokens(
+                found: ErroneousToken(
+                  kind: End,
+                  text: "",
+                ),
+                expected: [
+                  Ident,
+                  StringLiteral,
+                  Boolean,
+                  Number,
+                  MultiLineStringLiteral,
+                  LBracket,
+                  LSquare,
+                  Null,
+                ],
+              ),
+              span: Span(
+                start: Position(
+                  value: 43,
+                  line: 0,
+                  col: 42,
+                ),
+                end: Position(
+                  value: 43,
+                  line: 0,
+                  col: 42,
+                ),
+              ),
+              bad_token_at: Span(
+                start: Position(
+                  value: 43,
+                  line: 0,
+                  col: 42,
+                ),
+                end: Position(
+                  value: 43,
+                  line: 0,
+                  col: 42,
+                ),
+              ),
+              message: None,
+              context: ErrorSourceContext(
+                above: None,
+                line: "get /hello { header \"test\" \"value\" header }",
+                below: None,
+              ),
+            )),
+          ),
         ],
         span: Span(
           start: Position(

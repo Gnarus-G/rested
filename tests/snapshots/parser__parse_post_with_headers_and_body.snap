@@ -25,7 +25,7 @@ Program(
       block: Some(Block(
         statements: [
           Header(
-            name: StringLiteral(
+            name: Node(StringLiteral(
               raw: "\"Authorization\"",
               value: "Authorization",
               span: Span(
@@ -40,7 +40,7 @@ Program(
                   col: 30,
                 ),
               ),
-            ),
+            )),
             value: String(StringLiteral(
               raw: "\"Bearer token\"",
               value: "Bearer token",

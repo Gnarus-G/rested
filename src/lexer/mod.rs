@@ -56,7 +56,7 @@ pub enum TokenKind {
     IllegalToken,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, serde::Serialize)]
 pub struct Token<'t> {
     pub kind: TokenKind,
     pub text: &'t str,
