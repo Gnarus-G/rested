@@ -107,6 +107,8 @@ impl Backend {
 
         self.documents.put(params.uri.clone(), params.text);
 
+        diagnostics.reverse();
+
         self.client
             .publish_diagnostics(params.uri, diagnostics, Some(params.version))
             .await;
