@@ -104,7 +104,7 @@ pub enum Item<'source> {
         identifier: TokenNode<'source, Token<'source>>,
         parameters: Option<Arguments<'source>>,
     },
-    Error(Error<'source>),
+    Error(Box<Error<'source>>),
 }
 
 #[derive(Debug, PartialEq, Clone, Copy, Serialize)]
@@ -133,7 +133,7 @@ pub enum Statement<'i> {
         start: Position,
     },
     LineComment(Literal<'i>),
-    Error(Error<'i>),
+    Error(Box<Error<'i>>),
 }
 
 #[derive(Debug, PartialEq, Serialize)]
@@ -169,7 +169,7 @@ pub enum Expression<'source> {
         span: Span,
         parts: Vec<Expression<'source>>,
     },
-    Error(Error<'source>),
+    Error(Box<Error<'source>>),
 }
 
 #[derive(Debug, PartialEq, Serialize)]
@@ -193,29 +193,37 @@ impl<'source, T: GetSpan> TokenNode<'source, T> {
     }
 }
 
-impl<'source, T: GetSpan> From<std::result::Result<T, Error<'source>>> for TokenNode<'source, T> {
-    fn from(value: std::result::Result<T, Error<'source>>) -> Self {
+impl<'source, T: GetSpan> From<std::result::Result<T, Box<Error<'source>>>>
+    for TokenNode<'source, T>
+{
+    fn from(value: std::result::Result<T, std::boxed::Box<Error<'source>>>) -> Self {
         match value {
             Ok(value) => TokenNode::Ok(value),
-            Err(error) => TokenNode::Error(error.into()),
+            Err(error) => TokenNode::Error(error),
         }
     }
 }
 
 impl<'source> From<Error<'source>> for Expression<'source> {
     fn from(value: Error<'source>) -> Self {
-        Self::Error(value)
+        Self::Error(value.into())
     }
 }
 
 impl<'source> From<Error<'source>> for Statement<'source> {
     fn from(value: Error<'source>) -> Self {
+        Self::Error(value.into())
+    }
+}
+
+impl<'source> From<Box<Error<'source>>> for Statement<'source> {
+    fn from(value: Box<Error<'source>>) -> Self {
         Self::Error(value)
     }
 }
 
 impl<'source> From<Error<'source>> for Item<'source> {
     fn from(value: Error<'source>) -> Self {
-        Self::Error(value)
+        Self::Error(value.into())
     }
 }

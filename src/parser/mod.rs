@@ -28,7 +28,7 @@ macro_rules! match_or_throw {
     };
 }
 
-pub type Result<'source, T> = std::result::Result<T, ContextualError<ParseError<'source>>>;
+pub type Result<'source, T> = std::result::Result<T, Box<ContextualError<ParseError<'source>>>>;
 
 trait TokenCheck {
     fn is_one_of(&self, kinds: &[TokenKind]) -> bool;
@@ -145,7 +145,7 @@ impl<'i> Parser<'i> {
             match result {
                 Ok(item) => items.push(item),
                 Err(error) => {
-                    items.push(error.into());
+                    items.push(Item::Error(error));
                     self.eat_till_next_top_level_peek_token();
                 }
             }
@@ -191,7 +191,7 @@ impl<'i> Parser<'i> {
             Ok(i) => i.into(),
             Err(error) => {
                 return Ok(Item::Set {
-                    identifier: ast::TokenNode::Error(error.clone().into()),
+                    identifier: ast::TokenNode::Error(error.clone()),
                     value: Expression::Error(error),
                 })
             }

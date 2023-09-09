@@ -35,7 +35,7 @@ impl<'source> GetErrors<'source> for Item<'source> {
                     errors.extend(args.parameters.iter().flat_map(|expr| expr.errors()))
                 }
             }
-            Item::Error(e) => errors.push(e.clone()),
+            Item::Error(e) => errors.push(*e.clone()),
             _ => {}
         }
 
@@ -56,7 +56,7 @@ impl<'source> GetErrors<'source> for Statement<'source> {
             }
             Statement::Body { value, .. } => errors.extend(value.errors()),
             Statement::LineComment(_) => {}
-            Statement::Error(e) => errors.push(e.to_owned()),
+            Statement::Error(e) => errors.push(*e.clone()),
         }
 
         errors
@@ -75,7 +75,7 @@ impl<'source> GetErrors<'source> for Expression<'source> {
             Expression::TemplateSringLiteral { parts, .. } => {
                 parts.iter().for_each(|expr| errors.extend(expr.errors()))
             }
-            Expression::Error(e) => errors.push(e.to_owned()),
+            Expression::Error(e) => errors.push(*e.clone()),
             _ => {}
         }
 

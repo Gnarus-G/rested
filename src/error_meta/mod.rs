@@ -128,7 +128,7 @@ impl<E: Display + std::error::Error + Clone> ErrorDisplay<utils::String> for Con
     }
 
     fn message(&self) -> Option<utils::String> {
-        self.message.clone().map(|m| m.into())
+        self.message.clone()
     }
 
     fn line_above(&self) -> Option<utils::String> {

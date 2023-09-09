@@ -104,7 +104,7 @@ impl<'i> Expectations<'i> {
 
         let error = self.expected_token(parser.next_token(), expected_kind);
 
-        Err(error)
+        Err(error.into())
     }
 
     pub fn expect_peek_one_of(
@@ -118,7 +118,7 @@ impl<'i> Expectations<'i> {
 
         let error = self.expected_one_of_tokens(parser.next_token(), expected_kinds);
 
-        Err(error)
+        Err(error.into())
     }
 
     pub fn expected_token(
