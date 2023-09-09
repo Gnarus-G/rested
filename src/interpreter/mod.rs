@@ -181,8 +181,11 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                                     }
                                 }
                                 ast::Statement::LineComment(_) => {}
-                                ast::Statement::Error(_) => {
-                                    unreachable!("errors should have been handled")
+                                ast::Statement::Error(err) => {
+                                    unreachable!(
+                                        "all syntax errors should have been caught, but found {}",
+                                        err
+                                    )
                                 }
                             }
                         }
@@ -274,7 +277,12 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                     self.let_bindings.insert(identifier.get()?.text, value);
                 }
                 Expr(_) => continue,
-                Error(err) => return Err(ParserErrors::new(vec![err]).into()),
+                Error(err) => {
+                    unreachable!(
+                        "all syntax errors should have been caught, but found {}",
+                        err
+                    )
+                }
             }
         }
 
@@ -355,7 +363,10 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
             EmptyArray(_) => "[]".to_string(),
             EmptyObject(_) => "{}".to_string(),
             Null(_) => "null".to_string(),
-            Error(err) => return Err(ParserErrors::new(vec![err.to_owned()]).into()),
+            Error(err) => unreachable!(
+                "all syntax errors should have been caught, but found {}",
+                err
+            ),
         };
 
         Ok(value)
