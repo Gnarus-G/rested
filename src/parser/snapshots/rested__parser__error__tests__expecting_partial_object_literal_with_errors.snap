@@ -1,0 +1,104 @@
+---
+source: src/parser/error.rs
+description: "\nlet b = {\n  \"key\": value, \n  \"key2\": \n}\n"
+expression: ast
+---
+Program(
+  items: [
+    Let(
+      identifier: Ok(Token(
+        kind: Ident,
+        text: "b",
+        start: Position(
+          value: 5,
+          line: 1,
+          col: 4,
+        ),
+      )),
+      value: Object((Span(
+        start: Position(
+          value: 9,
+          line: 1,
+          col: 8,
+        ),
+        end: Position(
+          value: 41,
+          line: 4,
+          col: 1,
+        ),
+      ), [
+        ObjectEntry(Ok(StringLiteral(
+          raw: "\"key\"",
+          value: "key",
+          span: Span(
+            start: Position(
+              value: 13,
+              line: 2,
+              col: 2,
+            ),
+            end: Position(
+              value: 18,
+              line: 2,
+              col: 7,
+            ),
+          ),
+        )), Identifier(Ok(Token(
+          kind: Ident,
+          text: "value",
+          start: Position(
+            value: 20,
+            line: 2,
+            col: 9,
+          ),
+        )))),
+        ObjectEntry(Ok(StringLiteral(
+          raw: "\"key2\"",
+          value: "key2",
+          span: Span(
+            start: Position(
+              value: 30,
+              line: 3,
+              col: 2,
+            ),
+            end: Position(
+              value: 36,
+              line: 3,
+              col: 8,
+            ),
+          ),
+        )), Error(ContextualError(
+          inner_error: ExpectedToken(
+            found: Token(
+              kind: End,
+              text: "",
+              start: Position(
+                value: 41,
+                line: 4,
+                col: 1,
+              ),
+            ),
+            expected: Comma,
+          ),
+          span: Span(
+            start: Position(
+              value: 25,
+              line: 2,
+              col: 14,
+            ),
+            end: Position(
+              value: 41,
+              line: 4,
+              col: 1,
+            ),
+          ),
+          message: None,
+          context: ErrorSourceContext(
+            above: Some("  \"key2\": "),
+            line: "}",
+            below: None,
+          ),
+        ))),
+      ])),
+    ),
+  ],
+)

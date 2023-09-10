@@ -4,8 +4,6 @@ mod ast_queries;
 mod ast_span;
 pub mod error;
 
-use std::collections::BTreeMap;
-
 use ast::{Endpoint, Expression, Item, RequestMethod, Statement};
 
 use self::ast::{Arguments, Block};
@@ -322,20 +320,15 @@ impl<'i> Parser<'i> {
                     return Ok(Expression::EmptyObject(self.span_from(e.start)));
                 }
 
-                let mut fields = BTreeMap::new();
+                let mut fields = vec![];
 
-                while self.peek_token().kind != RBracket {
+                while self.peek_token().kind != RBracket && self.peek_token().kind != End {
                     if self.peek_token().is(Linecomment) {
                         self.next_token();
                         continue;
                     }
 
-                    let (key, value) = self.parse_object_property()?;
-                    fields.insert(key, value);
-
-                    if !self.peek_token().is(RBracket) {
-                        e.expect_peek(self, Comma)?;
-                    }
+                    fields.push(self.parse_object_property()?);
                 }
 
                 self.next_token();
@@ -352,7 +345,7 @@ impl<'i> Parser<'i> {
 
                 let mut list = vec![];
 
-                while self.peek_token().kind != RSquare {
+                while self.peek_token().kind != RSquare && self.peek_token().kind != End {
                     if self.peek_token().is(Linecomment) {
                         self.next_token();
                         continue;
@@ -378,24 +371,52 @@ impl<'i> Parser<'i> {
         Ok(object)
     }
 
-    fn parse_object_property(&mut self) -> Result<'i, (&'i str, Expression<'i>)> {
+    fn parse_object_property(&mut self) -> Result<'i, ast::ObjectEntry<'i>> {
         let e = Expectations::new(self);
-        let key_token = self.next_token();
-
-        let key = match_or_throw! { key_token.kind; e; self;
-            Ident => key_token.text,
-            StringLiteral => ast::StringLiteral::from(key_token).value
-        };
-
-        e.expect_peek(self, TokenKind::Colon)?;
         self.next_token();
 
-        Ok((key, self.parse_json_like()?))
+        let key = match self.parse_object_key() {
+            Ok(k) => ast::result::ParsedNode::Ok(k),
+            Err(error) => ast::result::ParsedNode::Error(error),
+        };
+
+        if let Err(e) = e.expect_peek(self, TokenKind::Colon) {
+            return Ok(ast::ObjectEntry(key, Expression::Error(e)));
+        }
+
+        self.next_token();
+
+        let mut value = match self.parse_json_like() {
+            Ok(exp) => exp,
+            Err(error) => Expression::Error(error),
+        };
+
+        if !self.peek_token().is(RBracket) {
+            if let Err(e) = e.expect_peek(self, Comma) {
+                value = Expression::Error(e)
+            }
+        }
+
+        Ok(ast::ObjectEntry(key, value))
+    }
+
+    fn parse_object_key(&mut self) -> Result<'i, ast::StringLiteral<'i>> {
+        let e = Expectations::new(self);
+
+        let key_token = self.curr_token();
+
+        let key = match_or_throw! { key_token.kind; e; self;
+            Ident | StringLiteral => key_token.into(),
+        };
+
+        Ok(key)
     }
 
     fn parse_call_expression(&mut self) -> Result<'i, Expression<'i>> {
         let identifier = self.curr_token().into();
         self.next_token();
+
+        let params_start = self.curr_token().start;
 
         self.next_token();
 
@@ -407,9 +428,17 @@ impl<'i> Parser<'i> {
             self.next_token();
         }
 
+        let last_token = self.curr_token();
+
         Ok(Expression::Call {
             identifier,
-            arguments,
+            arguments: Arguments {
+                span: Span {
+                    start: params_start,
+                    end: last_token.span().end,
+                },
+                parameters: arguments,
+            },
         })
     }
 

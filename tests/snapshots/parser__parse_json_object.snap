@@ -26,23 +26,23 @@ Program(
           line: 5,
           col: 1,
         ),
-      ), {
-        "akey": Number(Literal(
-          value: "123",
+      ), [
+        ObjectEntry(Ok(StringLiteral(
+          raw: "key",
+          value: "key",
           span: Span(
             start: Position(
-              value: 39,
-              line: 3,
-              col: 10,
+              value: 15,
+              line: 2,
+              col: 4,
             ),
             end: Position(
-              value: 42,
-              line: 3,
-              col: 13,
+              value: 18,
+              line: 2,
+              col: 7,
             ),
           ),
-        )),
-        "key": String(StringLiteral(
+        )), String(StringLiteral(
           raw: "\"value\"",
           value: "value",
           span: Span(
@@ -57,8 +57,53 @@ Program(
               col: 16,
             ),
           ),
-        )),
-        "love": String(StringLiteral(
+        ))),
+        ObjectEntry(Ok(StringLiteral(
+          raw: "akey",
+          value: "akey",
+          span: Span(
+            start: Position(
+              value: 33,
+              line: 3,
+              col: 4,
+            ),
+            end: Position(
+              value: 37,
+              line: 3,
+              col: 8,
+            ),
+          ),
+        )), Number(Literal(
+          value: "123",
+          span: Span(
+            start: Position(
+              value: 39,
+              line: 3,
+              col: 10,
+            ),
+            end: Position(
+              value: 42,
+              line: 3,
+              col: 13,
+            ),
+          ),
+        ))),
+        ObjectEntry(Ok(StringLiteral(
+          raw: "love",
+          value: "love",
+          span: Span(
+            start: Position(
+              value: 48,
+              line: 4,
+              col: 4,
+            ),
+            end: Position(
+              value: 52,
+              line: 4,
+              col: 8,
+            ),
+          ),
+        )), String(StringLiteral(
           raw: "\"me\"",
           value: "me",
           span: Span(
@@ -73,8 +118,8 @@ Program(
               col: 14,
             ),
           ),
-        )),
-      })),
+        ))),
+      ])),
     ),
   ],
 )

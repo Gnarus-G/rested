@@ -26,8 +26,54 @@ Program(
           line: 6,
           col: 1,
         ),
-      ), {
-        "akey": Array((Span(
+      ), [
+        ObjectEntry(Ok(StringLiteral(
+          raw: "key",
+          value: "key",
+          span: Span(
+            start: Position(
+              value: 15,
+              line: 2,
+              col: 4,
+            ),
+            end: Position(
+              value: 18,
+              line: 2,
+              col: 7,
+            ),
+          ),
+        )), String(StringLiteral(
+          raw: "\"value\"",
+          value: "value",
+          span: Span(
+            start: Position(
+              value: 20,
+              line: 2,
+              col: 9,
+            ),
+            end: Position(
+              value: 27,
+              line: 2,
+              col: 16,
+            ),
+          ),
+        ))),
+        ObjectEntry(Ok(StringLiteral(
+          raw: "akey",
+          value: "akey",
+          span: Span(
+            start: Position(
+              value: 33,
+              line: 3,
+              col: 4,
+            ),
+            end: Position(
+              value: 37,
+              line: 3,
+              col: 8,
+            ),
+          ),
+        )), Array((Span(
           start: Position(
             value: 39,
             line: 3,
@@ -84,24 +130,23 @@ Program(
               ),
             ),
           )),
-        ])),
-        "key": String(StringLiteral(
-          raw: "\"value\"",
-          value: "value",
+        ]))),
+        ObjectEntry(Ok(StringLiteral(
+          raw: "love",
+          value: "love",
           span: Span(
             start: Position(
-              value: 20,
-              line: 2,
-              col: 9,
+              value: 55,
+              line: 4,
+              col: 4,
             ),
             end: Position(
-              value: 27,
-              line: 2,
-              col: 16,
+              value: 59,
+              line: 4,
+              col: 8,
             ),
           ),
-        )),
-        "love": String(StringLiteral(
+        )), String(StringLiteral(
           raw: "\"me\"",
           value: "me",
           span: Span(
@@ -116,8 +161,23 @@ Program(
               col: 14,
             ),
           ),
-        )),
-        "test": Object((Span(
+        ))),
+        ObjectEntry(Ok(StringLiteral(
+          raw: "\"test\"",
+          value: "test",
+          span: Span(
+            start: Position(
+              value: 71,
+              line: 5,
+              col: 4,
+            ),
+            end: Position(
+              value: 77,
+              line: 5,
+              col: 10,
+            ),
+          ),
+        )), Object((Span(
           start: Position(
             value: 79,
             line: 5,
@@ -128,8 +188,23 @@ Program(
             line: 5,
             col: 36,
           ),
-        ), {
-          "a": String(StringLiteral(
+        ), [
+          ObjectEntry(Ok(StringLiteral(
+            raw: "a",
+            value: "a",
+            span: Span(
+              start: Position(
+                value: 80,
+                line: 5,
+                col: 13,
+              ),
+              end: Position(
+                value: 81,
+                line: 5,
+                col: 14,
+              ),
+            ),
+          )), String(StringLiteral(
             raw: "\"asdf\"",
             value: "asdf",
             span: Span(
@@ -144,8 +219,23 @@ Program(
                 col: 22,
               ),
             ),
-          )),
-          "b": Number(Literal(
+          ))),
+          ObjectEntry(Ok(StringLiteral(
+            raw: "b",
+            value: "b",
+            span: Span(
+              start: Position(
+                value: 91,
+                line: 5,
+                col: 24,
+              ),
+              end: Position(
+                value: 92,
+                line: 5,
+                col: 25,
+              ),
+            ),
+          )), Number(Literal(
             value: "1",
             span: Span(
               start: Position(
@@ -159,8 +249,23 @@ Program(
                 col: 28,
               ),
             ),
-          )),
-          "c": Number(Literal(
+          ))),
+          ObjectEntry(Ok(StringLiteral(
+            raw: "c",
+            value: "c",
+            span: Span(
+              start: Position(
+                value: 97,
+                line: 5,
+                col: 30,
+              ),
+              end: Position(
+                value: 98,
+                line: 5,
+                col: 31,
+              ),
+            ),
+          )), Number(Literal(
             value: "3",
             span: Span(
               start: Position(
@@ -174,9 +279,9 @@ Program(
                 col: 34,
               ),
             ),
-          )),
-        })),
-      })),
+          ))),
+        ]))),
+      ])),
     ),
   ],
 )

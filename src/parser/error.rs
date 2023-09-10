@@ -247,4 +247,16 @@ get /adsf {
 "#
         );
     }
+
+    #[test]
+    fn expecting_partial_object_literal_with_errors() {
+        assert_ast!(
+            r#"
+let b = {
+  "key": value, 
+  "key2": 
+}
+"#
+        );
+    }
 }

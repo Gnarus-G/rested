@@ -65,24 +65,38 @@ Program(
                       col: 29,
                     ),
                   )),
-                  arguments: [
-                    String(StringLiteral(
-                      raw: "\"love\"",
-                      value: "love",
-                      span: Span(
-                        start: Position(
-                          value: 54,
-                          line: 2,
-                          col: 33,
-                        ),
-                        end: Position(
-                          value: 60,
-                          line: 2,
-                          col: 39,
-                        ),
+                  arguments: Arguments(
+                    span: Span(
+                      start: Position(
+                        value: 53,
+                        line: 2,
+                        col: 32,
                       ),
-                    )),
-                  ],
+                      end: Position(
+                        value: 61,
+                        line: 2,
+                        col: 40,
+                      ),
+                    ),
+                    parameters: [
+                      String(StringLiteral(
+                        raw: "\"love\"",
+                        value: "love",
+                        span: Span(
+                          start: Position(
+                            value: 54,
+                            line: 2,
+                            col: 33,
+                          ),
+                          end: Position(
+                            value: 60,
+                            line: 2,
+                            col: 39,
+                          ),
+                        ),
+                      )),
+                    ],
+                  ),
                 ),
                 String(StringLiteral(
                   raw: ", 2: ",

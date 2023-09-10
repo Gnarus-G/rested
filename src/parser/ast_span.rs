@@ -21,11 +21,7 @@ impl<'source> GetSpan for Expression<'source> {
             Expression::Call {
                 identifier,
                 arguments,
-            } => arguments
-                .last()
-                .map(|arg| arg.span())
-                .map(|span| identifier.span().to_end_of(span))
-                .unwrap_or(identifier.span()),
+            } => identifier.span().to_end_of(arguments.span),
             Expression::TemplateSringLiteral { span, .. } => *span,
             Expression::Array((span, ..)) => *span,
             Expression::Object((span, ..)) => *span,

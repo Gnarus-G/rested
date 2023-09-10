@@ -318,8 +318,11 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                 identifier,
                 arguments,
             } => {
-                let value =
-                    self.evaluate_call_expression(identifier.get()?, arguments, expression_span)?;
+                let value = self.evaluate_call_expression(
+                    identifier.get()?,
+                    &arguments.parameters,
+                    expression_span,
+                )?;
                 if quote_string_literal {
                     format!("{:?}", value)
                 } else {
@@ -344,9 +347,9 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
             Object((.., fields)) => {
                 let mut props = HashMap::new();
 
-                for (key, value) in fields {
+                for ast::ObjectEntry(key, value) in fields {
                     let value = self.evaluate_expression_and_quote_string(value, true)?;
-                    props.insert(key.to_string(), value);
+                    props.insert(key.get()?.value.to_string(), value);
                 }
 
                 format!(

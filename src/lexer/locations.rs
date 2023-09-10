@@ -84,18 +84,3 @@ impl<'source> GetSpan for Token<'source> {
         }
     }
 }
-
-pub trait GetSpanOption {
-    fn get_span(&self) -> Option<Span>;
-}
-
-impl<T: GetSpan> GetSpanOption for Vec<T> {
-    fn get_span(&self) -> Option<Span> {
-        match (self.first(), self.last()) {
-            (None, None) => None,
-            (None, Some(e)) => Some(e.span()),
-            (Some(e), None) => Some(e.span()),
-            (Some(f), Some(l)) => Some(f.span().to_end_of(l.span())),
-        }
-    }
-}

@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, fmt::Display};
+use std::fmt::Display;
 
 use serde::Serialize;
 
@@ -123,10 +123,10 @@ pub enum Expression<'source> {
     Number(Literal<'source>),
     Call {
         identifier: ParsedNode<'source, Token<'source>>,
-        arguments: Vec<Expression<'source>>,
+        arguments: Arguments<'source>,
     },
     Array(Spanned<Vec<Expression<'source>>>),
-    Object(Spanned<BTreeMap<&'source str, Expression<'source>>>),
+    Object(Spanned<Vec<ObjectEntry<'source>>>),
     Null(Span),
     EmptyArray(Span),
     EmptyObject(Span),
@@ -136,6 +136,12 @@ pub enum Expression<'source> {
     },
     Error(Box<Error<'source>>),
 }
+
+#[derive(Debug, PartialEq, Serialize)]
+pub struct ObjectEntry<'source>(
+    pub ParsedNode<'source, StringLiteral<'source>>,
+    pub Expression<'source>,
+);
 
 #[derive(Debug, PartialEq, Serialize)]
 pub enum Endpoint<'i> {

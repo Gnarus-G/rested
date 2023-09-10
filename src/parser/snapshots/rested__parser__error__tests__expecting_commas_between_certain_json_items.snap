@@ -15,79 +15,132 @@ Program(
           col: 4,
         ),
       )),
-      value: Error(ContextualError(
-        inner_error: ExpectedToken(
-          found: Token(
-            kind: Ident,
-            text: "hello",
+      value: Object((Span(
+        start: Position(
+          value: 8,
+          line: 0,
+          col: 8,
+        ),
+        end: Position(
+          value: 85,
+          line: 3,
+          col: 16,
+        ),
+      ), [
+        ObjectEntry(Ok(StringLiteral(
+          raw: "yo",
+          value: "yo",
+          span: Span(
+            start: Position(
+              value: 27,
+              line: 1,
+              col: 17,
+            ),
+            end: Position(
+              value: 29,
+              line: 1,
+              col: 19,
+            ),
+          ),
+        )), Error(ContextualError(
+          inner_error: ExpectedToken(
+            found: Token(
+              kind: Ident,
+              text: "hello",
+              start: Position(
+                value: 54,
+                line: 2,
+                col: 17,
+              ),
+            ),
+            expected: Comma,
+          ),
+          span: Span(
+            start: Position(
+              value: 8,
+              line: 0,
+              col: 8,
+            ),
+            end: Position(
+              value: 59,
+              line: 2,
+              col: 22,
+            ),
+          ),
+          message: None,
+          context: ErrorSourceContext(
+            above: Some("                 yo: \"joe\""),
+            line: "                 hello: \"world\"",
+            below: Some("               }"),
+          ),
+        ))),
+        ObjectEntry(Error(ContextualError(
+          inner_error: ExpectedEitherOfTokens(
+            found: Token(
+              kind: Colon,
+              text: ":",
+              start: Position(
+                value: 59,
+                line: 2,
+                col: 22,
+              ),
+            ),
+            expected: [
+              Ident,
+              StringLiteral,
+            ],
+          ),
+          span: Span(
+            start: Position(
+              value: 59,
+              line: 2,
+              col: 22,
+            ),
+            end: Position(
+              value: 60,
+              line: 2,
+              col: 23,
+            ),
+          ),
+          message: None,
+          context: ErrorSourceContext(
+            above: Some("                 yo: \"joe\""),
+            line: "                 hello: \"world\"",
+            below: Some("               }"),
+          ),
+        )), Error(ContextualError(
+          inner_error: ExpectedToken(
+            found: Token(
+              kind: StringLiteral,
+              text: "\"world\"",
+              start: Position(
+                value: 61,
+                line: 2,
+                col: 24,
+              ),
+            ),
+            expected: Colon,
+          ),
+          span: Span(
             start: Position(
               value: 54,
               line: 2,
               col: 17,
             ),
+            end: Position(
+              value: 68,
+              line: 2,
+              col: 31,
+            ),
           ),
-          expected: Comma,
-        ),
-        span: Span(
-          start: Position(
-            value: 8,
-            line: 0,
-            col: 8,
+          message: None,
+          context: ErrorSourceContext(
+            above: Some("                 yo: \"joe\""),
+            line: "                 hello: \"world\"",
+            below: Some("               }"),
           ),
-          end: Position(
-            value: 59,
-            line: 2,
-            col: 22,
-          ),
-        ),
-        message: None,
-        context: ErrorSourceContext(
-          above: Some("                 yo: \"joe\""),
-          line: "                 hello: \"world\"",
-          below: Some("               }"),
-        ),
-      )),
+        ))),
+      ])),
     ),
-    Error(ContextualError(
-      inner_error: ExpectedEitherOfTokens(
-        found: Token(
-          kind: Colon,
-          text: ":",
-          start: Position(
-            value: 59,
-            line: 2,
-            col: 22,
-          ),
-        ),
-        expected: [
-          Ident,
-          StringLiteral,
-          Boolean,
-          Number,
-          MultiLineStringLiteral,
-          LBracket,
-          LSquare,
-          Null,
-        ],
-      ),
-      span: Span(
-        start: Position(
-          value: 59,
-          line: 2,
-          col: 22,
-        ),
-        end: Position(
-          value: 60,
-          line: 2,
-          col: 23,
-        ),
-      ),
-      message: None,
-      context: ErrorSourceContext(
-        above: Some("                 yo: \"joe\""),
-        line: "                 hello: \"world\"",
-        below: Some("               }"),
-      ),
-    )),
   ],
 )

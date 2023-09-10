@@ -5,7 +5,7 @@ mod position;
 
 use crate::lexer;
 use crate::lexer::locations::{GetSpan, Location};
-use crate::parser::ast::{self, Program};
+use crate::parser::ast::Program;
 use crate::parser::{self, Parser};
 use completions::*;
 use tower_lsp::jsonrpc::Result;
@@ -173,7 +173,7 @@ impl LanguageServer for Backend {
                 .map(|var| CompletionItem {
                     label: var.text.to_string(),
                     kind: Some(CompletionItemKind::VARIABLE),
-                    insert_text: Some(var.to_string()),
+                    insert_text: Some(var.text.to_string()),
                     ..CompletionItem::default()
                 })
                 .collect();

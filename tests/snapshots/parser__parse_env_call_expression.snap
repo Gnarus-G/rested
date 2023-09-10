@@ -51,24 +51,38 @@ Program(
                   col: 38,
                 ),
               )),
-              arguments: [
-                String(StringLiteral(
-                  raw: "\"auth\"",
-                  value: "auth",
-                  span: Span(
-                    start: Position(
-                      value: 42,
-                      line: 0,
-                      col: 42,
-                    ),
-                    end: Position(
-                      value: 48,
-                      line: 0,
-                      col: 48,
-                    ),
+              arguments: Arguments(
+                span: Span(
+                  start: Position(
+                    value: 41,
+                    line: 0,
+                    col: 41,
                   ),
-                )),
-              ],
+                  end: Position(
+                    value: 49,
+                    line: 0,
+                    col: 49,
+                  ),
+                ),
+                parameters: [
+                  String(StringLiteral(
+                    raw: "\"auth\"",
+                    value: "auth",
+                    span: Span(
+                      start: Position(
+                        value: 42,
+                        line: 0,
+                        col: 42,
+                      ),
+                      end: Position(
+                        value: 48,
+                        line: 0,
+                        col: 48,
+                      ),
+                    ),
+                  )),
+                ],
+              ),
             ),
           ),
           Body(
@@ -82,24 +96,38 @@ Program(
                   col: 55,
                 ),
               )),
-              arguments: [
-                String(StringLiteral(
-                  raw: "\"data\"",
-                  value: "data",
-                  span: Span(
-                    start: Position(
-                      value: 59,
-                      line: 0,
-                      col: 59,
-                    ),
-                    end: Position(
-                      value: 65,
-                      line: 0,
-                      col: 65,
-                    ),
+              arguments: Arguments(
+                span: Span(
+                  start: Position(
+                    value: 58,
+                    line: 0,
+                    col: 58,
                   ),
-                )),
-              ],
+                  end: Position(
+                    value: 66,
+                    line: 0,
+                    col: 66,
+                  ),
+                ),
+                parameters: [
+                  String(StringLiteral(
+                    raw: "\"data\"",
+                    value: "data",
+                    span: Span(
+                      start: Position(
+                        value: 59,
+                        line: 0,
+                        col: 59,
+                      ),
+                      end: Position(
+                        value: 65,
+                        line: 0,
+                        col: 65,
+                      ),
+                    ),
+                  )),
+                ],
+              ),
             ),
             start: Position(
               value: 50,

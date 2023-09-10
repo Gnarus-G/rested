@@ -139,24 +139,38 @@ Program(
             col: 12,
           ),
         )),
-        arguments: [
-          String(StringLiteral(
-            raw: "\"auth-token\"",
-            value: "auth-token",
-            span: Span(
-              start: Position(
-                value: 114,
-                line: 6,
-                col: 16,
-              ),
-              end: Position(
-                value: 126,
-                line: 6,
-                col: 28,
-              ),
+        arguments: Arguments(
+          span: Span(
+            start: Position(
+              value: 113,
+              line: 6,
+              col: 15,
             ),
-          )),
-        ],
+            end: Position(
+              value: 127,
+              line: 6,
+              col: 29,
+            ),
+          ),
+          parameters: [
+            String(StringLiteral(
+              raw: "\"auth-token\"",
+              value: "auth-token",
+              span: Span(
+                start: Position(
+                  value: 114,
+                  line: 6,
+                  col: 16,
+                ),
+                end: Position(
+                  value: 126,
+                  line: 6,
+                  col: 28,
+                ),
+              ),
+            )),
+          ],
+        ),
       ),
     ),
     Attribute(
@@ -302,24 +316,38 @@ Program(
                       col: 17,
                     ),
                   )),
-                  arguments: [
-                    String(StringLiteral(
-                      raw: "\"var\"",
-                      value: "var",
-                      span: Span(
-                        start: Position(
-                          value: 234,
-                          line: 13,
-                          col: 21,
-                        ),
-                        end: Position(
-                          value: 239,
-                          line: 13,
-                          col: 26,
-                        ),
+                  arguments: Arguments(
+                    span: Span(
+                      start: Position(
+                        value: 233,
+                        line: 13,
+                        col: 20,
                       ),
-                    )),
-                  ],
+                      end: Position(
+                        value: 240,
+                        line: 13,
+                        col: 27,
+                      ),
+                    ),
+                    parameters: [
+                      String(StringLiteral(
+                        raw: "\"var\"",
+                        value: "var",
+                        span: Span(
+                          start: Position(
+                            value: 234,
+                            line: 13,
+                            col: 21,
+                          ),
+                          end: Position(
+                            value: 239,
+                            line: 13,
+                            col: 26,
+                          ),
+                        ),
+                      )),
+                    ],
+                  ),
                 ),
                 String(StringLiteral(
                   raw: "\",\n      \"nerd\": \"",

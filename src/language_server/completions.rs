@@ -42,7 +42,20 @@ impl<'source> GetCompletions for Expression<'source> {
             return None;
         }
 
-        return Some([comps.variables.clone(), comps.functions.clone()].concat());
+        return match self {
+            Expression::TemplateSringLiteral { parts, .. } => {
+                for part in parts {
+                    let some_comp = part.completions(position, comps);
+                    if some_comp.is_some() {
+                        return some_comp;
+                    }
+                }
+                None
+            }
+            Expression::EmptyObject(_) => None,
+            Expression::String(_) => None,
+            _ => Some([comps.variables.clone(), comps.functions.clone()].concat()),
+        };
     }
 }
 
