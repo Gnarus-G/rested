@@ -10,6 +10,8 @@ use crate::{
     },
 };
 
+use self::result::ParsedNode;
+
 use super::error::ParseError;
 
 type Error<'source> = ContextualError<ParseError<'source>>;
@@ -25,29 +27,10 @@ impl<'i> Program<'i> {
     }
 }
 
-impl<'i> From<&Token<'i>> for ParsedNode<'i, Token<'i>> {
-    fn from(token: &Token<'i>) -> Self {
-        Self::Ok(Token {
-            kind: token.kind,
-            text: token.text,
-            start: token.start,
-        })
-    }
-}
-
 #[derive(Debug, PartialEq, Serialize)]
 pub struct Literal<'i> {
     pub value: &'i str,
     pub span: Span,
-}
-
-impl<'i> From<&Token<'i>> for Literal<'i> {
-    fn from(token: &Token<'i>) -> Self {
-        Self {
-            value: token.text,
-            span: token.span(),
-        }
-    }
 }
 
 #[derive(Debug, PartialEq, Serialize)]
@@ -55,24 +38,6 @@ pub struct StringLiteral<'source> {
     pub raw: &'source str,
     pub value: &'source str,
     pub span: Span,
-}
-
-impl<'i> From<&Token<'i>> for StringLiteral<'i> {
-    fn from(token: &Token<'i>) -> Self {
-        let value = match (token.text.chars().next(), token.text.chars().last()) {
-            (Some('"'), Some('"')) if token.text.len() > 1 => &token.text[1..token.text.len() - 1],
-            (Some('`'), Some('`')) if token.text.len() > 1 => &token.text[1..token.text.len() - 1],
-            (_, Some('`')) => &token.text[..token.text.len() - 1],
-            (Some('`'), _) => &token.text[1..],
-            _ => token.text,
-        };
-
-        Self {
-            raw: token.text,
-            value,
-            span: token.span(),
-        }
-    }
 }
 
 #[derive(Debug, PartialEq, Serialize)]
@@ -178,52 +143,100 @@ pub enum Endpoint<'i> {
     Pathname(Literal<'i>),
 }
 
-#[derive(Debug, PartialEq, serde::Serialize)]
-pub enum ParsedNode<'i, T: GetSpan> {
-    Ok(T),
-    Error(Box<Error<'i>>),
-}
+pub mod result {
 
-impl<'source, T: GetSpan> ParsedNode<'source, T> {
-    pub fn get(&self) -> std::result::Result<&T, Box<Error<'source>>> {
-        match self {
-            ParsedNode::Ok(node) => Ok(node),
-            ParsedNode::Error(error) => Err(error.clone()),
+    use super::*;
+
+    #[derive(Debug, PartialEq, serde::Serialize)]
+    pub enum ParsedNode<'i, T: GetSpan> {
+        Ok(T),
+        Error(Box<Error<'i>>),
+    }
+
+    impl<'source, T: GetSpan> ParsedNode<'source, T> {
+        pub fn get(&self) -> std::result::Result<&T, Box<Error<'source>>> {
+            match self {
+                ParsedNode::Ok(node) => Ok(node),
+                ParsedNode::Error(error) => Err(error.clone()),
+            }
         }
     }
 }
 
-impl<'source, T: GetSpan> From<std::result::Result<T, Box<Error<'source>>>>
-    for ParsedNode<'source, T>
-{
-    fn from(value: std::result::Result<T, std::boxed::Box<Error<'source>>>) -> Self {
-        match value {
-            Ok(value) => ParsedNode::Ok(value),
-            Err(error) => ParsedNode::Error(error),
+mod convert {
+    use super::*;
+
+    impl<'i> From<&Token<'i>> for ParsedNode<'i, Token<'i>> {
+        fn from(token: &Token<'i>) -> Self {
+            Self::Ok(Token {
+                kind: token.kind,
+                text: token.text,
+                start: token.start,
+            })
         }
     }
-}
-
-impl<'source> From<Error<'source>> for Expression<'source> {
-    fn from(value: Error<'source>) -> Self {
-        Self::Error(value.into())
+    impl<'i> From<&Token<'i>> for Literal<'i> {
+        fn from(token: &Token<'i>) -> Self {
+            Self {
+                value: token.text,
+                span: token.span(),
+            }
+        }
     }
-}
+    impl<'i> From<&Token<'i>> for StringLiteral<'i> {
+        fn from(token: &Token<'i>) -> Self {
+            let value = match (token.text.chars().next(), token.text.chars().last()) {
+                (Some('"'), Some('"')) if token.text.len() > 1 => {
+                    &token.text[1..token.text.len() - 1]
+                }
+                (Some('`'), Some('`')) if token.text.len() > 1 => {
+                    &token.text[1..token.text.len() - 1]
+                }
+                (_, Some('`')) => &token.text[..token.text.len() - 1],
+                (Some('`'), _) => &token.text[1..],
+                _ => token.text,
+            };
 
-impl<'source> From<Error<'source>> for Statement<'source> {
-    fn from(value: Error<'source>) -> Self {
-        Self::Error(value.into())
+            Self {
+                raw: token.text,
+                value,
+                span: token.span(),
+            }
+        }
     }
-}
 
-impl<'source> From<Box<Error<'source>>> for Statement<'source> {
-    fn from(value: Box<Error<'source>>) -> Self {
-        Self::Error(value)
+    impl<'source, T: GetSpan> From<std::result::Result<T, Box<Error<'source>>>>
+        for ParsedNode<'source, T>
+    {
+        fn from(value: std::result::Result<T, std::boxed::Box<Error<'source>>>) -> Self {
+            match value {
+                Ok(value) => ParsedNode::Ok(value),
+                Err(error) => ParsedNode::Error(error),
+            }
+        }
     }
-}
 
-impl<'source> From<Error<'source>> for Item<'source> {
-    fn from(value: Error<'source>) -> Self {
-        Self::Error(value.into())
+    impl<'source> From<Error<'source>> for Expression<'source> {
+        fn from(value: Error<'source>) -> Self {
+            Self::Error(value.into())
+        }
+    }
+
+    impl<'source> From<Error<'source>> for Statement<'source> {
+        fn from(value: Error<'source>) -> Self {
+            Self::Error(value.into())
+        }
+    }
+
+    impl<'source> From<Box<Error<'source>>> for Statement<'source> {
+        fn from(value: Box<Error<'source>>) -> Self {
+            Self::Error(value)
+        }
+    }
+
+    impl<'source> From<Error<'source>> for Item<'source> {
+        fn from(value: Error<'source>) -> Self {
+            Self::Error(value.into())
+        }
     }
 }
