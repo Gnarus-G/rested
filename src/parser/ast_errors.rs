@@ -14,13 +14,13 @@ impl<'source> GetErrors<'source> for Item<'source> {
 
         match &self {
             Item::Set { identifier, value } => {
-                if let ast::TokenNode::Error(error) = identifier {
+                if let ast::ParsedNode::Error(error) = identifier {
                     errors.push(*error.clone());
                 }
                 errors.extend(value.errors());
             }
             Item::Let { value, identifier } => {
-                if let ast::TokenNode::Error(error) = identifier {
+                if let ast::ParsedNode::Error(error) = identifier {
                     errors.push(*error.clone());
                 }
                 errors.extend(value.errors())
@@ -49,7 +49,7 @@ impl<'source> GetErrors<'source> for Statement<'source> {
 
         match &self {
             Statement::Header { value, name } => {
-                if let ast::TokenNode::Error(error) = name {
+                if let ast::ParsedNode::Error(error) = name {
                     errors.push(*error.clone());
                 }
                 errors.extend(value.errors())

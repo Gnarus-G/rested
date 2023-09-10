@@ -1,5 +1,5 @@
 use super::{
-    ast::{self, Program, TokenNode},
+    ast::{self, ParsedNode, Program},
     ast_errors::GetErrors,
     error::ParseError,
 };
@@ -13,7 +13,7 @@ use crate::{
 };
 
 impl<'source> Program<'source> {
-    pub fn variables(&self) -> impl Iterator<Item = &TokenNode<'source, Token<'source>>> {
+    pub fn variables(&self) -> impl Iterator<Item = &ParsedNode<'source, Token<'source>>> {
         self.items.iter().filter_map(|i| match i {
             ast::Item::Let {
                 value: ast::Expression::Error(..),
@@ -27,7 +27,7 @@ impl<'source> Program<'source> {
     pub fn variables_before(
         &self,
         location: Location,
-    ) -> Array<&TokenNode<'source, Token<'source>>> {
+    ) -> Array<&ParsedNode<'source, Token<'source>>> {
         self.variables()
             .filter(|i| Into::<Location>::into(i.span().start).is_before(location))
             .collect()

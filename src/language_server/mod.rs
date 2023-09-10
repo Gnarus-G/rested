@@ -173,7 +173,7 @@ impl LanguageServer for Backend {
                 })
                 .iter()
                 .filter_map(|v| match v {
-                    ast::TokenNode::Ok(t) => Some(t.text),
+                    ast::ParsedNode::Ok(t) => Some(t.text),
                     _ => None,
                 })
                 .map(|var| CompletionItem {

@@ -25,7 +25,7 @@ impl<'i> Program<'i> {
     }
 }
 
-impl<'i> From<&Token<'i>> for TokenNode<'i, Token<'i>> {
+impl<'i> From<&Token<'i>> for ParsedNode<'i, Token<'i>> {
     fn from(token: &Token<'i>) -> Self {
         Self::Ok(Token {
             kind: token.kind,
@@ -84,11 +84,11 @@ pub struct Block<'source> {
 #[derive(Debug, PartialEq, Serialize)]
 pub enum Item<'source> {
     Set {
-        identifier: TokenNode<'source, Token<'source>>,
+        identifier: ParsedNode<'source, Token<'source>>,
         value: Expression<'source>,
     },
     Let {
-        identifier: TokenNode<'source, Token<'source>>,
+        identifier: ParsedNode<'source, Token<'source>>,
         value: Expression<'source>,
     },
     LineComment(Literal<'source>),
@@ -101,7 +101,7 @@ pub enum Item<'source> {
     Expr(Expression<'source>),
     Attribute {
         location: Position,
-        identifier: TokenNode<'source, Token<'source>>,
+        identifier: ParsedNode<'source, Token<'source>>,
         parameters: Option<Arguments<'source>>,
     },
     Error(Box<Error<'source>>),
@@ -125,7 +125,7 @@ impl Display for RequestMethod {
 #[derive(Debug, PartialEq, Serialize)]
 pub enum Statement<'i> {
     Header {
-        name: TokenNode<'i, StringLiteral<'i>>,
+        name: ParsedNode<'i, StringLiteral<'i>>,
         value: Expression<'i>,
     },
     Body {
@@ -152,12 +152,12 @@ pub type Spanned<T> = (Span, T);
 
 #[derive(Debug, PartialEq, Serialize)]
 pub enum Expression<'source> {
-    Identifier(TokenNode<'source, Token<'source>>),
+    Identifier(ParsedNode<'source, Token<'source>>),
     String(StringLiteral<'source>),
     Bool(Literal<'source>),
     Number(Literal<'source>),
     Call {
-        identifier: TokenNode<'source, Token<'source>>,
+        identifier: ParsedNode<'source, Token<'source>>,
         arguments: Vec<Expression<'source>>,
     },
     Array(Spanned<Vec<Expression<'source>>>),
@@ -179,27 +179,27 @@ pub enum Endpoint<'i> {
 }
 
 #[derive(Debug, PartialEq, serde::Serialize)]
-pub enum TokenNode<'i, T: GetSpan> {
+pub enum ParsedNode<'i, T: GetSpan> {
     Ok(T),
     Error(Box<Error<'i>>),
 }
 
-impl<'source, T: GetSpan> TokenNode<'source, T> {
+impl<'source, T: GetSpan> ParsedNode<'source, T> {
     pub fn get(&self) -> std::result::Result<&T, Box<Error<'source>>> {
         match self {
-            TokenNode::Ok(node) => Ok(node),
-            TokenNode::Error(error) => Err(error.clone()),
+            ParsedNode::Ok(node) => Ok(node),
+            ParsedNode::Error(error) => Err(error.clone()),
         }
     }
 }
 
 impl<'source, T: GetSpan> From<std::result::Result<T, Box<Error<'source>>>>
-    for TokenNode<'source, T>
+    for ParsedNode<'source, T>
 {
     fn from(value: std::result::Result<T, std::boxed::Box<Error<'source>>>) -> Self {
         match value {
-            Ok(value) => TokenNode::Ok(value),
-            Err(error) => TokenNode::Error(error),
+            Ok(value) => ParsedNode::Ok(value),
+            Err(error) => ParsedNode::Error(error),
         }
     }
 }

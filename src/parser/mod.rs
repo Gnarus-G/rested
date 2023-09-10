@@ -191,7 +191,7 @@ impl<'i> Parser<'i> {
             Ok(i) => i.into(),
             Err(error) => {
                 return Ok(Item::Set {
-                    identifier: ast::TokenNode::Error(error.clone()),
+                    identifier: ast::ParsedNode::Error(error.clone()),
                     value: Expression::Error(error),
                 })
             }
