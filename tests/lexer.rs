@@ -104,6 +104,12 @@ fn lex_template_literals() {
     assert_lexes!(r#"`stuff${"interpolated"}(things${env("dead_night")}` `dohickeys`"#);
 
     assert_lexes!(r#"`a${"temp"}` }}"#);
+
+    assert_lexes!(
+        r#"
+let b = `asdf ${}` 
+"#
+    );
 }
 
 #[test]

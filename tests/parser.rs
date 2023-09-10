@@ -138,6 +138,12 @@ fn parse_template_string_literal() {
             body `{"neet": ${env("love")}, 2: ${"two"}}`
         }"#
     );
+
+    assert_ast!(
+        r#"
+let b = `asdf ${}` 
+"#
+    );
 }
 
 #[test]

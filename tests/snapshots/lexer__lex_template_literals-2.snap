@@ -7,5 +7,7 @@ expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
     MultiLineStringLiteral("`a") at Position { value: 0, line: 0, col: 0 },
     DollarSignLBracket("${") at Position { value: 2, line: 0, col: 2 },
     StringLiteral("\"temp\"") at Position { value: 4, line: 0, col: 4 },
+    MultiLineStringLiteral("`") at Position { value: 11, line: 0, col: 11 },
     RBracket("}") at Position { value: 13, line: 0, col: 13 },
+    RBracket("}") at Position { value: 14, line: 0, col: 14 },
 ]

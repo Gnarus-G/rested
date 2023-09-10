@@ -13,5 +13,6 @@ expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
     LParen("(") at Position { value: 35, line: 0, col: 35 },
     StringLiteral("\"dead_night\"") at Position { value: 36, line: 0, col: 36 },
     RParen(")") at Position { value: 48, line: 0, col: 48 },
+    MultiLineStringLiteral("`") at Position { value: 50, line: 0, col: 50 },
     MultiLineStringLiteral("`dohickeys`") at Position { value: 52, line: 0, col: 52 },
 ]

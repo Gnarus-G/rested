@@ -209,9 +209,15 @@ impl<'i> Lexer<'i> {
             }
             b'}' if self.peek_char().is(b'`') && self.inside_multiline_string => {
                 self.step(); // eat the curly
-                self.step(); // eat the backtick
                 self.inside_multiline_string = false;
-                self.next_token()
+
+                let token = Token {
+                    kind: TokenKind::MultiLineStringLiteral,
+                    start: self.position,
+                    text: "`",
+                };
+                self.step(); // eat the backtick
+                token
             }
             b'}' if self.inside_multiline_string => {
                 self.step(); // eat the curly
