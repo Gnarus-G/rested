@@ -161,8 +161,6 @@ impl LanguageServer for Backend {
             return Ok(None);
         };
 
-        let methods = http_method_completions();
-
         let builtin_functions = builtin_functions_completions();
 
         let get_variables = |program: &Program| {
@@ -191,7 +189,7 @@ impl LanguageServer for Backend {
 
         let completions_store = CompletionsStore {
             functions: builtin_functions,
-            methods,
+            items: item_keywords(),
             header_body: header_body_keyword_completions(),
             attributes: attributes_completions(),
             variables,
@@ -202,7 +200,7 @@ impl LanguageServer for Backend {
             .into_iter()
             .find(|i| i.span().contains(&position))
         else {
-            return Ok(Some(CompletionResponse::Array(completions_store.methods)));
+            return Ok(Some(CompletionResponse::Array(completions_store.items)));
         };
 
         return Ok(current_item

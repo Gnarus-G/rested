@@ -18,7 +18,7 @@ macro_rules! dbg_comp {
 
 pub struct CompletionsStore {
     pub functions: Vec<CompletionItem>,
-    pub methods: Vec<CompletionItem>,
+    pub items: Vec<CompletionItem>,
     pub header_body: Vec<CompletionItem>,
     pub attributes: Vec<CompletionItem>,
     pub variables: Vec<CompletionItem>,
@@ -174,15 +174,19 @@ pub fn builtin_functions_completions() -> Vec<CompletionItem> {
         .to_vec()
 }
 
-pub fn http_method_completions() -> Vec<CompletionItem> {
-    ["get", "post", "put", "patch", "delete"]
+pub fn item_keywords() -> Vec<CompletionItem> {
+    let methods = vec!["get", "post", "put", "patch", "delete"];
+
+    [vec!["let", "set"], methods]
+        .concat()
+        .iter()
         .map(|keyword| CompletionItem {
             label: keyword.to_string(),
             kind: Some(CompletionItemKind::KEYWORD),
             insert_text: Some(keyword.to_string()),
             ..CompletionItem::default()
         })
-        .to_vec()
+        .collect()
 }
 
 pub fn header_body_keyword_completions() -> Vec<CompletionItem> {
