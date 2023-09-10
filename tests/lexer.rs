@@ -107,9 +107,28 @@ fn lex_template_literals() {
 
     assert_lexes!(
         r#"
-let b = `asdf ${}` 
+let b = `asdf ${}`
 "#
     );
+
+    assert_lexes!(r#"` ${} ${} `"#);
+    assert_lexes!(r#"`head ${} ${} tail`"#);
+
+    assert_lexes!(
+        r#"
+let b = `asdf ${test} ${} ${"word"}`
+"#
+    );
+
+    assert_lexes!(
+        r#"
+let b = `asdf ${}` 
+let c = {}
+"#
+    );
+
+    assert_lexes!(r#"`${test} ${df} `"#);
+    assert_lexes!(r#"`asdf ${test} ${df} `"#);
 }
 
 #[test]

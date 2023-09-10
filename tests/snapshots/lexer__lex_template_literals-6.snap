@@ -1,0 +1,19 @@
+---
+source: tests/lexer.rs
+description: "\nlet b = `asdf ${test} ${} ${\"word\"}`\n"
+expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
+---
+[
+    Let("let") at Position { value: 1, line: 1, col: 0 },
+    Ident("b") at Position { value: 5, line: 1, col: 4 },
+    Assign("=") at Position { value: 7, line: 1, col: 6 },
+    MultiLineStringLiteral { head: true, tail: false }("`asdf ") at Position { value: 9, line: 1, col: 8 },
+    DollarSignLBracket("${") at Position { value: 15, line: 1, col: 14 },
+    Ident("test") at Position { value: 17, line: 1, col: 16 },
+    MultiLineStringLiteral { head: false, tail: false }(" ") at Position { value: 22, line: 1, col: 21 },
+    DollarSignLBracket("${") at Position { value: 23, line: 1, col: 22 },
+    MultiLineStringLiteral { head: false, tail: false }(" ") at Position { value: 26, line: 1, col: 25 },
+    DollarSignLBracket("${") at Position { value: 27, line: 1, col: 26 },
+    StringLiteral("\"word\"") at Position { value: 29, line: 1, col: 28 },
+    MultiLineStringLiteral { head: false, tail: true }("`") at Position { value: 36, line: 1, col: 35 },
+]

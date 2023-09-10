@@ -1,0 +1,14 @@
+---
+source: tests/lexer.rs
+description: "`${test} ${df} `"
+expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
+---
+[
+    MultiLineStringLiteral { head: true, tail: false }("`") at Position { value: 0, line: 0, col: 0 },
+    DollarSignLBracket("${") at Position { value: 1, line: 0, col: 1 },
+    Ident("test") at Position { value: 3, line: 0, col: 3 },
+    MultiLineStringLiteral { head: false, tail: false }(" ") at Position { value: 8, line: 0, col: 8 },
+    DollarSignLBracket("${") at Position { value: 9, line: 0, col: 9 },
+    Ident("df") at Position { value: 11, line: 0, col: 11 },
+    MultiLineStringLiteral { head: false, tail: true }(" `") at Position { value: 14, line: 0, col: 14 },
+]

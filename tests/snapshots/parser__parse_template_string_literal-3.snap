@@ -1,0 +1,125 @@
+---
+source: tests/parser.rs
+description: "\nlet b = `asdf ${test} ${} ${\"word\"}`\n"
+expression: ast
+---
+Program(
+  items: [
+    Let(
+      identifier: Ok(Token(
+        kind: Ident,
+        text: "b",
+        start: Position(
+          value: 5,
+          line: 1,
+          col: 4,
+        ),
+      )),
+      value: TemplateSringLiteral(
+        span: Span(
+          start: Position(
+            value: 9,
+            line: 1,
+            col: 8,
+          ),
+          end: Position(
+            value: 37,
+            line: 1,
+            col: 36,
+          ),
+        ),
+        parts: [
+          String(StringLiteral(
+            raw: "`asdf ",
+            value: "asdf ",
+            span: Span(
+              start: Position(
+                value: 9,
+                line: 1,
+                col: 8,
+              ),
+              end: Position(
+                value: 15,
+                line: 1,
+                col: 14,
+              ),
+            ),
+          )),
+          Identifier(Ok(Token(
+            kind: Ident,
+            text: "test",
+            start: Position(
+              value: 17,
+              line: 1,
+              col: 16,
+            ),
+          ))),
+          String(StringLiteral(
+            raw: " ",
+            value: " ",
+            span: Span(
+              start: Position(
+                value: 22,
+                line: 1,
+                col: 21,
+              ),
+              end: Position(
+                value: 23,
+                line: 1,
+                col: 22,
+              ),
+            ),
+          )),
+          String(StringLiteral(
+            raw: " ",
+            value: " ",
+            span: Span(
+              start: Position(
+                value: 26,
+                line: 1,
+                col: 25,
+              ),
+              end: Position(
+                value: 27,
+                line: 1,
+                col: 26,
+              ),
+            ),
+          )),
+          String(StringLiteral(
+            raw: "\"word\"",
+            value: "word",
+            span: Span(
+              start: Position(
+                value: 29,
+                line: 1,
+                col: 28,
+              ),
+              end: Position(
+                value: 35,
+                line: 1,
+                col: 34,
+              ),
+            ),
+          )),
+          String(StringLiteral(
+            raw: "`",
+            value: "",
+            span: Span(
+              start: Position(
+                value: 36,
+                line: 1,
+                col: 35,
+              ),
+              end: Position(
+                value: 37,
+                line: 1,
+                col: 36,
+              ),
+            ),
+          )),
+        ],
+      ),
+    ),
+  ],
+)

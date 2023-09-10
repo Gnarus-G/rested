@@ -107,7 +107,6 @@ Program(
                   StringLiteral,
                   Boolean,
                   Number,
-                  MultiLineStringLiteral,
                   LBracket,
                   LSquare,
                   Null,

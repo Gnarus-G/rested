@@ -295,15 +295,31 @@ impl<'i> Parser<'i> {
         let e = Expectations::new(self);
         let kind = self.curr_token().kind;
 
-        let exp = match_or_throw! { kind; e; self;
+        let exp = match kind {
             Ident if self.peek_token().kind == LParen => self.parse_call_expression()?,
             Ident => Expression::Identifier(self.curr_token().into()),
             StringLiteral => Expression::String(self.curr_token().into()),
             Boolean => Expression::Bool(self.curr_token().into()),
             Number => Expression::Number(self.curr_token().into()),
-            MultiLineStringLiteral => self.parse_multiline_string_literal()?,
+            MultiLineStringLiteral { head: true, .. } => self.parse_multiline_string_literal()?,
             LBracket | LSquare => self.parse_json_like()?,
             Null => Expression::Null(self.curr_token().span()),
+            _ => {
+                return Err(e
+                    .expected_one_of_tokens(
+                        self.curr_token(),
+                        &[
+                            Ident,
+                            StringLiteral,
+                            Boolean,
+                            Number,
+                            LBracket,
+                            LSquare,
+                            Null,
+                        ],
+                    )
+                    .into())
+            }
         };
 
         Ok(exp)
@@ -450,30 +466,34 @@ impl<'i> Parser<'i> {
         loop {
             let kind = self.curr_token().kind;
 
-            match_or_throw! { kind; e; self;
-                MultiLineStringLiteral
-                    if self.peek_token().kind == TokenKind::DollarSignLBracket =>
-                {
-                    let s_literal = Expression::String(self.curr_token().into());
-
-                    parts.push(s_literal);
-
-                    self.next_token();
-
-                    self.next_token();
-
-                    parts.push(self.parse_expression()?);
-                }
-                End => {
-                    end = self.curr_token().end_position();
-                    break;
-                },
-                MultiLineStringLiteral if parts.is_empty() => {
+            match kind {
+                MultiLineStringLiteral {
+                    head: true,
+                    tail: true,
+                } => {
                     return Ok(Expression::String(self.curr_token().into()));
                 }
-                MultiLineStringLiteral => {
+                MultiLineStringLiteral { tail: true, .. } => {
                     end = self.curr_token().end_position();
                     parts.push(Expression::String(self.curr_token().into()));
+                    break;
+                }
+                MultiLineStringLiteral { .. } => {
+                    let s_literal = Expression::String(self.curr_token().into());
+                    parts.push(s_literal);
+                }
+                DollarSignLBracket
+                    if matches!(self.peek_token().kind, MultiLineStringLiteral { .. }) => {}
+                DollarSignLBracket => {
+                    self.next_token();
+
+                    parts.push(match self.parse_expression() {
+                        Ok(e) => e,
+                        Err(e) => Expression::Error(e),
+                    });
+                }
+                _ => {
+                    end = self.curr_token().end_position();
                     break;
                 }
             };

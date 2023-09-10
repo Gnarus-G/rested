@@ -144,6 +144,25 @@ fn parse_template_string_literal() {
 let b = `asdf ${}` 
 "#
     );
+
+    assert_ast!(
+        r#"
+let b = `asdf ${test} ${} ${"word"}`
+"#
+    );
+
+    assert_ast!(
+        r#"
+let b = `asdf ${}` 
+let c = {}
+"#
+    );
+
+    assert_ast!(
+        r#"
+`asdf ${test} ${a}`
+"#
+    );
 }
 
 #[test]

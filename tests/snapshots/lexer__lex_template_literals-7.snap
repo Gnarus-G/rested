@@ -1,6 +1,6 @@
 ---
 source: tests/lexer.rs
-description: "\nlet b = `asdf ${}`\n"
+description: "\nlet b = `asdf ${}` \nlet c = {}\n"
 expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
@@ -10,4 +10,9 @@ expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
     MultiLineStringLiteral { head: true, tail: false }("`asdf ") at Position { value: 9, line: 1, col: 8 },
     DollarSignLBracket("${") at Position { value: 15, line: 1, col: 14 },
     MultiLineStringLiteral { head: false, tail: true }("`") at Position { value: 18, line: 1, col: 17 },
+    Let("let") at Position { value: 21, line: 2, col: 0 },
+    Ident("c") at Position { value: 25, line: 2, col: 4 },
+    Assign("=") at Position { value: 27, line: 2, col: 6 },
+    LBracket("{") at Position { value: 29, line: 2, col: 8 },
+    RBracket("}") at Position { value: 30, line: 2, col: 9 },
 ]

@@ -25,7 +25,7 @@ pub enum TokenKind {
     Boolean,
     Number,
     StringLiteral,
-    MultiLineStringLiteral,
+    MultiLineStringLiteral { head: bool, tail: bool },
     Url,
     Pathname,
 
@@ -152,11 +152,11 @@ impl<'i> Lexer<'i> {
     }
 
     fn peek_n_char(&self, n: usize) -> Option<&u8> {
-        self.char_at(self.position.value + n)
+        self.char_at(self.position.value + 1 + n)
     }
 
     fn peek_char(&self) -> Option<&u8> {
-        self.peek_n_char(1)
+        self.peek_n_char(0)
     }
 
     /// Assumes that the character at the current position, immediately before calling
@@ -196,7 +196,6 @@ impl<'i> Lexer<'i> {
         let t = match ch {
             b'"' if self.peek_char().is(b'"') => self.empty_string_literal(),
             b'"' => self.string_literal(),
-            b'`' if self.peek_char().is(b'`') => self.empty_string_literal(),
             b'`' => self.multiline_string_literal(),
             b'$' if self.peek_char().is(b'{') => {
                 let token = Token {
@@ -212,17 +211,17 @@ impl<'i> Lexer<'i> {
                 self.inside_multiline_string = false;
 
                 let token = Token {
-                    kind: TokenKind::MultiLineStringLiteral,
+                    kind: TokenKind::MultiLineStringLiteral {
+                        head: false,
+                        tail: true,
+                    },
                     start: self.position,
                     text: "`",
                 };
                 self.step(); // eat the backtick
                 token
             }
-            b'}' if self.inside_multiline_string => {
-                self.step(); // eat the curly
-                self.multiline_string_literal()
-            }
+            b'}' if self.inside_multiline_string => self.multiline_string_literal(),
             b'(' => Token {
                 kind: LParen,
                 start: self.position,
@@ -295,40 +294,64 @@ impl<'i> Lexer<'i> {
 
     fn multiline_string_literal(&mut self) -> Token<'i> {
         self.inside_multiline_string = true;
-        let location = self.position;
-        let start_pos = self.position.value;
 
-        self.step();
+        let mut is_head = false;
+        let mut is_tail = false;
 
-        let (s, e) = loop {
-            let is_at_end = self.ch().is(b'`');
-            let dollar_curly_ahead = self.peek_char().is(b'$') && self.peek_n_char(2).is(b'{');
-
-            if dollar_curly_ahead {
-                break (start_pos, self.position.value + 1);
-            }
-
-            if is_at_end {
-                self.inside_multiline_string = false;
-                break (start_pos, self.position.value + 1);
-            }
-
-            if self.ch().is_none() {
+        let start_pos = match self.ch() {
+            Some(b'`') if self.peek_char().is(b'`') => return self.empty_string_literal(),
+            Some(b'`') if self.peek_char().is(b'$') && self.peek_n_char(1).is(b'{') => {
                 return Token {
-                    kind: TokenKind::UnfinishedMultiLineStringLiteral,
-                    start: location,
-                    text: self.input_slice(start_pos..self.position.value),
+                    kind: TokenKind::MultiLineStringLiteral {
+                        head: true,
+                        tail: false,
+                    },
+                    text: "`",
+                    start: self.position,
                 };
             }
-
-            self.step();
+            Some(b'`') => {
+                let p = self.position;
+                self.step();
+                is_head = true;
+                p
+            }
+            Some(b'}') => {
+                self.step();
+                self.position
+            }
+            _ => unreachable!("should only start tokenizing template strings on a '`' or a '}}'"),
         };
 
-        let string = self.input_slice(s..e);
+        let (s, e) = loop {
+            match self.ch() {
+                _ if self.peek_char().is(b'$') && self.peek_n_char(1).is(b'{') => {
+                    break (start_pos, self.position.value + 1);
+                }
+                Some(b'`') => {
+                    self.inside_multiline_string = false;
+                    is_tail = true;
+                    break (start_pos, self.position.value + 1);
+                }
+                None => {
+                    return Token {
+                        kind: TokenKind::UnfinishedMultiLineStringLiteral,
+                        start: start_pos,
+                        text: self.input_slice(start_pos.value..self.position.value),
+                    };
+                }
+                _ => self.step(),
+            }
+        };
+
+        let string = self.input_slice(s.value..e);
 
         Token {
-            kind: TokenKind::MultiLineStringLiteral,
-            start: location,
+            kind: TokenKind::MultiLineStringLiteral {
+                head: is_head,
+                tail: is_tail,
+            },
+            start: start_pos,
             text: string,
         }
     }

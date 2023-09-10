@@ -1,6 +1,6 @@
 ---
 source: tests/parser.rs
-description: "\nlet b = `asdf ${}` \n"
+description: "\nlet b = `asdf ${}` \nlet c = {}\n"
 expression: ast
 ---
 Program(
@@ -63,6 +63,29 @@ Program(
           )),
         ],
       ),
+    ),
+    Let(
+      identifier: Ok(Token(
+        kind: Ident,
+        text: "c",
+        start: Position(
+          value: 25,
+          line: 2,
+          col: 4,
+        ),
+      )),
+      value: EmptyObject(Span(
+        start: Position(
+          value: 29,
+          line: 2,
+          col: 8,
+        ),
+        end: Position(
+          value: 31,
+          line: 2,
+          col: 10,
+        ),
+      )),
     ),
   ],
 )
