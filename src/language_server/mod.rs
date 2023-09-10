@@ -170,12 +170,8 @@ impl LanguageServer for Backend {
                     col: position.character as usize,
                 })
                 .iter()
-                .filter_map(|v| match v {
-                    ast::result::ParsedNode::Ok(t) => Some(t.text),
-                    _ => None,
-                })
                 .map(|var| CompletionItem {
-                    label: var.to_string(),
+                    label: var.text.to_string(),
                     kind: Some(CompletionItemKind::VARIABLE),
                     insert_text: Some(var.to_string()),
                     ..CompletionItem::default()

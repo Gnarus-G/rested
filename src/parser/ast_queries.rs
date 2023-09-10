@@ -6,6 +6,7 @@ use super::{
 use crate::{
     error_meta::ContextualError,
     lexer::{
+        self,
         locations::{GetSpan, Location},
         Token,
     },
@@ -13,25 +14,24 @@ use crate::{
 };
 
 impl<'source> Program<'source> {
-    pub fn variables(
-        &self,
-    ) -> impl Iterator<Item = &ast::result::ParsedNode<'source, Token<'source>>> {
+    pub fn variables(&self) -> impl Iterator<Item = (lexer::locations::Span, &Token<'source>)> {
         self.items.iter().filter_map(|i| match i {
             ast::Item::Let {
                 value: ast::Expression::Error(..),
                 ..
             } => None,
-            ast::Item::Let { identifier, .. } => Some(identifier),
+            ast::Item::Let {
+                identifier: ast::result::ParsedNode::Ok(identifier),
+                ..
+            } => Some((i.span(), identifier)),
             _ => None,
         })
     }
 
-    pub fn variables_before(
-        &self,
-        location: Location,
-    ) -> Array<&ast::result::ParsedNode<'source, Token<'source>>> {
+    pub fn variables_before(&self, location: Location) -> Array<&Token<'source>> {
         self.variables()
-            .filter(|i| Into::<Location>::into(i.span().start).is_before(location))
+            .filter(|(item_span, _)| Into::<Location>::into(item_span.end).is_before(location))
+            .map(|(_, token)| token)
             .collect()
     }
 
