@@ -483,6 +483,18 @@ impl<'i> Parser<'i> {
                     parts.push(s_literal);
                 }
                 DollarSignLBracket
+                    if matches!(
+                        self.peek_token().kind,
+                        MultiLineStringLiteral { head: true, .. }
+                    ) =>
+                {
+                    self.next_token();
+                    parts.push(match self.parse_expression() {
+                        Ok(expr) => expr,
+                        Err(e) => Expression::Error(e),
+                    })
+                }
+                DollarSignLBracket
                     if matches!(self.peek_token().kind, MultiLineStringLiteral { .. }) => {}
                 DollarSignLBracket => {
                     self.next_token();

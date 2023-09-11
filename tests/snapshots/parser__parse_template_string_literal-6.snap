@@ -1,0 +1,121 @@
+---
+source: tests/parser.rs
+description: "`asdf ${`hello${\"world\"}`} jkl`"
+expression: ast
+---
+Program(
+  items: [
+    Expr(TemplateSringLiteral(
+      span: Span(
+        start: Position(
+          value: 0,
+          line: 0,
+          col: 0,
+        ),
+        end: Position(
+          value: 31,
+          line: 0,
+          col: 31,
+        ),
+      ),
+      parts: [
+        String(StringLiteral(
+          raw: "`asdf ",
+          value: "asdf ",
+          span: Span(
+            start: Position(
+              value: 0,
+              line: 0,
+              col: 0,
+            ),
+            end: Position(
+              value: 6,
+              line: 0,
+              col: 6,
+            ),
+          ),
+        )),
+        TemplateSringLiteral(
+          span: Span(
+            start: Position(
+              value: 8,
+              line: 0,
+              col: 8,
+            ),
+            end: Position(
+              value: 25,
+              line: 0,
+              col: 25,
+            ),
+          ),
+          parts: [
+            String(StringLiteral(
+              raw: "`hello",
+              value: "hello",
+              span: Span(
+                start: Position(
+                  value: 8,
+                  line: 0,
+                  col: 8,
+                ),
+                end: Position(
+                  value: 14,
+                  line: 0,
+                  col: 14,
+                ),
+              ),
+            )),
+            String(StringLiteral(
+              raw: "\"world\"",
+              value: "world",
+              span: Span(
+                start: Position(
+                  value: 16,
+                  line: 0,
+                  col: 16,
+                ),
+                end: Position(
+                  value: 23,
+                  line: 0,
+                  col: 23,
+                ),
+              ),
+            )),
+            String(StringLiteral(
+              raw: "`",
+              value: "",
+              span: Span(
+                start: Position(
+                  value: 24,
+                  line: 0,
+                  col: 24,
+                ),
+                end: Position(
+                  value: 25,
+                  line: 0,
+                  col: 25,
+                ),
+              ),
+            )),
+          ],
+        ),
+        String(StringLiteral(
+          raw: " jkl`",
+          value: " jkl",
+          span: Span(
+            start: Position(
+              value: 26,
+              line: 0,
+              col: 26,
+            ),
+            end: Position(
+              value: 31,
+              line: 0,
+              col: 31,
+            ),
+          ),
+        )),
+      ],
+    )),
+  ],
+)

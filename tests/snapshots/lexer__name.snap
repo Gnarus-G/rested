@@ -1,0 +1,22 @@
+---
+source: tests/lexer.rs
+description: "\n        post /api {\n            body `{\"neet\": ${env(\"love\")}, 2: ${\"two\"}}`\n        }"
+expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
+---
+[
+    Post("post") at Position { value: 9, line: 1, col: 8 },
+    Pathname("/api") at Position { value: 14, line: 1, col: 13 },
+    LBracket("{") at Position { value: 19, line: 1, col: 18 },
+    Body("body") at Position { value: 33, line: 2, col: 12 },
+    MultiLineStringLiteral { head: true, tail: false }("`{\"neet\": ") at Position { value: 38, line: 2, col: 17 },
+    DollarSignLBracket("${") at Position { value: 48, line: 2, col: 27 },
+    Ident("env") at Position { value: 50, line: 2, col: 29 },
+    LParen("(") at Position { value: 53, line: 2, col: 32 },
+    StringLiteral("\"love\"") at Position { value: 54, line: 2, col: 33 },
+    RParen(")") at Position { value: 60, line: 2, col: 39 },
+    MultiLineStringLiteral { head: false, tail: false }(", 2: ") at Position { value: 62, line: 2, col: 41 },
+    DollarSignLBracket("${") at Position { value: 67, line: 2, col: 46 },
+    StringLiteral("\"two\"") at Position { value: 69, line: 2, col: 48 },
+    MultiLineStringLiteral { head: false, tail: true }("}`") at Position { value: 75, line: 2, col: 54 },
+    RBracket("}") at Position { value: 86, line: 3, col: 8 },
+]

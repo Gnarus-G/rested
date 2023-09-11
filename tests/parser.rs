@@ -163,6 +163,8 @@ let c = {}
 `asdf ${test} ${a}`
 "#
     );
+
+    assert_ast!(r#"`asdf ${`hello${"world"}`} jkl`"#);
 }
 
 #[test]

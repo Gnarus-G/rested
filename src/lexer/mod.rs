@@ -104,7 +104,7 @@ impl CharaterTest for Option<&u8> {
 pub struct Lexer<'i> {
     input: &'i [u8],
     position: Position,
-    inside_multiline_string: bool,
+    template_str_depth: u8,
 }
 
 impl<'i> Lexer<'i> {
@@ -112,7 +112,7 @@ impl<'i> Lexer<'i> {
         Self {
             input: input.as_bytes(),
             position: Default::default(),
-            inside_multiline_string: false,
+            template_str_depth: 0,
         }
     }
 
@@ -206,22 +206,7 @@ impl<'i> Lexer<'i> {
                 self.step();
                 token
             }
-            b'}' if self.peek_char().is(b'`') && self.inside_multiline_string => {
-                self.step(); // eat the curly
-                self.inside_multiline_string = false;
-
-                let token = Token {
-                    kind: TokenKind::MultiLineStringLiteral {
-                        head: false,
-                        tail: true,
-                    },
-                    start: self.position,
-                    text: "`",
-                };
-                self.step(); // eat the backtick
-                token
-            }
-            b'}' if self.inside_multiline_string => self.multiline_string_literal(),
+            b'}' if self.template_str_depth > 0 => self.multiline_string_literal(),
             b'(' => Token {
                 kind: LParen,
                 start: self.position,
@@ -293,14 +278,13 @@ impl<'i> Lexer<'i> {
     }
 
     fn multiline_string_literal(&mut self) -> Token<'i> {
-        self.inside_multiline_string = true;
-
         let mut is_head = false;
         let mut is_tail = false;
 
         let start_pos = match self.ch() {
             Some(b'`') if self.peek_char().is(b'`') => return self.empty_string_literal(),
             Some(b'`') if self.peek_char().is(b'$') && self.peek_n_char(1).is(b'{') => {
+                self.template_str_depth += 1;
                 return Token {
                     kind: TokenKind::MultiLineStringLiteral {
                         head: true,
@@ -311,10 +295,24 @@ impl<'i> Lexer<'i> {
                 };
             }
             Some(b'`') => {
+                self.template_str_depth += 1;
                 let p = self.position;
                 self.step();
                 is_head = true;
                 p
+            }
+            Some(b'}') if self.peek_char().is(b'`') && self.template_str_depth > 0 => {
+                self.step(); // eat the curly
+                self.template_str_depth -= 1;
+
+                return Token {
+                    kind: TokenKind::MultiLineStringLiteral {
+                        head: false,
+                        tail: true,
+                    },
+                    start: self.position,
+                    text: "`",
+                };
             }
             Some(b'}') => {
                 self.step();
@@ -329,7 +327,7 @@ impl<'i> Lexer<'i> {
                     break (start_pos, self.position.value + 1);
                 }
                 Some(b'`') => {
-                    self.inside_multiline_string = false;
+                    self.template_str_depth -= 1;
                     is_tail = true;
                     break (start_pos, self.position.value + 1);
                 }

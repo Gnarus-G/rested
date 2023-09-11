@@ -129,6 +129,15 @@ let c = {}
 
     assert_lexes!(r#"`${test} ${df} `"#);
     assert_lexes!(r#"`asdf ${test} ${df} `"#);
+
+    assert_lexes!(r#"`asdf ${`hello${"world"}`} ${asdf} jkl`"#);
+
+    assert_lexes!(
+        r#"
+        post /api {
+            body `{"neet": ${env("love")}, 2: ${"two"}}`
+        }"#
+    );
 }
 
 #[test]
