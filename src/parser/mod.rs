@@ -301,7 +301,7 @@ impl<'i> Parser<'i> {
             StringLiteral => Expression::String(self.curr_token().into()),
             Boolean => Expression::Bool(self.curr_token().into()),
             Number => Expression::Number(self.curr_token().into()),
-            MultiLineStringLiteral { head: true, .. } => self.parse_multiline_string_literal()?,
+            TemplateString { head: true, .. } => self.parse_multiline_string_literal()?,
             LBracket | LSquare => self.parse_json_like()?,
             Null => Expression::Null(self.curr_token().span()),
             _ => {
@@ -467,26 +467,23 @@ impl<'i> Parser<'i> {
             let kind = self.curr_token().kind;
 
             match kind {
-                MultiLineStringLiteral {
+                TemplateString {
                     head: true,
                     tail: true,
                 } => {
                     return Ok(Expression::String(self.curr_token().into()));
                 }
-                MultiLineStringLiteral { tail: true, .. } => {
+                TemplateString { tail: true, .. } => {
                     end = self.curr_token().end_position();
                     parts.push(Expression::String(self.curr_token().into()));
                     break;
                 }
-                MultiLineStringLiteral { .. } => {
+                TemplateString { .. } => {
                     let s_literal = Expression::String(self.curr_token().into());
                     parts.push(s_literal);
                 }
                 DollarSignLBracket
-                    if matches!(
-                        self.peek_token().kind,
-                        MultiLineStringLiteral { head: true, .. }
-                    ) =>
+                    if matches!(self.peek_token().kind, TemplateString { head: true, .. }) =>
                 {
                     self.next_token();
                     parts.push(match self.parse_expression() {
@@ -494,8 +491,7 @@ impl<'i> Parser<'i> {
                         Err(e) => Expression::Error(e),
                     })
                 }
-                DollarSignLBracket
-                    if matches!(self.peek_token().kind, MultiLineStringLiteral { .. }) => {}
+                DollarSignLBracket if matches!(self.peek_token().kind, TemplateString { .. }) => {}
                 DollarSignLBracket => {
                     self.next_token();
 

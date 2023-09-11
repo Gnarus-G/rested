@@ -4,15 +4,15 @@ description: "`stuff${\"interpolated\"}(things${env(\"dead_night\")}` `dohickeys
 expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
-    MultiLineStringLiteral { head: true, tail: false }("`stuff") at Position { value: 0, line: 0, col: 0 },
+    TemplateString { head: true, tail: false }("`stuff") at Position { value: 0, line: 0, col: 0 },
     DollarSignLBracket("${") at Position { value: 6, line: 0, col: 6 },
     StringLiteral("\"interpolated\"") at Position { value: 8, line: 0, col: 8 },
-    MultiLineStringLiteral { head: false, tail: false }("(things") at Position { value: 23, line: 0, col: 23 },
+    TemplateString { head: false, tail: false }("(things") at Position { value: 23, line: 0, col: 23 },
     DollarSignLBracket("${") at Position { value: 30, line: 0, col: 30 },
     Ident("env") at Position { value: 32, line: 0, col: 32 },
     LParen("(") at Position { value: 35, line: 0, col: 35 },
     StringLiteral("\"dead_night\"") at Position { value: 36, line: 0, col: 36 },
     RParen(")") at Position { value: 48, line: 0, col: 48 },
-    MultiLineStringLiteral { head: false, tail: true }("`") at Position { value: 50, line: 0, col: 50 },
-    MultiLineStringLiteral { head: true, tail: true }("`dohickeys`") at Position { value: 52, line: 0, col: 52 },
+    TemplateString { head: false, tail: true }("`") at Position { value: 50, line: 0, col: 50 },
+    TemplateString { head: true, tail: true }("`dohickeys`") at Position { value: 52, line: 0, col: 52 },
 ]

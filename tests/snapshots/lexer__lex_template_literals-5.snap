@@ -4,9 +4,9 @@ description: "`head ${} ${} tail`"
 expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
-    MultiLineStringLiteral { head: true, tail: false }("`head ") at Position { value: 0, line: 0, col: 0 },
+    TemplateString { head: true, tail: false }("`head ") at Position { value: 0, line: 0, col: 0 },
     DollarSignLBracket("${") at Position { value: 6, line: 0, col: 6 },
-    MultiLineStringLiteral { head: false, tail: false }(" ") at Position { value: 9, line: 0, col: 9 },
+    TemplateString { head: false, tail: false }(" ") at Position { value: 9, line: 0, col: 9 },
     DollarSignLBracket("${") at Position { value: 10, line: 0, col: 10 },
-    MultiLineStringLiteral { head: false, tail: true }(" tail`") at Position { value: 13, line: 0, col: 13 },
+    TemplateString { head: false, tail: true }(" tail`") at Position { value: 13, line: 0, col: 13 },
 ]

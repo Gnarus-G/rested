@@ -25,7 +25,7 @@ pub enum TokenKind {
     Boolean,
     Number,
     StringLiteral,
-    MultiLineStringLiteral { head: bool, tail: bool },
+    TemplateString { head: bool, tail: bool },
     Url,
     Pathname,
 
@@ -286,7 +286,7 @@ impl<'i> Lexer<'i> {
             Some(b'`') if self.peek_char().is(b'$') && self.peek_n_char(1).is(b'{') => {
                 self.template_str_depth += 1;
                 return Token {
-                    kind: TokenKind::MultiLineStringLiteral {
+                    kind: TokenKind::TemplateString {
                         head: true,
                         tail: false,
                     },
@@ -306,7 +306,7 @@ impl<'i> Lexer<'i> {
                 self.template_str_depth -= 1;
 
                 return Token {
-                    kind: TokenKind::MultiLineStringLiteral {
+                    kind: TokenKind::TemplateString {
                         head: false,
                         tail: true,
                     },
@@ -345,7 +345,7 @@ impl<'i> Lexer<'i> {
         let string = self.input_slice(s.value..e);
 
         Token {
-            kind: TokenKind::MultiLineStringLiteral {
+            kind: TokenKind::TemplateString {
                 head: is_head,
                 tail: is_tail,
             },

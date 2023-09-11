@@ -4,9 +4,9 @@ description: "` ${} ${} `"
 expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
-    MultiLineStringLiteral { head: true, tail: false }("` ") at Position { value: 0, line: 0, col: 0 },
+    TemplateString { head: true, tail: false }("` ") at Position { value: 0, line: 0, col: 0 },
     DollarSignLBracket("${") at Position { value: 2, line: 0, col: 2 },
-    MultiLineStringLiteral { head: false, tail: false }(" ") at Position { value: 5, line: 0, col: 5 },
+    TemplateString { head: false, tail: false }(" ") at Position { value: 5, line: 0, col: 5 },
     DollarSignLBracket("${") at Position { value: 6, line: 0, col: 6 },
-    MultiLineStringLiteral { head: false, tail: true }(" `") at Position { value: 9, line: 0, col: 9 },
+    TemplateString { head: false, tail: true }(" `") at Position { value: 9, line: 0, col: 9 },
 ]

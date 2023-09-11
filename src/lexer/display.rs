@@ -17,7 +17,7 @@ impl std::fmt::Display for TokenKind {
             Boolean => "boolean",
             Number => "number",
             StringLiteral => "string",
-            MultiLineStringLiteral => "string",
+            TemplateString { .. } => "template string",
             Pathname => "pathname",
             Url => "url",
             Linecomment => "comment",
