@@ -84,21 +84,32 @@ struct ChangedDocumentItem {
 impl Backend {
     async fn on_change(&self, params: ChangedDocumentItem) {
         let Ok(config) = Config::load() else {
+            self.client
+                .log_message(MessageType::ERROR, "failed to load configs")
+                .await;
+
             return self
                 .client
-                .log_message(MessageType::ERROR, "failed to load configs")
+                .publish_diagnostics(params.uri, vec![], Some(params.version))
                 .await;
         };
         let env_path = config.scratch_dir.join(".vars.rd.json");
         let Ok(env) = Environment::new(env_path) else {
+            self.client
+                .log_message(MessageType::ERROR, "failed to initialize the environment")
+                .await;
+
             return self
                 .client
-                .log_message(MessageType::ERROR, "failed to initialize the environment")
+                .publish_diagnostics(params.uri, vec![], Some(params.version))
                 .await;
         };
 
         let Err(interp_errors) = Interpreter::new(&params.text, env, NoopRunner).run(None) else {
-            return;
+            return self
+                .client
+                .publish_diagnostics(params.uri, vec![], Some(params.version))
+                .await;
         };
 
         let mut diagnostics = vec![];
