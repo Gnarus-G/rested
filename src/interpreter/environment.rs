@@ -1,5 +1,6 @@
-use anyhow;
 use std::{collections::HashMap, path::PathBuf};
+
+use anyhow::Context;
 
 pub struct Environment {
     pub env_file_name: PathBuf,
@@ -55,10 +56,12 @@ impl Environment {
     }
 
     pub fn set_variable(&mut self, name: String, value: String) -> anyhow::Result<()> {
+        let namespace = &self.selected_namespace();
         let variables_map = self
             .namespaced_variables
-            .get_mut(&self.selected_namespace())
-            .unwrap();
+            .get_mut(namespace)
+            .ok_or_else(|| anyhow::anyhow!("undefined namespace {namespace}"))
+            .with_context(|| format!("can't set variable '{name}'"))?;
 
         variables_map.insert(name, value);
 
