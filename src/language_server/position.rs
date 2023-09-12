@@ -53,6 +53,19 @@ mod tests {
         },
     };
 
+    const NO_SPAN: Span = Span {
+        start: Position {
+            value: 13,
+            line: 1,
+            col: 12,
+        },
+        end: Position {
+            value: 13,
+            line: 1,
+            col: 12,
+        },
+    };
+
     #[test]
     fn test_contains() {
         let position = &tower_lsp::lsp_types::Position {
@@ -81,7 +94,12 @@ mod tests {
             character: 4,
         };
 
-        assert!(!SPAN.contains(position))
+        assert!(!SPAN.contains(position));
+
+        assert!(NO_SPAN.contains(&tower_lsp::lsp_types::Position {
+            line: 1,
+            character: 12,
+        }))
     }
 
     #[test]
