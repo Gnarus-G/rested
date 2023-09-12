@@ -83,7 +83,7 @@ enum EnvNamespaceCommand {
 
 fn main() {
     if let Err(e) = run() {
-        eprint!("{}", e);
+        eprint!("{:#}", e);
     }
 }
 
