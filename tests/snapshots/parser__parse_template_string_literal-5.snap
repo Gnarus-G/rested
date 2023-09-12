@@ -1,0 +1,91 @@
+---
+source: tests/parser.rs
+description: "\n`asdf ${test} ${a}`\n"
+expression: ast
+---
+Program(
+  items: [
+    Expr(TemplateSringLiteral(
+      span: Span(
+        start: Position(
+          value: 1,
+          line: 1,
+          col: 0,
+        ),
+        end: Position(
+          value: 20,
+          line: 1,
+          col: 19,
+        ),
+      ),
+      parts: [
+        String(StringLiteral(
+          raw: "`asdf ",
+          value: "asdf ",
+          span: Span(
+            start: Position(
+              value: 1,
+              line: 1,
+              col: 0,
+            ),
+            end: Position(
+              value: 7,
+              line: 1,
+              col: 6,
+            ),
+          ),
+        )),
+        Identifier(Ok(Token(
+          kind: Ident,
+          text: "test",
+          start: Position(
+            value: 9,
+            line: 1,
+            col: 8,
+          ),
+        ))),
+        String(StringLiteral(
+          raw: " ",
+          value: " ",
+          span: Span(
+            start: Position(
+              value: 14,
+              line: 1,
+              col: 13,
+            ),
+            end: Position(
+              value: 15,
+              line: 1,
+              col: 14,
+            ),
+          ),
+        )),
+        Identifier(Ok(Token(
+          kind: Ident,
+          text: "a",
+          start: Position(
+            value: 17,
+            line: 1,
+            col: 16,
+          ),
+        ))),
+        String(StringLiteral(
+          raw: "`",
+          value: "",
+          span: Span(
+            start: Position(
+              value: 19,
+              line: 1,
+              col: 18,
+            ),
+            end: Position(
+              value: 20,
+              line: 1,
+              col: 19,
+            ),
+          ),
+        )),
+      ],
+    )),
+  ],
+)

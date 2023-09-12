@@ -1,15 +1,44 @@
 ---
-source: parser/src/error.rs
-expression: error
+source: src/parser/error.rs
+description: "get {}"
+expression: ast
 ---
-ParserErrors {
-    errors: [
-        get {}
-            ≈
-            ↳ [1:5] expected either one of 'url','pathname' but got {
-        ,
-    ],
-    incomplete_rogram: Program {
-        items: [],
-    },
-}
+Program(
+  items: [
+    Error(ContextualError(
+      inner_error: ExpectedEitherOfTokens(
+        found: Token(
+          kind: LBracket,
+          text: "{",
+          start: Position(
+            value: 4,
+            line: 0,
+            col: 4,
+          ),
+        ),
+        expected: [
+          Url,
+          Pathname,
+        ],
+      ),
+      span: Span(
+        start: Position(
+          value: 0,
+          line: 0,
+          col: 0,
+        ),
+        end: Position(
+          value: 5,
+          line: 0,
+          col: 5,
+        ),
+      ),
+      message: Some("expecting only a url and pathname here"),
+      context: ErrorSourceContext(
+        above: None,
+        line: "get {}",
+        below: None,
+      ),
+    )),
+  ],
+)

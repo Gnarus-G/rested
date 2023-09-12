@@ -1,15 +1,129 @@
 ---
-source: parser/src/error.rs
-expression: error
+source: src/parser/error.rs
+description: "post http://localhost {header}"
+expression: ast
 ---
-ParserErrors {
-    errors: [
-        post http://localhost {header}
-                                     ≈
-                                     ↳ [1:30] expected 'string' but got }
-        ,
-    ],
-    incomplete_rogram: Program {
-        items: [],
-    },
-}
+Program(
+  items: [
+    Request(
+      method: POST,
+      endpoint: Url(Literal(
+        value: "http://localhost",
+        span: Span(
+          start: Position(
+            value: 5,
+            line: 0,
+            col: 5,
+          ),
+          end: Position(
+            value: 21,
+            line: 0,
+            col: 21,
+          ),
+        ),
+      )),
+      block: Some(Block(
+        statements: [
+          Header(
+            name: Error(ContextualError(
+              inner_error: ExpectedToken(
+                found: Token(
+                  kind: RBracket,
+                  text: "}",
+                  start: Position(
+                    value: 29,
+                    line: 0,
+                    col: 29,
+                  ),
+                ),
+                expected: StringLiteral,
+              ),
+              span: Span(
+                start: Position(
+                  value: 23,
+                  line: 0,
+                  col: 23,
+                ),
+                end: Position(
+                  value: 30,
+                  line: 0,
+                  col: 30,
+                ),
+              ),
+              message: None,
+              context: ErrorSourceContext(
+                above: None,
+                line: "post http://localhost {header}",
+                below: None,
+              ),
+            )),
+            value: Error(ContextualError(
+              inner_error: ExpectedEitherOfTokens(
+                found: Token(
+                  kind: End,
+                  text: "",
+                  start: Position(
+                    value: 30,
+                    line: 0,
+                    col: 29,
+                  ),
+                ),
+                expected: [
+                  Ident,
+                  StringLiteral,
+                  Boolean,
+                  Number,
+                  LBracket,
+                  LSquare,
+                  Null,
+                ],
+              ),
+              span: Span(
+                start: Position(
+                  value: 30,
+                  line: 0,
+                  col: 29,
+                ),
+                end: Position(
+                  value: 30,
+                  line: 0,
+                  col: 29,
+                ),
+              ),
+              message: None,
+              context: ErrorSourceContext(
+                above: None,
+                line: "post http://localhost {header}",
+                below: None,
+              ),
+            )),
+          ),
+        ],
+        span: Span(
+          start: Position(
+            value: 22,
+            line: 0,
+            col: 22,
+          ),
+          end: Position(
+            value: 30,
+            line: 0,
+            col: 29,
+          ),
+        ),
+      )),
+      span: Span(
+        start: Position(
+          value: 0,
+          line: 0,
+          col: 0,
+        ),
+        end: Position(
+          value: 30,
+          line: 0,
+          col: 29,
+        ),
+      ),
+    ),
+  ],
+)

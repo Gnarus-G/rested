@@ -1,11 +1,11 @@
 mod display;
 pub mod locations;
 
-use std::sync::Arc;
-
 use locations::Location;
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+use self::locations::Position;
+
+#[derive(Debug, PartialEq, Clone, Copy, serde::Serialize)]
 pub enum TokenKind {
     // keywords
     Get,
@@ -25,7 +25,7 @@ pub enum TokenKind {
     Boolean,
     Number,
     StringLiteral,
-    MultiLineStringLiteral,
+    TemplateString { head: bool, tail: bool },
     Url,
     Pathname,
 
@@ -54,17 +54,25 @@ pub enum TokenKind {
     IllegalToken,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, serde::Serialize)]
 pub struct Token<'t> {
     pub kind: TokenKind,
     pub text: &'t str,
-    pub start: Location,
+    pub start: Position,
 }
 
 impl<'source> Token<'source> {
     pub fn end_location(&self) -> Location {
         Location {
             line: self.start.line,
+            col: self.start.col + self.text.len(),
+        }
+    }
+
+    pub fn end_position(&self) -> Position {
+        Position {
+            line: self.start.line,
+            value: self.start.value + self.text.len(),
             col: self.start.col + self.text.len(),
         }
     }
@@ -95,18 +103,16 @@ impl CharaterTest for Option<&u8> {
 #[derive(Debug)]
 pub struct Lexer<'i> {
     input: &'i [u8],
-    position: usize,
-    cursor: Location,
-    inside_multiline_string: bool,
+    position: Position,
+    template_str_depth: u8,
 }
 
 impl<'i> Lexer<'i> {
     pub fn new(input: &'i str) -> Self {
         Self {
             input: input.as_bytes(),
-            position: 0,
-            cursor: Location { line: 0, col: 0 },
-            inside_multiline_string: false,
+            position: Default::default(),
+            template_str_depth: 0,
         }
     }
 
@@ -126,44 +132,43 @@ impl<'i> Lexer<'i> {
     }
 
     fn ch(&self) -> Option<&u8> {
-        self.char_at(self.position)
+        self.char_at(self.position.value)
     }
 
     fn step(&mut self) {
-        if self.peek_char().is_none() {
-            return self.position += 1;
+        if self.peek_char().is_some() {
+            self.check_and_bump_new_line();
         }
-        self.check_and_bump_new_line();
-        self.position += 1;
+        self.position.value += 1;
     }
 
     fn check_and_bump_new_line(&mut self) {
         if let Some(b'\n') = self.ch() {
-            self.cursor.line += 1;
-            self.cursor.col = 0;
+            self.position.line += 1;
+            self.position.col = 0;
         } else {
-            self.cursor.col += 1;
+            self.position.col += 1;
         };
     }
 
     fn peek_n_char(&self, n: usize) -> Option<&u8> {
-        self.char_at(self.position + n)
+        self.char_at(self.position.value + 1 + n)
     }
 
     fn peek_char(&self) -> Option<&u8> {
-        self.peek_n_char(1)
+        self.peek_n_char(0)
     }
 
     /// Assumes that the character at the current position, immediately before calling
     /// this function is also true for the predicate function given.
     fn read_while<P: Fn(&u8) -> bool>(&mut self, predicate: P) -> (usize, usize) {
-        let start_pos = self.position;
+        let start_pos = self.position.value;
 
         while self.peek_char().passes(&predicate) {
             self.step();
         }
 
-        (start_pos, self.position + 1)
+        (start_pos, self.position.value + 1)
     }
 
     fn skip_whitespace(&mut self) {
@@ -182,7 +187,7 @@ impl<'i> Lexer<'i> {
             None => {
                 return Token {
                     kind: TokenKind::End,
-                    start: self.cursor,
+                    start: self.position,
                     text: "",
                 }
             }
@@ -191,76 +196,66 @@ impl<'i> Lexer<'i> {
         let t = match ch {
             b'"' if self.peek_char().is(b'"') => self.empty_string_literal(),
             b'"' => self.string_literal(),
-            b'`' if self.peek_char().is(b'`') => self.empty_string_literal(),
             b'`' => self.multiline_string_literal(),
             b'$' if self.peek_char().is(b'{') => {
                 let token = Token {
                     kind: DollarSignLBracket,
                     text: "${",
-                    start: self.cursor,
+                    start: self.position,
                 };
                 self.step();
                 token
             }
-            b'}' if self.peek_char().is(b'`') && self.inside_multiline_string => {
-                self.step(); // eat the curly
-                self.step(); // eat the backtick
-                self.inside_multiline_string = false;
-                self.next_token()
-            }
-            b'}' if self.inside_multiline_string => {
-                self.step(); // eat the curly
-                self.multiline_string_literal()
-            }
+            b'}' if self.template_str_depth > 0 => self.multiline_string_literal(),
             b'(' => Token {
                 kind: LParen,
-                start: self.cursor,
+                start: self.position,
                 text: "(",
             },
             b')' => Token {
                 kind: RParen,
-                start: self.cursor,
+                start: self.position,
                 text: ")",
             },
             b'{' => Token {
                 kind: LBracket,
-                start: self.cursor,
+                start: self.position,
                 text: "{",
             },
             b'}' => Token {
                 kind: RBracket,
-                start: self.cursor,
+                start: self.position,
                 text: "}",
             },
             b'[' => Token {
                 kind: LSquare,
-                start: self.cursor,
+                start: self.position,
                 text: "[",
             },
             b']' => Token {
                 kind: RSquare,
-                start: self.cursor,
+                start: self.position,
                 text: "]",
             },
             b',' => Token {
                 kind: Comma,
                 text: ",",
-                start: self.cursor,
+                start: self.position,
             },
             b':' => Token {
                 kind: Colon,
                 text: ":",
-                start: self.cursor,
+                start: self.position,
             },
             b'=' => Token {
                 kind: Assign,
                 text: "=",
-                start: self.cursor,
+                start: self.position,
             },
             b'@' => Token {
                 kind: AttributePrefix,
                 text: "@",
-                start: self.cursor,
+                start: self.position,
             },
             b'/' if self.peek_char().is(b'/') => self.line_comment(),
             b'/' => self.pathname(),
@@ -269,8 +264,11 @@ impl<'i> Lexer<'i> {
             c if c.is_ascii_digit() => self.number(),
             _ => Token {
                 kind: IllegalToken,
-                text: std::str::from_utf8(&self.input[self.position..self.position + 1]).unwrap(),
-                start: self.cursor,
+                text: std::str::from_utf8(
+                    &self.input[self.position.value..self.position.value + 1],
+                )
+                .unwrap(),
+                start: self.position,
             },
         };
 
@@ -280,47 +278,84 @@ impl<'i> Lexer<'i> {
     }
 
     fn multiline_string_literal(&mut self) -> Token<'i> {
-        self.inside_multiline_string = true;
-        let location = self.cursor;
-        let start_pos = self.position;
+        let mut is_head = false;
+        let mut is_tail = false;
 
-        self.step();
-
-        let (s, e) = loop {
-            let is_at_end = self.ch().is(b'`');
-            let dollar_curly_ahead = self.peek_char().is(b'$') && self.peek_n_char(2).is(b'{');
-
-            if dollar_curly_ahead {
-                break (start_pos, self.position + 1);
-            }
-
-            if is_at_end {
-                self.inside_multiline_string = false;
-                break (start_pos, self.position + 1);
-            }
-
-            if self.ch().is_none() {
+        let start_pos = match self.ch() {
+            Some(b'`') if self.peek_char().is(b'`') => return self.empty_string_literal(),
+            Some(b'`') if self.peek_char().is(b'$') && self.peek_n_char(1).is(b'{') => {
+                self.template_str_depth += 1;
                 return Token {
-                    kind: TokenKind::UnfinishedMultiLineStringLiteral,
-                    start: location,
-                    text: self.input_slice(start_pos..self.position),
+                    kind: TokenKind::TemplateString {
+                        head: true,
+                        tail: false,
+                    },
+                    text: "`",
+                    start: self.position,
                 };
             }
+            Some(b'`') => {
+                self.template_str_depth += 1;
+                let p = self.position;
+                self.step();
+                is_head = true;
+                p
+            }
+            Some(b'}') if self.peek_char().is(b'`') && self.template_str_depth > 0 => {
+                self.step(); // eat the curly
+                self.template_str_depth -= 1;
 
-            self.step();
+                return Token {
+                    kind: TokenKind::TemplateString {
+                        head: false,
+                        tail: true,
+                    },
+                    start: self.position,
+                    text: "`",
+                };
+            }
+            Some(b'}') => {
+                self.step();
+                self.position
+            }
+            _ => unreachable!("should only start tokenizing template strings on a '`' or a '}}'"),
         };
 
-        let string = self.input_slice(s..e);
+        let (s, e) = loop {
+            match self.ch() {
+                _ if self.peek_char().is(b'$') && self.peek_n_char(1).is(b'{') => {
+                    break (start_pos, self.position.value + 1);
+                }
+                Some(b'`') => {
+                    self.template_str_depth -= 1;
+                    is_tail = true;
+                    break (start_pos, self.position.value + 1);
+                }
+                None => {
+                    return Token {
+                        kind: TokenKind::UnfinishedMultiLineStringLiteral,
+                        start: start_pos,
+                        text: self.input_slice(start_pos.value..self.position.value),
+                    };
+                }
+                _ => self.step(),
+            }
+        };
+
+        let string = self.input_slice(s.value..e);
 
         Token {
-            kind: TokenKind::MultiLineStringLiteral,
-            start: location,
+            kind: TokenKind::TemplateString {
+                head: is_head,
+                tail: is_tail,
+            },
+            start: start_pos,
             text: string,
         }
     }
 
     fn string_literal(&mut self) -> Token<'i> {
-        let location = self.cursor;
+        let location = self.position;
 
         let (s, e) = self.read_while(|&c| c != b'"' && c != b'\n');
 
@@ -347,7 +382,7 @@ impl<'i> Lexer<'i> {
     }
 
     fn empty_string_literal(&mut self) -> Token<'i> {
-        let location = self.cursor;
+        let location = self.position;
         self.step();
         Token {
             kind: TokenKind::StringLiteral,
@@ -357,7 +392,7 @@ impl<'i> Lexer<'i> {
     }
 
     fn keyword_or_identifier(&mut self) -> Token<'i> {
-        let location = self.cursor;
+        let location = self.position;
         let (s, e) = self.read_while(|&c| c.is_ascii_alphabetic() || c == b'_');
         let string = self.input_slice(s..e);
 
@@ -442,7 +477,7 @@ impl<'i> Lexer<'i> {
     }
 
     fn pathname(&mut self) -> Token<'i> {
-        let location = self.cursor;
+        let location = self.position;
         let (s, e) = self.read_while(|&c| !c.is_ascii_whitespace());
         let string = self.input_slice(s..e);
 
@@ -454,7 +489,7 @@ impl<'i> Lexer<'i> {
     }
 
     fn number(&mut self) -> Token<'i> {
-        let location = self.cursor;
+        let location = self.position;
         let (s, e) = self.read_while(|&c| c.is_ascii_digit());
         let string = self.input_slice(s..e);
 
@@ -481,7 +516,7 @@ impl<'i> Lexer<'i> {
     }
 
     fn shebang(&mut self) -> Token<'i> {
-        let location = self.cursor;
+        let location = self.position;
         let (s, e) = self.read_while(|&c| c != b'\n');
         let string = self.input_slice(s..e);
         Token {
@@ -492,7 +527,7 @@ impl<'i> Lexer<'i> {
     }
 
     fn line_comment(&mut self) -> Token<'i> {
-        let location = self.cursor;
+        let location = self.position;
         let (s, e) = self.read_while(|&c| c != b'\n');
         let string = self.input_slice(s..e);
         Token {
@@ -516,5 +551,3 @@ impl<'source> Iterator for Lexer<'source> {
         Some(token)
     }
 }
-
-pub type Array<T> = Arc<[T]>;

@@ -1,11 +1,13 @@
 ---
-source: lexer/tests/lexer.rs
+source: tests/lexer.rs
 description: "`a${\"temp\"}` }}"
-expression: "lexer.into_iter().collect::<Vec<Token>>()"
+expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
-    MultiLineStringLiteral("`a") at Location { line: 0, col: 0 },
-    DollarSignLBracket("${") at Location { line: 0, col: 2 },
-    StringLiteral("\"temp\"") at Location { line: 0, col: 4 },
-    RBracket("}") at Location { line: 0, col: 13 },
+    TemplateString { head: true, tail: false }("`a") at Position { value: 0, line: 0, col: 0 },
+    DollarSignLBracket("${") at Position { value: 2, line: 0, col: 2 },
+    StringLiteral("\"temp\"") at Position { value: 4, line: 0, col: 4 },
+    TemplateString { head: false, tail: true }("`") at Position { value: 11, line: 0, col: 11 },
+    RBracket("}") at Position { value: 13, line: 0, col: 13 },
+    RBracket("}") at Position { value: 14, line: 0, col: 14 },
 ]

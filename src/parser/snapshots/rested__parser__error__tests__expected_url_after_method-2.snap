@@ -1,15 +1,44 @@
 ---
-source: parser/src/error.rs
-expression: error
+source: src/parser/error.rs
+description: post
+expression: ast
 ---
-ParserErrors {
-    errors: [
-        post
-           
-           ↳ [1:4] expected either one of 'url','pathname' but got Eof
-        ,
-    ],
-    incomplete_rogram: Program {
-        items: [],
-    },
-}
+Program(
+  items: [
+    Error(ContextualError(
+      inner_error: ExpectedEitherOfTokens(
+        found: Token(
+          kind: End,
+          text: "",
+          start: Position(
+            value: 4,
+            line: 0,
+            col: 3,
+          ),
+        ),
+        expected: [
+          Url,
+          Pathname,
+        ],
+      ),
+      span: Span(
+        start: Position(
+          value: 0,
+          line: 0,
+          col: 0,
+        ),
+        end: Position(
+          value: 4,
+          line: 0,
+          col: 3,
+        ),
+      ),
+      message: Some("expecting only a url and pathname here"),
+      context: ErrorSourceContext(
+        above: None,
+        line: "post",
+        below: None,
+      ),
+    )),
+  ],
+)

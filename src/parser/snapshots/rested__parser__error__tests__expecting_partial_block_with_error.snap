@@ -1,0 +1,163 @@
+---
+source: src/parser/error.rs
+description: "get /hello { header \"test\" \"value\" header }"
+expression: ast
+---
+Program(
+  items: [
+    Request(
+      method: GET,
+      endpoint: Pathname(Literal(
+        value: "/hello",
+        span: Span(
+          start: Position(
+            value: 4,
+            line: 0,
+            col: 4,
+          ),
+          end: Position(
+            value: 10,
+            line: 0,
+            col: 10,
+          ),
+        ),
+      )),
+      block: Some(Block(
+        statements: [
+          Header(
+            name: Ok(StringLiteral(
+              raw: "\"test\"",
+              value: "test",
+              span: Span(
+                start: Position(
+                  value: 20,
+                  line: 0,
+                  col: 20,
+                ),
+                end: Position(
+                  value: 26,
+                  line: 0,
+                  col: 26,
+                ),
+              ),
+            )),
+            value: String(StringLiteral(
+              raw: "\"value\"",
+              value: "value",
+              span: Span(
+                start: Position(
+                  value: 27,
+                  line: 0,
+                  col: 27,
+                ),
+                end: Position(
+                  value: 34,
+                  line: 0,
+                  col: 34,
+                ),
+              ),
+            )),
+          ),
+          Header(
+            name: Error(ContextualError(
+              inner_error: ExpectedToken(
+                found: Token(
+                  kind: RBracket,
+                  text: "}",
+                  start: Position(
+                    value: 42,
+                    line: 0,
+                    col: 42,
+                  ),
+                ),
+                expected: StringLiteral,
+              ),
+              span: Span(
+                start: Position(
+                  value: 35,
+                  line: 0,
+                  col: 35,
+                ),
+                end: Position(
+                  value: 43,
+                  line: 0,
+                  col: 43,
+                ),
+              ),
+              message: None,
+              context: ErrorSourceContext(
+                above: None,
+                line: "get /hello { header \"test\" \"value\" header }",
+                below: None,
+              ),
+            )),
+            value: Error(ContextualError(
+              inner_error: ExpectedEitherOfTokens(
+                found: Token(
+                  kind: End,
+                  text: "",
+                  start: Position(
+                    value: 43,
+                    line: 0,
+                    col: 42,
+                  ),
+                ),
+                expected: [
+                  Ident,
+                  StringLiteral,
+                  Boolean,
+                  Number,
+                  LBracket,
+                  LSquare,
+                  Null,
+                ],
+              ),
+              span: Span(
+                start: Position(
+                  value: 43,
+                  line: 0,
+                  col: 42,
+                ),
+                end: Position(
+                  value: 43,
+                  line: 0,
+                  col: 42,
+                ),
+              ),
+              message: None,
+              context: ErrorSourceContext(
+                above: None,
+                line: "get /hello { header \"test\" \"value\" header }",
+                below: None,
+              ),
+            )),
+          ),
+        ],
+        span: Span(
+          start: Position(
+            value: 11,
+            line: 0,
+            col: 11,
+          ),
+          end: Position(
+            value: 43,
+            line: 0,
+            col: 42,
+          ),
+        ),
+      )),
+      span: Span(
+        start: Position(
+          value: 0,
+          line: 0,
+          col: 0,
+        ),
+        end: Position(
+          value: 43,
+          line: 0,
+          col: 42,
+        ),
+      ),
+    ),
+  ],
+)

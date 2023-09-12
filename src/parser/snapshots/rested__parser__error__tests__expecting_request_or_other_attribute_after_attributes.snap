@@ -1,145 +1,166 @@
 ---
-source: parser/src/error.rs
-expression: error
+source: src/parser/error.rs
+description: "\n            @skip\n            @dbg\n            let k = \"v\"\n            get http://localhost { header \"name\" k }"
+expression: ast
 ---
-ParserErrors {
-    errors: [
-                    @dbg
-                    let k = "v"
-                    ≈≈≈
-                    ↳ [4:13] expected either one of 'get','post','put','patch','delete','@','comment' but got let
-                             after attributes should come requests or more attributes
-                    get http://localhost { header "name" k }
-        ,
-    ],
-    incomplete_rogram: Program {
-        items: [
-            Attribute {
-                location: Location {
-                    line: 1,
-                    col: 12,
-                },
-                identifier: Identifier {
-                    name: "skip",
-                    span: Span {
-                        start: Location {
-                            line: 1,
-                            col: 13,
-                        },
-                        end: Location {
-                            line: 1,
-                            col: 17,
-                        },
-                    },
-                },
-                parameters: [],
-            },
-            Let {
-                identifier: Identifier {
-                    name: "k",
-                    span: Span {
-                        start: Location {
-                            line: 3,
-                            col: 16,
-                        },
-                        end: Location {
-                            line: 3,
-                            col: 17,
-                        },
-                    },
-                },
-                value: String(
-                    StringLiteral {
-                        raw: "\"v\"",
-                        value: "v",
-                        span: Span {
-                            start: Location {
-                                line: 3,
-                                col: 20,
-                            },
-                            end: Location {
-                                line: 3,
-                                col: 23,
-                            },
-                        },
-                    },
-                ),
-            },
-            Request {
-                method: GET,
-                endpoint: Url(
-                    Literal {
-                        value: "http://localhost",
-                        span: Span {
-                            start: Location {
-                                line: 4,
-                                col: 16,
-                            },
-                            end: Location {
-                                line: 4,
-                                col: 32,
-                            },
-                        },
-                    },
-                ),
-                block: Some(
-                    Block {
-                        statements: [
-                            Header {
-                                name: StringLiteral {
-                                    raw: "\"name\"",
-                                    value: "name",
-                                    span: Span {
-                                        start: Location {
-                                            line: 4,
-                                            col: 42,
-                                        },
-                                        end: Location {
-                                            line: 4,
-                                            col: 48,
-                                        },
-                                    },
-                                },
-                                value: Identifier(
-                                    Identifier {
-                                        name: "k",
-                                        span: Span {
-                                            start: Location {
-                                                line: 4,
-                                                col: 49,
-                                            },
-                                            end: Location {
-                                                line: 4,
-                                                col: 50,
-                                            },
-                                        },
-                                    },
-                                ),
-                            },
-                        ],
-                        span: Span {
-                            start: Location {
-                                line: 4,
-                                col: 33,
-                            },
-                            end: Location {
-                                line: 4,
-                                col: 51,
-                            },
-                        },
-                    },
-                ),
-                span: Span {
-                    start: Location {
-                        line: 4,
-                        col: 12,
-                    },
-                    end: Location {
-                        line: 4,
-                        col: 51,
-                    },
-                },
-            },
+Program(
+  items: [
+    Attribute(
+      location: Position(
+        value: 13,
+        line: 1,
+        col: 12,
+      ),
+      identifier: Ok(Token(
+        kind: Ident,
+        text: "skip",
+        start: Position(
+          value: 14,
+          line: 1,
+          col: 13,
+        ),
+      )),
+      parameters: None,
+    ),
+    Error(ContextualError(
+      inner_error: ExpectedEitherOfTokens(
+        found: Token(
+          kind: Let,
+          text: "let",
+          start: Position(
+            value: 48,
+            line: 3,
+            col: 12,
+          ),
+        ),
+        expected: [
+          Get,
+          Post,
+          Put,
+          Patch,
+          Delete,
+          AttributePrefix,
+          Linecomment,
         ],
-    },
-}
+      ),
+      span: Span(
+        start: Position(
+          value: 31,
+          line: 2,
+          col: 12,
+        ),
+        end: Position(
+          value: 51,
+          line: 3,
+          col: 15,
+        ),
+      ),
+      message: Some("after attributes should come requests or more attributes"),
+      context: ErrorSourceContext(
+        above: Some("            @dbg"),
+        line: "            let k = \"v\"",
+        below: Some("            get http://localhost { header \"name\" k }"),
+      ),
+    )),
+    Let(
+      identifier: Ok(Token(
+        kind: Ident,
+        text: "k",
+        start: Position(
+          value: 52,
+          line: 3,
+          col: 16,
+        ),
+      )),
+      value: String(StringLiteral(
+        raw: "\"v\"",
+        value: "v",
+        span: Span(
+          start: Position(
+            value: 56,
+            line: 3,
+            col: 20,
+          ),
+          end: Position(
+            value: 59,
+            line: 3,
+            col: 23,
+          ),
+        ),
+      )),
+    ),
+    Request(
+      method: GET,
+      endpoint: Url(Literal(
+        value: "http://localhost",
+        span: Span(
+          start: Position(
+            value: 76,
+            line: 4,
+            col: 16,
+          ),
+          end: Position(
+            value: 92,
+            line: 4,
+            col: 32,
+          ),
+        ),
+      )),
+      block: Some(Block(
+        statements: [
+          Header(
+            name: Ok(StringLiteral(
+              raw: "\"name\"",
+              value: "name",
+              span: Span(
+                start: Position(
+                  value: 102,
+                  line: 4,
+                  col: 42,
+                ),
+                end: Position(
+                  value: 108,
+                  line: 4,
+                  col: 48,
+                ),
+              ),
+            )),
+            value: Identifier(Ok(Token(
+              kind: Ident,
+              text: "k",
+              start: Position(
+                value: 109,
+                line: 4,
+                col: 49,
+              ),
+            ))),
+          ),
+        ],
+        span: Span(
+          start: Position(
+            value: 93,
+            line: 4,
+            col: 33,
+          ),
+          end: Position(
+            value: 111,
+            line: 4,
+            col: 51,
+          ),
+        ),
+      )),
+      span: Span(
+        start: Position(
+          value: 72,
+          line: 4,
+          col: 12,
+        ),
+        end: Position(
+          value: 111,
+          line: 4,
+          col: 51,
+        ),
+      ),
+    ),
+  ],
+)

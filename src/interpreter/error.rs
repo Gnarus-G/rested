@@ -1,10 +1,9 @@
 use crate::error_meta::ContextualError;
-use crate::lexer::locations::Span;
-use crate::lexer::Array;
-use crate::parser::ast::Identifier;
+use crate::lexer::locations::{GetSpan, Span};
+use crate::lexer::Token;
 use crate::parser::error::{ParseError, ParserErrors};
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum InterpreterErrorKind {
     UnknownConstant { constant: String },
     RequiredArguments { required: usize, recieved: usize },
@@ -57,8 +56,8 @@ impl std::fmt::Display for InterpreterErrorKind {
 }
 
 pub enum InterpreterError<'source> {
-    ParseErrors(Array<ContextualError<ParseError<'source>>>),
-    Error(ContextualError<InterpreterErrorKind>),
+    ParseErrors(ParserErrors<'source>),
+    Error(Box<ContextualError<InterpreterErrorKind>>),
 }
 
 impl<'source> std::error::Error for InterpreterError<'source> {}
@@ -73,7 +72,7 @@ impl<'source> std::fmt::Display for InterpreterError<'source> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             InterpreterError::Error(err) => write!(f, "{err}"),
-            InterpreterError::ParseErrors(errors) => {
+            InterpreterError::ParseErrors(ParserErrors { errors }) => {
                 for err in errors.iter() {
                     write!(f, "{err}")?
                 }
@@ -85,13 +84,29 @@ impl<'source> std::fmt::Display for InterpreterError<'source> {
 
 impl<'source> From<ContextualError<InterpreterErrorKind>> for InterpreterError<'source> {
     fn from(value: ContextualError<InterpreterErrorKind>) -> Self {
-        Self::Error(value)
+        Self::Error(value.into())
+    }
+}
+
+impl<'source> From<Box<ContextualError<ParseError<'source>>>> for InterpreterError<'source> {
+    fn from(value: Box<ContextualError<ParseError<'source>>>) -> Self {
+        Self::Error(
+            ContextualError {
+                inner_error: InterpreterErrorKind::Other {
+                    error: value.inner_error.to_string(),
+                },
+                span: value.span,
+                message: value.message,
+                context: value.context,
+            }
+            .into(),
+        )
     }
 }
 
 impl<'source> From<ParserErrors<'source>> for InterpreterError<'source> {
     fn from(value: ParserErrors<'source>) -> Self {
-        Self::ParseErrors(value.errors)
+        Self::ParseErrors(value)
     }
 }
 
@@ -105,12 +120,12 @@ impl<'i> InterpErrorFactory<'i> {
             source_code: source,
         }
     }
-    pub fn unknown_constant(&self, token: &Identifier) -> ContextualError<InterpreterErrorKind> {
+    pub fn unknown_constant(&self, token: &Token) -> ContextualError<InterpreterErrorKind> {
         ContextualError::new(
             InterpreterErrorKind::UnknownConstant {
-                constant: token.name.to_string(),
+                constant: token.text.to_string(),
             },
-            token.span,
+            token.span(),
             self.source_code,
         )
     }
@@ -140,48 +155,42 @@ impl<'i> InterpErrorFactory<'i> {
         )
     }
 
-    pub fn undeclared_identifier(
-        &self,
-        token: &Identifier,
-    ) -> ContextualError<InterpreterErrorKind> {
+    pub fn undeclared_identifier(&self, token: &Token) -> ContextualError<InterpreterErrorKind> {
         ContextualError::new(
             InterpreterErrorKind::UndeclaredIdentifier {
-                name: token.name.to_string(),
+                name: token.text.to_string(),
             },
-            token.span,
+            token.span(),
             self.source_code,
         )
     }
 
-    pub fn unsupported_attribute(
-        &self,
-        token: &Identifier,
-    ) -> ContextualError<InterpreterErrorKind> {
+    pub fn unsupported_attribute(&self, token: &Token) -> ContextualError<InterpreterErrorKind> {
         ContextualError::new(
             InterpreterErrorKind::UnsupportedAttribute {
-                name: token.name.to_string(),
+                name: token.text.to_string(),
             },
-            token.span,
+            token.span(),
             self.source_code,
         )
     }
 
-    pub fn duplicate_attribute(&self, token: &Identifier) -> ContextualError<InterpreterErrorKind> {
+    pub fn duplicate_attribute(&self, token: &Token) -> ContextualError<InterpreterErrorKind> {
         ContextualError::new(
             InterpreterErrorKind::DuplicateAttribute {
-                name: token.name.to_string(),
+                name: token.text.to_string(),
             },
-            token.span,
+            token.span(),
             self.source_code,
         )
     }
 
-    pub fn undefined_callable(&self, token: &Identifier) -> ContextualError<InterpreterErrorKind> {
+    pub fn undefined_callable(&self, token: &Token) -> ContextualError<InterpreterErrorKind> {
         ContextualError::new(
             InterpreterErrorKind::UndefinedCallable {
-                name: token.name.to_string(),
+                name: token.text.to_string(),
             },
-            token.span,
+            token.span(),
             self.source_code,
         )
     }

@@ -104,6 +104,40 @@ fn lex_template_literals() {
     assert_lexes!(r#"`stuff${"interpolated"}(things${env("dead_night")}` `dohickeys`"#);
 
     assert_lexes!(r#"`a${"temp"}` }}"#);
+
+    assert_lexes!(
+        r#"
+let b = `asdf ${}`
+"#
+    );
+
+    assert_lexes!(r#"` ${} ${} `"#);
+    assert_lexes!(r#"`head ${} ${} tail`"#);
+
+    assert_lexes!(
+        r#"
+let b = `asdf ${test} ${} ${"word"}`
+"#
+    );
+
+    assert_lexes!(
+        r#"
+let b = `asdf ${}` 
+let c = {}
+"#
+    );
+
+    assert_lexes!(r#"`${test} ${df} `"#);
+    assert_lexes!(r#"`asdf ${test} ${df} `"#);
+
+    assert_lexes!(r#"`asdf ${`hello${"world"}`} ${asdf} jkl`"#);
+
+    assert_lexes!(
+        r#"
+        post /api {
+            body `{"neet": ${env("love")}, 2: ${"two"}}`
+        }"#
+    );
 }
 
 #[test]

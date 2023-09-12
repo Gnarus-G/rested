@@ -44,8 +44,9 @@ impl RunArgs {
         interp
             .run(self.request.map(|r| r.into()))
             .map_err(|value| match value {
-                InterpreterError::ParseErrors(errors) => {
-                    let error_string: String = errors
+                InterpreterError::ParseErrors(p) => {
+                    let error_string: String = p
+                        .errors
                         .iter()
                         .map(|e| ColoredMetaError(e).to_string())
                         .collect();

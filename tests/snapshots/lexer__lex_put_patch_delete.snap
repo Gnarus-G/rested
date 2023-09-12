@@ -1,19 +1,19 @@
 ---
-source: lexer/tests/lexer.rs
+source: tests/lexer.rs
 description: "\nput /api {}\npatch /api {}\ndelete /api {}\n"
-expression: "lexer.into_iter().collect::<Vec<Token>>()"
+expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
-    Put("put") at Location { line: 1, col: 0 },
-    Pathname("/api") at Location { line: 1, col: 4 },
-    LBracket("{") at Location { line: 1, col: 9 },
-    RBracket("}") at Location { line: 1, col: 10 },
-    Patch("patch") at Location { line: 2, col: 0 },
-    Pathname("/api") at Location { line: 2, col: 6 },
-    LBracket("{") at Location { line: 2, col: 11 },
-    RBracket("}") at Location { line: 2, col: 12 },
-    Delete("delete") at Location { line: 3, col: 0 },
-    Pathname("/api") at Location { line: 3, col: 7 },
-    LBracket("{") at Location { line: 3, col: 12 },
-    RBracket("}") at Location { line: 3, col: 13 },
+    Put("put") at Position { value: 1, line: 1, col: 0 },
+    Pathname("/api") at Position { value: 5, line: 1, col: 4 },
+    LBracket("{") at Position { value: 10, line: 1, col: 9 },
+    RBracket("}") at Position { value: 11, line: 1, col: 10 },
+    Patch("patch") at Position { value: 13, line: 2, col: 0 },
+    Pathname("/api") at Position { value: 19, line: 2, col: 6 },
+    LBracket("{") at Position { value: 24, line: 2, col: 11 },
+    RBracket("}") at Position { value: 25, line: 2, col: 12 },
+    Delete("delete") at Position { value: 27, line: 3, col: 0 },
+    Pathname("/api") at Position { value: 34, line: 3, col: 7 },
+    LBracket("{") at Position { value: 39, line: 3, col: 12 },
+    RBracket("}") at Position { value: 40, line: 3, col: 13 },
 ]

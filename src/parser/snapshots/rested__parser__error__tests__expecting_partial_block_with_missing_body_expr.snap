@@ -1,0 +1,129 @@
+---
+source: src/parser/error.rs
+description: "\nget /sdf {\n   header \"\" s\n   body  }\n"
+expression: ast
+---
+Program(
+  items: [
+    Request(
+      method: GET,
+      endpoint: Pathname(Literal(
+        value: "/sdf",
+        span: Span(
+          start: Position(
+            value: 5,
+            line: 1,
+            col: 4,
+          ),
+          end: Position(
+            value: 9,
+            line: 1,
+            col: 8,
+          ),
+        ),
+      )),
+      block: Some(Block(
+        statements: [
+          Header(
+            name: Ok(StringLiteral(
+              raw: "",
+              value: "",
+              span: Span(
+                start: Position(
+                  value: 22,
+                  line: 2,
+                  col: 10,
+                ),
+                end: Position(
+                  value: 22,
+                  line: 2,
+                  col: 10,
+                ),
+              ),
+            )),
+            value: Identifier(Ok(Token(
+              kind: Ident,
+              text: "s",
+              start: Position(
+                value: 25,
+                line: 2,
+                col: 13,
+              ),
+            ))),
+          ),
+          Body(
+            value: Error(ContextualError(
+              inner_error: ExpectedEitherOfTokens(
+                found: Token(
+                  kind: RBracket,
+                  text: "}",
+                  start: Position(
+                    value: 36,
+                    line: 3,
+                    col: 9,
+                  ),
+                ),
+                expected: [
+                  Ident,
+                  StringLiteral,
+                  Boolean,
+                  Number,
+                  LBracket,
+                  LSquare,
+                  Null,
+                ],
+              ),
+              span: Span(
+                start: Position(
+                  value: 36,
+                  line: 3,
+                  col: 9,
+                ),
+                end: Position(
+                  value: 37,
+                  line: 3,
+                  col: 10,
+                ),
+              ),
+              message: None,
+              context: ErrorSourceContext(
+                above: Some("   header \"\" s"),
+                line: "   body  }",
+                below: None,
+              ),
+            )),
+            start: Position(
+              value: 30,
+              line: 3,
+              col: 3,
+            ),
+          ),
+        ],
+        span: Span(
+          start: Position(
+            value: 10,
+            line: 1,
+            col: 9,
+          ),
+          end: Position(
+            value: 38,
+            line: 3,
+            col: 10,
+          ),
+        ),
+      )),
+      span: Span(
+        start: Position(
+          value: 1,
+          line: 1,
+          col: 0,
+        ),
+        end: Position(
+          value: 38,
+          line: 3,
+          col: 10,
+        ),
+      ),
+    ),
+  ],
+)

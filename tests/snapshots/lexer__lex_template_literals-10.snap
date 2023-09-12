@@ -1,0 +1,17 @@
+---
+source: tests/lexer.rs
+description: "`asdf ${`hello${\"world\"}`} ${asdf} jkl`"
+expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
+---
+[
+    TemplateString { head: true, tail: false }("`asdf ") at Position { value: 0, line: 0, col: 0 },
+    DollarSignLBracket("${") at Position { value: 6, line: 0, col: 6 },
+    TemplateString { head: true, tail: false }("`hello") at Position { value: 8, line: 0, col: 8 },
+    DollarSignLBracket("${") at Position { value: 14, line: 0, col: 14 },
+    StringLiteral("\"world\"") at Position { value: 16, line: 0, col: 16 },
+    TemplateString { head: false, tail: true }("`") at Position { value: 24, line: 0, col: 24 },
+    TemplateString { head: false, tail: false }(" ") at Position { value: 26, line: 0, col: 26 },
+    DollarSignLBracket("${") at Position { value: 27, line: 0, col: 27 },
+    Ident("asdf") at Position { value: 29, line: 0, col: 29 },
+    TemplateString { head: false, tail: true }(" jkl`") at Position { value: 34, line: 0, col: 34 },
+]

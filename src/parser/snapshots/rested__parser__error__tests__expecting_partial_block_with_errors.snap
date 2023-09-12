@@ -1,0 +1,98 @@
+---
+source: src/parser/error.rs
+description: "\nget /adsf {\n  header\n  body a\n}\n"
+expression: ast
+---
+Program(
+  items: [
+    Request(
+      method: GET,
+      endpoint: Pathname(Literal(
+        value: "/adsf",
+        span: Span(
+          start: Position(
+            value: 5,
+            line: 1,
+            col: 4,
+          ),
+          end: Position(
+            value: 10,
+            line: 1,
+            col: 9,
+          ),
+        ),
+      )),
+      block: Some(Block(
+        statements: [
+          Header(
+            name: Error(ContextualError(
+              inner_error: ExpectedToken(
+                found: Token(
+                  kind: Body,
+                  text: "body",
+                  start: Position(
+                    value: 24,
+                    line: 3,
+                    col: 2,
+                  ),
+                ),
+                expected: StringLiteral,
+              ),
+              span: Span(
+                start: Position(
+                  value: 15,
+                  line: 2,
+                  col: 2,
+                ),
+                end: Position(
+                  value: 28,
+                  line: 3,
+                  col: 6,
+                ),
+              ),
+              message: None,
+              context: ErrorSourceContext(
+                above: Some("  header"),
+                line: "  body a",
+                below: Some("}"),
+              ),
+            )),
+            value: Identifier(Ok(Token(
+              kind: Ident,
+              text: "a",
+              start: Position(
+                value: 29,
+                line: 3,
+                col: 7,
+              ),
+            ))),
+          ),
+        ],
+        span: Span(
+          start: Position(
+            value: 11,
+            line: 1,
+            col: 10,
+          ),
+          end: Position(
+            value: 31,
+            line: 4,
+            col: 0,
+          ),
+        ),
+      )),
+      span: Span(
+        start: Position(
+          value: 1,
+          line: 1,
+          col: 0,
+        ),
+        end: Position(
+          value: 31,
+          line: 4,
+          col: 0,
+        ),
+      ),
+    ),
+  ],
+)

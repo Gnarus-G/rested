@@ -1,146 +1,117 @@
 ---
-source: parser/tests/parser.rs
+source: tests/parser.rs
 description: "\nlet o = {\n    key: \"value\",\n    akey: \"234va\",\n    oKey: [\"val\", \"val2\"],\n    aoKay: [\"val\", \"123\", {\n        hey: \"yo!\",\n        hello: \"world\"\n    }]\n}"
 expression: ast
 ---
 Program(
   items: [
     Let(
-      identifier: Identifier(
-        name: "o",
-        span: Span(
-          start: Location(
-            line: 1,
-            col: 4,
-          ),
-          end: Location(
-            line: 1,
-            col: 5,
-          ),
+      identifier: Ok(Token(
+        kind: Ident,
+        text: "o",
+        start: Position(
+          value: 5,
+          line: 1,
+          col: 4,
         ),
-      ),
+      )),
       value: Object((Span(
-        start: Location(
+        start: Position(
+          value: 9,
           line: 1,
           col: 8,
         ),
-        end: Location(
+        end: Position(
+          value: 154,
           line: 9,
           col: 1,
         ),
-      ), {
-        "akey": String(StringLiteral(
-          raw: "\"234va\"",
-          value: "234va",
+      ), [
+        ObjectEntry(Ok(StringLiteral(
+          raw: "key",
+          value: "key",
           span: Span(
-            start: Location(
-              line: 3,
-              col: 10,
+            start: Position(
+              value: 15,
+              line: 2,
+              col: 4,
             ),
-            end: Location(
-              line: 3,
-              col: 17,
+            end: Position(
+              value: 18,
+              line: 2,
+              col: 7,
             ),
           ),
-        )),
-        "aoKay": Array((Span(
-          start: Location(
-            line: 5,
-            col: 11,
-          ),
-          end: Location(
-            line: 8,
-            col: 6,
-          ),
-        ), [
-          String(StringLiteral(
-            raw: "\"val\"",
-            value: "val",
-            span: Span(
-              start: Location(
-                line: 5,
-                col: 12,
-              ),
-              end: Location(
-                line: 5,
-                col: 17,
-              ),
-            ),
-          )),
-          String(StringLiteral(
-            raw: "\"123\"",
-            value: "123",
-            span: Span(
-              start: Location(
-                line: 5,
-                col: 19,
-              ),
-              end: Location(
-                line: 5,
-                col: 24,
-              ),
-            ),
-          )),
-          Object((Span(
-            start: Location(
-              line: 5,
-              col: 26,
-            ),
-            end: Location(
-              line: 8,
-              col: 5,
-            ),
-          ), {
-            "hello": String(StringLiteral(
-              raw: "\"world\"",
-              value: "world",
-              span: Span(
-                start: Location(
-                  line: 7,
-                  col: 15,
-                ),
-                end: Location(
-                  line: 7,
-                  col: 22,
-                ),
-              ),
-            )),
-            "hey": String(StringLiteral(
-              raw: "\"yo!\"",
-              value: "yo!",
-              span: Span(
-                start: Location(
-                  line: 6,
-                  col: 13,
-                ),
-                end: Location(
-                  line: 6,
-                  col: 18,
-                ),
-              ),
-            )),
-          })),
-        ])),
-        "key": String(StringLiteral(
+        )), String(StringLiteral(
           raw: "\"value\"",
           value: "value",
           span: Span(
-            start: Location(
+            start: Position(
+              value: 20,
               line: 2,
               col: 9,
             ),
-            end: Location(
+            end: Position(
+              value: 27,
               line: 2,
               col: 16,
             ),
           ),
-        )),
-        "oKey": Array((Span(
-          start: Location(
+        ))),
+        ObjectEntry(Ok(StringLiteral(
+          raw: "akey",
+          value: "akey",
+          span: Span(
+            start: Position(
+              value: 33,
+              line: 3,
+              col: 4,
+            ),
+            end: Position(
+              value: 37,
+              line: 3,
+              col: 8,
+            ),
+          ),
+        )), String(StringLiteral(
+          raw: "\"234va\"",
+          value: "234va",
+          span: Span(
+            start: Position(
+              value: 39,
+              line: 3,
+              col: 10,
+            ),
+            end: Position(
+              value: 46,
+              line: 3,
+              col: 17,
+            ),
+          ),
+        ))),
+        ObjectEntry(Ok(StringLiteral(
+          raw: "oKey",
+          value: "oKey",
+          span: Span(
+            start: Position(
+              value: 52,
+              line: 4,
+              col: 4,
+            ),
+            end: Position(
+              value: 56,
+              line: 4,
+              col: 8,
+            ),
+          ),
+        )), Array((Span(
+          start: Position(
+            value: 58,
             line: 4,
             col: 10,
           ),
-          end: Location(
+          end: Position(
+            value: 73,
             line: 4,
             col: 25,
           ),
@@ -149,11 +120,13 @@ Program(
             raw: "\"val\"",
             value: "val",
             span: Span(
-              start: Location(
+              start: Position(
+                value: 59,
                 line: 4,
                 col: 11,
               ),
-              end: Location(
+              end: Position(
+                value: 64,
                 line: 4,
                 col: 16,
               ),
@@ -163,18 +136,155 @@ Program(
             raw: "\"val2\"",
             value: "val2",
             span: Span(
-              start: Location(
+              start: Position(
+                value: 66,
                 line: 4,
                 col: 18,
               ),
-              end: Location(
+              end: Position(
+                value: 72,
                 line: 4,
                 col: 24,
               ),
             ),
           )),
-        ])),
-      })),
+        ]))),
+        ObjectEntry(Ok(StringLiteral(
+          raw: "aoKay",
+          value: "aoKay",
+          span: Span(
+            start: Position(
+              value: 79,
+              line: 5,
+              col: 4,
+            ),
+            end: Position(
+              value: 84,
+              line: 5,
+              col: 9,
+            ),
+          ),
+        )), Array((Span(
+          start: Position(
+            value: 86,
+            line: 5,
+            col: 11,
+          ),
+          end: Position(
+            value: 152,
+            line: 8,
+            col: 6,
+          ),
+        ), [
+          String(StringLiteral(
+            raw: "\"val\"",
+            value: "val",
+            span: Span(
+              start: Position(
+                value: 87,
+                line: 5,
+                col: 12,
+              ),
+              end: Position(
+                value: 92,
+                line: 5,
+                col: 17,
+              ),
+            ),
+          )),
+          String(StringLiteral(
+            raw: "\"123\"",
+            value: "123",
+            span: Span(
+              start: Position(
+                value: 94,
+                line: 5,
+                col: 19,
+              ),
+              end: Position(
+                value: 99,
+                line: 5,
+                col: 24,
+              ),
+            ),
+          )),
+          Object((Span(
+            start: Position(
+              value: 101,
+              line: 5,
+              col: 26,
+            ),
+            end: Position(
+              value: 151,
+              line: 8,
+              col: 5,
+            ),
+          ), [
+            ObjectEntry(Ok(StringLiteral(
+              raw: "hey",
+              value: "hey",
+              span: Span(
+                start: Position(
+                  value: 111,
+                  line: 6,
+                  col: 8,
+                ),
+                end: Position(
+                  value: 114,
+                  line: 6,
+                  col: 11,
+                ),
+              ),
+            )), String(StringLiteral(
+              raw: "\"yo!\"",
+              value: "yo!",
+              span: Span(
+                start: Position(
+                  value: 116,
+                  line: 6,
+                  col: 13,
+                ),
+                end: Position(
+                  value: 121,
+                  line: 6,
+                  col: 18,
+                ),
+              ),
+            ))),
+            ObjectEntry(Ok(StringLiteral(
+              raw: "hello",
+              value: "hello",
+              span: Span(
+                start: Position(
+                  value: 131,
+                  line: 7,
+                  col: 8,
+                ),
+                end: Position(
+                  value: 136,
+                  line: 7,
+                  col: 13,
+                ),
+              ),
+            )), String(StringLiteral(
+              raw: "\"world\"",
+              value: "world",
+              span: Span(
+                start: Position(
+                  value: 138,
+                  line: 7,
+                  col: 15,
+                ),
+                end: Position(
+                  value: 145,
+                  line: 7,
+                  col: 22,
+                ),
+              ),
+            ))),
+          ])),
+        ]))),
+      ])),
     ),
   ],
 )

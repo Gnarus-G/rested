@@ -1,33 +1,31 @@
 ---
-source: parser/tests/parser.rs
+source: tests/parser.rs
 description: "\nset BASE_URL \"httas...\"\npost http://lasdf.. {}\n// asdfasdf\n\nlet output_file = \"output/file.json\"\nlet token = env(\"auth-token\")\n\n@log(output_file)\npost /asd {\n  // asdfasd\n  header \"Authorization\" token\n  body `{\n      \"neet\": \"${env(\"var\")}\",\n      \"nerd\": \"${output_file}\",\n  }`\n}\n\n@skip\nget /api {}\n\nput /api {}\npatch /api {}\ndelete /api {}\n"
 expression: ast
 ---
 Program(
   items: [
     Set(
-      identifier: Identifier(
-        name: "BASE_URL",
-        span: Span(
-          start: Location(
-            line: 1,
-            col: 4,
-          ),
-          end: Location(
-            line: 1,
-            col: 12,
-          ),
+      identifier: Ok(Token(
+        kind: Ident,
+        text: "BASE_URL",
+        start: Position(
+          value: 5,
+          line: 1,
+          col: 4,
         ),
-      ),
+      )),
       value: String(StringLiteral(
         raw: "\"httas...\"",
         value: "httas...",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 14,
             line: 1,
             col: 13,
           ),
-          end: Location(
+          end: Position(
+            value: 24,
             line: 1,
             col: 23,
           ),
@@ -39,11 +37,13 @@ Program(
       endpoint: Url(Literal(
         value: "http://lasdf..",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 30,
             line: 2,
             col: 5,
           ),
-          end: Location(
+          end: Position(
+            value: 44,
             line: 2,
             col: 19,
           ),
@@ -52,22 +52,26 @@ Program(
       block: Some(Block(
         statements: [],
         span: Span(
-          start: Location(
+          start: Position(
+            value: 45,
             line: 2,
             col: 20,
           ),
-          end: Location(
+          end: Position(
+            value: 46,
             line: 2,
             col: 21,
           ),
         ),
       )),
       span: Span(
-        start: Location(
+        start: Position(
+          value: 25,
           line: 2,
           col: 0,
         ),
-        end: Location(
+        end: Position(
+          value: 46,
           line: 2,
           col: 21,
         ),
@@ -76,39 +80,39 @@ Program(
     LineComment(Literal(
       value: "// asdfasdf",
       span: Span(
-        start: Location(
+        start: Position(
+          value: 48,
           line: 3,
           col: 0,
         ),
-        end: Location(
+        end: Position(
+          value: 59,
           line: 3,
           col: 11,
         ),
       ),
     )),
     Let(
-      identifier: Identifier(
-        name: "output_file",
-        span: Span(
-          start: Location(
-            line: 5,
-            col: 4,
-          ),
-          end: Location(
-            line: 5,
-            col: 15,
-          ),
+      identifier: Ok(Token(
+        kind: Ident,
+        text: "output_file",
+        start: Position(
+          value: 65,
+          line: 5,
+          col: 4,
         ),
-      ),
+      )),
       value: String(StringLiteral(
         raw: "\"output/file.json\"",
         value: "output/file.json",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 79,
             line: 5,
             col: 18,
           ),
-          end: Location(
+          end: Position(
+            value: 97,
             line: 5,
             col: 36,
           ),
@@ -116,95 +120,112 @@ Program(
       )),
     ),
     Let(
-      identifier: Identifier(
-        name: "token",
-        span: Span(
-          start: Location(
-            line: 6,
-            col: 4,
-          ),
-          end: Location(
-            line: 6,
-            col: 9,
-          ),
+      identifier: Ok(Token(
+        kind: Ident,
+        text: "token",
+        start: Position(
+          value: 102,
+          line: 6,
+          col: 4,
         ),
-      ),
+      )),
       value: Call(
-        identifier: Identifier(
-          name: "env",
+        identifier: Ok(Token(
+          kind: Ident,
+          text: "env",
+          start: Position(
+            value: 110,
+            line: 6,
+            col: 12,
+          ),
+        )),
+        arguments: Arguments(
           span: Span(
-            start: Location(
-              line: 6,
-              col: 12,
-            ),
-            end: Location(
+            start: Position(
+              value: 113,
               line: 6,
               col: 15,
             ),
-          ),
-        ),
-        arguments: [
-          String(StringLiteral(
-            raw: "\"auth-token\"",
-            value: "auth-token",
-            span: Span(
-              start: Location(
-                line: 6,
-                col: 16,
-              ),
-              end: Location(
-                line: 6,
-                col: 28,
-              ),
+            end: Position(
+              value: 127,
+              line: 6,
+              col: 29,
             ),
-          )),
-        ],
+          ),
+          parameters: [
+            String(StringLiteral(
+              raw: "\"auth-token\"",
+              value: "auth-token",
+              span: Span(
+                start: Position(
+                  value: 114,
+                  line: 6,
+                  col: 16,
+                ),
+                end: Position(
+                  value: 126,
+                  line: 6,
+                  col: 28,
+                ),
+              ),
+            )),
+          ],
+        ),
       ),
     ),
     Attribute(
-      location: Location(
+      location: Position(
+        value: 129,
         line: 8,
         col: 0,
       ),
-      identifier: Identifier(
-        name: "log",
+      identifier: Ok(Token(
+        kind: Ident,
+        text: "log",
+        start: Position(
+          value: 130,
+          line: 8,
+          col: 1,
+        ),
+      )),
+      parameters: Some(Arguments(
         span: Span(
-          start: Location(
-            line: 8,
-            col: 1,
-          ),
-          end: Location(
+          start: Position(
+            value: 133,
             line: 8,
             col: 4,
           ),
+          end: Position(
+            value: 146,
+            line: 8,
+            col: 17,
+          ),
         ),
-      ),
-      parameters: [
-        Identifier(Identifier(
-          name: "output_file",
-          span: Span(
-            start: Location(
+        parameters: [
+          Identifier(Ok(Token(
+            kind: Ident,
+            text: "output_file",
+            start: Position(
+              value: 134,
               line: 8,
               col: 5,
             ),
-            end: Location(
-              line: 8,
-              col: 16,
-            ),
-          ),
-        )),
-      ],
+          ))),
+        ],
+      )),
     ),
     Request(
       method: POST,
       endpoint: Pathname(Literal(
         value: "/asd",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 152,
             line: 9,
             col: 5,
           ),
-          end: Location(
+          end: Position(
+            value: 156,
             line: 9,
             col: 9,
           ),
@@ -215,53 +236,55 @@ Program(
           LineComment(Literal(
             value: "// asdfasd",
             span: Span(
-              start: Location(
+              start: Position(
+                value: 161,
                 line: 10,
                 col: 2,
               ),
-              end: Location(
+              end: Position(
+                value: 171,
                 line: 10,
                 col: 12,
               ),
             ),
           )),
           Header(
-            name: StringLiteral(
+            name: Ok(StringLiteral(
               raw: "\"Authorization\"",
               value: "Authorization",
               span: Span(
-                start: Location(
+                start: Position(
+                  value: 181,
                   line: 11,
                   col: 9,
                 ),
-                end: Location(
+                end: Position(
+                  value: 196,
                   line: 11,
                   col: 24,
                 ),
               ),
-            ),
-            value: Identifier(Identifier(
-              name: "token",
-              span: Span(
-                start: Location(
-                  line: 11,
-                  col: 25,
-                ),
-                end: Location(
-                  line: 11,
-                  col: 30,
-                ),
-              ),
             )),
+            value: Identifier(Ok(Token(
+              kind: Ident,
+              text: "token",
+              start: Position(
+                value: 197,
+                line: 11,
+                col: 25,
+              ),
+            ))),
           ),
           Body(
             value: TemplateSringLiteral(
               span: Span(
-                start: Location(
+                start: Position(
+                  value: 210,
                   line: 12,
                   col: 7,
                 ),
-                end: Location(
+                end: Position(
+                  value: 280,
                   line: 14,
                   col: 36,
                 ),
@@ -271,83 +294,97 @@ Program(
                   raw: "`{\n      \"neet\": \"",
                   value: "{\n      \"neet\": \"",
                   span: Span(
-                    start: Location(
+                    start: Position(
+                      value: 210,
                       line: 12,
                       col: 7,
                     ),
-                    end: Location(
+                    end: Position(
+                      value: 228,
                       line: 12,
                       col: 25,
                     ),
                   ),
                 )),
                 Call(
-                  identifier: Identifier(
-                    name: "env",
+                  identifier: Ok(Token(
+                    kind: Ident,
+                    text: "env",
+                    start: Position(
+                      value: 230,
+                      line: 13,
+                      col: 17,
+                    ),
+                  )),
+                  arguments: Arguments(
                     span: Span(
-                      start: Location(
-                        line: 13,
-                        col: 17,
-                      ),
-                      end: Location(
+                      start: Position(
+                        value: 233,
                         line: 13,
                         col: 20,
                       ),
-                    ),
-                  ),
-                  arguments: [
-                    String(StringLiteral(
-                      raw: "\"var\"",
-                      value: "var",
-                      span: Span(
-                        start: Location(
-                          line: 13,
-                          col: 21,
-                        ),
-                        end: Location(
-                          line: 13,
-                          col: 26,
-                        ),
+                      end: Position(
+                        value: 240,
+                        line: 13,
+                        col: 27,
                       ),
-                    )),
-                  ],
+                    ),
+                    parameters: [
+                      String(StringLiteral(
+                        raw: "\"var\"",
+                        value: "var",
+                        span: Span(
+                          start: Position(
+                            value: 234,
+                            line: 13,
+                            col: 21,
+                          ),
+                          end: Position(
+                            value: 239,
+                            line: 13,
+                            col: 26,
+                          ),
+                        ),
+                      )),
+                    ],
+                  ),
                 ),
                 String(StringLiteral(
                   raw: "\",\n      \"nerd\": \"",
                   value: ",\n      \"nerd\": ",
                   span: Span(
-                    start: Location(
+                    start: Position(
+                      value: 241,
                       line: 13,
                       col: 28,
                     ),
-                    end: Location(
+                    end: Position(
+                      value: 259,
                       line: 13,
                       col: 46,
                     ),
                   ),
                 )),
-                Identifier(Identifier(
-                  name: "output_file",
-                  span: Span(
-                    start: Location(
-                      line: 14,
-                      col: 17,
-                    ),
-                    end: Location(
-                      line: 14,
-                      col: 28,
-                    ),
+                Identifier(Ok(Token(
+                  kind: Ident,
+                  text: "output_file",
+                  start: Position(
+                    value: 261,
+                    line: 14,
+                    col: 17,
                   ),
-                )),
+                ))),
                 String(StringLiteral(
                   raw: "\",\n  }`",
                   value: "\",\n  }",
                   span: Span(
-                    start: Location(
+                    start: Position(
+                      value: 273,
                       line: 14,
                       col: 29,
                     ),
-                    end: Location(
+                    end: Position(
+                      value: 280,
                       line: 14,
                       col: 36,
                     ),
@@ -355,64 +392,68 @@ Program(
                 )),
               ],
             ),
-            start: Location(
+            start: Position(
+              value: 205,
               line: 12,
               col: 2,
             ),
           ),
         ],
         span: Span(
-          start: Location(
+          start: Position(
+            value: 157,
             line: 9,
             col: 10,
           ),
-          end: Location(
+          end: Position(
+            value: 281,
             line: 16,
             col: 0,
           ),
         ),
       )),
       span: Span(
-        start: Location(
+        start: Position(
+          value: 147,
           line: 9,
           col: 0,
         ),
-        end: Location(
+        end: Position(
+          value: 281,
           line: 16,
           col: 0,
         ),
       ),
     ),
     Attribute(
-      location: Location(
+      location: Position(
+        value: 284,
         line: 18,
         col: 0,
       ),
-      identifier: Identifier(
-        name: "skip",
-        span: Span(
-          start: Location(
-            line: 18,
-            col: 1,
-          ),
-          end: Location(
-            line: 18,
-            col: 5,
-          ),
+      identifier: Ok(Token(
+        kind: Ident,
+        text: "skip",
+        start: Position(
+          value: 285,
+          line: 18,
+          col: 1,
         ),
-      ),
-      parameters: [],
+      )),
+      parameters: None,
     ),
     Request(
       method: GET,
       endpoint: Pathname(Literal(
         value: "/api",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 294,
             line: 19,
             col: 4,
           ),
-          end: Location(
+          end: Position(
+            value: 298,
             line: 19,
             col: 8,
           ),
@@ -421,22 +462,26 @@ Program(
       block: Some(Block(
         statements: [],
         span: Span(
-          start: Location(
+          start: Position(
+            value: 299,
             line: 19,
             col: 9,
           ),
-          end: Location(
+          end: Position(
+            value: 300,
             line: 19,
             col: 10,
           ),
         ),
       )),
       span: Span(
-        start: Location(
+        start: Position(
+          value: 290,
           line: 19,
           col: 0,
         ),
-        end: Location(
+        end: Position(
+          value: 300,
           line: 19,
           col: 10,
         ),
@@ -447,11 +492,13 @@ Program(
       endpoint: Pathname(Literal(
         value: "/api",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 307,
             line: 21,
             col: 4,
           ),
-          end: Location(
+          end: Position(
+            value: 311,
             line: 21,
             col: 8,
           ),
@@ -460,22 +507,26 @@ Program(
       block: Some(Block(
         statements: [],
         span: Span(
-          start: Location(
+          start: Position(
+            value: 312,
             line: 21,
             col: 9,
           ),
-          end: Location(
+          end: Position(
+            value: 313,
             line: 21,
             col: 10,
           ),
         ),
       )),
       span: Span(
-        start: Location(
+        start: Position(
+          value: 303,
           line: 21,
           col: 0,
         ),
-        end: Location(
+        end: Position(
+          value: 313,
           line: 21,
           col: 10,
         ),
@@ -486,11 +537,13 @@ Program(
       endpoint: Pathname(Literal(
         value: "/api",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 321,
             line: 22,
             col: 6,
           ),
-          end: Location(
+          end: Position(
+            value: 325,
             line: 22,
             col: 10,
           ),
@@ -499,22 +552,26 @@ Program(
       block: Some(Block(
         statements: [],
         span: Span(
-          start: Location(
+          start: Position(
+            value: 326,
             line: 22,
             col: 11,
           ),
-          end: Location(
+          end: Position(
+            value: 327,
             line: 22,
             col: 12,
           ),
         ),
       )),
       span: Span(
-        start: Location(
+        start: Position(
+          value: 315,
           line: 22,
           col: 0,
         ),
-        end: Location(
+        end: Position(
+          value: 327,
           line: 22,
           col: 12,
         ),
@@ -525,11 +582,13 @@ Program(
       endpoint: Pathname(Literal(
         value: "/api",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 336,
             line: 23,
             col: 7,
           ),
-          end: Location(
+          end: Position(
+            value: 340,
             line: 23,
             col: 11,
           ),
@@ -538,22 +597,26 @@ Program(
       block: Some(Block(
         statements: [],
         span: Span(
-          start: Location(
+          start: Position(
+            value: 341,
             line: 23,
             col: 12,
           ),
-          end: Location(
+          end: Position(
+            value: 342,
             line: 23,
             col: 13,
           ),
         ),
       )),
       span: Span(
-        start: Location(
+        start: Position(
+          value: 329,
           line: 23,
           col: 0,
         ),
-        end: Location(
+        end: Position(
+          value: 342,
           line: 23,
           col: 13,
         ),

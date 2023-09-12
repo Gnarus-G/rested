@@ -1,8 +1,8 @@
 ---
-source: lexer/tests/lexer.rs
+source: tests/lexer.rs
 description: "\"hello"
-expression: "lexer.into_iter().collect::<Vec<Token>>()"
+expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
-    UnfinishedStringLiteral("\"hello") at Location { line: 0, col: 0 },
+    UnfinishedStringLiteral("\"hello") at Position { value: 0, line: 0, col: 0 },
 ]

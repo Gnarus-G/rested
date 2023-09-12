@@ -1,5 +1,5 @@
 ---
-source: parser/tests/parser.rs
+source: tests/parser.rs
 description: "get http://localhost:8080\n        get http://localhost:8080 {}"
 expression: ast
 ---
@@ -10,11 +10,13 @@ Program(
       endpoint: Url(Literal(
         value: "http://localhost:8080",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 4,
             line: 0,
             col: 4,
           ),
-          end: Location(
+          end: Position(
+            value: 25,
             line: 0,
             col: 25,
           ),
@@ -22,11 +24,13 @@ Program(
       )),
       block: None,
       span: Span(
-        start: Location(
+        start: Position(
+          value: 0,
           line: 0,
           col: 0,
         ),
-        end: Location(
+        end: Position(
+          value: 25,
           line: 0,
           col: 25,
         ),
@@ -37,11 +41,13 @@ Program(
       endpoint: Url(Literal(
         value: "http://localhost:8080",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 38,
             line: 1,
             col: 12,
           ),
-          end: Location(
+          end: Position(
+            value: 59,
             line: 1,
             col: 33,
           ),
@@ -50,22 +56,26 @@ Program(
       block: Some(Block(
         statements: [],
         span: Span(
-          start: Location(
+          start: Position(
+            value: 60,
             line: 1,
             col: 34,
           ),
-          end: Location(
+          end: Position(
+            value: 61,
             line: 1,
             col: 35,
           ),
         ),
       )),
       span: Span(
-        start: Location(
+        start: Position(
+          value: 34,
           line: 1,
           col: 8,
         ),
-        end: Location(
+        end: Position(
+          value: 61,
           line: 1,
           col: 35,
         ),

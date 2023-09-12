@@ -1,53 +1,68 @@
 ---
-source: parser/tests/parser.rs
+source: tests/parser.rs
 description: "@log(\"path/to/file\") \n                // ignored\n                get /api"
 expression: ast
 ---
 Program(
   items: [
     Attribute(
-      location: Location(
+      location: Position(
+        value: 0,
         line: 0,
         col: 0,
       ),
-      identifier: Identifier(
-        name: "log",
+      identifier: Ok(Token(
+        kind: Ident,
+        text: "log",
+        start: Position(
+          value: 1,
+          line: 0,
+          col: 1,
+        ),
+      )),
+      parameters: Some(Arguments(
         span: Span(
-          start: Location(
-            line: 0,
-            col: 1,
-          ),
-          end: Location(
+          start: Position(
+            value: 4,
             line: 0,
             col: 4,
           ),
-        ),
-      ),
-      parameters: [
-        String(StringLiteral(
-          raw: "\"path/to/file\"",
-          value: "path/to/file",
-          span: Span(
-            start: Location(
-              line: 0,
-              col: 5,
-            ),
-            end: Location(
-              line: 0,
-              col: 19,
-            ),
+          end: Position(
+            value: 20,
+            line: 0,
+            col: 20,
           ),
-        )),
-      ],
+        ),
+        parameters: [
+          String(StringLiteral(
+            raw: "\"path/to/file\"",
+            value: "path/to/file",
+            span: Span(
+              start: Position(
+                value: 5,
+                line: 0,
+                col: 5,
+              ),
+              end: Position(
+                value: 19,
+                line: 0,
+                col: 19,
+              ),
+            ),
+          )),
+        ],
+      )),
     ),
     LineComment(Literal(
       value: "// ignored",
       span: Span(
-        start: Location(
+        start: Position(
+          value: 38,
           line: 1,
           col: 16,
         ),
-        end: Location(
+        end: Position(
+          value: 48,
           line: 1,
           col: 26,
         ),
@@ -58,11 +73,13 @@ Program(
       endpoint: Pathname(Literal(
         value: "/api",
         span: Span(
-          start: Location(
+          start: Position(
+            value: 69,
             line: 2,
             col: 20,
           ),
-          end: Location(
+          end: Position(
+            value: 73,
             line: 2,
             col: 24,
           ),
@@ -70,11 +87,13 @@ Program(
       )),
       block: None,
       span: Span(
-        start: Location(
+        start: Position(
+          value: 65,
           line: 2,
           col: 16,
         ),
-        end: Location(
+        end: Position(
+          value: 73,
           line: 2,
           col: 24,
         ),

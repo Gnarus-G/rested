@@ -1,9 +1,9 @@
 ---
-source: lexer/tests/lexer.rs
+source: tests/lexer.rs
 description: "\n\"hello\n\"world\n"
-expression: "lexer.into_iter().collect::<Vec<Token>>()"
+expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
-    UnfinishedStringLiteral("\n\"hello") at Location { line: 1, col: 0 },
-    UnfinishedStringLiteral("\n\"hello\n\"world") at Location { line: 2, col: 0 },
+    UnfinishedStringLiteral("\n\"hello") at Position { value: 1, line: 1, col: 0 },
+    UnfinishedStringLiteral("\n\"hello\n\"world") at Position { value: 8, line: 2, col: 0 },
 ]

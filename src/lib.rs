@@ -4,3 +4,9 @@ pub mod interpreter;
 pub mod language_server;
 pub mod lexer;
 pub mod parser;
+
+mod utils {
+    use std::sync::Arc;
+    pub type Array<T> = Arc<[T]>;
+    pub type String = Arc<str>;
+}

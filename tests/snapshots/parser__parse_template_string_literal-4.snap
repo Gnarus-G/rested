@@ -1,0 +1,91 @@
+---
+source: tests/parser.rs
+description: "\nlet b = `asdf ${}` \nlet c = {}\n"
+expression: ast
+---
+Program(
+  items: [
+    Let(
+      identifier: Ok(Token(
+        kind: Ident,
+        text: "b",
+        start: Position(
+          value: 5,
+          line: 1,
+          col: 4,
+        ),
+      )),
+      value: TemplateSringLiteral(
+        span: Span(
+          start: Position(
+            value: 9,
+            line: 1,
+            col: 8,
+          ),
+          end: Position(
+            value: 19,
+            line: 1,
+            col: 18,
+          ),
+        ),
+        parts: [
+          String(StringLiteral(
+            raw: "`asdf ",
+            value: "asdf ",
+            span: Span(
+              start: Position(
+                value: 9,
+                line: 1,
+                col: 8,
+              ),
+              end: Position(
+                value: 15,
+                line: 1,
+                col: 14,
+              ),
+            ),
+          )),
+          String(StringLiteral(
+            raw: "`",
+            value: "",
+            span: Span(
+              start: Position(
+                value: 18,
+                line: 1,
+                col: 17,
+              ),
+              end: Position(
+                value: 19,
+                line: 1,
+                col: 18,
+              ),
+            ),
+          )),
+        ],
+      ),
+    ),
+    Let(
+      identifier: Ok(Token(
+        kind: Ident,
+        text: "c",
+        start: Position(
+          value: 25,
+          line: 2,
+          col: 4,
+        ),
+      )),
+      value: EmptyObject(Span(
+        start: Position(
+          value: 29,
+          line: 2,
+          col: 8,
+        ),
+        end: Position(
+          value: 31,
+          line: 2,
+          col: 10,
+        ),
+      )),
+    ),
+  ],
+)

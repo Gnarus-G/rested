@@ -1,20 +1,33 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
 mod completions;
+mod position;
 
-use crate::lexer::locations::Location;
-use crate::lexer::Token;
-use crate::parser::Parser;
+use crate::lexer;
+use crate::lexer::locations::{GetSpan, Location};
+use crate::parser::ast::Program;
+use crate::parser::{self, Parser};
 use completions::*;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::{lsp_types::*, LspService, Server};
 use tower_lsp::{Client, LanguageServer};
+
+use self::position::ContainsPosition;
 
 trait IntoPosition {
     fn into_position(self) -> Position;
 }
 
 impl IntoPosition for Location {
+    fn into_position(self) -> Position {
+        Position {
+            line: self.line as u32,
+            character: self.col as u32,
+        }
+    }
+}
+
+impl IntoPosition for lexer::locations::Position {
     fn into_position(self) -> Position {
         Position {
             line: self.line as u32,
@@ -65,26 +78,36 @@ struct ChangedDocumentItem {
 
 impl Backend {
     async fn on_change(&self, params: ChangedDocumentItem) {
-        let result = Parser::new(&params.text).parse();
+        let program = Parser::new(&params.text).parse();
 
         let mut diagnostics = vec![];
 
-        if let Err(error) = result {
-            for err in error.errors.iter() {
-                let range = Range {
-                    start: err.span.start.into_position(),
-                    end: err.span.end.into_position(),
-                };
+        for err in program.errors().iter() {
+            let range = Range {
+                start: match &err.inner_error {
+                    parser::error::ParseError::ExpectedToken { found, .. }
+                    | parser::error::ParseError::ExpectedEitherOfTokens { found, .. } => {
+                        found.start.into_position()
+                    }
+                },
+                end: match &err.inner_error {
+                    parser::error::ParseError::ExpectedToken { found, .. }
+                    | parser::error::ParseError::ExpectedEitherOfTokens { found, .. } => {
+                        found.span().end.into_position()
+                    }
+                },
+            };
 
-                diagnostics.push(Diagnostic::new_simple(range, err.inner_error.to_string()));
+            diagnostics.push(Diagnostic::new_simple(range, err.inner_error.to_string()));
 
-                if let Some(msg) = err.message.clone() {
-                    diagnostics.push(Diagnostic::new_simple(range, msg))
-                }
+            if let Some(msg) = err.message.clone() {
+                diagnostics.push(Diagnostic::new_simple(range, msg.to_string()))
             }
-        };
+        }
 
         self.documents.put(params.uri.clone(), params.text);
+
+        diagnostics.reverse();
 
         self.client
             .publish_diagnostics(params.uri, diagnostics, Some(params.version))
@@ -134,84 +157,51 @@ impl LanguageServer for Backend {
         let Some(text) = self
             .documents
             .get(params.text_document_position.text_document.uri)
-            else {
-                return Ok(None);
-            };
-
-        let methods = http_method_completions();
+        else {
+            return Ok(None);
+        };
 
         let builtin_functions = builtin_functions_completions();
 
-        let program = match crate::parser::Parser::new(&text).parse() {
-            Ok(ast) => ast,
-            Err(err) => err.incomplete_rogram,
-        };
-
-        let variables = program
-            .variables_before(Location {
-                line: position.line as usize,
-                col: position.character as usize,
-            })
-            .iter()
-            .map(|var| CompletionItem {
-                label: var.name.to_string(),
-                kind: Some(CompletionItemKind::VARIABLE),
-                insert_text: Some(var.name.to_string()),
-                ..CompletionItem::default()
-            })
-            .collect();
-
-        for item in program.items.iter() {
-            if let crate::parser::ast::Item::Request {
-                block: Some(block), ..
-            } = item
-            {
-                let contains_position = block.span.contains(&position);
-                if contains_position {
-                    let header_or_body = header_body_keyword_completions();
-                    return Ok(Some(CompletionResponse::Array([header_or_body].concat())));
-                }
-            }
-        }
-
-        let mut tokens = crate::lexer::Lexer::new(&text)
-            .filter(|t| {
-                t.start.is_before(Location {
+        let get_variables = |program: &Program| {
+            return program
+                .variables_before(Location {
                     line: position.line as usize,
                     col: position.character as usize,
                 })
-            })
-            .collect::<Vec<_>>();
-
-        tokens.reverse();
-
-        use crate::lexer::TokenKind::*;
-
-        match tokens.as_slice() {
-            [Token {
-                kind: StringLiteral,
-                ..
-            }, Token { kind: Header, .. }, ..]
-            | [Token { kind: Assign, .. }, _, _]
-            | [Token { kind: Body, .. }, ..]
-            | [Token { kind: Colon, .. }, Token { kind: Ident, .. }, ..] => {
-                return Ok(Some(CompletionResponse::Array(
-                    [builtin_functions, variables].concat(),
-                )));
-            }
-            [Token { kind: Set, .. }, ..] => {
-                return Ok(Some(CompletionResponse::Array(vec![CompletionItem {
-                    label: "BASE_URL".to_string(),
-                    kind: Some(CompletionItemKind::CONSTANT),
+                .iter()
+                .map(|var| CompletionItem {
+                    label: var.text.to_string(),
+                    kind: Some(CompletionItemKind::VARIABLE),
+                    insert_text: Some(var.text.to_string()),
                     ..CompletionItem::default()
-                }])));
-            }
-            _ => {}
-        }
+                })
+                .collect();
+        };
 
-        return Ok(Some(CompletionResponse::Array(
-            [methods, builtin_functions, variables].concat(),
-        )));
+        let program = parser::Parser::new(&text).parse();
+
+        let variables = get_variables(&program);
+
+        let completions_store = CompletionsStore {
+            functions: builtin_functions,
+            items: item_keywords(),
+            header_body: header_body_keyword_completions(),
+            attributes: attributes_completions(),
+            variables,
+        };
+
+        let Some(current_item) = program
+            .items
+            .into_iter()
+            .find(|i| i.span().contains(&position))
+        else {
+            return Ok(Some(CompletionResponse::Array(completions_store.items)));
+        };
+
+        return Ok(current_item
+            .completions(&position, &completions_store)
+            .map(CompletionResponse::Array));
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {

@@ -1,0 +1,14 @@
+---
+source: tests/lexer.rs
+description: "`asdf ${test} ${df} `"
+expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
+---
+[
+    TemplateString { head: true, tail: false }("`asdf ") at Position { value: 0, line: 0, col: 0 },
+    DollarSignLBracket("${") at Position { value: 6, line: 0, col: 6 },
+    Ident("test") at Position { value: 8, line: 0, col: 8 },
+    TemplateString { head: false, tail: false }(" ") at Position { value: 13, line: 0, col: 13 },
+    DollarSignLBracket("${") at Position { value: 14, line: 0, col: 14 },
+    Ident("df") at Position { value: 16, line: 0, col: 16 },
+    TemplateString { head: false, tail: true }(" `") at Position { value: 19, line: 0, col: 19 },
+]

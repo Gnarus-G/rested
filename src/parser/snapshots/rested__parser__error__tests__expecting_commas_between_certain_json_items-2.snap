@@ -1,15 +1,92 @@
 ---
-source: parser/src/error.rs
-expression: error
+source: src/parser/error.rs
+description: " let o = [\"joe\" \"world\"] "
+expression: ast
 ---
-ParserErrors {
-    errors: [
-         let o = ["joe" "world"] 
-                        ≈≈≈≈≈≈≈
-                        ↳ [1:17] expected ',' but got string
-        ,
-    ],
-    incomplete_rogram: Program {
-        items: [],
-    },
-}
+Program(
+  items: [
+    Let(
+      identifier: Ok(Token(
+        kind: Ident,
+        text: "o",
+        start: Position(
+          value: 5,
+          line: 0,
+          col: 5,
+        ),
+      )),
+      value: Error(ContextualError(
+        inner_error: ExpectedToken(
+          found: Token(
+            kind: StringLiteral,
+            text: "\"world\"",
+            start: Position(
+              value: 16,
+              line: 0,
+              col: 16,
+            ),
+          ),
+          expected: Comma,
+        ),
+        span: Span(
+          start: Position(
+            value: 9,
+            line: 0,
+            col: 9,
+          ),
+          end: Position(
+            value: 23,
+            line: 0,
+            col: 23,
+          ),
+        ),
+        message: None,
+        context: ErrorSourceContext(
+          above: None,
+          line: " let o = [\"joe\" \"world\"] ",
+          below: None,
+        ),
+      )),
+    ),
+    Error(ContextualError(
+      inner_error: ExpectedEitherOfTokens(
+        found: Token(
+          kind: RSquare,
+          text: "]",
+          start: Position(
+            value: 23,
+            line: 0,
+            col: 23,
+          ),
+        ),
+        expected: [
+          Ident,
+          StringLiteral,
+          Boolean,
+          Number,
+          LBracket,
+          LSquare,
+          Null,
+        ],
+      ),
+      span: Span(
+        start: Position(
+          value: 23,
+          line: 0,
+          col: 23,
+        ),
+        end: Position(
+          value: 24,
+          line: 0,
+          col: 24,
+        ),
+      ),
+      message: None,
+      context: ErrorSourceContext(
+        above: None,
+        line: " let o = [\"joe\" \"world\"] ",
+        below: None,
+      ),
+    )),
+  ],
+)

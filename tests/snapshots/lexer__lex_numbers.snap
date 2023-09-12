@@ -1,9 +1,9 @@
 ---
-source: lexer/tests/lexer.rs
+source: tests/lexer.rs
 description: 123124 1.0
-expression: "lexer.into_iter().collect::<Vec<Token>>()"
+expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
-    Number("123124") at Location { line: 0, col: 0 },
-    Number("1.0") at Location { line: 0, col: 7 },
+    Number("123124") at Position { value: 0, line: 0, col: 0 },
+    Number("1.0") at Position { value: 7, line: 0, col: 7 },
 ]

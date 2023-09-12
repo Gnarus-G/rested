@@ -14,10 +14,12 @@ use colored::Colorize;
 use environment::Environment;
 use error::InterpreterError;
 
-use crate::lexer::Array;
-use crate::parser::ast::{self, Endpoint, Expression, Identifier, Literal};
+use crate::lexer;
+use crate::parser::ast::{self, Endpoint, Expression, Literal};
+use crate::utils::Array;
 
 use crate::lexer::locations::{GetSpan, Span};
+use crate::parser::error::ParserErrors;
 
 use self::error::InterpErrorFactory;
 use attributes::AttributeStore;
@@ -46,8 +48,6 @@ pub struct Interpreter<'source, R: ir::Runner> {
     let_bindings: HashMap<&'source str, String>,
     runner: R,
 }
-
-#[allow(clippy::result_large_err)]
 
 impl<'source, R: ir::Runner> Interpreter<'source, R> {
     pub fn new(code: &'source str, env: Environment, runner: R) -> Self {
@@ -129,7 +129,13 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
     fn evaluate(&mut self) -> Result<'source, Array<RequestMeta>> {
         let mut parser = crate::parser::Parser::new(self.code);
 
-        let ast = parser.parse()?;
+        let ast = parser.parse();
+
+        let parse_errors = ast.errors();
+
+        if !parse_errors.is_empty() {
+            return Err(ParserErrors::new(parse_errors).into());
+        }
 
         use ast::Item::*;
 
@@ -137,7 +143,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
 
         let mut requests = vec![];
 
-        for item in ast.items.iter() {
+        for item in ast.items.into_iter() {
             match item {
                 Request {
                     method,
@@ -153,7 +159,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
 
                     let span = span.to_end_of(endpoint.span());
 
-                    let path = self.evaluate_request_endpoint(endpoint)?;
+                    let path = self.evaluate_request_endpoint(&endpoint)?;
 
                     let mut headers = vec![];
                     let mut body = None;
@@ -163,7 +169,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                             match statement {
                                 ast::Statement::Header { name, value } => {
                                     headers.push(Header::new(
-                                        name.value.to_string(),
+                                        name.get()?.value.to_string(),
                                         self.evaluate_expression(value)?,
                                     ))
                                 }
@@ -173,6 +179,12 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                                     }
                                 }
                                 ast::Statement::LineComment(_) => {}
+                                ast::Statement::Error(err) => {
+                                    unreachable!(
+                                        "all syntax errors should have been caught, but found {}",
+                                        err
+                                    )
+                                }
                             }
                         }
                     }
@@ -209,7 +221,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                         log_destination,
                         span,
                         request: ir::Request {
-                            method: *method,
+                            method,
                             url: path,
                             headers: headers.into(),
                             body,
@@ -219,39 +231,56 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                     attributes.clear();
                 }
                 Set { identifier, value } => {
-                    if identifier.name != "BASE_URL" {
+                    let identifier = identifier.get()?;
+                    if identifier.text != "BASE_URL" {
                         return Err(self.error_factory.unknown_constant(identifier).into());
                     }
 
-                    self.base_url = Some(self.evaluate_expression(value)?);
+                    self.base_url = Some(self.evaluate_expression(&value)?);
                 }
                 LineComment(_) => {}
                 Attribute {
                     identifier,
                     parameters,
                     ..
-                } => match identifier.name {
-                    "name" | "log" | "dbg" | "skip" => {
-                        if attributes.has(identifier.name) {
-                            return Err(self.error_factory.duplicate_attribute(identifier).into());
+                } => {
+                    let identifier = identifier.get()?;
+
+                    match identifier.text {
+                        "name" | "log" | "dbg" | "skip" => {
+                            if attributes.has(identifier.text) {
+                                return Err(self
+                                    .error_factory
+                                    .duplicate_attribute(identifier)
+                                    .into());
+                            }
+                            attributes.add(
+                                identifier,
+                                parameters.map(|p| p.parameters).unwrap_or_default(),
+                            );
                         }
-                        attributes.add(identifier, parameters.clone());
+                        _ => {
+                            return Err(self
+                                .error_factory
+                                .unsupported_attribute(identifier)
+                                .with_message(
+                                    "@name, @log, @skip and @dbg are the only supported attributes",
+                                )
+                                .into());
+                        }
                     }
-                    _ => {
-                        return Err(self
-                            .error_factory
-                            .unsupported_attribute(identifier)
-                            .with_message(
-                                "@name, @log, @skip and @dbg are the only supported attributes",
-                            )
-                            .into());
-                    }
-                },
+                }
                 Let { identifier, value } => {
-                    let value = self.evaluate_expression(value)?;
-                    self.let_bindings.insert(identifier.name, value);
+                    let value = self.evaluate_expression(&value)?;
+                    self.let_bindings.insert(identifier.get()?.text, value);
                 }
                 Expr(_) => continue,
+                Error(err) => {
+                    unreachable!(
+                        "all syntax errors should have been caught, but found {}",
+                        err
+                    )
+                }
             }
         }
 
@@ -272,7 +301,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         let expression_span = exp.span();
 
         let value = match exp {
-            Identifier(token) => self.evaluate_identifier(token)?,
+            Identifier(token) => self.evaluate_identifier(token.get()?)?,
             String(token) => {
                 if quote_string_literal {
                     format!("{:?}", token.value)
@@ -289,8 +318,11 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                 identifier,
                 arguments,
             } => {
-                let value =
-                    self.evaluate_call_expression(identifier, arguments, expression_span)?;
+                let value = self.evaluate_call_expression(
+                    identifier.get()?,
+                    &arguments.parameters,
+                    expression_span,
+                )?;
                 if quote_string_literal {
                     format!("{:?}", value)
                 } else {
@@ -315,9 +347,9 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
             Object((.., fields)) => {
                 let mut props = HashMap::new();
 
-                for (key, value) in fields {
+                for ast::ObjectEntry(key, value) in fields {
                     let value = self.evaluate_expression_and_quote_string(value, true)?;
-                    props.insert(key.to_string(), value);
+                    props.insert(key.get()?.value.to_string(), value);
                 }
 
                 format!(
@@ -332,6 +364,10 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
             EmptyArray(_) => "[]".to_string(),
             EmptyObject(_) => "{}".to_string(),
             Null(_) => "null".to_string(),
+            Error(err) => unreachable!(
+                "all syntax errors should have been caught, but found {}",
+                err
+            ),
         };
 
         Ok(value)
@@ -339,11 +375,11 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
 
     fn evaluate_call_expression(
         &self,
-        identifier: &Identifier<'source>,
+        identifier: &lexer::Token<'source>,
         arguments: &[Expression<'source>],
         expression_span: Span,
     ) -> Result<'source, String> {
-        let string_value = match identifier.name {
+        let string_value = match identifier.text {
             "env" => {
                 let arg = arguments.first().ok_or_else(|| {
                     self.error_factory
@@ -437,10 +473,10 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         })
     }
 
-    fn evaluate_identifier(&self, token: &ast::Identifier) -> Result<'source, String> {
+    fn evaluate_identifier(&self, token: &lexer::Token<'source>) -> Result<'source, String> {
         let value = self
             .let_bindings
-            .get(token.name)
+            .get(token.text)
             .map(|value| value.to_string())
             .ok_or_else(|| {
                 self.error_factory

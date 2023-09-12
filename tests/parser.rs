@@ -5,7 +5,7 @@ use rested::parser::Parser;
 macro_rules! assert_ast {
     ($input:literal) => {
         let mut parser = Parser::new($input);
-        let ast = parser.parse().unwrap();
+        let ast = parser.parse();
 
         insta::with_settings!({
              description => $input
@@ -44,12 +44,6 @@ patch /api {}
 delete /api {}
 "#
     );
-}
-
-use rested::lexer::locations::Location;
-
-pub fn at(line: usize, col: usize) -> Location {
-    Location { line, col }
 }
 
 #[test]
@@ -144,6 +138,33 @@ fn parse_template_string_literal() {
             body `{"neet": ${env("love")}, 2: ${"two"}}`
         }"#
     );
+
+    assert_ast!(
+        r#"
+let b = `asdf ${}` 
+"#
+    );
+
+    assert_ast!(
+        r#"
+let b = `asdf ${test} ${} ${"word"}`
+"#
+    );
+
+    assert_ast!(
+        r#"
+let b = `asdf ${}` 
+let c = {}
+"#
+    );
+
+    assert_ast!(
+        r#"
+`asdf ${test} ${a}`
+"#
+    );
+
+    assert_ast!(r#"`asdf ${`hello${"world"}`} jkl`"#);
 }
 
 #[test]
