@@ -17,10 +17,6 @@ pub struct ScratchCommandArgs {
     #[command(subcommand)]
     command: Option<ScratchCommand>,
 
-    /// Create a new scratch file
-    #[arg(long)]
-    new: bool,
-
     /// Run the saved file when done editing
     #[arg(long)]
     run: bool,
@@ -41,6 +37,20 @@ pub enum ScratchCommand {
         // Don't show scratch file previews
         #[arg(short, long)]
         quiet: bool,
+    },
+
+    /// Create a new scratch file
+    New,
+
+    /// Run the last scratch file edited
+    Run {
+        /// Namespace in which to look for environment variables
+        #[arg(short = 'n', long)]
+        namespace: Option<String>,
+
+        /// One or more names of the specific request(s) to run
+        #[arg(short = 'r', long, num_args(1..))]
+        request: Option<Vec<String>>,
     },
 }
 
@@ -63,11 +73,26 @@ impl ScratchCommandArgs {
                         }
                     }
                 }
+                ScratchCommand::New => {
+                    let file_name = create_scratch_file()?;
+                    edit(file_name)?;
+                }
+                ScratchCommand::Run { namespace, request } => {
+                    let file_name = match fetch_scratch_files()?.last().cloned() {
+                        Some(last) => last,
+                        None => create_scratch_file()?,
+                    };
+
+                    RunArgs {
+                        request: request.clone(),
+                        namespace: namespace.clone(),
+                        file: Some(file_name),
+                    }
+                    .handle(env)?;
+                }
             },
             None => {
-                let file_name = if self.new {
-                    create_scratch_file()?
-                } else if let Some(file) = fetch_scratch_files()?.last().cloned() {
+                let file_name = if let Some(file) = fetch_scratch_files()?.last().cloned() {
                     file
                 } else {
                     create_scratch_file()?
