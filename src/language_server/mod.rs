@@ -93,8 +93,7 @@ impl Backend {
                 .publish_diagnostics(params.uri, vec![], Some(params.version))
                 .await;
         };
-        let env_path = config.scratch_dir.join(".vars.rd.json");
-        let Ok(env) = Environment::new(env_path) else {
+        let Ok(env) = Environment::new(config.env_file_path()) else {
             self.client
                 .log_message(MessageType::ERROR, "failed to initialize the environment")
                 .await;

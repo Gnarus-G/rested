@@ -13,6 +13,10 @@ impl Config {
     pub fn save(self) -> anyhow::Result<()> {
         return confy::store("rested", None, self).map_err(|e| e.into());
     }
+
+    pub fn env_file_path(&self) -> PathBuf {
+        self.scratch_dir.join(".vars.rd.json")
+    }
 }
 
 impl Default for Config {
