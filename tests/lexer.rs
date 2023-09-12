@@ -97,6 +97,11 @@ post http://localhost {
 #[test]
 fn lex_call_expression() {
     assert_lexes!(r#"env() env("stuff")"#);
+    assert_lexes!(
+        r#"
+let a = env(")
+"#
+    );
 }
 
 #[test]

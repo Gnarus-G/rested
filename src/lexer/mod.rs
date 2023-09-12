@@ -355,7 +355,7 @@ impl<'i> Lexer<'i> {
     }
 
     fn string_literal(&mut self) -> Token<'i> {
-        let location = self.position;
+        let start_pos = self.position;
 
         let (s, e) = self.read_while(|&c| c != b'"' && c != b'\n');
 
@@ -363,8 +363,8 @@ impl<'i> Lexer<'i> {
             Some(b'\n') | None => {
                 return Token {
                     kind: TokenKind::UnfinishedStringLiteral,
-                    start: location,
-                    text: self.input_slice(..e),
+                    start: start_pos,
+                    text: self.input_slice(start_pos.value..e),
                 };
             }
             _ => {}
@@ -376,7 +376,7 @@ impl<'i> Lexer<'i> {
 
         Token {
             kind: TokenKind::StringLiteral,
-            start: location,
+            start: start_pos,
             text: string,
         }
     }

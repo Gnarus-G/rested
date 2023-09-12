@@ -1,0 +1,13 @@
+---
+source: tests/lexer.rs
+description: "\nlet a = env(\")\n"
+expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
+---
+[
+    Let("let") at Position { value: 1, line: 1, col: 0 },
+    Ident("a") at Position { value: 5, line: 1, col: 4 },
+    Assign("=") at Position { value: 7, line: 1, col: 6 },
+    Ident("env") at Position { value: 9, line: 1, col: 8 },
+    LParen("(") at Position { value: 12, line: 1, col: 11 },
+    UnfinishedStringLiteral("\")") at Position { value: 13, line: 1, col: 12 },
+]
