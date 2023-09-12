@@ -8,9 +8,9 @@ use std::{
 
 use clap::{Args, Subcommand};
 use colored::Colorize;
-use rested::interpreter::environment::Environment;
+use rested::{config::Config, interpreter::environment::Environment};
 
-use super::{config::Config, run::RunArgs};
+use super::run::RunArgs;
 
 #[derive(Debug, Args)]
 pub struct ScratchCommandArgs {

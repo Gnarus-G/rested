@@ -1,3 +1,4 @@
+pub mod config;
 pub mod error;
 pub mod error_meta;
 pub mod interpreter;

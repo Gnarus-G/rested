@@ -4,6 +4,7 @@ mod completions;
 mod position;
 mod runner;
 
+use crate::config::Config;
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{self, Interpreter};
 use crate::lexer;
@@ -82,7 +83,14 @@ struct ChangedDocumentItem {
 
 impl Backend {
     async fn on_change(&self, params: ChangedDocumentItem) {
-        let Ok(env) = Environment::new(".vars.rd.json") else {
+        let Ok(config) = Config::load() else {
+            return self
+                .client
+                .log_message(MessageType::ERROR, "failed to load configs")
+                .await;
+        };
+        let env_path = config.scratch_dir.join(".vars.rd.json");
+        let Ok(env) = Environment::new(env_path) else {
             return self
                 .client
                 .log_message(MessageType::ERROR, "failed to initialize the environment")

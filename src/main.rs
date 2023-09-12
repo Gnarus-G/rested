@@ -4,9 +4,10 @@ use clap::{CommandFactory, Parser, Subcommand};
 use cli::config::ConfigArgs;
 use cli::run::RunArgs;
 use cli::scratch::ScratchCommandArgs;
+use rested::config::Config;
 use rested::interpreter::environment::Environment;
 
-use std::{collections::HashMap, path::PathBuf};
+use std::collections::HashMap;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
@@ -83,7 +84,7 @@ fn main() {
 fn run() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
-    let mut env = Environment::new(PathBuf::from(".vars.rd.json"))?;
+    let mut env = Environment::new(Config::load()?.scratch_dir.join(".vars.rd.json"))?;
 
     match cli.command {
         Command::Env { command } => match command {
