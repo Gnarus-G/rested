@@ -245,4 +245,13 @@ mod convert {
             Self::Error(value.into())
         }
     }
+
+    impl<'source> From<std::result::Result<Self, Box<Error<'source>>>> for Expression<'source> {
+        fn from(value: std::result::Result<Self, Box<Error<'source>>>) -> Self {
+            match value {
+                Ok(v) => v,
+                Err(error) => Self::Error(error),
+            }
+        }
+    }
 }

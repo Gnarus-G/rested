@@ -230,12 +230,15 @@ impl LanguageServer for Backend {
 
         let variables = get_variables(&program);
 
+        let env_args = env_args_completions().unwrap_or(vec![]);
+
         let completions_store = CompletionsStore {
             functions: builtin_functions,
             items: item_keywords(),
             header_body: header_body_keyword_completions(),
             attributes: attributes_completions(),
             variables,
+            env_args,
         };
 
         let Some(current_item) = program

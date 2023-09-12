@@ -296,7 +296,7 @@ impl<'i> Parser<'i> {
         let kind = self.curr_token().kind;
 
         let exp = match kind {
-            Ident if self.peek_token().kind == LParen => self.parse_call_expression()?,
+            Ident if self.peek_token().kind == LParen => self.parse_call_expression().into(),
             Ident => Expression::Identifier(self.curr_token().into()),
             StringLiteral => Expression::String(self.curr_token().into()),
             Boolean => Expression::Bool(self.curr_token().into()),
@@ -438,8 +438,10 @@ impl<'i> Parser<'i> {
 
         let mut arguments = vec![];
 
-        while self.curr_token().kind != TokenKind::RParen {
-            let exp = self.parse_expression()?;
+        while self.curr_token().kind != TokenKind::RParen
+            && self.curr_token().kind != TokenKind::End
+        {
+            let exp = self.parse_expression().into();
             arguments.push(exp);
             self.next_token();
         }

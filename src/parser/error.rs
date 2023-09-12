@@ -259,4 +259,13 @@ let b = {
 "#
         );
     }
+
+    #[test]
+    fn expecting_expression_error_for_parameter_of_unfinished_string() {
+        assert_ast!(
+            r#"
+let a = env(")
+"#
+        );
+    }
 }

@@ -1,0 +1,63 @@
+---
+source: tests/parser.rs
+description: "let a = env(\"\")"
+expression: ast
+---
+Program(
+  items: [
+    Let(
+      identifier: Ok(Token(
+        kind: Ident,
+        text: "a",
+        start: Position(
+          value: 4,
+          line: 0,
+          col: 4,
+        ),
+      )),
+      value: Call(
+        identifier: Ok(Token(
+          kind: Ident,
+          text: "env",
+          start: Position(
+            value: 8,
+            line: 0,
+            col: 8,
+          ),
+        )),
+        arguments: Arguments(
+          span: Span(
+            start: Position(
+              value: 11,
+              line: 0,
+              col: 11,
+            ),
+            end: Position(
+              value: 15,
+              line: 0,
+              col: 15,
+            ),
+          ),
+          parameters: [
+            String(StringLiteral(
+              raw: "\"\"",
+              value: "",
+              span: Span(
+                start: Position(
+                  value: 12,
+                  line: 0,
+                  col: 12,
+                ),
+                end: Position(
+                  value: 14,
+                  line: 0,
+                  col: 14,
+                ),
+              ),
+            )),
+          ],
+        ),
+      ),
+    ),
+  ],
+)

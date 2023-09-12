@@ -387,7 +387,7 @@ impl<'i> Lexer<'i> {
         Token {
             kind: TokenKind::StringLiteral,
             start: location,
-            text: "",
+            text: "\"\"",
         }
     }
 

@@ -26,7 +26,7 @@ Program(
         statements: [
           Header(
             name: Ok(StringLiteral(
-              raw: "",
+              raw: "\"\"",
               value: "",
               span: Span(
                 start: Position(
@@ -35,9 +35,9 @@ Program(
                   col: 10,
                 ),
                 end: Position(
-                  value: 22,
+                  value: 24,
                   line: 2,
-                  col: 10,
+                  col: 12,
                 ),
               ),
             )),
