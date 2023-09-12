@@ -60,7 +60,7 @@ impl Environment {
         let variables_map = self
             .namespaced_variables
             .get_mut(namespace)
-            .ok_or_else(|| anyhow::anyhow!("undefined namespace {namespace}"))
+            .ok_or_else(|| anyhow::anyhow!("undefined namespace '{namespace}'"))
             .with_context(|| format!("can't set variable '{name}'"))?;
 
         variables_map.insert(name, value);
