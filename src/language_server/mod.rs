@@ -4,7 +4,7 @@ mod completions;
 mod position;
 mod runner;
 
-use crate::config::Config;
+use crate::config::env_file_path;
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{self, Interpreter};
 use crate::lexer;
@@ -83,7 +83,7 @@ struct ChangedDocumentItem {
 
 impl Backend {
     async fn on_change(&self, params: ChangedDocumentItem) {
-        let Ok(config) = Config::load() else {
+        let Ok(env_file) = env_file_path() else {
             self.client
                 .log_message(MessageType::ERROR, "failed to load configs")
                 .await;
@@ -93,7 +93,8 @@ impl Backend {
                 .publish_diagnostics(params.uri, vec![], Some(params.version))
                 .await;
         };
-        let Ok(env) = Environment::new(config.env_file_path()) else {
+
+        let Ok(env) = Environment::new(env_file) else {
             self.client
                 .log_message(MessageType::ERROR, "failed to initialize the environment")
                 .await;

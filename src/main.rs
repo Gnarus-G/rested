@@ -90,7 +90,7 @@ fn main() {
 fn run() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
-    let mut env = Environment::new(Config::load()?.env_file_path())?;
+    let mut env = Environment::new(rested::config::env_file_path()?)?;
 
     match cli.command {
         Command::Env { command } => match command {

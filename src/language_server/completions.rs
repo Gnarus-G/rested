@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use tower_lsp::lsp_types::{CompletionItem, CompletionItemKind, InsertTextFormat, Position};
 
-use crate::config::Config;
+use crate::config::env_file_path;
 use crate::interpreter::environment::Environment;
 use crate::lexer;
 use crate::parser::ast::{self, Item, Statement};
@@ -285,7 +285,7 @@ pub fn attributes_completions() -> Vec<CompletionItem> {
 }
 
 pub fn env_args_completions() -> anyhow::Result<Vec<CompletionItem>> {
-    let env = Environment::new(Config::load()?.env_file_path())?;
+    let env = Environment::new(env_file_path()?)?;
     let env_args = env
         .namespaced_variables
         .values()
