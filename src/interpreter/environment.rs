@@ -2,7 +2,7 @@ use anyhow;
 use std::{collections::HashMap, path::PathBuf};
 
 pub struct Environment {
-    env_file_name: PathBuf,
+    pub env_file_name: PathBuf,
     pub namespaced_variables: HashMap<String, HashMap<String, String>>,
     selected_namespace: Option<String>,
 }
