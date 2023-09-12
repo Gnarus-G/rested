@@ -2,15 +2,15 @@ use anyhow;
 use std::{collections::HashMap, path::PathBuf};
 
 pub struct Environment {
-    env_file_name: PathBuf,
+    pub env_file_name: PathBuf,
     pub namespaced_variables: HashMap<String, HashMap<String, String>>,
     selected_namespace: Option<String>,
 }
 
 impl Environment {
-    pub fn new(file_name: PathBuf) -> anyhow::Result<Self, std::io::Error> {
+    pub fn new<P: Into<PathBuf>>(file_name: P) -> anyhow::Result<Self, std::io::Error> {
         let mut env = Self {
-            env_file_name: file_name,
+            env_file_name: file_name.into(),
             namespaced_variables: HashMap::from([("default".to_string(), HashMap::new())]),
             selected_namespace: None,
         };

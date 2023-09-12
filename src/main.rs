@@ -4,9 +4,12 @@ use clap::{CommandFactory, Parser, Subcommand};
 use cli::config::ConfigArgs;
 use cli::run::RunArgs;
 use cli::scratch::ScratchCommandArgs;
+use rested::config::Config;
+use rested::editing::edit;
 use rested::interpreter::environment::Environment;
 
-use std::{collections::HashMap, path::PathBuf};
+use std::collections::HashMap;
+use std::fs;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
@@ -41,6 +44,10 @@ enum Command {
 
 #[derive(Debug, Subcommand)]
 enum EnvCommand {
+    /// View environment variables available in the runtime
+    Show,
+    /// Edit environment variables in your default editor.
+    Edit,
     /// Set environment variables available in the runtime
     Set {
         /// Namespace for which to set environment variable
@@ -83,7 +90,7 @@ fn main() {
 fn run() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
-    let mut env = Environment::new(PathBuf::from(".vars.rd.json"))?;
+    let mut env = Environment::new(Config::load()?.scratch_dir.join(".vars.rd.json"))?;
 
     match cli.command {
         Command::Env { command } => match command {
@@ -107,6 +114,8 @@ fn run() -> anyhow::Result<()> {
                     env.save_to_file()?;
                 }
             },
+            EnvCommand::Show => println!("{}", fs::read_to_string(env.env_file_name)?),
+            EnvCommand::Edit => edit(&env.env_file_name)?,
         },
         Command::Completion { shell } => {
             clap_complete::generate(shell, &mut Cli::command(), "rstd", &mut std::io::stdout())

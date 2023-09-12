@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    env, fs,
+    fs,
     io::{BufRead, BufReader},
     path::PathBuf,
     time::{SystemTime, UNIX_EPOCH},
@@ -8,9 +8,9 @@ use std::{
 
 use clap::{Args, Subcommand};
 use colored::Colorize;
-use rested::interpreter::environment::Environment;
+use rested::{config::Config, editing::edit, interpreter::environment::Environment};
 
-use super::{config::Config, run::RunArgs};
+use super::run::RunArgs;
 
 #[derive(Debug, Args)]
 pub struct ScratchCommandArgs {
@@ -65,8 +65,6 @@ impl ScratchCommandArgs {
                 }
             },
             None => {
-                let default_editor = env::var("EDITOR")?;
-
                 let file_name = if self.new {
                     create_scratch_file()?
                 } else if let Some(file) = fetch_scratch_files()?.last().cloned() {
@@ -75,10 +73,7 @@ impl ScratchCommandArgs {
                     create_scratch_file()?
                 };
 
-                std::process::Command::new(default_editor)
-                    .arg(&file_name)
-                    .spawn()?
-                    .wait()?;
+                edit(&file_name)?;
 
                 if self.run {
                     RunArgs {

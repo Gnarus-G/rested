@@ -1,3 +1,4 @@
+pub mod config;
 pub mod error;
 pub mod error_meta;
 pub mod interpreter;
@@ -9,4 +10,18 @@ mod utils {
     use std::sync::Arc;
     pub type Array<T> = Arc<[T]>;
     pub type String = Arc<str>;
+}
+
+pub mod editing {
+
+    pub fn edit<P: AsRef<std::path::Path>>(file_name: P) -> anyhow::Result<()> {
+        let default_editor = std::env::var("EDITOR")?;
+
+        std::process::Command::new(default_editor)
+            .arg(file_name.as_ref())
+            .spawn()?
+            .wait()?;
+
+        Ok(())
+    }
 }

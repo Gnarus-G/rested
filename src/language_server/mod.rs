@@ -2,17 +2,22 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 mod completions;
 mod position;
+mod runner;
 
+use crate::config::Config;
+use crate::interpreter::environment::Environment;
+use crate::interpreter::{self, Interpreter};
 use crate::lexer;
 use crate::lexer::locations::{GetSpan, Location};
 use crate::parser::ast::Program;
-use crate::parser::{self, Parser};
+use crate::parser::{self};
 use completions::*;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::{lsp_types::*, LspService, Server};
 use tower_lsp::{Client, LanguageServer};
 
 use self::position::ContainsPosition;
+use self::runner::NoopRunner;
 
 trait IntoPosition {
     fn into_position(self) -> Position;
@@ -78,30 +83,73 @@ struct ChangedDocumentItem {
 
 impl Backend {
     async fn on_change(&self, params: ChangedDocumentItem) {
-        let program = Parser::new(&params.text).parse();
+        let Ok(config) = Config::load() else {
+            self.client
+                .log_message(MessageType::ERROR, "failed to load configs")
+                .await;
+
+            return self
+                .client
+                .publish_diagnostics(params.uri, vec![], Some(params.version))
+                .await;
+        };
+        let env_path = config.scratch_dir.join(".vars.rd.json");
+        let Ok(env) = Environment::new(env_path) else {
+            self.client
+                .log_message(MessageType::ERROR, "failed to initialize the environment")
+                .await;
+
+            return self
+                .client
+                .publish_diagnostics(params.uri, vec![], Some(params.version))
+                .await;
+        };
+
+        let Err(interp_errors) = Interpreter::new(&params.text, env, NoopRunner).run(None) else {
+            return self
+                .client
+                .publish_diagnostics(params.uri, vec![], Some(params.version))
+                .await;
+        };
 
         let mut diagnostics = vec![];
 
-        for err in program.errors().iter() {
-            let range = Range {
-                start: match &err.inner_error {
-                    parser::error::ParseError::ExpectedToken { found, .. }
-                    | parser::error::ParseError::ExpectedEitherOfTokens { found, .. } => {
-                        found.start.into_position()
-                    }
-                },
-                end: match &err.inner_error {
-                    parser::error::ParseError::ExpectedToken { found, .. }
-                    | parser::error::ParseError::ExpectedEitherOfTokens { found, .. } => {
-                        found.span().end.into_position()
-                    }
-                },
-            };
+        match interp_errors {
+            interpreter::error::InterpreterError::ParseErrors(p) => {
+                for err in p.errors.iter() {
+                    let range = Range {
+                        start: match &err.inner_error {
+                            parser::error::ParseError::ExpectedToken { found, .. }
+                            | parser::error::ParseError::ExpectedEitherOfTokens { found, .. } => {
+                                found.start.into_position()
+                            }
+                        },
+                        end: match &err.inner_error {
+                            parser::error::ParseError::ExpectedToken { found, .. }
+                            | parser::error::ParseError::ExpectedEitherOfTokens { found, .. } => {
+                                found.span().end.into_position()
+                            }
+                        },
+                    };
 
-            diagnostics.push(Diagnostic::new_simple(range, err.inner_error.to_string()));
+                    diagnostics.push(Diagnostic::new_simple(range, err.inner_error.to_string()));
 
-            if let Some(msg) = err.message.clone() {
-                diagnostics.push(Diagnostic::new_simple(range, msg.to_string()))
+                    if let Some(msg) = err.message.clone() {
+                        diagnostics.push(Diagnostic::new_simple(range, msg.to_string()))
+                    }
+                }
+            }
+            interpreter::error::InterpreterError::Error(err) => {
+                let range = Range {
+                    start: err.span.start.into_position(),
+                    end: err.span.end.into_position(),
+                };
+
+                diagnostics.push(Diagnostic::new_simple(range, err.inner_error.to_string()));
+
+                if let Some(msg) = err.message.clone() {
+                    diagnostics.push(Diagnostic::new_simple(range, msg.to_string()))
+                }
             }
         }
 

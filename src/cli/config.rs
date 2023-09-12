@@ -1,55 +1,7 @@
 use anyhow::anyhow;
-use std::{fs, path::PathBuf};
+use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Config {
-    pub scratch_dir: PathBuf,
-}
-
-impl Config {
-    pub fn load() -> anyhow::Result<Self> {
-        return confy::load("rested", None).map_err(|e| e.into());
-    }
-
-    pub fn save(self) -> anyhow::Result<()> {
-        return confy::store("rested", None, self).map_err(|e| e.into());
-    }
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        let folder_name = "rested-scratch";
-
-        #[cfg(windows)]
-        let home_dir_key = "USERPROFILE";
-
-        #[cfg(unix)]
-        let home_dir_key = "HOME";
-
-        let home = std::env::var(home_dir_key).unwrap_or_else(|_| {
-            panic!(
-                "failed to read the user's home directory, using the {} environment variable",
-                home_dir_key
-            )
-        });
-
-        let scratch_dir = PathBuf::from(home).join(folder_name);
-
-        if !scratch_dir.exists() {
-            fs::create_dir(&scratch_dir).unwrap_or_else(|_| {
-                panic!(
-                    "failed to create a directory for the scratch files: {}",
-                    scratch_dir.to_string_lossy()
-                )
-            })
-        }
-
-        Self { scratch_dir }
-    }
-}
 
 #[derive(Debug, Parser)]
 pub struct ConfigArgs {
@@ -82,12 +34,17 @@ impl ConfigArgs {
         match self.command {
             ConfigCommand::ScratchDirectory { command } => match command {
                 ManageScratchDirCommand::Set { value: path } => {
-                    let mut config = Config::load()?;
+                    let mut config = rested::config::Config::load()?;
                     config.scratch_dir = path.check_is_dir()?;
                     config.save()?;
                 }
                 ManageScratchDirCommand::Show {} => {
-                    println!("{}", Config::load()?.scratch_dir.to_string_lossy());
+                    println!(
+                        "{}",
+                        rested::config::Config::load()?
+                            .scratch_dir
+                            .to_string_lossy()
+                    );
                 }
             },
             ConfigCommand::Path {} => {
