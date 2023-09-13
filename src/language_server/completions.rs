@@ -5,7 +5,7 @@ use tower_lsp::lsp_types::{CompletionItem, CompletionItemKind, InsertTextFormat,
 use crate::config::env_file_path;
 use crate::interpreter::environment::Environment;
 use crate::lexer;
-use crate::parser::ast::{self, Item, Statement};
+use crate::parser::ast::{self, Item, ObjectEntry, Statement};
 use crate::parser::error::ParseError;
 use crate::{lexer::locations::GetSpan, parser::ast::Expression};
 
@@ -97,6 +97,25 @@ impl<'source> GetCompletions for Expression<'source> {
                 ast::result::ParsedNode::Error(_) => Some(comps.functions.clone()),
                 _ => Some([comps.variables.clone(), comps.functions.clone()].concat()),
             },
+            Expression::Array((_, exprs)) => {
+                match exprs.iter().find(|p| p.span().contains(position)) {
+                    Some(expr) => expr.completions(position, comps),
+                    _ => Some([comps.variables.clone(), comps.functions.clone()].concat()),
+                }
+            }
+            Expression::Object((_, entries)) => {
+                for ObjectEntry(id, expr) in entries {
+                    if id.span().contains(position) {
+                        return None;
+                    }
+
+                    if expr.span().contains(position) {
+                        return expr.completions(position, comps);
+                    }
+                }
+
+                Some([comps.variables.clone(), comps.functions.clone()].concat())
+            }
             Expression::EmptyObject(_) => None,
             Expression::String(_) => None,
             _ => Some([comps.variables.clone(), comps.functions.clone()].concat()),

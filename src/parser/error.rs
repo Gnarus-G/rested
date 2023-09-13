@@ -166,6 +166,18 @@ mod tests {
 
     use insta::assert_ron_snapshot;
 
+    macro_rules! assert_lexes {
+        ($input:literal) => {
+            let lexer = crate::lexer::Lexer::new($input);
+
+            insta::with_settings!({
+                 description => $input
+            }, {
+                assert_ron_snapshot!(lexer.into_iter().collect::<Vec<crate::lexer::Token>>());
+            })
+        }
+    }
+
     macro_rules! assert_ast {
         ($input:literal) => {
             let mut parser = Parser::new($input);
@@ -265,6 +277,18 @@ let b = {
         assert_ast!(
             r#"
 let a = env(")
+"#
+        );
+
+        //         assert_lexes!(
+        //             r#"
+        // let b = [env(")]
+        // "#
+        //         );
+
+        assert_ast!(
+            r#"
+let b = [env(")]
 "#
         );
     }

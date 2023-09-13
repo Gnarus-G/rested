@@ -344,7 +344,7 @@ impl<'i> Parser<'i> {
                         continue;
                     }
 
-                    fields.push(self.parse_object_property()?);
+                    fields.push(self.parse_object_property());
                 }
 
                 self.next_token();
@@ -368,11 +368,7 @@ impl<'i> Parser<'i> {
                     }
 
                     self.next_token();
-                    list.push(self.parse_json_like()?);
-
-                    if !self.peek_token().is(RSquare) {
-                        e.expect_peek(self, Comma)?;
-                    }
+                    list.push(self.parse_array_element());
                 }
 
                 self.next_token();
@@ -387,7 +383,24 @@ impl<'i> Parser<'i> {
         Ok(object)
     }
 
-    fn parse_object_property(&mut self) -> Result<'i, ast::ObjectEntry<'i>> {
+    fn parse_array_element(&mut self) -> Expression<'i> {
+        let e = Expectations::new(self);
+
+        let mut value = match self.parse_json_like() {
+            Ok(exp) => exp,
+            Err(error) => Expression::Error(error),
+        };
+
+        if !self.peek_token().is(RSquare) {
+            if let Err(e) = e.expect_peek(self, Comma) {
+                value = Expression::Error(e)
+            }
+        }
+
+        value
+    }
+
+    fn parse_object_property(&mut self) -> ast::ObjectEntry<'i> {
         let e = Expectations::new(self);
         self.next_token();
 
@@ -397,7 +410,7 @@ impl<'i> Parser<'i> {
         };
 
         if let Err(e) = e.expect_peek(self, TokenKind::Colon) {
-            return Ok(ast::ObjectEntry(key, Expression::Error(e)));
+            return ast::ObjectEntry(key, Expression::Error(e));
         }
 
         self.next_token();
@@ -413,7 +426,7 @@ impl<'i> Parser<'i> {
             }
         }
 
-        Ok(ast::ObjectEntry(key, value))
+        ast::ObjectEntry(key, value)
     }
 
     fn parse_object_key(&mut self) -> Result<'i, ast::StringLiteral<'i>> {

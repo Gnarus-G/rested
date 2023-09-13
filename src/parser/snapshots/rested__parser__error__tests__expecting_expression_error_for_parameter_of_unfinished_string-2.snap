@@ -1,6 +1,6 @@
 ---
 source: src/parser/error.rs
-description: " let o = [\"joe\" \"world\"] "
+description: "\nlet b = [env(\")]\n"
 expression: ast
 ---
 Program(
@@ -8,33 +8,33 @@ Program(
     Let(
       identifier: Ok(Token(
         kind: Ident,
-        text: "o",
+        text: "b",
         start: Position(
           value: 5,
-          line: 0,
-          col: 5,
+          line: 1,
+          col: 4,
         ),
       )),
       value: Array((Span(
         start: Position(
           value: 9,
-          line: 0,
-          col: 9,
+          line: 1,
+          col: 8,
         ),
         end: Position(
-          value: 24,
-          line: 0,
-          col: 24,
+          value: 18,
+          line: 1,
+          col: 16,
         ),
       ), [
         Error(ContextualError(
           inner_error: ExpectedToken(
             found: Token(
-              kind: StringLiteral,
-              text: "\"world\"",
+              kind: End,
+              text: "",
               start: Position(
-                value: 16,
-                line: 0,
+                value: 18,
+                line: 1,
                 col: 16,
               ),
             ),
@@ -43,19 +43,19 @@ Program(
           span: Span(
             start: Position(
               value: 10,
-              line: 0,
-              col: 10,
+              line: 1,
+              col: 9,
             ),
             end: Position(
-              value: 23,
-              line: 0,
-              col: 23,
+              value: 18,
+              line: 1,
+              col: 16,
             ),
           ),
           message: None,
           context: ErrorSourceContext(
-            above: None,
-            line: " let o = [\"joe\" \"world\"] ",
+            above: Some(""),
+            line: "let b = [env(\")]",
             below: None,
           ),
         )),
