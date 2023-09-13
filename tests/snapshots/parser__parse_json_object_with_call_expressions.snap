@@ -27,122 +27,130 @@ Program(
           col: 1,
         ),
       ), [
-        ObjectEntry(Ok(StringLiteral(
-          raw: "key",
-          value: "key",
-          span: Span(
-            start: Position(
-              value: 15,
-              line: 2,
-              col: 4,
-            ),
-            end: Position(
-              value: 18,
-              line: 2,
-              col: 7,
-            ),
-          ),
-        )), Call(
-          identifier: Ok(Token(
-            kind: Ident,
-            text: "read",
-            start: Position(
-              value: 20,
-              line: 2,
-              col: 9,
-            ),
-          )),
-          arguments: Arguments(
+        ObjectEntry(
+          key: Ok(StringLiteral(
+            raw: "key",
+            value: "key",
             span: Span(
               start: Position(
-                value: 24,
+                value: 15,
                 line: 2,
-                col: 13,
+                col: 4,
               ),
               end: Position(
-                value: 32,
+                value: 18,
                 line: 2,
-                col: 21,
+                col: 7,
               ),
-            ),
-            parameters: [
-              String(StringLiteral(
-                raw: "\"test\"",
-                value: "test",
-                span: Span(
-                  start: Position(
-                    value: 25,
-                    line: 2,
-                    col: 14,
-                  ),
-                  end: Position(
-                    value: 31,
-                    line: 2,
-                    col: 20,
-                  ),
-                ),
-              )),
-            ],
-          ),
-        )),
-        ObjectEntry(Ok(StringLiteral(
-          raw: "akey",
-          value: "akey",
-          span: Span(
-            start: Position(
-              value: 38,
-              line: 3,
-              col: 4,
-            ),
-            end: Position(
-              value: 42,
-              line: 3,
-              col: 8,
-            ),
-          ),
-        )), Call(
-          identifier: Ok(Token(
-            kind: Ident,
-            text: "env",
-            start: Position(
-              value: 44,
-              line: 3,
-              col: 10,
             ),
           )),
-          arguments: Arguments(
+          value: Call(
+            identifier: Ok(Token(
+              kind: Ident,
+              text: "read",
+              start: Position(
+                value: 20,
+                line: 2,
+                col: 9,
+              ),
+            )),
+            arguments: Arguments(
+              span: Span(
+                start: Position(
+                  value: 24,
+                  line: 2,
+                  col: 13,
+                ),
+                end: Position(
+                  value: 32,
+                  line: 2,
+                  col: 21,
+                ),
+              ),
+              parameters: [
+                String(StringLiteral(
+                  raw: "\"test\"",
+                  value: "test",
+                  span: Span(
+                    start: Position(
+                      value: 25,
+                      line: 2,
+                      col: 14,
+                    ),
+                    end: Position(
+                      value: 31,
+                      line: 2,
+                      col: 20,
+                    ),
+                  ),
+                )),
+              ],
+            ),
+          ),
+          errors: [],
+        ),
+        ObjectEntry(
+          key: Ok(StringLiteral(
+            raw: "akey",
+            value: "akey",
             span: Span(
               start: Position(
-                value: 47,
+                value: 38,
                 line: 3,
-                col: 13,
+                col: 4,
               ),
               end: Position(
-                value: 54,
+                value: 42,
                 line: 3,
-                col: 20,
+                col: 8,
               ),
             ),
-            parameters: [
-              String(StringLiteral(
-                raw: "\"url\"",
-                value: "url",
-                span: Span(
-                  start: Position(
-                    value: 48,
-                    line: 3,
-                    col: 14,
-                  ),
-                  end: Position(
-                    value: 53,
-                    line: 3,
-                    col: 19,
-                  ),
+          )),
+          value: Call(
+            identifier: Ok(Token(
+              kind: Ident,
+              text: "env",
+              start: Position(
+                value: 44,
+                line: 3,
+                col: 10,
+              ),
+            )),
+            arguments: Arguments(
+              span: Span(
+                start: Position(
+                  value: 47,
+                  line: 3,
+                  col: 13,
                 ),
-              )),
-            ],
+                end: Position(
+                  value: 54,
+                  line: 3,
+                  col: 20,
+                ),
+              ),
+              parameters: [
+                String(StringLiteral(
+                  raw: "\"url\"",
+                  value: "url",
+                  span: Span(
+                    start: Position(
+                      value: 48,
+                      line: 3,
+                      col: 14,
+                    ),
+                    end: Position(
+                      value: 53,
+                      line: 3,
+                      col: 19,
+                    ),
+                  ),
+                )),
+              ],
+            ),
           ),
-        )),
+          errors: [],
+        ),
       ])),
     ),
   ],

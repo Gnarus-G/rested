@@ -1,6 +1,12 @@
+use std::collections::HashSet;
+
 use tower_lsp::lsp_types::{CompletionItem, CompletionItemKind, InsertTextFormat, Position};
 
-use crate::parser::ast::{self, Item, Statement};
+use crate::config::env_file_path;
+use crate::interpreter::environment::Environment;
+use crate::lexer;
+use crate::parser::ast::{self, Item, ObjectEntry, Statement};
+use crate::parser::error::ParseError;
 use crate::{lexer::locations::GetSpan, parser::ast::Expression};
 
 use super::position::ContainsPosition;
@@ -22,6 +28,7 @@ pub struct CompletionsStore {
     pub header_body: Vec<CompletionItem>,
     pub attributes: Vec<CompletionItem>,
     pub variables: Vec<CompletionItem>,
+    pub env_args: Vec<CompletionItem>,
 }
 
 pub trait GetCompletions {
@@ -52,6 +59,63 @@ impl<'source> GetCompletions for Expression<'source> {
                 }
                 None
             }
+            Expression::Call {
+                identifier,
+                arguments,
+            } => match identifier {
+                ast::result::ParsedNode::Ok(lexer::Token {
+                    kind: lexer::TokenKind::Ident,
+                    text: "env",
+                    ..
+                }) => {
+                    if arguments.span.contains(position) {
+                        match arguments
+                            .parameters
+                            .iter()
+                            .find(|p| p.span().contains(position))
+                        {
+                            Some(Expression::String(..)) => return Some(comps.env_args.clone()),
+                            Some(Expression::Error(err))
+                                if matches!(
+                                    err.inner_error,
+                                    ParseError::ExpectedEitherOfTokens {
+                                        found: lexer::Token {
+                                            kind: lexer::TokenKind::UnfinishedStringLiteral,
+                                            ..
+                                        },
+                                        ..
+                                    }
+                                ) =>
+                            {
+                                return Some(comps.env_args.clone())
+                            }
+                            _ => {}
+                        }
+                    }
+                    None
+                }
+                ast::result::ParsedNode::Error(_) => Some(comps.functions.clone()),
+                _ => Some([comps.variables.clone(), comps.functions.clone()].concat()),
+            },
+            Expression::Array((_, elements)) => {
+                match elements.iter().find(|el| el.expr.span().contains(position)) {
+                    Some(el) => el.expr.completions(position, comps),
+                    _ => Some([comps.variables.clone(), comps.functions.clone()].concat()),
+                }
+            }
+            Expression::Object((_, entries)) => {
+                for ObjectEntry { key, value, .. } in entries {
+                    if key.span().contains(position) {
+                        return None;
+                    }
+
+                    if value.span().contains(position) {
+                        return value.completions(position, comps);
+                    }
+                }
+
+                Some([comps.variables.clone(), comps.functions.clone()].concat())
+            }
             Expression::EmptyObject(_) => None,
             Expression::String(_) => None,
             _ => Some([comps.variables.clone(), comps.functions.clone()].concat()),
@@ -78,15 +142,15 @@ impl<'source> GetCompletions for Statement<'source> {
                     return None;
                 }
 
-                if value.span().is_on_or_after(position) {
+                if value.span().is_after(position) {
                     return Some([comps.variables.clone(), comps.functions.clone()].concat());
                 }
 
-                None
+                value.completions(position, comps)
             }
-            Statement::Body { .. } => {
-                Some([comps.variables.clone(), comps.functions.clone()].concat())
-            }
+            Statement::Body { value, .. } => value
+                .completions(position, comps)
+                .or_else(|| Some([comps.variables.clone(), comps.functions.clone()].concat())),
             Statement::Error(..) => None,
             _ => None,
         }
@@ -237,4 +301,23 @@ pub fn attributes_completions() -> Vec<CompletionItem> {
     );
 
     comp
+}
+
+pub fn env_args_completions() -> anyhow::Result<Vec<CompletionItem>> {
+    let env = Environment::new(env_file_path()?)?;
+    let env_args = env
+        .namespaced_variables
+        .values()
+        .flat_map(|map| map.keys())
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .map(|var| CompletionItem {
+            label: var.to_string(),
+            kind: Some(CompletionItemKind::CONSTANT),
+            insert_text: Some(var.to_string()),
+            ..CompletionItem::default()
+        })
+        .collect::<Vec<_>>();
+
+    Ok(env_args)
 }

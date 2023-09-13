@@ -4,7 +4,7 @@ mod completions;
 mod position;
 mod runner;
 
-use crate::config::Config;
+use crate::config::env_file_path;
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{self, Interpreter};
 use crate::lexer;
@@ -83,7 +83,7 @@ struct ChangedDocumentItem {
 
 impl Backend {
     async fn on_change(&self, params: ChangedDocumentItem) {
-        let Ok(config) = Config::load() else {
+        let Ok(env_file) = env_file_path() else {
             self.client
                 .log_message(MessageType::ERROR, "failed to load configs")
                 .await;
@@ -93,8 +93,8 @@ impl Backend {
                 .publish_diagnostics(params.uri, vec![], Some(params.version))
                 .await;
         };
-        let env_path = config.scratch_dir.join(".vars.rd.json");
-        let Ok(env) = Environment::new(env_path) else {
+
+        let Ok(env) = Environment::new(env_file) else {
             self.client
                 .log_message(MessageType::ERROR, "failed to initialize the environment")
                 .await;
@@ -231,12 +231,15 @@ impl LanguageServer for Backend {
 
         let variables = get_variables(&program);
 
+        let env_args = env_args_completions().unwrap_or(vec![]);
+
         let completions_store = CompletionsStore {
             functions: builtin_functions,
             items: item_keywords(),
             header_body: header_body_keyword_completions(),
             attributes: attributes_completions(),
             variables,
+            env_args,
         };
 
         let Some(current_item) = program

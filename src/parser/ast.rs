@@ -125,7 +125,7 @@ pub enum Expression<'source> {
         identifier: ParsedNode<'source, Token<'source>>,
         arguments: Arguments<'source>,
     },
-    Array(Spanned<Vec<Expression<'source>>>),
+    Array(Spanned<Vec<ArrayElement<'source>>>),
     Object(Spanned<Vec<ObjectEntry<'source>>>),
     Null(Span),
     EmptyArray(Span),
@@ -138,10 +138,32 @@ pub enum Expression<'source> {
 }
 
 #[derive(Debug, PartialEq, Serialize)]
-pub struct ObjectEntry<'source>(
-    pub ParsedNode<'source, StringLiteral<'source>>,
-    pub Expression<'source>,
-);
+pub struct ArrayElement<'source> {
+    pub expr: Expression<'source>,
+    // For missing commas actually. I don't know if this is a good idea generally though.
+    pub errors: Vec<Error<'source>>,
+}
+
+#[derive(Debug, PartialEq, Serialize)]
+pub struct ObjectEntry<'source> {
+    pub key: ParsedNode<'source, StringLiteral<'source>>,
+    pub value: Expression<'source>,
+    // For missing commas...
+    pub errors: Vec<Error<'source>>,
+}
+
+impl<'source> ObjectEntry<'source> {
+    pub fn new(
+        key: ParsedNode<'source, StringLiteral<'source>>,
+        value: Expression<'source>,
+    ) -> Self {
+        Self {
+            key,
+            value,
+            errors: vec![],
+        }
+    }
+}
 
 #[derive(Debug, PartialEq, Serialize)]
 pub enum Endpoint<'i> {
@@ -222,6 +244,15 @@ mod convert {
         }
     }
 
+    impl<'source> From<Expression<'source>> for ArrayElement<'source> {
+        fn from(value: Expression<'source>) -> Self {
+            Self {
+                expr: value,
+                errors: vec![],
+            }
+        }
+    }
+
     impl<'source> From<Error<'source>> for Expression<'source> {
         fn from(value: Error<'source>) -> Self {
             Self::Error(value.into())
@@ -243,6 +274,15 @@ mod convert {
     impl<'source> From<Error<'source>> for Item<'source> {
         fn from(value: Error<'source>) -> Self {
             Self::Error(value.into())
+        }
+    }
+
+    impl<'source> From<std::result::Result<Self, Box<Error<'source>>>> for Expression<'source> {
+        fn from(value: std::result::Result<Self, Box<Error<'source>>>) -> Self {
+            match value {
+                Ok(v) => v,
+                Err(error) => Self::Error(error),
+            }
         }
     }
 }

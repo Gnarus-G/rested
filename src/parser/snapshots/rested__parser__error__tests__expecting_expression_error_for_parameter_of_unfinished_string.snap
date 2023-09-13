@@ -1,0 +1,87 @@
+---
+source: src/parser/error.rs
+description: "\nlet a = env(\")\n"
+expression: ast
+---
+Program(
+  items: [
+    Let(
+      identifier: Ok(Token(
+        kind: Ident,
+        text: "a",
+        start: Position(
+          value: 5,
+          line: 1,
+          col: 4,
+        ),
+      )),
+      value: Call(
+        identifier: Ok(Token(
+          kind: Ident,
+          text: "env",
+          start: Position(
+            value: 9,
+            line: 1,
+            col: 8,
+          ),
+        )),
+        arguments: Arguments(
+          span: Span(
+            start: Position(
+              value: 12,
+              line: 1,
+              col: 11,
+            ),
+            end: Position(
+              value: 16,
+              line: 1,
+              col: 14,
+            ),
+          ),
+          parameters: [
+            Error(ContextualError(
+              inner_error: ExpectedEitherOfTokens(
+                found: Token(
+                  kind: UnfinishedStringLiteral,
+                  text: "\")",
+                  start: Position(
+                    value: 13,
+                    line: 1,
+                    col: 12,
+                  ),
+                ),
+                expected: [
+                  Ident,
+                  StringLiteral,
+                  Boolean,
+                  Number,
+                  LBracket,
+                  LSquare,
+                  Null,
+                ],
+              ),
+              span: Span(
+                start: Position(
+                  value: 13,
+                  line: 1,
+                  col: 12,
+                ),
+                end: Position(
+                  value: 15,
+                  line: 1,
+                  col: 14,
+                ),
+              ),
+              message: None,
+              context: ErrorSourceContext(
+                above: Some(""),
+                line: "let a = env(\")",
+                below: None,
+              ),
+            )),
+          ],
+        ),
+      ),
+    ),
+  ],
+)

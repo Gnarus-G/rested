@@ -1,5 +1,7 @@
 use std::{fs, path::PathBuf};
 
+use anyhow::Context;
+
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Config {
     pub scratch_dir: PathBuf,
@@ -19,20 +21,9 @@ impl Default for Config {
     fn default() -> Self {
         let folder_name = "rested-scratch";
 
-        #[cfg(windows)]
-        let home_dir_key = "USERPROFILE";
+        let home = get_home_dir().unwrap_or_else(|e| panic!("{e}"));
 
-        #[cfg(unix)]
-        let home_dir_key = "HOME";
-
-        let home = std::env::var(home_dir_key).unwrap_or_else(|_| {
-            panic!(
-                "failed to read the user's home directory, using the {} environment variable",
-                home_dir_key
-            )
-        });
-
-        let scratch_dir = PathBuf::from(home).join(folder_name);
+        let scratch_dir = home.join(folder_name);
 
         if !scratch_dir.exists() {
             fs::create_dir(&scratch_dir).unwrap_or_else(|_| {
@@ -45,4 +36,26 @@ impl Default for Config {
 
         Self { scratch_dir }
     }
+}
+
+fn get_home_dir() -> anyhow::Result<PathBuf> {
+    #[cfg(windows)]
+    let home_dir_key = "USERPROFILE";
+
+    #[cfg(unix)]
+    let home_dir_key = "HOME";
+
+    let home = std::env::var(home_dir_key).with_context(|| {
+        format!(
+            "failed to read the user's home directory, using the {} environment variable",
+            home_dir_key
+        )
+    })?;
+
+    Ok(home.into())
+}
+
+#[inline]
+pub fn env_file_path() -> anyhow::Result<PathBuf> {
+    get_home_dir().map(|home| home.join(".env.rd.json"))
 }
