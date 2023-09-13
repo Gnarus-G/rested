@@ -6,6 +6,7 @@ use cli::run::RunArgs;
 use cli::scratch::ScratchCommandArgs;
 use rested::editing::edit;
 use rested::interpreter::environment::Environment;
+use tracing::error;
 
 use std::collections::HashMap;
 use std::fs;
@@ -16,6 +17,10 @@ use std::fs;
 struct Cli {
     #[command(subcommand)]
     command: Command,
+
+    /// Set log level
+    #[arg(short, long, default_value = "trace", global = true)]
+    level: tracing::Level,
 }
 
 #[derive(Debug, Subcommand)]
@@ -81,14 +86,19 @@ enum EnvNamespaceCommand {
 }
 
 fn main() {
-    if let Err(e) = run() {
-        eprint!("{:#}", e);
+    let cli = Cli::parse();
+
+    tracing_subscriber::fmt()
+        .with_max_level(cli.level)
+        .with_writer(std::io::stderr)
+        .init();
+
+    if let Err(e) = run(cli) {
+        error!("{:#}", e);
     }
 }
 
-fn run() -> anyhow::Result<()> {
-    let cli = Cli::parse();
-
+fn run(cli: Cli) -> anyhow::Result<()> {
     let mut env = Environment::new(rested::config::env_file_path()?)?;
 
     match cli.command {
