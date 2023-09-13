@@ -142,15 +142,15 @@ impl<'source> GetCompletions for Statement<'source> {
                     return None;
                 }
 
-                if value.span().is_on_or_after(position) {
+                if value.span().is_after(position) {
                     return Some([comps.variables.clone(), comps.functions.clone()].concat());
                 }
 
-                None
+                value.completions(position, comps)
             }
-            Statement::Body { .. } => {
-                Some([comps.variables.clone(), comps.functions.clone()].concat())
-            }
+            Statement::Body { value, .. } => value
+                .completions(position, comps)
+                .or_else(|| Some([comps.variables.clone(), comps.functions.clone()].concat())),
             Statement::Error(..) => None,
             _ => None,
         }
