@@ -116,38 +116,44 @@ Program(
             col: 25,
           ),
         ), [
-          String(StringLiteral(
-            raw: "\"val\"",
-            value: "val",
-            span: Span(
-              start: Position(
-                value: 59,
-                line: 4,
-                col: 11,
+          ArrayElement(
+            expr: String(StringLiteral(
+              raw: "\"val\"",
+              value: "val",
+              span: Span(
+                start: Position(
+                  value: 59,
+                  line: 4,
+                  col: 11,
+                ),
+                end: Position(
+                  value: 64,
+                  line: 4,
+                  col: 16,
+                ),
               ),
-              end: Position(
-                value: 64,
-                line: 4,
-                col: 16,
+            )),
+            errors: [],
+          ),
+          ArrayElement(
+            expr: String(StringLiteral(
+              raw: "\"val2\"",
+              value: "val2",
+              span: Span(
+                start: Position(
+                  value: 66,
+                  line: 4,
+                  col: 18,
+                ),
+                end: Position(
+                  value: 72,
+                  line: 4,
+                  col: 24,
+                ),
               ),
-            ),
-          )),
-          String(StringLiteral(
-            raw: "\"val2\"",
-            value: "val2",
-            span: Span(
-              start: Position(
-                value: 66,
-                line: 4,
-                col: 18,
-              ),
-              end: Position(
-                value: 72,
-                line: 4,
-                col: 24,
-              ),
-            ),
-          )),
+            )),
+            errors: [],
+          ),
         ]))),
         ObjectEntry(Ok(StringLiteral(
           raw: "aoKay",
@@ -176,113 +182,122 @@ Program(
             col: 6,
           ),
         ), [
-          String(StringLiteral(
-            raw: "\"val\"",
-            value: "val",
-            span: Span(
+          ArrayElement(
+            expr: String(StringLiteral(
+              raw: "\"val\"",
+              value: "val",
+              span: Span(
+                start: Position(
+                  value: 87,
+                  line: 5,
+                  col: 12,
+                ),
+                end: Position(
+                  value: 92,
+                  line: 5,
+                  col: 17,
+                ),
+              ),
+            )),
+            errors: [],
+          ),
+          ArrayElement(
+            expr: String(StringLiteral(
+              raw: "\"123\"",
+              value: "123",
+              span: Span(
+                start: Position(
+                  value: 94,
+                  line: 5,
+                  col: 19,
+                ),
+                end: Position(
+                  value: 99,
+                  line: 5,
+                  col: 24,
+                ),
+              ),
+            )),
+            errors: [],
+          ),
+          ArrayElement(
+            expr: Object((Span(
               start: Position(
-                value: 87,
+                value: 101,
                 line: 5,
-                col: 12,
+                col: 26,
               ),
               end: Position(
-                value: 92,
-                line: 5,
-                col: 17,
+                value: 151,
+                line: 8,
+                col: 5,
               ),
-            ),
-          )),
-          String(StringLiteral(
-            raw: "\"123\"",
-            value: "123",
-            span: Span(
-              start: Position(
-                value: 94,
-                line: 5,
-                col: 19,
-              ),
-              end: Position(
-                value: 99,
-                line: 5,
-                col: 24,
-              ),
-            ),
-          )),
-          Object((Span(
-            start: Position(
-              value: 101,
-              line: 5,
-              col: 26,
-            ),
-            end: Position(
-              value: 151,
-              line: 8,
-              col: 5,
-            ),
-          ), [
-            ObjectEntry(Ok(StringLiteral(
-              raw: "hey",
-              value: "hey",
-              span: Span(
-                start: Position(
-                  value: 111,
-                  line: 6,
-                  col: 8,
+            ), [
+              ObjectEntry(Ok(StringLiteral(
+                raw: "hey",
+                value: "hey",
+                span: Span(
+                  start: Position(
+                    value: 111,
+                    line: 6,
+                    col: 8,
+                  ),
+                  end: Position(
+                    value: 114,
+                    line: 6,
+                    col: 11,
+                  ),
                 ),
-                end: Position(
-                  value: 114,
-                  line: 6,
-                  col: 11,
+              )), String(StringLiteral(
+                raw: "\"yo!\"",
+                value: "yo!",
+                span: Span(
+                  start: Position(
+                    value: 116,
+                    line: 6,
+                    col: 13,
+                  ),
+                  end: Position(
+                    value: 121,
+                    line: 6,
+                    col: 18,
+                  ),
                 ),
-              ),
-            )), String(StringLiteral(
-              raw: "\"yo!\"",
-              value: "yo!",
-              span: Span(
-                start: Position(
-                  value: 116,
-                  line: 6,
-                  col: 13,
+              ))),
+              ObjectEntry(Ok(StringLiteral(
+                raw: "hello",
+                value: "hello",
+                span: Span(
+                  start: Position(
+                    value: 131,
+                    line: 7,
+                    col: 8,
+                  ),
+                  end: Position(
+                    value: 136,
+                    line: 7,
+                    col: 13,
+                  ),
                 ),
-                end: Position(
-                  value: 121,
-                  line: 6,
-                  col: 18,
+              )), String(StringLiteral(
+                raw: "\"world\"",
+                value: "world",
+                span: Span(
+                  start: Position(
+                    value: 138,
+                    line: 7,
+                    col: 15,
+                  ),
+                  end: Position(
+                    value: 145,
+                    line: 7,
+                    col: 22,
+                  ),
                 ),
-              ),
-            ))),
-            ObjectEntry(Ok(StringLiteral(
-              raw: "hello",
-              value: "hello",
-              span: Span(
-                start: Position(
-                  value: 131,
-                  line: 7,
-                  col: 8,
-                ),
-                end: Position(
-                  value: 136,
-                  line: 7,
-                  col: 13,
-                ),
-              ),
-            )), String(StringLiteral(
-              raw: "\"world\"",
-              value: "world",
-              span: Span(
-                start: Position(
-                  value: 138,
-                  line: 7,
-                  col: 15,
-                ),
-                end: Position(
-                  value: 145,
-                  line: 7,
-                  col: 22,
-                ),
-              ),
-            ))),
-          ])),
+              ))),
+            ])),
+            errors: [],
+          ),
         ]))),
       ])),
     ),

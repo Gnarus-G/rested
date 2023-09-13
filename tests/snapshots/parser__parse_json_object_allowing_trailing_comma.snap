@@ -85,51 +85,60 @@ Program(
             col: 20,
           ),
         ), [
-          Number(Literal(
-            value: "1",
-            span: Span(
-              start: Position(
-                value: 40,
-                line: 3,
-                col: 11,
+          ArrayElement(
+            expr: Number(Literal(
+              value: "1",
+              span: Span(
+                start: Position(
+                  value: 40,
+                  line: 3,
+                  col: 11,
+                ),
+                end: Position(
+                  value: 41,
+                  line: 3,
+                  col: 12,
+                ),
               ),
-              end: Position(
-                value: 41,
-                line: 3,
-                col: 12,
+            )),
+            errors: [],
+          ),
+          ArrayElement(
+            expr: Number(Literal(
+              value: "2",
+              span: Span(
+                start: Position(
+                  value: 43,
+                  line: 3,
+                  col: 14,
+                ),
+                end: Position(
+                  value: 44,
+                  line: 3,
+                  col: 15,
+                ),
               ),
-            ),
-          )),
-          Number(Literal(
-            value: "2",
-            span: Span(
-              start: Position(
-                value: 43,
-                line: 3,
-                col: 14,
+            )),
+            errors: [],
+          ),
+          ArrayElement(
+            expr: Number(Literal(
+              value: "3",
+              span: Span(
+                start: Position(
+                  value: 46,
+                  line: 3,
+                  col: 17,
+                ),
+                end: Position(
+                  value: 47,
+                  line: 3,
+                  col: 18,
+                ),
               ),
-              end: Position(
-                value: 44,
-                line: 3,
-                col: 15,
-              ),
-            ),
-          )),
-          Number(Literal(
-            value: "3",
-            span: Span(
-              start: Position(
-                value: 46,
-                line: 3,
-                col: 17,
-              ),
-              end: Position(
-                value: 47,
-                line: 3,
-                col: 18,
-              ),
-            ),
-          )),
+            )),
+            errors: [],
+          ),
         ]))),
         ObjectEntry(Ok(StringLiteral(
           raw: "love",

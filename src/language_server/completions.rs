@@ -97,9 +97,9 @@ impl<'source> GetCompletions for Expression<'source> {
                 ast::result::ParsedNode::Error(_) => Some(comps.functions.clone()),
                 _ => Some([comps.variables.clone(), comps.functions.clone()].concat()),
             },
-            Expression::Array((_, exprs)) => {
-                match exprs.iter().find(|p| p.span().contains(position)) {
-                    Some(expr) => expr.completions(position, comps),
+            Expression::Array((_, elements)) => {
+                match elements.iter().find(|el| el.expr.span().contains(position)) {
+                    Some(el) => el.expr.completions(position, comps),
                     _ => Some([comps.variables.clone(), comps.functions.clone()].concat()),
                 }
             }

@@ -67,26 +67,34 @@ Program(
             ),
           ),
         )), Error(ContextualError(
-          inner_error: ExpectedToken(
+          inner_error: ExpectedEitherOfTokens(
             found: Token(
-              kind: End,
-              text: "",
+              kind: RBracket,
+              text: "}",
               start: Position(
-                value: 41,
+                value: 39,
                 line: 4,
-                col: 1,
+                col: 0,
               ),
             ),
-            expected: Comma,
+            expected: [
+              Ident,
+              StringLiteral,
+              Boolean,
+              Number,
+              LBracket,
+              LSquare,
+              Null,
+            ],
           ),
           span: Span(
             start: Position(
-              value: 25,
-              line: 2,
-              col: 14,
+              value: 39,
+              line: 4,
+              col: 0,
             ),
             end: Position(
-              value: 41,
+              value: 40,
               line: 4,
               col: 1,
             ),

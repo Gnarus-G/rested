@@ -333,7 +333,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                 let mut v = vec![];
 
                 for value in values.iter() {
-                    v.push(self.evaluate_expression_and_quote_string(value, true)?);
+                    v.push(self.evaluate_expression_and_quote_string(&value.expr, true)?);
                 }
 
                 format!(

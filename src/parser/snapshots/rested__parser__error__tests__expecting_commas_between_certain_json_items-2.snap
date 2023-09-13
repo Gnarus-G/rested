@@ -27,38 +27,58 @@ Program(
           col: 24,
         ),
       ), [
-        Error(ContextualError(
-          inner_error: ExpectedToken(
-            found: Token(
-              kind: StringLiteral,
-              text: "\"world\"",
+        ArrayElement(
+          expr: String(StringLiteral(
+            raw: "\"joe\"",
+            value: "joe",
+            span: Span(
               start: Position(
-                value: 16,
+                value: 10,
                 line: 0,
-                col: 16,
+                col: 10,
+              ),
+              end: Position(
+                value: 15,
+                line: 0,
+                col: 15,
               ),
             ),
-            expected: Comma,
-          ),
-          span: Span(
-            start: Position(
-              value: 10,
-              line: 0,
-              col: 10,
+          )),
+          errors: [
+            ContextualError(
+              inner_error: ExpectedToken(
+                found: Token(
+                  kind: StringLiteral,
+                  text: "\"world\"",
+                  start: Position(
+                    value: 16,
+                    line: 0,
+                    col: 16,
+                  ),
+                ),
+                expected: Comma,
+              ),
+              span: Span(
+                start: Position(
+                  value: 10,
+                  line: 0,
+                  col: 10,
+                ),
+                end: Position(
+                  value: 23,
+                  line: 0,
+                  col: 23,
+                ),
+              ),
+              message: None,
+              context: ErrorSourceContext(
+                above: None,
+                line: " let o = [\"joe\" \"world\"] ",
+                below: None,
+              ),
             ),
-            end: Position(
-              value: 23,
-              line: 0,
-              col: 23,
-            ),
-          ),
-          message: None,
-          context: ErrorSourceContext(
-            above: None,
-            line: " let o = [\"joe\" \"world\"] ",
-            below: None,
-          ),
-        )),
+          ],
+        ),
       ])),
     ),
   ],

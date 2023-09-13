@@ -318,7 +318,7 @@ impl<'i> Parser<'i> {
                             Null,
                         ],
                     )
-                    .into())
+                    .into());
             }
         };
 
@@ -383,17 +383,17 @@ impl<'i> Parser<'i> {
         Ok(object)
     }
 
-    fn parse_array_element(&mut self) -> Expression<'i> {
+    fn parse_array_element(&mut self) -> ast::ArrayElement<'i> {
         let e = Expectations::new(self);
 
-        let mut value = match self.parse_json_like() {
-            Ok(exp) => exp,
-            Err(error) => Expression::Error(error),
+        let mut value: ast::ArrayElement<'_> = match self.parse_json_like() {
+            Ok(exp) => exp.into(),
+            Err(error) => return Expression::Error(error).into(),
         };
 
         if !self.peek_token().is(RSquare) {
             if let Err(e) = e.expect_peek(self, Comma) {
-                value = Expression::Error(e)
+                value.errors.push(*e);
             }
         }
 
@@ -417,7 +417,7 @@ impl<'i> Parser<'i> {
 
         let mut value = match self.parse_json_like() {
             Ok(exp) => exp,
-            Err(error) => Expression::Error(error),
+            Err(error) => return ast::ObjectEntry(key, Expression::Error(error)),
         };
 
         if !self.peek_token().is(RBracket) {
@@ -443,33 +443,12 @@ impl<'i> Parser<'i> {
 
     fn parse_call_expression(&mut self) -> Result<'i, Expression<'i>> {
         let identifier = self.curr_token().into();
-        self.next_token();
-
-        let params_start = self.curr_token().start;
 
         self.next_token();
-
-        let mut arguments = vec![];
-
-        while self.curr_token().kind != TokenKind::RParen
-            && self.curr_token().kind != TokenKind::End
-        {
-            let exp = self.parse_expression().into();
-            arguments.push(exp);
-            self.next_token();
-        }
-
-        let last_token = self.curr_token();
 
         Ok(Expression::Call {
             identifier,
-            arguments: Arguments {
-                span: Span {
-                    start: params_start,
-                    end: last_token.span().end,
-                },
-                parameters: arguments,
-            },
+            arguments: self.parse_call_arguments(),
         })
     }
 
@@ -548,11 +527,11 @@ impl<'i> Parser<'i> {
         Ok(Item::Attribute {
             location: e.start,
             identifier,
-            parameters: Some(self.parse_parameters()),
+            parameters: Some(self.parse_call_arguments()),
         })
     }
 
-    fn parse_parameters(&mut self) -> Arguments<'i> {
+    fn parse_call_arguments(&mut self) -> Arguments<'i> {
         let mut params = vec![];
         let params_start = self.curr_token().start;
 
@@ -571,7 +550,9 @@ impl<'i> Parser<'i> {
             self.next_token();
         }
 
-        let last_token = self.curr_token(); // should be RParen
+        let last_token = self.curr_token();
+        // debug_assert_eq!(last_token.kind, RParen);
+        debug_assert!(matches!(last_token.kind, RParen | End));
 
         Arguments {
             span: Span {

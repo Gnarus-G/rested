@@ -85,37 +85,43 @@ Program(
             col: 5,
           ),
         ), [
-          String(StringLiteral(
-            raw: "\"asdf\"",
-            value: "asdf",
-            span: Span(
-              start: Position(
-                value: 67,
-                line: 5,
-                col: 8,
+          ArrayElement(
+            expr: String(StringLiteral(
+              raw: "\"asdf\"",
+              value: "asdf",
+              span: Span(
+                start: Position(
+                  value: 67,
+                  line: 5,
+                  col: 8,
+                ),
+                end: Position(
+                  value: 73,
+                  line: 5,
+                  col: 14,
+                ),
               ),
-              end: Position(
-                value: 73,
-                line: 5,
-                col: 14,
+            )),
+            errors: [],
+          ),
+          ArrayElement(
+            expr: Number(Literal(
+              value: "12",
+              span: Span(
+                start: Position(
+                  value: 100,
+                  line: 7,
+                  col: 8,
+                ),
+                end: Position(
+                  value: 102,
+                  line: 7,
+                  col: 10,
+                ),
               ),
-            ),
-          )),
-          Number(Literal(
-            value: "12",
-            span: Span(
-              start: Position(
-                value: 100,
-                line: 7,
-                col: 8,
-              ),
-              end: Position(
-                value: 102,
-                line: 7,
-                col: 10,
-              ),
-            ),
-          )),
+            )),
+            errors: [],
+          ),
         ]))),
       ])),
     ),

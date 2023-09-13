@@ -125,7 +125,7 @@ pub enum Expression<'source> {
         identifier: ParsedNode<'source, Token<'source>>,
         arguments: Arguments<'source>,
     },
-    Array(Spanned<Vec<Expression<'source>>>),
+    Array(Spanned<Vec<ArrayElement<'source>>>),
     Object(Spanned<Vec<ObjectEntry<'source>>>),
     Null(Span),
     EmptyArray(Span),
@@ -135,6 +135,13 @@ pub enum Expression<'source> {
         parts: Vec<Expression<'source>>,
     },
     Error(Box<Error<'source>>),
+}
+
+#[derive(Debug, PartialEq, Serialize)]
+pub struct ArrayElement<'source> {
+    pub expr: Expression<'source>,
+    // For missing commas actually. I don't know if this is a good idea generally though.
+    pub errors: Vec<Error<'source>>,
 }
 
 #[derive(Debug, PartialEq, Serialize)]
@@ -218,6 +225,15 @@ mod convert {
             match value {
                 Ok(value) => ParsedNode::Ok(value),
                 Err(error) => ParsedNode::Error(error),
+            }
+        }
+    }
+
+    impl<'source> From<Expression<'source>> for ArrayElement<'source> {
+        fn from(value: Expression<'source>) -> Self {
+            Self {
+                expr: value,
+                errors: vec![],
             }
         }
     }

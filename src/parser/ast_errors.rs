@@ -1,5 +1,5 @@
 use super::{
-    ast::{self, Expression, Item, ObjectEntry, Statement},
+    ast::{self, ArrayElement, Expression, Item, ObjectEntry, Statement},
     error::ParseError,
 };
 use crate::error_meta::ContextualError;
@@ -78,6 +78,16 @@ impl<'source> GetErrors<'source> for Expression<'source> {
             Expression::Error(e) => errors.push(*e.clone()),
             _ => {}
         }
+
+        errors
+    }
+}
+
+impl<'source> GetErrors<'source> for ArrayElement<'source> {
+    fn errors(&self) -> Vec<ContextualError<ParseError<'source>>> {
+        let mut errors = self.expr.errors();
+
+        errors.extend(self.errors.clone());
 
         errors
     }
