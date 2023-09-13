@@ -4,7 +4,6 @@ use clap::{CommandFactory, Parser, Subcommand};
 use cli::config::ConfigArgs;
 use cli::run::RunArgs;
 use cli::scratch::ScratchCommandArgs;
-use rested::config::Config;
 use rested::editing::edit;
 use rested::interpreter::environment::Environment;
 
