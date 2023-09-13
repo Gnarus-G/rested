@@ -27,85 +27,93 @@ Program(
           col: 1,
         ),
       ), [
-        ObjectEntry(Ok(StringLiteral(
-          raw: "\"key\"",
-          value: "key",
-          span: Span(
+        ObjectEntry(
+          key: Ok(StringLiteral(
+            raw: "\"key\"",
+            value: "key",
+            span: Span(
+              start: Position(
+                value: 13,
+                line: 2,
+                col: 2,
+              ),
+              end: Position(
+                value: 18,
+                line: 2,
+                col: 7,
+              ),
+            ),
+          )),
+          value: Identifier(Ok(Token(
+            kind: Ident,
+            text: "value",
             start: Position(
-              value: 13,
+              value: 20,
               line: 2,
-              col: 2,
+              col: 9,
             ),
-            end: Position(
-              value: 18,
-              line: 2,
-              col: 7,
+          ))),
+          errors: [],
+        ),
+        ObjectEntry(
+          key: Ok(StringLiteral(
+            raw: "\"key2\"",
+            value: "key2",
+            span: Span(
+              start: Position(
+                value: 30,
+                line: 3,
+                col: 2,
+              ),
+              end: Position(
+                value: 36,
+                line: 3,
+                col: 8,
+              ),
             ),
-          ),
-        )), Identifier(Ok(Token(
-          kind: Ident,
-          text: "value",
-          start: Position(
-            value: 20,
-            line: 2,
-            col: 9,
-          ),
-        )))),
-        ObjectEntry(Ok(StringLiteral(
-          raw: "\"key2\"",
-          value: "key2",
-          span: Span(
-            start: Position(
-              value: 30,
-              line: 3,
-              col: 2,
+          )),
+          value: Error(ContextualError(
+            inner_error: ExpectedEitherOfTokens(
+              found: Token(
+                kind: RBracket,
+                text: "}",
+                start: Position(
+                  value: 39,
+                  line: 4,
+                  col: 0,
+                ),
+              ),
+              expected: [
+                Ident,
+                StringLiteral,
+                Boolean,
+                Number,
+                LBracket,
+                LSquare,
+                Null,
+              ],
             ),
-            end: Position(
-              value: 36,
-              line: 3,
-              col: 8,
-            ),
-          ),
-        )), Error(ContextualError(
-          inner_error: ExpectedEitherOfTokens(
-            found: Token(
-              kind: RBracket,
-              text: "}",
+            span: Span(
               start: Position(
                 value: 39,
                 line: 4,
                 col: 0,
               ),
+              end: Position(
+                value: 40,
+                line: 4,
+                col: 1,
+              ),
             ),
-            expected: [
-              Ident,
-              StringLiteral,
-              Boolean,
-              Number,
-              LBracket,
-              LSquare,
-              Null,
-            ],
-          ),
-          span: Span(
-            start: Position(
-              value: 39,
-              line: 4,
-              col: 0,
+            message: None,
+            context: ErrorSourceContext(
+              above: Some("  \"key2\": "),
+              line: "}",
+              below: None,
             ),
-            end: Position(
-              value: 40,
-              line: 4,
-              col: 1,
-            ),
-          ),
-          message: None,
-          context: ErrorSourceContext(
-            above: Some("  \"key2\": "),
-            line: "}",
-            below: None,
-          ),
-        ))),
+          )),
+          errors: [],
+        ),
       ])),
     ),
   ],

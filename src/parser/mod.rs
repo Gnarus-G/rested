@@ -410,23 +410,23 @@ impl<'i> Parser<'i> {
         };
 
         if let Err(e) = e.expect_peek(self, TokenKind::Colon) {
-            return ast::ObjectEntry(key, Expression::Error(e));
+            return ast::ObjectEntry::new(key, Expression::Error(e));
         }
 
         self.next_token();
 
-        let mut value = match self.parse_json_like() {
-            Ok(exp) => exp,
-            Err(error) => return ast::ObjectEntry(key, Expression::Error(error)),
+        let mut entry = match self.parse_json_like() {
+            Ok(exp) => ast::ObjectEntry::new(key, exp),
+            Err(error) => return ast::ObjectEntry::new(key, Expression::Error(error)),
         };
 
         if !self.peek_token().is(RBracket) {
             if let Err(e) = e.expect_peek(self, Comma) {
-                value = Expression::Error(e)
+                entry.errors.push(*e)
             }
         }
 
-        ast::ObjectEntry(key, value)
+        entry
     }
 
     fn parse_object_key(&mut self) -> Result<'i, ast::StringLiteral<'i>> {

@@ -1,0 +1,192 @@
+---
+source: src/parser/error.rs
+description: "\nlet b = {\n    key: env(\")\n}\n"
+expression: ast
+---
+Program(
+  items: [
+    Let(
+      identifier: Ok(Token(
+        kind: Ident,
+        text: "b",
+        start: Position(
+          value: 5,
+          line: 1,
+          col: 4,
+        ),
+      )),
+      value: Object((Span(
+        start: Position(
+          value: 9,
+          line: 1,
+          col: 8,
+        ),
+        end: Position(
+          value: 29,
+          line: 3,
+          col: 1,
+        ),
+      ), [
+        ObjectEntry(
+          key: Ok(StringLiteral(
+            raw: "key",
+            value: "key",
+            span: Span(
+              start: Position(
+                value: 15,
+                line: 2,
+                col: 4,
+              ),
+              end: Position(
+                value: 18,
+                line: 2,
+                col: 7,
+              ),
+            ),
+          )),
+          value: Call(
+            identifier: Ok(Token(
+              kind: Ident,
+              text: "env",
+              start: Position(
+                value: 20,
+                line: 2,
+                col: 9,
+              ),
+            )),
+            arguments: Arguments(
+              span: Span(
+                start: Position(
+                  value: 23,
+                  line: 2,
+                  col: 12,
+                ),
+                end: Position(
+                  value: 29,
+                  line: 3,
+                  col: 1,
+                ),
+              ),
+              parameters: [
+                Error(ContextualError(
+                  inner_error: ExpectedEitherOfTokens(
+                    found: Token(
+                      kind: UnfinishedStringLiteral,
+                      text: "\")",
+                      start: Position(
+                        value: 24,
+                        line: 2,
+                        col: 13,
+                      ),
+                    ),
+                    expected: [
+                      Ident,
+                      StringLiteral,
+                      Boolean,
+                      Number,
+                      LBracket,
+                      LSquare,
+                      Null,
+                    ],
+                  ),
+                  span: Span(
+                    start: Position(
+                      value: 24,
+                      line: 2,
+                      col: 13,
+                    ),
+                    end: Position(
+                      value: 26,
+                      line: 2,
+                      col: 15,
+                    ),
+                  ),
+                  message: None,
+                  context: ErrorSourceContext(
+                    above: Some("let b = {"),
+                    line: "    key: env(\")",
+                    below: Some("}"),
+                  ),
+                )),
+                Error(ContextualError(
+                  inner_error: ExpectedEitherOfTokens(
+                    found: Token(
+                      kind: RBracket,
+                      text: "}",
+                      start: Position(
+                        value: 27,
+                        line: 3,
+                        col: 0,
+                      ),
+                    ),
+                    expected: [
+                      Ident,
+                      StringLiteral,
+                      Boolean,
+                      Number,
+                      LBracket,
+                      LSquare,
+                      Null,
+                    ],
+                  ),
+                  span: Span(
+                    start: Position(
+                      value: 27,
+                      line: 3,
+                      col: 0,
+                    ),
+                    end: Position(
+                      value: 28,
+                      line: 3,
+                      col: 1,
+                    ),
+                  ),
+                  message: None,
+                  context: ErrorSourceContext(
+                    above: Some("    key: env(\")"),
+                    line: "}",
+                    below: None,
+                  ),
+                )),
+              ],
+            ),
+          ),
+          errors: [
+            ContextualError(
+              inner_error: ExpectedToken(
+                found: Token(
+                  kind: End,
+                  text: "",
+                  start: Position(
+                    value: 29,
+                    line: 3,
+                    col: 1,
+                  ),
+                ),
+                expected: Comma,
+              ),
+              span: Span(
+                start: Position(
+                  value: 9,
+                  line: 1,
+                  col: 8,
+                ),
+                end: Position(
+                  value: 29,
+                  line: 3,
+                  col: 1,
+                ),
+              ),
+              message: None,
+              context: ErrorSourceContext(
+                above: Some("    key: env(\")"),
+                line: "}",
+                below: None,
+              ),
+            ),
+          ],
+        ),
+      ])),
+    ),
+  ],
+)

@@ -104,13 +104,13 @@ impl<'source> GetCompletions for Expression<'source> {
                 }
             }
             Expression::Object((_, entries)) => {
-                for ObjectEntry(id, expr) in entries {
-                    if id.span().contains(position) {
+                for ObjectEntry { key, value, .. } in entries {
+                    if key.span().contains(position) {
                         return None;
                     }
 
-                    if expr.span().contains(position) {
-                        return expr.completions(position, comps);
+                    if value.span().contains(position) {
+                        return value.completions(position, comps);
                     }
                 }
 

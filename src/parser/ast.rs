@@ -145,10 +145,25 @@ pub struct ArrayElement<'source> {
 }
 
 #[derive(Debug, PartialEq, Serialize)]
-pub struct ObjectEntry<'source>(
-    pub ParsedNode<'source, StringLiteral<'source>>,
-    pub Expression<'source>,
-);
+pub struct ObjectEntry<'source> {
+    pub key: ParsedNode<'source, StringLiteral<'source>>,
+    pub value: Expression<'source>,
+    // For missing commas...
+    pub errors: Vec<Error<'source>>,
+}
+
+impl<'source> ObjectEntry<'source> {
+    pub fn new(
+        key: ParsedNode<'source, StringLiteral<'source>>,
+        value: Expression<'source>,
+    ) -> Self {
+        Self {
+            key,
+            value,
+            errors: vec![],
+        }
+    }
+}
 
 #[derive(Debug, PartialEq, Serialize)]
 pub enum Endpoint<'i> {

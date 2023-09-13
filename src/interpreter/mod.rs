@@ -347,7 +347,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
             Object((.., fields)) => {
                 let mut props = HashMap::new();
 
-                for ast::ObjectEntry(key, value) in fields {
+                for ast::ObjectEntry { key, value, .. } in fields {
                     let value = self.evaluate_expression_and_quote_string(value, true)?;
                     props.insert(key.get()?.value.to_string(), value);
                 }

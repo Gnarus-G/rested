@@ -97,12 +97,13 @@ impl<'source> GetErrors<'source> for ObjectEntry<'source> {
     fn errors(&self) -> Vec<ContextualError<ParseError<'source>>> {
         let mut errors = vec![];
 
-        match &self.0 {
+        match &self.key {
             ast::result::ParsedNode::Ok(_) => {}
             ast::result::ParsedNode::Error(error) => errors.push(*error.clone()),
         }
 
-        errors.extend(self.1.errors());
+        errors.extend(self.value.errors());
+        errors.extend(self.errors.clone());
 
         errors
     }
