@@ -4,6 +4,7 @@ use colored::{ColoredString, Colorize};
 use std::fmt::Display;
 
 #[derive(Debug)]
+/// Decorates the contextual errors, to add ansi colors to the diagnostics
 pub struct ColoredMetaError<'e, EK: Display + std::error::Error + std::clone::Clone>(
     pub &'e crate::error_meta::ContextualError<EK>,
 );
