@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use tower_lsp::lsp_types::{CompletionItem, CompletionItemKind, InsertTextFormat, Position};
+use tracing::debug;
 
 use crate::config::env_file_path;
 use crate::interpreter::environment::Environment;
@@ -45,6 +46,8 @@ impl<'source> GetCompletions for Expression<'source> {
         position: &Position,
         comps: &CompletionsStore,
     ) -> Option<Vec<CompletionItem>> {
+        debug!("visited expression -> {:?}", self);
+
         if !self.span().contains(position) {
             return None;
         }

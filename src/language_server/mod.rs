@@ -205,6 +205,9 @@ impl LanguageServer for Backend {
 
     async fn completion(&self, params: CompletionParams) -> Result<Option<CompletionResponse>> {
         let position = params.text_document_position.position;
+
+        debug!("cursor position -> {:?}", position);
+
         let Some(text) = self
             .documents
             .get(params.text_document_position.text_document.uri.clone())
@@ -252,13 +255,13 @@ impl LanguageServer for Backend {
             env_args,
         };
 
-        let Some(current_item) = program
-            .items
-            .into_iter()
-            .find(|i| i.span().contains(&position))
-        else {
+        let Some(current_item) = program.items.iter().find(|i| i.span().contains(&position)) else {
+            debug!("cursor is apparently not on any items");
+            debug!("{:?}", program);
             return Ok(Some(CompletionResponse::Array(completions_store.items)));
         };
+
+        debug!("cursor on item -> {:?}", current_item);
 
         return Ok(current_item
             .completions(&position, &completions_store)
