@@ -15,6 +15,7 @@ use completions::*;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::{lsp_types::*, LspService, Server};
 use tower_lsp::{Client, LanguageServer};
+use tracing::{debug, error};
 
 use self::position::ContainsPosition;
 use self::runner::NoopRunner;
@@ -106,6 +107,8 @@ impl Backend {
         };
 
         let Err(interp_errors) = Interpreter::new(&params.text, env, NoopRunner).run(None) else {
+            self.documents.put(params.uri.clone(), params.text);
+
             return self
                 .client
                 .publish_diagnostics(params.uri, vec![], Some(params.version))
@@ -204,8 +207,15 @@ impl LanguageServer for Backend {
         let position = params.text_document_position.position;
         let Some(text) = self
             .documents
-            .get(params.text_document_position.text_document.uri)
+            .get(params.text_document_position.text_document.uri.clone())
         else {
+            error!(
+                "failed to get the text by uri: {}",
+                params.text_document_position.text_document.uri
+            );
+
+            debug!("{:?}", self.documents);
+
             return Ok(None);
         };
 
