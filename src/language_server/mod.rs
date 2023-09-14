@@ -269,19 +269,32 @@ impl LanguageServer for Backend {
     }
 }
 
-pub fn start() {
-    tokio::runtime::Builder::new_multi_thread()
-        .enable_all()
-        .build()
-        .unwrap()
-        .block_on(async {
-            let stdin = tokio::io::stdin();
-            let stdout = tokio::io::stdout();
+pub fn start(level: tracing::Level) {
+    let subscriber = tracing_subscriber::fmt()
+        .pretty()
+        .with_max_level(level)
+        .with_ansi(false)
+        .with_writer(std::io::stderr)
+        .finish();
 
-            let (service, socket) = LspService::new(|client| Backend {
-                client,
-                documents: TextDocuments::new(),
-            });
-            Server::new(stdin, stdout, socket).serve(service).await;
-        });
+    tracing::subscriber::with_default(subscriber, || {
+        tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .unwrap()
+            .block_on(run());
+    })
+}
+
+#[tracing::instrument]
+async fn run() {
+    let stdin = tokio::io::stdin();
+    let stdout = tokio::io::stdout();
+
+    let (service, socket) = LspService::new(|client| Backend {
+        client,
+        documents: TextDocuments::new(),
+    });
+
+    Server::new(stdin, stdout, socket).serve(service).await;
 }

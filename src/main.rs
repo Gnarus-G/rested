@@ -129,7 +129,7 @@ fn run(cli: Cli) -> anyhow::Result<()> {
         Command::Completion { shell } => {
             clap_complete::generate(shell, &mut Cli::command(), "rstd", &mut std::io::stdout())
         }
-        Command::Lsp => rested::language_server::start(),
+        Command::Lsp => rested::language_server::start(cli.level),
         Command::Run(run) => run.handle(env)?,
         Command::Scratch(scratch) => scratch.handle(env)?,
         Command::Config(config) => config.handle()?,
