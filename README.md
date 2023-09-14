@@ -128,3 +128,30 @@ post /tomatoes {
 @log("output/yams.json")
 get /yams
 ```
+
+# Lsp setup
+
+I doubt this language server will ever land into `neovim/nvim-lspconfig`, so here's an example
+of my lsp config setup.
+
+```lua
+local nvim_lsp = require("lspconfig");
+
+local configs = require 'lspconfig.configs'
+
+if not configs.rstdls then
+  configs.rstdls = {
+    default_config = {
+      cmd = { "rstd", "lsp" },
+      filetypes = { "rd" },
+    },
+  }
+end
+
+nvim_lsp.rstdls.setup({
+  on_attach = on_attach, --[[your on_attach function goes here]]
+  single_file_support = true,
+  capabilities = require('cmp_nvim_lsp')
+      .default_capabilities(vim.lsp.protocol.make_client_capabilities())
+})
+```
