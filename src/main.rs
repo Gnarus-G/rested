@@ -19,7 +19,7 @@ struct Cli {
     command: Command,
 
     /// Set log level
-    #[arg(short, long, default_value = "trace", global = true)]
+    #[arg(short, long, default_value = "debug", global = true)]
     level: tracing::Level,
 }
 
