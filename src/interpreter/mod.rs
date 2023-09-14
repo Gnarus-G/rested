@@ -13,6 +13,7 @@ use colored::Colorize;
 
 use environment::Environment;
 use error::InterpreterError;
+use tracing::info;
 
 use crate::lexer;
 use crate::parser::ast::{self, Endpoint, Expression, Literal};
@@ -78,17 +79,17 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
             ..
         } in requests
         {
-            println!(
+            info!(
                 "sending {} request to {}",
                 request.method.to_string().yellow().bold(),
                 request.url.bold()
             );
 
             if *dbg {
-                println!("    \u{21B3} with request data:");
-                println!("{}", indent_lines(&format!("{:#?}", request), 6));
+                info!(" \u{21B3} with request data:");
+                eprintln!("{}", indent_lines(&format!("{:#?}", request), 6));
 
-                println!(
+                eprintln!(
                     "{}",
                     indent_lines(
                         &format!(
@@ -114,10 +115,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                         log(&res, file_path)
                             .map_err(|error| self.error_factory.other(*span, error))?;
 
-                        println!(
-                            "    \u{21B3} {}",
-                            format!("saved response to {:?}", file_path).blue()
-                        );
+                        info!("{}", format!("saved response to {:?}", file_path).blue());
                     }
                 }
             }
