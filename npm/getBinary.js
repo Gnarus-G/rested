@@ -6,8 +6,6 @@ function getPlatform() {
   const arch = os.arch();
 
   switch (`${type} ${arch}`) {
-    case "Windows_NT x64":
-      return "x86_64-pc-windows-gnu";
     case "Linux x64":
       return "x86_64-unknown-linux-gnu";
     case "Darwin x64":

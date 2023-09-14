@@ -39,9 +39,6 @@ impl Default for Config {
 }
 
 fn get_home_dir() -> anyhow::Result<PathBuf> {
-    #[cfg(windows)]
-    let home_dir_key = "USERPROFILE";
-
     #[cfg(unix)]
     let home_dir_key = "HOME";
 
