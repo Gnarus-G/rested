@@ -17,6 +17,7 @@ impl<'e, EK: Display + std::error::Error + std::clone::Clone> std::fmt::Display
     for ColoredMetaError<'e, EK>
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f)?;
         self.format(f)
     }
 }
