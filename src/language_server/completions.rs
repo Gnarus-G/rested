@@ -23,11 +23,8 @@ macro_rules! dbg_comp {
     };
 }
 
+/// For "dynamically" generated completions
 pub struct CompletionsStore {
-    pub functions: Vec<CompletionItem>,
-    pub items: Vec<CompletionItem>,
-    pub header_body: Vec<CompletionItem>,
-    pub attributes: Vec<CompletionItem>,
     pub variables: Vec<CompletionItem>,
     pub env_args: Vec<CompletionItem>,
 }
@@ -97,13 +94,13 @@ impl<'source> GetCompletions for Expression<'source> {
                     }
                     None
                 }
-                ast::result::ParsedNode::Error(_) => Some(comps.functions.clone()),
-                _ => Some([comps.variables.clone(), comps.functions.clone()].concat()),
+                ast::result::ParsedNode::Error(_) => Some(builtin_functions_completions()),
+                _ => Some([comps.variables.clone(), builtin_functions_completions()].concat()),
             },
             Expression::Array((_, elements)) => {
                 match elements.iter().find(|el| el.expr.span().contains(position)) {
                     Some(el) => el.expr.completions(position, comps),
-                    _ => Some([comps.variables.clone(), comps.functions.clone()].concat()),
+                    _ => Some([comps.variables.clone(), builtin_functions_completions()].concat()),
                 }
             }
             Expression::Object((_, entries)) => {
@@ -117,11 +114,11 @@ impl<'source> GetCompletions for Expression<'source> {
                     }
                 }
 
-                Some([comps.variables.clone(), comps.functions.clone()].concat())
+                Some([comps.variables.clone(), builtin_functions_completions()].concat())
             }
             Expression::EmptyObject(_) => None,
             Expression::String(_) => None,
-            _ => Some([comps.variables.clone(), comps.functions.clone()].concat()),
+            _ => Some([comps.variables.clone(), builtin_functions_completions()].concat()),
         };
     }
 }
@@ -139,21 +136,20 @@ impl<'source> GetCompletions for Statement<'source> {
         match self {
             Statement::Header { name, value } => {
                 if name.span().is_on_or_after(position) {
-                    if matches!(name, ast::result::ParsedNode::Error(..)) {
-                        return Some(vec![]);
-                    }
-                    return None;
+                    return Some(http_headers_completions());
                 }
 
                 if value.span().is_after(position) {
-                    return Some([comps.variables.clone(), comps.functions.clone()].concat());
+                    return Some(
+                        [comps.variables.clone(), builtin_functions_completions()].concat(),
+                    );
                 }
 
                 value.completions(position, comps)
             }
-            Statement::Body { value, .. } => value
-                .completions(position, comps)
-                .or_else(|| Some([comps.variables.clone(), comps.functions.clone()].concat())),
+            Statement::Body { value, .. } => value.completions(position, comps).or_else(|| {
+                Some([comps.variables.clone(), builtin_functions_completions()].concat())
+            }),
             Statement::Error(..) => None,
             _ => None,
         }
@@ -211,7 +207,7 @@ impl<'source> GetCompletions for Item<'source> {
                     }
                 }
 
-                return Some(comps.header_body.clone());
+                return Some(header_body_keyword_completions());
             }
             Item::Expr(expr) => expr.completions(position, comps),
             Item::Attribute {
@@ -220,12 +216,14 @@ impl<'source> GetCompletions for Item<'source> {
                 ..
             } => {
                 if identifier.span().is_on_or_after(position) {
-                    return Some(comps.attributes.clone());
+                    return Some(attributes_completions());
                 }
 
                 if let Some(args) = parameters {
                     if args.span.contains(position) {
-                        return Some([comps.variables.clone(), comps.functions.clone()].concat());
+                        return Some(
+                            [comps.variables.clone(), builtin_functions_completions()].concat(),
+                        );
                     }
 
                     for param in args.iter() {
@@ -323,4 +321,46 @@ pub fn env_args_completions() -> anyhow::Result<Vec<CompletionItem>> {
         .collect::<Vec<_>>();
 
     Ok(env_args)
+}
+
+pub fn http_headers_completions() -> Vec<CompletionItem> {
+    let headers = [
+        "Accept",
+        "Accept-Charset",
+        "Accept-Encoding",
+        "Accept-Language",
+        "Authorization",
+        "Cache-Control",
+        "Connection",
+        "Content-Disposition",
+        "Content-Encoding",
+        "Content-Length",
+        "Content-Type",
+        "Cookie",
+        "Date",
+        "ETag",
+        "Host",
+        "If-Match",
+        "If-Modified-Since",
+        "If-None-Match",
+        "If-Range",
+        "If-Unmodified-Since",
+        "Last-Modified",
+        "Location",
+        "Origin",
+        "Referer",
+        "Server",
+        "User-Agent",
+        "WWW-Authenticate",
+        "X-Forwarded-For",
+    ];
+
+    headers
+        .map(|header| CompletionItem {
+            label: header.to_string(),
+            kind: Some(CompletionItemKind::CONSTANT),
+            insert_text: Some(header.to_string()),
+            ..CompletionItem::default()
+        })
+        .to_vec()
 }
