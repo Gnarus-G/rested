@@ -139,10 +139,7 @@ impl<'source> GetCompletions for Statement<'source> {
         match self {
             Statement::Header { name, value } => {
                 if name.span().is_on_or_after(position) {
-                    if matches!(name, ast::result::ParsedNode::Error(..)) {
-                        return Some(vec![]);
-                    }
-                    return None;
+                    return Some(http_headers_completions());
                 }
 
                 if value.span().is_after(position) {
@@ -323,4 +320,46 @@ pub fn env_args_completions() -> anyhow::Result<Vec<CompletionItem>> {
         .collect::<Vec<_>>();
 
     Ok(env_args)
+}
+
+pub fn http_headers_completions() -> Vec<CompletionItem> {
+    let headers = [
+        "Accept",
+        "Accept-Charset",
+        "Accept-Encoding",
+        "Accept-Language",
+        "Authorization",
+        "Cache-Control",
+        "Connection",
+        "Content-Disposition",
+        "Content-Encoding",
+        "Content-Length",
+        "Content-Type",
+        "Cookie",
+        "Date",
+        "ETag",
+        "Host",
+        "If-Match",
+        "If-Modified-Since",
+        "If-None-Match",
+        "If-Range",
+        "If-Unmodified-Since",
+        "Last-Modified",
+        "Location",
+        "Origin",
+        "Referer",
+        "Server",
+        "User-Agent",
+        "WWW-Authenticate",
+        "X-Forwarded-For",
+    ];
+
+    headers
+        .map(|header| CompletionItem {
+            label: header.to_string(),
+            kind: Some(CompletionItemKind::CONSTANT),
+            insert_text: Some(header.to_string()),
+            ..CompletionItem::default()
+        })
+        .to_vec()
 }
