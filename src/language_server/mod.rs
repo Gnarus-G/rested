@@ -222,8 +222,6 @@ impl LanguageServer for Backend {
             return Ok(None);
         };
 
-        let builtin_functions = builtin_functions_completions();
-
         let get_variables = |program: &Program| {
             return program
                 .variables_before(Location {
@@ -247,10 +245,6 @@ impl LanguageServer for Backend {
         let env_args = env_args_completions().unwrap_or(vec![]);
 
         let completions_store = CompletionsStore {
-            functions: builtin_functions,
-            items: item_keywords(),
-            header_body: header_body_keyword_completions(),
-            attributes: attributes_completions(),
             variables,
             env_args,
         };
@@ -258,7 +252,7 @@ impl LanguageServer for Backend {
         let Some(current_item) = program.items.iter().find(|i| i.span().contains(&position)) else {
             debug!("cursor is apparently not on any items");
             debug!("{:?}", program);
-            return Ok(Some(CompletionResponse::Array(completions_store.items)));
+            return Ok(Some(CompletionResponse::Array(item_keywords())));
         };
 
         debug!("cursor on item -> {:?}", current_item);
