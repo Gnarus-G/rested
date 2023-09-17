@@ -18,7 +18,7 @@ struct Cli {
     #[command(subcommand)]
     command: Command,
 
-    /// Set log level
+    /// Set log level, one of trace, debug, info, warn, error
     #[arg(short, long, default_value = "info", global = true)]
     level: tracing::Level,
 }
