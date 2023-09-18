@@ -27,20 +27,23 @@ npm install -g rstd
 # Usage
 
 ```
-The CLI runtime for Rested, the language/interpreter for easily defining and running requests to an http server
+Language/Interpreter for easily defining and running requests to an http server.
 
-Usage: rstd [COMMAND]
+Usage: rstd [OPTIONS] <COMMAND>
 
 Commands:
   run         Run a script written in the language
+  scratch     Open your default editor to start editing a temporary file
   env         Operate on the environment variables available in the runtime
   completion  Generate a completions file for a specified shell
   lsp         Start the rested language server
+  config      Configure, or view current configurations
   help        Print this message or the help of the given subcommand(s)
 
 Options:
-  -h, --help     Print help
-  -V, --version  Print version
+  -l, --level <LEVEL>  Set log level, one of trace, debug, info, warn, error [default: info]
+  -h, --help           Print help
+  -V, --version        Print version
 ```
 
 Write a script, for example
