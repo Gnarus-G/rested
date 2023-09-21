@@ -31,35 +31,30 @@ impl<'env> ast_visit::Visitor for EnvVarsNotInAllNamespaces<'env> {
             identifier: ast::result::ParsedNode::Ok(Token { text: "env", .. }),
         } = expr
         {
-            for arg in &arguments.parameters {
-                match arg {
-                    Expression::String(value) => {
-                        let namespaces_from_which_var_is_missing = self
-                            .env
-                            .namespaced_variables
-                            .iter()
-                            .filter(|(_, vars)| !vars.contains_key(&value.value.to_string()))
-                            .map(|(namespace, _)| namespace)
-                            .cloned()
-                            .collect::<Vec<_>>();
+            if let Some(Expression::String(value)) = &arguments.parameters.first() {
+                let namespaces_from_which_var_is_missing = self
+                    .env
+                    .namespaced_variables
+                    .iter()
+                    .filter(|(_, vars)| !vars.contains_key(&value.value.to_string()))
+                    .map(|(namespace, _)| namespace)
+                    .cloned()
+                    .collect::<Vec<_>>();
 
-                        if !namespaces_from_which_var_is_missing.is_empty() {
-                            self.warnings.push(Diagnostic {
-                                range: Range {
-                                    start: value.span.start.into_position(),
-                                    end: value.span.end.into_position(),
-                                },
-                                message: format!(
-                                    "variable '{}' missing from some namespaces: {}",
-                                    value.value,
-                                    namespaces_from_which_var_is_missing.join(", ")
-                                ),
-                                severity: Some(DiagnosticSeverity::WARNING),
-                                ..Default::default()
-                            })
-                        }
-                    }
-                    _ => self.visit_expr(expr),
+                if !namespaces_from_which_var_is_missing.is_empty() {
+                    self.warnings.push(Diagnostic {
+                        range: Range {
+                            start: value.span.start.into_position(),
+                            end: value.span.end.into_position(),
+                        },
+                        message: format!(
+                            "variable '{}' missing from some namespaces: {}",
+                            value.value,
+                            namespaces_from_which_var_is_missing.join(", ")
+                        ),
+                        severity: Some(DiagnosticSeverity::WARNING),
+                        ..Default::default()
+                    })
                 }
             }
         }
