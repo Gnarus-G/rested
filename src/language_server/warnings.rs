@@ -3,7 +3,7 @@ use crate::{
     lexer::Token,
     parser::{
         ast::{self, Expression},
-        ast_visit::{self},
+        ast_visit::{self, VisitWith},
     },
 };
 use tower_lsp::lsp_types::*;
@@ -26,6 +26,8 @@ impl<'env> EnvVarsNotInAllNamespaces<'env> {
 
 impl<'env> ast_visit::Visitor for EnvVarsNotInAllNamespaces<'env> {
     fn visit_expr(&mut self, expr: &Expression) {
+        expr.visit_children_with(self);
+
         if let Expression::Call {
             arguments,
             identifier: ast::result::ParsedNode::Ok(Token { text: "env", .. }),
