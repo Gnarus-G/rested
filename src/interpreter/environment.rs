@@ -2,6 +2,7 @@ use std::{collections::HashMap, path::PathBuf};
 
 use anyhow::Context;
 
+#[derive(Debug)]
 pub struct Environment {
     pub env_file_name: PathBuf,
     pub namespaced_variables: HashMap<String, HashMap<String, String>>,

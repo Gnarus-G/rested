@@ -3,6 +3,7 @@ use std::sync::Mutex;
 mod completions;
 mod position;
 mod runner;
+mod warnings;
 
 use crate::config::env_file_path;
 use crate::interpreter::environment::Environment;
@@ -10,6 +11,7 @@ use crate::interpreter::{self, Interpreter};
 use crate::lexer;
 use crate::lexer::locations::{GetSpan, Location};
 use crate::parser::ast::Program;
+use crate::parser::ast_visit::VisitWith;
 use crate::parser::{self};
 use completions::*;
 use tower_lsp::jsonrpc::Result;
@@ -106,16 +108,28 @@ impl Backend {
                 .await;
         };
 
+        // Handle warnings...
+
+        let program = parser::Parser::new(&params.text).parse();
+
+        let mut w = warnings::EnvVarsNotInAllNamespaces::new(&env);
+
+        for item in program.items {
+            item.visit_with(&mut w)
+        }
+
+        let mut diagnostics = w.warnings;
+
+        // Done handling warnings
+
         let Err(interp_errors) = Interpreter::new(&params.text, env, NoopRunner).run(None) else {
             self.documents.put(params.uri.clone(), params.text);
 
             return self
                 .client
-                .publish_diagnostics(params.uri, vec![], Some(params.version))
+                .publish_diagnostics(params.uri, diagnostics, Some(params.version))
                 .await;
         };
-
-        let mut diagnostics = vec![];
 
         match interp_errors {
             interpreter::error::InterpreterError::ParseErrors(p) => {
