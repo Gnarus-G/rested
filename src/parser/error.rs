@@ -160,6 +160,16 @@ impl<'i> Expectations<'i> {
     }
 }
 
+pub struct ErrorsCollector<'source> {
+    pub list: Vec<ContextualError<ParseError<'source>>>,
+}
+
+impl<'source> crate::parser::ast_visit::Visitor<'source> for ErrorsCollector<'source> {
+    fn visit_error(&mut self, err: &ContextualError<ParseError<'source>>) {
+        self.list.push(err.clone());
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::parser::Parser;

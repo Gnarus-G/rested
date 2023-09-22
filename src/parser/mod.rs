@@ -1,5 +1,4 @@
 pub mod ast;
-mod ast_errors;
 mod ast_queries;
 mod ast_span;
 pub mod ast_visit;
