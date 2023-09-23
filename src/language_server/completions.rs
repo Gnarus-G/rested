@@ -280,6 +280,17 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
                 self.suggest(SuggestionKind::Identifiers);
             }
             Expression::EmptyObject(_) => self.suggest(SuggestionKind::Nothing),
+            Expression::Object((_, entries)) => {
+                for entry in entries {
+                    if let Expression::Error(_) = entry.value {
+                        self.suggest(SuggestionKind::Identifiers)
+                    } else {
+                        self.visit_expr(&entry.value)
+                    }
+                }
+                self.suggest(SuggestionKind::Nothing)
+            }
+            Expression::Identifier(_) => self.suggest(SuggestionKind::Identifiers),
             _ => {}
         };
     }
