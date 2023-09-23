@@ -1,6 +1,8 @@
 use std::collections::HashSet;
 
-use tower_lsp::lsp_types::{CompletionItem, CompletionItemKind, InsertTextFormat, Position};
+use tower_lsp::lsp_types::{
+    CompletionItem, CompletionItemKind, CompletionResponse, InsertTextFormat, Position,
+};
 use tracing::debug;
 
 use crate::{
@@ -13,30 +15,125 @@ use crate::{
         ast_visit::{self, VisitWith},
         error::ParseError,
     },
+    utils,
 };
 
-#[derive(Debug)]
-pub struct CompletionsCollector {
-    pub store: CompletionsStore,
-    pub comps: Vec<CompletionItem>,
-    pub position: Position,
+#[derive(Debug, PartialEq)]
+pub enum SuggestionKind {
+    Nothing,
+    Identifiers,
+    SetIdentifiers,
+    Functions,
+    StatementKeywords,
+    ItemKeywords,
+    Attributes,
+    EnvVars,
+    Headers,
 }
 
-/// For "dynamically" generated completions
-#[derive(Debug)]
-pub struct CompletionsStore {
-    pub variables: Vec<CompletionItem>,
-    pub env_args: Vec<CompletionItem>,
-}
-
-impl CompletionsCollector {
-    fn push_vars_and_functions(&mut self) {
-        self.comps.extend(self.store.variables.clone());
-        self.comps.extend(builtin_functions_completions());
+impl From<SuggestionKind> for Vec<CompletionItem> {
+    fn from(value: SuggestionKind) -> Self {
+        (&value).into()
     }
 }
 
-impl<'source> ast_visit::Visitor<'source> for CompletionsCollector {
+impl From<&SuggestionKind> for Vec<CompletionItem> {
+    fn from(value: &SuggestionKind) -> Self {
+        match value {
+            SuggestionKind::Nothing => vec![],
+            SuggestionKind::Identifiers => builtin_functions_completions(),
+            SuggestionKind::Functions => builtin_functions_completions(),
+            SuggestionKind::StatementKeywords => header_body_keyword_completions(),
+            SuggestionKind::ItemKeywords => item_keywords(),
+            SuggestionKind::EnvVars => env_args_completions().unwrap_or(vec![]),
+            SuggestionKind::SetIdentifiers => {
+                vec![CompletionItem {
+                    label: "BASE_URL".to_string(),
+                    kind: Some(CompletionItemKind::CONSTANT),
+                    ..CompletionItem::default()
+                }]
+            }
+            SuggestionKind::Attributes => attributes_completions(),
+            SuggestionKind::Headers => http_headers_completions(),
+        }
+    }
+}
+
+#[derive(Debug)]
+/// For collecting and deduping, different types of susgesstions and resolving
+/// them into completion items.
+struct Suggestions<'source> {
+    list: Vec<SuggestionKind>,
+    variables: utils::Array<lexer::Token<'source>>,
+}
+
+impl<'source> Suggestions<'source> {
+    fn push(&mut self, kind: SuggestionKind) {
+        if !self.list.contains(&kind) {
+            self.list.push(kind)
+        }
+    }
+
+    fn first(&self) -> Option<Vec<CompletionItem>> {
+        let kind = self.list.first();
+        debug!("resolving first suggestion given: {:?}", kind);
+        return kind.map(|k| self.comps_from_kind(k));
+    }
+
+    fn comps_from_kind(&self, kind: &SuggestionKind) -> Vec<CompletionItem> {
+        let mut comps: Vec<_> = kind.into();
+        if let SuggestionKind::Identifiers = kind {
+            debug!("adding variables to {:?}", kind);
+            comps.extend(self.variables.iter().map(|var| CompletionItem {
+                label: var.text.to_string(),
+                kind: Some(CompletionItemKind::VARIABLE),
+                insert_text: Some(var.text.to_string()),
+                ..CompletionItem::default()
+            }));
+        }
+        comps
+    }
+}
+
+#[derive(Debug)]
+pub struct CompletionsCollector<'source> {
+    suggestions: Suggestions<'source>,
+    position: Position,
+}
+
+impl<'source> CompletionsCollector<'source> {
+    pub fn new(program: &ast::Program<'source>, position: Position) -> Self {
+        CompletionsCollector {
+            suggestions: Suggestions {
+                list: vec![],
+                variables: program
+                    .variables_before(lexer::locations::Location {
+                        line: position.line as usize,
+                        col: position.character as usize,
+                    })
+                    .iter()
+                    // This clone is avoidable, but I don't want to add more lifetimes params to
+                    // Suggestions struct and this struct
+                    .map(|t| (*t).clone())
+                    .collect(),
+            },
+            position,
+        }
+    }
+
+    pub fn suggest(&mut self, kind: SuggestionKind) {
+        self.suggestions.push(kind);
+    }
+
+    pub fn into_response(self) -> Option<CompletionResponse> {
+        // We get the first suggestion here because we traversed depth first in
+        // the visitor. The deepest node that suggested something had to have contained
+        // the cursor position
+        return self.suggestions.first().map(CompletionResponse::Array);
+    }
+}
+
+impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
     fn visit_item(&mut self, item: &ast::Item<'source>) {
         debug!("visited item -> {:?}", item);
 
@@ -47,18 +144,12 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector {
         match item {
             Item::Set { identifier, value } => {
                 if identifier.span().is_on_or_after(&self.position) {
-                    return self.comps.push(CompletionItem {
-                        label: "BASE_URL".to_string(),
-                        kind: Some(CompletionItemKind::CONSTANT),
-                        ..CompletionItem::default()
-                    });
+                    return self.suggest(SuggestionKind::SetIdentifiers);
                 }
 
                 self.visit_expr(value);
 
-                if self.comps.is_empty() {
-                    self.push_vars_and_functions();
-                }
+                self.suggest(SuggestionKind::Identifiers);
             }
             Item::Let { value, identifier } => {
                 if identifier.span().is_on_or_after(&self.position) {
@@ -67,9 +158,7 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector {
 
                 self.visit_expr(value);
 
-                if self.comps.is_empty() {
-                    self.push_vars_and_functions();
-                }
+                self.suggest(SuggestionKind::Identifiers);
             }
             Item::Request {
                 block: Some(block), ..
@@ -82,9 +171,7 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector {
                     self.visit_statement(st);
                 }
 
-                if self.comps.is_empty() {
-                    return self.comps.extend(header_body_keyword_completions());
-                }
+                return self.suggest(SuggestionKind::StatementKeywords);
             }
             Item::Attribute {
                 identifier,
@@ -92,12 +179,12 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector {
                 ..
             } => {
                 if identifier.span().is_on_or_after(&self.position) {
-                    return self.comps.extend(attributes_completions());
+                    return self.suggest(SuggestionKind::Attributes);
                 }
 
                 if let Some(args) = parameters {
                     if args.span.contains(&self.position) {
-                        return self.push_vars_and_functions();
+                        return self.suggest(SuggestionKind::Identifiers);
                     }
 
                     for param in args.iter() {
@@ -108,6 +195,7 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector {
             _ => {}
         }
     }
+
     fn visit_statement(&mut self, statement: &ast::Statement<'source>) {
         debug!("visited statement -> {:?}", statement);
 
@@ -120,19 +208,17 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector {
         match statement {
             Statement::Header { name, value } => {
                 if name.span().is_on_or_after(&self.position) {
-                    return self.comps.extend(http_headers_completions());
+                    return self.suggest(SuggestionKind::Headers);
                 }
 
-                if value.span().is_after(&self.position) && self.comps.is_empty() {
-                    return self.push_vars_and_functions();
+                if value.span().is_after(&self.position) {
+                    return self.suggest(SuggestionKind::Identifiers);
                 }
 
                 self.visit_expr(value)
             }
             Statement::Body { .. } => {
-                if self.comps.is_empty() {
-                    self.push_vars_and_functions();
-                }
+                self.suggest(SuggestionKind::Identifiers);
             }
             _ => {}
         }
@@ -163,9 +249,7 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector {
                             .iter()
                             .find(|p| p.span().contains(&self.position))
                         {
-                            Some(Expression::String(..)) => {
-                                self.comps.extend(self.store.env_args.clone())
-                            }
+                            Some(Expression::String(..)) => self.suggest(SuggestionKind::EnvVars),
                             Some(Expression::Error(err))
                                 if matches!(
                                     err.inner_error,
@@ -178,35 +262,30 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector {
                                     }
                                 ) =>
                             {
-                                self.comps.extend(self.store.env_args.clone())
+                                self.suggest(SuggestionKind::EnvVars)
                             }
-                            None => self.push_vars_and_functions(),
+                            None => self.suggest(SuggestionKind::Identifiers),
                             _ => {}
                         }
                     }
                 }
-                ast::result::ParsedNode::Error(_) => {
-                    self.comps.extend(builtin_functions_completions())
-                }
+                ast::result::ParsedNode::Error(_) => self.suggest(SuggestionKind::Functions),
                 _ => {
-                    if self.comps.is_empty() && arguments.span.contains(&self.position) {
-                        self.push_vars_and_functions();
+                    if arguments.span.contains(&self.position) {
+                        self.suggest(SuggestionKind::Identifiers);
                     }
                 }
             },
-            Expression::Array(_) => {
-                if self.comps.is_empty() {
-                    self.push_vars_and_functions();
-                }
+            Expression::Array(_) | Expression::EmptyArray(_) => {
+                self.suggest(SuggestionKind::Identifiers);
             }
-            Expression::EmptyObject(_) => {}
-            Expression::String(_) => {}
+            Expression::EmptyObject(_) => self.suggest(SuggestionKind::Nothing),
             _ => {}
         };
     }
 }
 
-pub fn builtin_functions_completions() -> Vec<CompletionItem> {
+fn builtin_functions_completions() -> Vec<CompletionItem> {
     ["env", "read", "escape_new_lines"]
         .map(|keyword| CompletionItem {
             label: format!("{}(..)", keyword),
@@ -218,7 +297,7 @@ pub fn builtin_functions_completions() -> Vec<CompletionItem> {
         .to_vec()
 }
 
-pub fn item_keywords() -> Vec<CompletionItem> {
+fn item_keywords() -> Vec<CompletionItem> {
     let methods = vec!["get", "post", "put", "patch", "delete"];
 
     [vec!["let", "set"], methods]
@@ -233,7 +312,7 @@ pub fn item_keywords() -> Vec<CompletionItem> {
         .collect()
 }
 
-pub fn header_body_keyword_completions() -> Vec<CompletionItem> {
+fn header_body_keyword_completions() -> Vec<CompletionItem> {
     ["header", "body"]
         .map(|kw| kw.to_string())
         .map(|keyword| CompletionItem {
@@ -245,7 +324,7 @@ pub fn header_body_keyword_completions() -> Vec<CompletionItem> {
         .to_vec()
 }
 
-pub fn attributes_completions() -> Vec<CompletionItem> {
+fn attributes_completions() -> Vec<CompletionItem> {
     let mut comp = ["log", "name"]
         .map(|keyword| CompletionItem {
             label: format!("{}(..)", keyword),
@@ -270,7 +349,7 @@ pub fn attributes_completions() -> Vec<CompletionItem> {
     comp
 }
 
-pub fn env_args_completions() -> anyhow::Result<Vec<CompletionItem>> {
+fn env_args_completions() -> anyhow::Result<Vec<CompletionItem>> {
     let env = Environment::new(env_file_path()?)?;
     let env_args = env
         .namespaced_variables
@@ -289,7 +368,7 @@ pub fn env_args_completions() -> anyhow::Result<Vec<CompletionItem>> {
     Ok(env_args)
 }
 
-pub fn http_headers_completions() -> Vec<CompletionItem> {
+fn http_headers_completions() -> Vec<CompletionItem> {
     let headers = [
         "Accept",
         "Accept-Charset",

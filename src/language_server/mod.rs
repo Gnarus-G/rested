@@ -10,7 +10,6 @@ use crate::interpreter::environment::Environment;
 use crate::interpreter::{self, Interpreter};
 use crate::lexer;
 use crate::lexer::locations::{GetSpan, Location};
-use crate::parser::ast::Program;
 use crate::parser::ast_visit::VisitWith;
 use crate::parser::{self};
 use completions::*;
@@ -236,51 +235,25 @@ impl LanguageServer for Backend {
             return Ok(None);
         };
 
-        let get_variables = |program: &Program| {
-            return program
-                .variables_before(Location {
-                    line: position.line as usize,
-                    col: position.character as usize,
-                })
-                .iter()
-                .map(|var| CompletionItem {
-                    label: var.text.to_string(),
-                    kind: Some(CompletionItemKind::VARIABLE),
-                    insert_text: Some(var.text.to_string()),
-                    ..CompletionItem::default()
-                })
-                .collect();
-        };
-
         let program = parser::Parser::new(&text).parse();
 
-        let variables = get_variables(&program);
-
-        let env_args = env_args_completions().unwrap_or(vec![]);
-
-        let completions_store = CompletionsStore {
-            variables,
-            env_args,
-        };
-
-        let mut completions_collector = CompletionsCollector {
-            store: completions_store,
-            position,
-            comps: vec![],
-        };
+        let mut completions_collector = CompletionsCollector::new(&program, position);
 
         let Some(current_item) = program.items.iter().find(|i| i.span().contains(&position)) else {
             debug!("cursor is apparently not on any items");
             debug!("{:?}", program);
-            return Ok(Some(CompletionResponse::Array(item_keywords())));
+            return Ok(Some(CompletionResponse::Array(
+                SuggestionKind::ItemKeywords.into(),
+            )));
         };
 
-        // debug!("cursor on item -> {:?}", current_item);
+        debug!("cursor on item -> {:?}", current_item);
 
         current_item.visit_with(&mut completions_collector);
-        debug!("curasdfor on item -> {:?}", current_item);
 
-        return Ok(Some(CompletionResponse::Array(completions_collector.comps)));
+        debug!("done collecting completions");
+
+        return Ok(completions_collector.into_response());
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
