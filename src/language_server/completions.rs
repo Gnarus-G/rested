@@ -74,6 +74,10 @@ impl<'source> Suggestions<'source> {
         }
     }
 
+    fn pop(&mut self) {
+        self.list.pop();
+    }
+
     fn first(&self) -> Option<Vec<CompletionItem>> {
         let kind = self.list.first();
         debug!("resolving first suggestion given: {:?}", kind);
@@ -122,6 +126,14 @@ impl<'source> CompletionsCollector<'source> {
     }
 
     pub fn suggest(&mut self, kind: SuggestionKind) {
+        debug!("suggesting {:?}", kind);
+        self.suggestions.push(kind);
+    }
+
+    /// Overwrite the previous suggestion (likely from deeper in the tree) the one given.
+    pub fn suggest_over_previous(&mut self, kind: SuggestionKind) {
+        debug!("suggesting {:?}", kind);
+        self.suggestions.pop();
         self.suggestions.push(kind);
     }
 
@@ -249,7 +261,11 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
                             .iter()
                             .find(|p| p.span().contains(&self.position))
                         {
-                            Some(Expression::String(..)) => self.suggest(SuggestionKind::EnvVars),
+                            Some(Expression::String(..)) => {
+                                // This string was visited earlier with visit_children_with
+                                // and it suggested Nothing, as it should, so...
+                                self.suggest_over_previous(SuggestionKind::EnvVars)
+                            }
                             Some(Expression::Error(err))
                                 if matches!(
                                     err.inner_error,
@@ -262,7 +278,8 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
                                     }
                                 ) =>
                             {
-                                self.suggest(SuggestionKind::EnvVars)
+                                // Same deal here as for the Expression::String above
+                                self.suggest_over_previous(SuggestionKind::EnvVars)
                             }
                             None => self.suggest(SuggestionKind::Identifiers),
                             _ => {}
@@ -291,6 +308,21 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
                 self.suggest(SuggestionKind::Nothing)
             }
             Expression::Identifier(_) => self.suggest(SuggestionKind::Identifiers),
+            Expression::String(_) => self.suggest(SuggestionKind::Nothing),
+            Expression::Error(err)
+                if matches!(
+                    err.inner_error,
+                    ParseError::ExpectedEitherOfTokens {
+                        found: lexer::Token {
+                            kind: lexer::TokenKind::UnfinishedStringLiteral,
+                            ..
+                        },
+                        ..
+                    }
+                ) =>
+            {
+                self.suggest(SuggestionKind::Nothing)
+            }
             _ => {}
         };
     }
