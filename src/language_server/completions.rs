@@ -3,62 +3,151 @@ use std::collections::HashSet;
 use tower_lsp::lsp_types::{CompletionItem, CompletionItemKind, InsertTextFormat, Position};
 use tracing::debug;
 
-use crate::config::env_file_path;
-use crate::interpreter::environment::Environment;
-use crate::lexer;
-use crate::parser::ast::{self, Item, ObjectEntry, Statement};
-use crate::parser::error::ParseError;
-use crate::{lexer::locations::GetSpan, parser::ast::Expression};
+use crate::{
+    config::env_file_path,
+    interpreter::environment::Environment,
+    language_server::position::ContainsPosition,
+    lexer::{self, locations::GetSpan},
+    parser::{
+        ast::{self, Expression, Item, Statement},
+        ast_visit::{self, VisitWith},
+        error::ParseError,
+    },
+};
 
-use super::position::ContainsPosition;
-
-#[allow(unused_macros)]
-macro_rules! dbg_comp {
-    ($value:expr) => {
-        return Some(vec![CompletionItem {
-            label: format!("{:?}", $value),
-            kind: Some(CompletionItemKind::CONSTANT),
-            ..CompletionItem::default()
-        }]);
-    };
+#[derive(Debug)]
+pub struct CompletionsCollector {
+    pub store: CompletionsStore,
+    pub comps: Vec<CompletionItem>,
+    pub position: Position,
 }
 
 /// For "dynamically" generated completions
+#[derive(Debug)]
 pub struct CompletionsStore {
     pub variables: Vec<CompletionItem>,
     pub env_args: Vec<CompletionItem>,
 }
 
-pub trait GetCompletions {
-    fn completions(
-        &self,
-        position: &Position,
-        comps: &CompletionsStore,
-    ) -> Option<Vec<CompletionItem>>;
+impl CompletionsCollector {
+    fn push_vars_and_functions(&mut self) {
+        self.comps.extend(self.store.variables.clone());
+        self.comps.extend(builtin_functions_completions());
+    }
 }
 
-impl<'source> GetCompletions for Expression<'source> {
-    fn completions(
-        &self,
-        position: &Position,
-        comps: &CompletionsStore,
-    ) -> Option<Vec<CompletionItem>> {
-        debug!("visited expression -> {:?}", self);
+impl<'source> ast_visit::Visitor<'source> for CompletionsCollector {
+    fn visit_item(&mut self, item: &ast::Item<'source>) {
+        debug!("visited item -> {:?}", item);
 
-        if !self.span().contains(position) {
-            return None;
+        if !item.span().contains(&self.position) {
+            return;
         }
 
-        return match self {
-            Expression::TemplateSringLiteral { parts, .. } => {
-                for part in parts {
-                    let some_comp = part.completions(position, comps);
-                    if some_comp.is_some() {
-                        return some_comp;
+        match item {
+            Item::Set { identifier, value } => {
+                if identifier.span().is_on_or_after(&self.position) {
+                    return self.comps.push(CompletionItem {
+                        label: "BASE_URL".to_string(),
+                        kind: Some(CompletionItemKind::CONSTANT),
+                        ..CompletionItem::default()
+                    });
+                }
+
+                self.visit_expr(value);
+
+                if self.comps.is_empty() {
+                    self.push_vars_and_functions();
+                }
+            }
+            Item::Let { value, identifier } => {
+                if identifier.span().is_on_or_after(&self.position) {
+                    return;
+                }
+
+                self.visit_expr(value);
+
+                if self.comps.is_empty() {
+                    self.push_vars_and_functions();
+                }
+            }
+            Item::Request {
+                block: Some(block), ..
+            } => {
+                if !block.span.contains(&self.position) {
+                    return;
+                }
+
+                for st in &block.statements {
+                    self.visit_statement(st);
+                }
+
+                if self.comps.is_empty() {
+                    return self.comps.extend(header_body_keyword_completions());
+                }
+            }
+            Item::Attribute {
+                identifier,
+                parameters,
+                ..
+            } => {
+                if identifier.span().is_on_or_after(&self.position) {
+                    return self.comps.extend(attributes_completions());
+                }
+
+                if let Some(args) = parameters {
+                    if args.span.contains(&self.position) {
+                        return self.push_vars_and_functions();
+                    }
+
+                    for param in args.iter() {
+                        self.visit_expr(param)
                     }
                 }
-                None
             }
+            _ => {}
+        }
+    }
+    fn visit_statement(&mut self, statement: &ast::Statement<'source>) {
+        debug!("visited statement -> {:?}", statement);
+
+        if !statement.span().contains(&self.position) {
+            return;
+        }
+
+        statement.visit_children_with(self);
+
+        match statement {
+            Statement::Header { name, value } => {
+                if name.span().is_on_or_after(&self.position) {
+                    return self.comps.extend(http_headers_completions());
+                }
+
+                if value.span().is_after(&self.position) && self.comps.is_empty() {
+                    return self.push_vars_and_functions();
+                }
+
+                self.visit_expr(value)
+            }
+            Statement::Body { .. } => {
+                if self.comps.is_empty() {
+                    self.push_vars_and_functions();
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn visit_expr(&mut self, expr: &Expression<'source>) {
+        debug!("visited expression -> {:?}", expr);
+
+        if !expr.span().contains(&self.position) {
+            return;
+        }
+
+        expr.visit_children_with(self);
+
+        return match expr {
             Expression::Call {
                 identifier,
                 arguments,
@@ -68,13 +157,15 @@ impl<'source> GetCompletions for Expression<'source> {
                     text: "env",
                     ..
                 }) => {
-                    if arguments.span.contains(position) {
+                    if arguments.span.contains(&self.position) {
                         match arguments
                             .parameters
                             .iter()
-                            .find(|p| p.span().contains(position))
+                            .find(|p| p.span().contains(&self.position))
                         {
-                            Some(Expression::String(..)) => return Some(comps.env_args.clone()),
+                            Some(Expression::String(..)) => {
+                                self.comps.extend(self.store.env_args.clone())
+                            }
                             Some(Expression::Error(err))
                                 if matches!(
                                     err.inner_error,
@@ -87,156 +178,31 @@ impl<'source> GetCompletions for Expression<'source> {
                                     }
                                 ) =>
                             {
-                                return Some(comps.env_args.clone())
+                                self.comps.extend(self.store.env_args.clone())
                             }
+                            None => self.push_vars_and_functions(),
                             _ => {}
                         }
                     }
-                    None
                 }
-                ast::result::ParsedNode::Error(_) => Some(builtin_functions_completions()),
-                _ => Some([comps.variables.clone(), builtin_functions_completions()].concat()),
+                ast::result::ParsedNode::Error(_) => {
+                    self.comps.extend(builtin_functions_completions())
+                }
+                _ => {
+                    if self.comps.is_empty() && arguments.span.contains(&self.position) {
+                        self.push_vars_and_functions();
+                    }
+                }
             },
-            Expression::Array((_, elements)) => {
-                match elements.iter().find(|el| el.expr.span().contains(position)) {
-                    Some(el) => el.expr.completions(position, comps),
-                    _ => Some([comps.variables.clone(), builtin_functions_completions()].concat()),
+            Expression::Array(_) => {
+                if self.comps.is_empty() {
+                    self.push_vars_and_functions();
                 }
             }
-            Expression::Object((_, entries)) => {
-                for ObjectEntry { key, value, .. } in entries {
-                    if key.span().contains(position) {
-                        return None;
-                    }
-
-                    if value.span().contains(position) {
-                        return value.completions(position, comps);
-                    }
-                }
-
-                Some([comps.variables.clone(), builtin_functions_completions()].concat())
-            }
-            Expression::EmptyObject(_) => None,
-            Expression::String(_) => None,
-            _ => Some([comps.variables.clone(), builtin_functions_completions()].concat()),
+            Expression::EmptyObject(_) => {}
+            Expression::String(_) => {}
+            _ => {}
         };
-    }
-}
-
-impl<'source> GetCompletions for Statement<'source> {
-    fn completions(
-        &self,
-        position: &Position,
-        comps: &CompletionsStore,
-    ) -> Option<Vec<CompletionItem>> {
-        if !self.span().contains(position) {
-            return None;
-        }
-
-        match self {
-            Statement::Header { name, value } => {
-                if name.span().is_on_or_after(position) {
-                    return Some(http_headers_completions());
-                }
-
-                if value.span().is_after(position) {
-                    return Some(
-                        [comps.variables.clone(), builtin_functions_completions()].concat(),
-                    );
-                }
-
-                value.completions(position, comps)
-            }
-            Statement::Body { value, .. } => value.completions(position, comps).or_else(|| {
-                Some([comps.variables.clone(), builtin_functions_completions()].concat())
-            }),
-            Statement::Error(..) => None,
-            _ => None,
-        }
-    }
-}
-
-impl<'source> GetCompletions for Item<'source> {
-    fn completions(
-        &self,
-        position: &Position,
-        comps: &CompletionsStore,
-    ) -> Option<Vec<CompletionItem>> {
-        if !self.span().contains(position) {
-            return None;
-        }
-
-        match self {
-            Item::Set { identifier, value } => {
-                if identifier.span().is_on_or_after(position) {
-                    return Some(vec![CompletionItem {
-                        label: "BASE_URL".to_string(),
-                        kind: Some(CompletionItemKind::CONSTANT),
-                        ..CompletionItem::default()
-                    }]);
-                }
-
-                if value.span().is_on_or_after(position) {
-                    return value.completions(position, comps);
-                }
-
-                None
-            }
-            Item::Let { value, identifier } => {
-                if identifier.span().is_on_or_after(position) {
-                    return None;
-                }
-
-                if value.span().is_on_or_after(position) {
-                    return value.completions(position, comps);
-                }
-
-                None
-            }
-            Item::LineComment(_) => None,
-            Item::Request {
-                block: Some(block), ..
-            } => {
-                if !block.span.contains(position) {
-                    return None;
-                }
-
-                for st in &block.statements {
-                    if let Some(c) = st.completions(position, comps) {
-                        return Some(c);
-                    }
-                }
-
-                return Some(header_body_keyword_completions());
-            }
-            Item::Expr(expr) => expr.completions(position, comps),
-            Item::Attribute {
-                identifier,
-                parameters,
-                ..
-            } => {
-                if identifier.span().is_on_or_after(position) {
-                    return Some(attributes_completions());
-                }
-
-                if let Some(args) = parameters {
-                    if args.span.contains(position) {
-                        return Some(
-                            [comps.variables.clone(), builtin_functions_completions()].concat(),
-                        );
-                    }
-
-                    for param in args.iter() {
-                        if let Some(c) = param.completions(position, comps) {
-                            return Some(c);
-                        }
-                    }
-                }
-
-                None
-            }
-            _ => None,
-        }
     }
 }
 

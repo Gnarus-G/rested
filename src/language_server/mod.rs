@@ -263,17 +263,24 @@ impl LanguageServer for Backend {
             env_args,
         };
 
+        let mut completions_collector = CompletionsCollector {
+            store: completions_store,
+            position,
+            comps: vec![],
+        };
+
         let Some(current_item) = program.items.iter().find(|i| i.span().contains(&position)) else {
             debug!("cursor is apparently not on any items");
             debug!("{:?}", program);
             return Ok(Some(CompletionResponse::Array(item_keywords())));
         };
 
-        debug!("cursor on item -> {:?}", current_item);
+        // debug!("cursor on item -> {:?}", current_item);
 
-        return Ok(current_item
-            .completions(&position, &completions_store)
-            .map(CompletionResponse::Array));
+        current_item.visit_with(&mut completions_collector);
+        debug!("curasdfor on item -> {:?}", current_item);
+
+        return Ok(Some(CompletionResponse::Array(completions_collector.comps)));
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {

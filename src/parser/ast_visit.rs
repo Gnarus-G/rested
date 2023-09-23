@@ -103,9 +103,7 @@ impl<'source> VisitWith<'source> for Expression<'source> {
                 identifier,
                 arguments,
             } => {
-                if let ParsedNode::Error(e) = identifier {
-                    visitor.visit_error(e)
-                }
+                visitor.visit_token(identifier);
                 for arg in &arguments.parameters {
                     visitor.visit_expr(arg)
                 }
