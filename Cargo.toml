@@ -44,6 +44,10 @@ harness = false
 name = "errors"
 harness = false
 
+[[bench]]
+name = "interpreter"
+harness = false
+
 [profile.dev.package.insta]
 opt-level = 3
 
