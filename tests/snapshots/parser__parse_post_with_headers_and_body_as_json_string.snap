@@ -4,6 +4,7 @@ description: "\n        post http://localhost {\n        header \"Authorization\
 expression: ast
 ---
 Program(
+  source: "\n        post http://localhost {\n        header \"Authorization\" \"Bearer token\"\n        body `\n        {\"neet\": 1337}\n        `\n        }",
   items: [
     Request(
       method: POST,

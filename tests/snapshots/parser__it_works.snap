@@ -4,6 +4,7 @@ description: "\nset BASE_URL \"httas...\"\npost http://lasdf.. {}\n// asdfasdf\n
 expression: ast
 ---
 Program(
+  source: "\nset BASE_URL \"httas...\"\npost http://lasdf.. {}\n// asdfasdf\n\nlet output_file = \"output/file.json\"\nlet token = env(\"auth-token\")\n\n@log(output_file)\npost /asd {\n  // asdfasd\n  header \"Authorization\" token\n  body `{\n      \"neet\": \"${env(\"var\")}\",\n      \"nerd\": \"${output_file}\",\n  }`\n}\n\n@skip\nget /api {}\n\nput /api {}\npatch /api {}\ndelete /api {}\n",
   items: [
     Set(
       identifier: Ok(Token(

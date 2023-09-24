@@ -4,6 +4,7 @@ description: "\n        post http://localhost {\n        header \"Authorization\
 expression: ast
 ---
 Program(
+  source: "\n        post http://localhost {\n        header \"Authorization\" \"Bearer token\"\n        header \"random\" \"tokener Bear\"\n        }",
   items: [
     Request(
       method: POST,

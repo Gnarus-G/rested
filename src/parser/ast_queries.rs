@@ -37,7 +37,7 @@ impl<'source> Program<'source> {
 
     pub fn errors(&self) -> Vec<ContextualError<ParseError<'source>>> {
         let mut errors = ErrorsCollector { list: vec![] };
-        for item in &self.items {
+        for item in self.items.iter() {
             item.visit_with(&mut errors)
         }
 

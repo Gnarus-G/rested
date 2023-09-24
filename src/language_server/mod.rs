@@ -2,12 +2,11 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 mod completions;
 mod position;
-mod runner;
 mod warnings;
 
 use crate::config::env_file_path;
+use crate::interpreter;
 use crate::interpreter::environment::Environment;
-use crate::interpreter::{self, Interpreter};
 use crate::lexer;
 use crate::lexer::locations::{GetSpan, Location};
 use crate::parser::ast_visit::VisitWith;
@@ -19,7 +18,6 @@ use tower_lsp::{Client, LanguageServer};
 use tracing::{debug, error};
 
 use self::position::ContainsPosition;
-use self::runner::NoopRunner;
 
 trait IntoPosition {
     fn into_position(self) -> Position;
@@ -113,7 +111,7 @@ impl Backend {
 
         let mut w = warnings::EnvVarsNotInAllNamespaces::new(&env);
 
-        for item in program.items {
+        for item in program.items.iter() {
             item.visit_with(&mut w)
         }
 
@@ -121,7 +119,7 @@ impl Backend {
 
         // Done handling warnings
 
-        let Err(interp_errors) = Interpreter::new(&params.text, env, NoopRunner).run(None) else {
+        let Err(interp_errors) = program.interpret(&env) else {
             self.documents.put(params.uri.clone(), params.text);
 
             return self

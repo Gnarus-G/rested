@@ -4,6 +4,7 @@ description: "@log(\"path/to/file\") get /api"
 expression: ast
 ---
 Program(
+  source: "@log(\"path/to/file\") get /api",
   items: [
     Attribute(
       location: Position(

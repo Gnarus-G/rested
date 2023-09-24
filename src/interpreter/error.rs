@@ -82,6 +82,12 @@ impl<'source> std::fmt::Display for InterpreterError<'source> {
     }
 }
 
+impl<'source> From<Box<ContextualError<InterpreterErrorKind>>> for InterpreterError<'source> {
+    fn from(value: Box<ContextualError<InterpreterErrorKind>>) -> Self {
+        Self::Error(value)
+    }
+}
+
 impl<'source> From<ContextualError<InterpreterErrorKind>> for InterpreterError<'source> {
     fn from(value: ContextualError<InterpreterErrorKind>) -> Self {
         Self::Error(value.into())
@@ -101,6 +107,21 @@ impl<'source> From<Box<ContextualError<ParseError<'source>>>> for InterpreterErr
             }
             .into(),
         )
+    }
+}
+
+impl<'source> From<Box<ContextualError<ParseError<'source>>>>
+    for Box<ContextualError<InterpreterErrorKind>>
+{
+    fn from(value: Box<ContextualError<ParseError<'source>>>) -> Self {
+        Box::new(ContextualError {
+            inner_error: InterpreterErrorKind::Other {
+                error: value.inner_error.to_string(),
+            },
+            span: value.span,
+            message: value.message,
+            context: value.context,
+        })
     }
 }
 

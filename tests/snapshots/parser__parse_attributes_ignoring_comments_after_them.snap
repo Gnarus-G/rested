@@ -4,6 +4,7 @@ description: "@log(\"path/to/file\") \n                // ignored\n             
 expression: ast
 ---
 Program(
+  source: "@log(\"path/to/file\") \n                // ignored\n                get /api",
   items: [
     Attribute(
       location: Position(

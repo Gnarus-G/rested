@@ -19,12 +19,6 @@ impl<'source> std::fmt::Display for lexer::Token<'source> {
     }
 }
 
-#[derive(Debug)]
-pub struct Expectations<'i> {
-    source_code: &'i str,
-    pub start: Position,
-}
-
 #[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub enum ParseError<'source> {
     ExpectedToken {
@@ -83,6 +77,12 @@ impl<'source> std::fmt::Display for ParserErrors<'source> {
         }
         Ok(())
     }
+}
+
+#[derive(Debug)]
+pub struct Expectations<'i> {
+    source_code: &'i str,
+    pub start: Position,
 }
 
 impl<'i> Expectations<'i> {

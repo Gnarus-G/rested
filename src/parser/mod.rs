@@ -43,6 +43,18 @@ impl<'source> TokenCheck for Token<'source> {
     }
 }
 
+impl<'source> From<&'source String> for ast::Program<'source> {
+    fn from(s: &'source String) -> Self {
+        Parser::new(s).parse()
+    }
+}
+
+impl<'source> From<&'source str> for ast::Program<'source> {
+    fn from(s: &'source str) -> Self {
+        Parser::new(s).parse()
+    }
+}
+
 #[derive(Debug)]
 pub struct Parser<'i> {
     lexer: Lexer<'i>,
@@ -151,7 +163,7 @@ impl<'i> Parser<'i> {
             self.next_token();
         }
 
-        return ast::Program { items };
+        return ast::Program::new(self.lexer.input(), items);
     }
 
     fn parse_request(&mut self, method: RequestMethod) -> Result<'i, Item<'i>> {

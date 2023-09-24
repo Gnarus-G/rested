@@ -4,6 +4,7 @@ description: "set BASE_URL \"stuff\""
 expression: ast
 ---
 Program(
+  source: "set BASE_URL \"stuff\"",
   items: [
     Set(
       identifier: Ok(Token(

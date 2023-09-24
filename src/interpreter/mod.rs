@@ -2,146 +2,76 @@ mod attributes;
 pub mod environment;
 pub mod error;
 pub mod ir;
+pub mod runner;
 pub mod ureq_runner;
-
-use std::collections::HashMap;
-use std::fs::{self, File};
-use std::io::{BufWriter, Read, Write};
-use std::path::PathBuf;
-
-use colored::Colorize;
 
 use environment::Environment;
 use error::InterpreterError;
-use tracing::info;
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::Read;
 
+use crate::error_meta::ContextualError;
+use crate::interpreter::ir::LogDestination;
 use crate::lexer;
 use crate::parser::ast::{self, Endpoint, Expression, Literal};
-use crate::utils::Array;
 
 use crate::lexer::locations::{GetSpan, Span};
 use crate::parser::error::ParserErrors;
 
-use self::error::InterpErrorFactory;
+use self::error::{InterpErrorFactory, InterpreterErrorKind};
+use self::ir::RequestItem;
 use attributes::AttributeStore;
 use ir::Header;
 
-type Result<'source, T> = std::result::Result<T, InterpreterError<'source>>;
+type Result<T> = std::result::Result<T, Box<ContextualError<InterpreterErrorKind>>>;
 
-enum Log {
-    Std,
-    File(PathBuf),
-}
-
-struct RequestMeta {
-    name: Option<String>,
-    dbg: bool,
-    span: Span,
-    request: ir::Request,
-    log_destination: Option<Log>,
-}
-
-pub struct Interpreter<'source, R: ir::Runner> {
-    code: &'source str,
-    error_factory: InterpErrorFactory<'source>,
-    env: Environment,
-    base_url: Option<String>,
-    let_bindings: HashMap<&'source str, String>,
-    runner: R,
-}
-
-impl<'source, R: ir::Runner> Interpreter<'source, R> {
-    pub fn new(code: &'source str, env: Environment, runner: R) -> Self {
-        Self {
-            error_factory: InterpErrorFactory::new(code),
-            code,
-            env,
-            base_url: None,
-            let_bindings: HashMap::new(),
-            runner,
-        }
-    }
-
-    pub fn run(&mut self, request_names: Option<Array<String>>) -> Result<'source, ()> {
-        let requests = self.evaluate()?;
-
-        let requests = requests.iter().filter(|r| match (&request_names, &r.name) {
-            (None, _) => true,
-            (Some(_), None) => false,
-            (Some(desired), Some(name)) => desired.contains(name),
-        });
-
-        for RequestMeta {
-            span,
-            request,
-            dbg,
-            log_destination,
-            ..
-        } in requests
-        {
-            info!(
-                "sending {} request to {}",
-                request.method.to_string().yellow().bold(),
-                request.url.bold()
-            );
-
-            if *dbg {
-                info!(" \u{21B3} with request data:");
-                eprintln!("{}", indent_lines(&format!("{:#?}", request), 6));
-
-                eprintln!(
-                    "{}",
-                    indent_lines(
-                        &format!(
-                            "Body: {}",
-                            request.body.clone().unwrap_or("(no body)".to_string())
-                        ),
-                        6
-                    )
-                );
-            }
-
-            let res = self
-                .runner
-                .run_request(request)
-                .map_err(|e| self.error_factory.other(*span, e))?;
-
-            if let Some(log_destination) = log_destination {
-                match log_destination {
-                    Log::Std => {
-                        println!("{}", indent_lines(&res, 4));
-                    }
-                    Log::File(file_path) => {
-                        log(&res, file_path)
-                            .map_err(|error| self.error_factory.other(*span, error))?;
-
-                        info!("{}", format!("saved response to {:?}", file_path).blue());
-                    }
-                }
-            }
-        }
-
-        Ok(())
-    }
-
-    fn evaluate(&mut self) -> Result<'source, Array<RequestMeta>> {
-        let mut parser = crate::parser::Parser::new(self.code);
-
-        let ast = parser.parse();
-
-        let parse_errors = ast.errors();
+impl<'source> ast::Program<'source> {
+    pub fn interpret(
+        &self,
+        env: &Environment,
+    ) -> std::result::Result<ir::Program<'source>, InterpreterError<'source>> {
+        let parse_errors = self.errors();
 
         if !parse_errors.is_empty() {
             return Err(ParserErrors::new(parse_errors).into());
         }
 
+        let mut interp = Interpreter::new(self, env);
+
+        let items = interp.evaluate()?;
+
+        Ok(ir::Program::new(self.source, items.into()))
+    }
+}
+
+pub struct Interpreter<'source, 'p, 'env> {
+    program: &'p ast::Program<'source>,
+    error_factory: InterpErrorFactory<'source>,
+    env: &'env Environment,
+    base_url: Option<String>,
+    let_bindings: HashMap<&'source str, String>,
+}
+
+impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
+    pub fn new(program: &'p ast::Program<'source>, env: &'env Environment) -> Self {
+        Self {
+            error_factory: InterpErrorFactory::new(program.source),
+            program,
+            env,
+            base_url: None,
+            let_bindings: HashMap::new(),
+        }
+    }
+
+    pub fn evaluate(&mut self) -> Result<Vec<RequestItem>> {
         use ast::Item::*;
 
         let mut attributes = AttributeStore::new();
 
         let mut requests = vec![];
 
-        for item in ast.items.into_iter() {
+        for item in self.program.items.iter() {
             match item {
                 Request {
                     method,
@@ -157,7 +87,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
 
                     let span = span.to_end_of(endpoint.span());
 
-                    let path = self.evaluate_request_endpoint(&endpoint)?;
+                    let path = self.evaluate_request_endpoint(endpoint)?;
 
                     let mut headers = vec![];
                     let mut body = None;
@@ -204,22 +134,23 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
 
                     let log_destination = if let Some(att) = attributes.get("log") {
                         if let Some(arg_exp) = att.first_params() {
-                            let file_path = self.evaluate_expression(arg_exp)?.into();
-                            Some(Log::File(file_path))
+                            let value = self.evaluate_expression(arg_exp)?;
+                            let file_path = value.into();
+                            Some(LogDestination::File(file_path))
                         } else {
-                            Some(Log::Std)
+                            Some(LogDestination::Std)
                         }
                     } else {
                         None
                     };
 
-                    requests.push(RequestMeta {
+                    requests.push(RequestItem {
                         name: name_of_request,
                         dbg: attributes.get("dbg").is_some(),
                         log_destination,
                         span,
                         request: ir::Request {
-                            method,
+                            method: *method,
                             url: path,
                             headers: headers.into(),
                             body,
@@ -234,7 +165,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                         return Err(self.error_factory.unknown_constant(identifier).into());
                     }
 
-                    self.base_url = Some(self.evaluate_expression(&value)?);
+                    self.base_url = Some(self.evaluate_expression(value)?);
                 }
                 LineComment(_) => {}
                 Attribute {
@@ -252,10 +183,10 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                                     .duplicate_attribute(identifier)
                                     .into());
                             }
-                            attributes.add(
-                                identifier,
-                                parameters.map(|p| p.parameters).unwrap_or_default(),
-                            );
+
+                            let att_params = parameters.as_ref().map(|p| &p.parameters);
+
+                            attributes.add(identifier, att_params);
                         }
                         _ => {
                             return Err(self
@@ -269,7 +200,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
                     }
                 }
                 Let { identifier, value } => {
-                    let value = self.evaluate_expression(&value)?;
+                    let value = self.evaluate_expression(value)?;
                     self.let_bindings.insert(identifier.get()?.text, value);
                 }
                 Expr(_) => continue,
@@ -282,10 +213,10 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
             }
         }
 
-        Ok(requests.into())
+        Ok(requests)
     }
 
-    fn evaluate_expression(&self, exp: &Expression<'source>) -> Result<'source, String> {
+    fn evaluate_expression(&self, exp: &Expression<'source>) -> Result<String> {
         self.evaluate_expression_and_quote_string(exp, false)
     }
 
@@ -293,7 +224,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         &self,
         exp: &Expression<'source>,
         quote_string_literal: bool,
-    ) -> Result<'source, String> {
+    ) -> Result<String> {
         use Expression::*;
 
         let expression_span = exp.span();
@@ -376,7 +307,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         identifier: &lexer::Token<'source>,
         arguments: &[Expression<'source>],
         expression_span: Span,
-    ) -> Result<'source, String> {
+    ) -> Result<String> {
         let string_value = match identifier.text {
             "env" => {
                 let arg = arguments.first().ok_or_else(|| {
@@ -428,7 +359,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         Ok(string_value)
     }
 
-    fn evaluate_env_variable(&self, variable: String, span: Span) -> Result<'source, String> {
+    fn evaluate_env_variable(&self, variable: String, span: Span) -> Result<String> {
         let value = self
             .env
             .get_variable_value(&variable)
@@ -438,7 +369,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         Ok(value)
     }
 
-    fn read_file(&self, file_path: &Literal) -> Result<'source, String> {
+    fn read_file(&self, file_path: &Literal) -> Result<String> {
         let handle_error = |e| {
             self.error_factory.other(
                 file_path.span,
@@ -455,7 +386,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         Ok(string)
     }
 
-    fn evaluate_request_endpoint(&self, endpoint: &Endpoint) -> Result<'source, String> {
+    fn evaluate_request_endpoint(&self, endpoint: &Endpoint) -> Result<String> {
         Ok(match endpoint {
             Endpoint::Url(url) => url.value.to_string(),
             Endpoint::Pathname(pn) => {
@@ -471,7 +402,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
         })
     }
 
-    fn evaluate_identifier(&self, token: &lexer::Token<'source>) -> Result<'source, String> {
+    fn evaluate_identifier(&self, token: &lexer::Token<'source>) -> Result<String> {
         let value = self
             .let_bindings
             .get(token.text)
@@ -488,7 +419,7 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
     fn evaluate_template_string_literal_parts(
         &self,
         parts: &[Expression<'source>],
-    ) -> Result<'source, String> {
+    ) -> Result<String> {
         let mut strings = vec![];
 
         for part in parts {
@@ -498,30 +429,6 @@ impl<'source, R: ir::Runner> Interpreter<'source, R> {
 
         Ok(strings.join(""))
     }
-}
-
-fn log(content: &str, to_file: &PathBuf) -> std::io::Result<()> {
-    if let Some(dir_path) = to_file.parent() {
-        fs::create_dir_all(dir_path)?
-    };
-
-    let file = File::options()
-        .truncate(true)
-        .write(true)
-        .create(true)
-        .open(to_file)?;
-
-    let mut w = BufWriter::new(file);
-
-    write!(w, "{content}")
-}
-
-fn indent_lines(string: &str, indent: u8) -> String {
-    string
-        .lines()
-        .map(|line| (" ".repeat(indent as usize) + line))
-        .collect::<Vec<_>>()
-        .join("\n")
 }
 
 fn escaping_new_lines(text: &str) -> String {

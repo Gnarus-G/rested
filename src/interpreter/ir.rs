@@ -1,7 +1,32 @@
-use std::error::Error;
-
 pub use crate::parser::ast::RequestMethod;
-use crate::utils::Array;
+use crate::{lexer::locations::Span, utils};
+
+#[derive(Debug)]
+pub struct Program<'source> {
+    pub source: &'source str,
+    pub items: utils::Array<RequestItem>,
+}
+
+impl<'source> Program<'source> {
+    pub fn new(source: &'source str, items: utils::Array<RequestItem>) -> Self {
+        Self { source, items }
+    }
+}
+
+#[derive(Debug)]
+pub struct RequestItem {
+    pub name: Option<String>,
+    pub dbg: bool,
+    pub span: Span,
+    pub request: Request,
+    pub log_destination: Option<LogDestination>,
+}
+
+#[derive(Debug)]
+pub enum LogDestination {
+    Std,
+    File(std::path::PathBuf),
+}
 
 #[derive(Debug)]
 pub struct Header {
@@ -19,14 +44,6 @@ impl Header {
 pub struct Request {
     pub method: RequestMethod,
     pub url: String,
-    pub headers: Array<Header>,
+    pub headers: utils::Array<Header>,
     pub body: Option<String>,
-}
-
-pub trait Runner {
-    fn run_request(&mut self, request: &Request) -> std::result::Result<String, Box<dyn Error>>;
-}
-
-pub fn prettify_json_string(string: &str) -> serde_json::Result<String> {
-    serde_json::to_string_pretty(&serde_json::from_str::<serde_json::Value>(string)?)
 }

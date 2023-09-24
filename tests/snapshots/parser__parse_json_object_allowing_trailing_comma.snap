@@ -4,6 +4,7 @@ description: "\nlet o = {\n    key: \"value\",\n    akey: [1, 2, 3,],\n    love:
 expression: ast
 ---
 Program(
+  source: "\nlet o = {\n    key: \"value\",\n    akey: [1, 2, 3,],\n    love: \"me\",\n    \"test\": {a: \"asdf\", b: 1, c: 3,},\n}",
   items: [
     Let(
       identifier: Ok(Token(
