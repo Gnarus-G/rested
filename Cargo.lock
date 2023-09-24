@@ -452,6 +452,32 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a357d28ed41a50f9c765dbfe56cbc04a64e53e5fc58ba79fbc34c10ef3df831f"
 
 [[package]]
+name = "enum-tags"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "88ef15a1e858bac2fe97690a2615e9a979be1284e9b8beb8078bd6117f3b5549"
+dependencies = [
+ "enum-tags-macros",
+ "enum-tags-traits",
+]
+
+[[package]]
+name = "enum-tags-macros"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a40f06be7b553c15a464b88ad7da00614b2440bddb990c6e1f13108b535bc2a7"
+dependencies = [
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "enum-tags-traits"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cdc5689518c99f8b19adeb125ccacfeb6aa2d5d67ee56000762cb055880220fd"
+
+[[package]]
 name = "errno"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1220,6 +1246,9 @@ dependencies = [
  "colored",
  "confy",
  "criterion",
+ "enum-tags",
+ "enum-tags-macros",
+ "enum-tags-traits",
  "insta",
  "mockito",
  "serde",

@@ -168,11 +168,12 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
 
                     self.base_url = match self.evaluate_expression(value)? {
                         value::Value::String(s) => Some(s),
-                        value::Value::Null => todo!(),
-                        value::Value::Bool(_) => todo!(),
-                        value::Value::Number(_) => todo!(),
-                        value::Value::Array(elements) => todo!(),
-                        value::Value::Object(map) => todo!(),
+                        expr => {
+                            return Err(self
+                                .error_factory
+                                .type_mismatch(value::ValueTag::String, expr, value.span())
+                                .into())
+                        }
                     };
                 }
                 LineComment(_) => {}
@@ -304,14 +305,20 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                         .with_message("calls to env(..) must include a variable name argument")
                 })?;
 
-                let value = self.evaluate_expression(arg)?;
-
-                builtin::call_env(self.env, value).map_err(|e| match e {
-                    builtin::CallEnvError::NotFound(v) => self
-                        .error_factory
-                        .env_variable_not_found(v, expression_span),
-                    _ => self.error_factory.other(expression_span, e),
-                })?
+                match self.evaluate_expression(arg)? {
+                    value::Value::String(variable) => builtin::call_env(self.env, &variable)
+                        .ok_or_else(|| {
+                            return self
+                                .error_factory
+                                .env_variable_not_found(variable, expression_span);
+                        })?,
+                    value => {
+                        return Err(self
+                            .error_factory
+                            .type_mismatch(value::ValueTag::String, value, expression_span)
+                            .into())
+                    }
+                }
             }
             "read" => {
                 let arg = arguments.first().ok_or_else(|| {
@@ -320,10 +327,16 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                         .with_message("calls to read(..) must include a file name argument")
                 })?;
 
-                let file_name = self.evaluate_expression(arg)?;
-
-                builtin::read_file(file_name)
-                    .map_err(|e| self.error_factory.other(expression_span, e))?
+                match self.evaluate_expression(arg)? {
+                    value::Value::String(file_name) => builtin::read_file(file_name)
+                        .map_err(|e| self.error_factory.other(expression_span, e))?,
+                    value => {
+                        return Err(self
+                            .error_factory
+                            .type_mismatch(value::ValueTag::String, value, expression_span)
+                            .into())
+                    }
+                }
             }
             "escape_new_lines" => {
                 let arg = arguments.first().ok_or_else(|| {
@@ -332,9 +345,15 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                         .with_message("calls to escape_new_lines(..) must include an argument")
                 })?;
 
-                let value = self.evaluate_expression(arg)?;
-
-                escaping_new_lines(value)
+                match self.evaluate_expression(arg)? {
+                    value::Value::String(s) => escaping_new_lines(s),
+                    value => {
+                        return Err(self
+                            .error_factory
+                            .type_mismatch(value::ValueTag::String, value, expression_span)
+                            .into())
+                    }
+                }
             }
             _ => {
                 return Err(self
@@ -373,11 +392,7 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
             .let_bindings
             .get(token.text)
             .map(|value| value.to_string())
-            .ok_or_else(|| {
-                self.error_factory
-                    .undeclared_identifier(token)
-                    .with_message("variable identifiers are not supported")
-            })?;
+            .ok_or_else(|| self.error_factory.undeclared_identifier(token))?;
 
         Ok(value.into())
     }
@@ -397,14 +412,11 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
     }
 }
 
-fn escaping_new_lines(text: value::Value) -> value::Value {
-    if let value::Value::String(text) = text {
-        let mut s = String::new();
-        for line in text.lines() {
-            s.push_str(line);
-            s.push_str("\\n")
-        }
-        return s.into();
+fn escaping_new_lines(text: String) -> value::Value {
+    let mut s = String::new();
+    for line in text.lines() {
+        s.push_str(line);
+        s.push_str("\\n")
     }
-    text
+    return s.into();
 }

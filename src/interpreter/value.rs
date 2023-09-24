@@ -1,8 +1,6 @@
 use std::{collections::HashMap, fmt::Display};
 
-use crate::utils;
-
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, enum_tags::Tag, serde::Serialize)]
 #[serde(untagged)]
 pub enum Value {
     Null,

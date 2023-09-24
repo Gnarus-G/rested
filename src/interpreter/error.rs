@@ -1,7 +1,11 @@
+use enum_tags_traits::TaggedEnum;
+
 use crate::error_meta::ContextualError;
 use crate::lexer::locations::{GetSpan, Span};
 use crate::lexer::Token;
 use crate::parser::error::{ParseError, ParserErrors};
+
+use super::value::{Value, ValueTag};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum InterpreterErrorKind {
@@ -13,6 +17,7 @@ pub enum InterpreterErrorKind {
     UndeclaredIdentifier { name: String },
     UnsupportedAttribute { name: String },
     DuplicateAttribute { name: String },
+    TypeMismatch { expected: ValueTag, found: ValueTag },
     Other { error: String },
 }
 
@@ -49,6 +54,13 @@ impl std::fmt::Display for InterpreterErrorKind {
                 )
             }
             InterpreterErrorKind::Other { error } => error.clone(),
+            InterpreterErrorKind::TypeMismatch { expected, found } => {
+                format!(
+                    "expected type {:?}, but found {:?}",
+                    format!("{:?}", expected).to_lowercase(),
+                    format!("{:?}", found).to_lowercase(),
+                )
+            },
         };
 
         f.write_str(&formatted_error)
@@ -219,6 +231,22 @@ impl<'i> InterpErrorFactory<'i> {
     pub fn unset_base_url(&self, at: Span) -> ContextualError<InterpreterErrorKind> {
         ContextualError::new(
             InterpreterErrorKind::RequestWithPathnameWithoutBaseUrl,
+            at,
+            self.source_code,
+        )
+    }
+
+    pub fn type_mismatch(
+        &self,
+        expected: ValueTag,
+        found: Value,
+        at: Span,
+    ) -> ContextualError<InterpreterErrorKind> {
+        ContextualError::new(
+            InterpreterErrorKind::TypeMismatch {
+                expected,
+                found: found.tag(),
+            },
             at,
             self.source_code,
         )
