@@ -1,20 +1,21 @@
 mod attributes;
+mod builtin;
 pub mod environment;
 pub mod error;
 pub mod ir;
 pub mod runner;
 pub mod ureq_runner;
+mod value;
 
+use anyhow::Context;
 use environment::Environment;
 use error::InterpreterError;
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::Read;
 
 use crate::error_meta::ContextualError;
 use crate::interpreter::ir::LogDestination;
 use crate::lexer;
-use crate::parser::ast::{self, Endpoint, Expression, Literal};
+use crate::parser::ast::{self, Endpoint, Expression};
 
 use crate::lexer::locations::{GetSpan, Span};
 use crate::parser::error::ParserErrors;
@@ -90,7 +91,7 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                     let path = self.evaluate_request_endpoint(endpoint)?;
 
                     let mut headers = vec![];
-                    let mut body = None;
+                    let mut body: Option<String> = None;
 
                     if let Some(statements) = block.as_ref().map(|b| &b.statements) {
                         for statement in statements.iter() {
@@ -98,12 +99,12 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                                 ast::Statement::Header { name, value } => {
                                     headers.push(Header::new(
                                         name.get()?.value.to_string(),
-                                        self.evaluate_expression(value)?,
+                                        self.evaluate_expression(value)?.to_string(),
                                     ))
                                 }
                                 ast::Statement::Body { value, .. } => {
                                     if body.is_none() {
-                                        body = Some(self.evaluate_expression(value)?);
+                                        body = Some(self.evaluate_expression(value)?.to_json());
                                     }
                                 }
                                 ast::Statement::LineComment(_) => {}
@@ -135,7 +136,7 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                     let log_destination = if let Some(att) = attributes.get("log") {
                         if let Some(arg_exp) = att.first_params() {
                             let value = self.evaluate_expression(arg_exp)?;
-                            let file_path = value.into();
+                            let file_path = value.to_string().into();
                             Some(LogDestination::File(file_path))
                         } else {
                             Some(LogDestination::Std)
@@ -145,7 +146,7 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                     };
 
                     requests.push(RequestItem {
-                        name: name_of_request,
+                        name: name_of_request.map(|nr| nr.to_string()),
                         dbg: attributes.get("dbg").is_some(),
                         log_destination,
                         span,
@@ -165,7 +166,14 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                         return Err(self.error_factory.unknown_constant(identifier).into());
                     }
 
-                    self.base_url = Some(self.evaluate_expression(value)?);
+                    self.base_url = match self.evaluate_expression(value)? {
+                        value::Value::String(s) => Some(s),
+                        value::Value::Null => todo!(),
+                        value::Value::Bool(_) => todo!(),
+                        value::Value::Number(_) => todo!(),
+                        value::Value::Array(elements) => todo!(),
+                        value::Value::Object(map) => todo!(),
+                    };
                 }
                 LineComment(_) => {}
                 Attribute {
@@ -201,7 +209,8 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                 }
                 Let { identifier, value } => {
                     let value = self.evaluate_expression(value)?;
-                    self.let_bindings.insert(identifier.get()?.text, value);
+                    self.let_bindings
+                        .insert(identifier.get()?.text, value.to_string());
                 }
                 Expr(_) => continue,
                 Error(err) => {
@@ -216,83 +225,62 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
         Ok(requests)
     }
 
-    fn evaluate_expression(&self, exp: &Expression<'source>) -> Result<String> {
-        self.evaluate_expression_and_quote_string(exp, false)
-    }
-
-    fn evaluate_expression_and_quote_string(
-        &self,
-        exp: &Expression<'source>,
-        quote_string_literal: bool,
-    ) -> Result<String> {
+    fn evaluate_expression(&self, exp: &Expression<'source>) -> Result<value::Value> {
         use Expression::*;
 
         let expression_span = exp.span();
 
         let value = match exp {
             Identifier(token) => self.evaluate_identifier(token.get()?)?,
-            String(token) => {
-                if quote_string_literal {
-                    format!("{:?}", token.value)
-                } else {
-                    token.value.to_string()
-                }
-            }
+            String(token) => token.value.into(),
             TemplateSringLiteral { parts, .. } => {
                 self.evaluate_template_string_literal_parts(parts)?
             }
-            Bool(literal) => literal.value.to_string(),
-            Number(literal) => literal.value.to_string(),
+            Bool(literal) => value::Value::Bool(
+                literal
+                    .value
+                    // TODO: do this in the parser
+                    .parse()
+                    .expect("our parse should not allow this"),
+            ),
+            Number(literal) => value::Value::Number(
+                literal
+                    .value
+                    // TODO: do this in the parser
+                    .parse()
+                    .context("failed to parse as an unsigned int")
+                    .expect("our parser should not allow this"),
+            ),
             Call {
                 identifier,
                 arguments,
-            } => {
-                let value = self.evaluate_call_expression(
-                    identifier.get()?,
-                    &arguments.parameters,
-                    expression_span,
-                )?;
-                if quote_string_literal {
-                    format!("{:?}", value)
-                } else {
-                    value
-                }
-            }
+            } => self.evaluate_call_expression(
+                identifier.get()?,
+                &arguments.parameters,
+                expression_span,
+            )?,
             Array((.., values)) => {
                 let mut v = vec![];
 
                 for value in values.iter() {
-                    v.push(self.evaluate_expression_and_quote_string(&value.expr, true)?);
+                    v.push(self.evaluate_expression(&value.expr)?);
                 }
 
-                format!(
-                    "[{}]",
-                    v.iter()
-                        .map(|value| value.to_string())
-                        .collect::<Vec<_>>()
-                        .join(",")
-                )
+                value::Value::Array(v.into())
             }
             Object((.., fields)) => {
                 let mut props = HashMap::new();
 
                 for ast::ObjectEntry { key, value, .. } in fields {
-                    let value = self.evaluate_expression_and_quote_string(value, true)?;
+                    let value = self.evaluate_expression(value)?;
                     props.insert(key.get()?.value.to_string(), value);
                 }
 
-                format!(
-                    "{{{}}}",
-                    props
-                        .iter()
-                        .map(|(key, value)| format!("\"{}\": {}", key, value))
-                        .collect::<Vec<_>>()
-                        .join(",")
-                )
+                value::Value::Object(props)
             }
-            EmptyArray(_) => "[]".to_string(),
-            EmptyObject(_) => "{}".to_string(),
-            Null(_) => "null".to_string(),
+            EmptyArray(_) => value::Value::Array(Box::new([])),
+            EmptyObject(_) => value::Value::Object(HashMap::new()),
+            Null(_) => value::Value::Null,
             Error(err) => unreachable!(
                 "all syntax errors should have been caught, but found {}",
                 err
@@ -307,7 +295,7 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
         identifier: &lexer::Token<'source>,
         arguments: &[Expression<'source>],
         expression_span: Span,
-    ) -> Result<String> {
+    ) -> Result<value::Value> {
         let string_value = match identifier.text {
             "env" => {
                 let arg = arguments.first().ok_or_else(|| {
@@ -318,7 +306,12 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
 
                 let value = self.evaluate_expression(arg)?;
 
-                self.evaluate_env_variable(value, expression_span)?
+                builtin::call_env(self.env, value).map_err(|e| match e {
+                    builtin::CallEnvError::NotFound(v) => self
+                        .error_factory
+                        .env_variable_not_found(v, expression_span),
+                    _ => self.error_factory.other(expression_span, e),
+                })?
             }
             "read" => {
                 let arg = arguments.first().ok_or_else(|| {
@@ -329,10 +322,8 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
 
                 let file_name = self.evaluate_expression(arg)?;
 
-                self.read_file(&Literal {
-                    value: &file_name,
-                    span: expression_span,
-                })?
+                builtin::read_file(file_name)
+                    .map_err(|e| self.error_factory.other(expression_span, e))?
             }
             "escape_new_lines" => {
                 let arg = arguments.first().ok_or_else(|| {
@@ -343,7 +334,7 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
 
                 let value = self.evaluate_expression(arg)?;
 
-                escaping_new_lines(&value)
+                escaping_new_lines(value)
             }
             _ => {
                 return Err(self
@@ -359,35 +350,8 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
         Ok(string_value)
     }
 
-    fn evaluate_env_variable(&self, variable: String, span: Span) -> Result<String> {
-        let value = self
-            .env
-            .get_variable_value(&variable)
-            .ok_or_else(|| self.error_factory.env_variable_not_found(variable, span))
-            .map(|s| s.to_owned())?;
-
-        Ok(value)
-    }
-
-    fn read_file(&self, file_path: &Literal) -> Result<String> {
-        let handle_error = |e| {
-            self.error_factory.other(
-                file_path.span,
-                format!("Error reading file '{}': {e}", file_path.value),
-            )
-        };
-
-        let mut file = File::open(file_path.value).map_err(handle_error)?;
-
-        let mut string = String::new();
-
-        file.read_to_string(&mut string).map_err(handle_error)?;
-
-        Ok(string)
-    }
-
     fn evaluate_request_endpoint(&self, endpoint: &Endpoint) -> Result<String> {
-        Ok(match endpoint {
+        let url = match endpoint {
             Endpoint::Url(url) => url.value.to_string(),
             Endpoint::Pathname(pn) => {
                 if let Some(mut base_url) = self.base_url.clone() {
@@ -399,10 +363,12 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                     return Err(self.error_factory.unset_base_url(pn.span).into());
                 }
             }
-        })
+        };
+
+        Ok(url)
     }
 
-    fn evaluate_identifier(&self, token: &lexer::Token<'source>) -> Result<String> {
+    fn evaluate_identifier(&self, token: &lexer::Token<'source>) -> Result<value::Value> {
         let value = self
             .let_bindings
             .get(token.text)
@@ -413,29 +379,32 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                     .with_message("variable identifiers are not supported")
             })?;
 
-        Ok(value)
+        Ok(value.into())
     }
 
     fn evaluate_template_string_literal_parts(
         &self,
         parts: &[Expression<'source>],
-    ) -> Result<String> {
+    ) -> Result<value::Value> {
         let mut strings = vec![];
 
         for part in parts {
-            let s = self.evaluate_expression(part)?;
-            strings.push(s);
+            let value = self.evaluate_expression(part)?;
+            strings.push(value.to_string());
         }
 
-        Ok(strings.join(""))
+        Ok(strings.join("").into())
     }
 }
 
-fn escaping_new_lines(text: &str) -> String {
-    let mut s = String::new();
-    for line in text.lines() {
-        s.push_str(line);
-        s.push_str("\\n")
+fn escaping_new_lines(text: value::Value) -> value::Value {
+    if let value::Value::String(text) = text {
+        let mut s = String::new();
+        for line in text.lines() {
+            s.push_str(line);
+            s.push_str("\\n")
+        }
+        return s.into();
     }
-    s
+    text
 }
