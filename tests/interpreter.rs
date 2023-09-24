@@ -19,11 +19,17 @@ macro_rules! run {
         let program = Program::from($code);
         let program = program.interpret(&$env).unwrap();
 
+        println!("{:#}", program.source);
+        println!("{:#?}", program);
+
         program.run_ureq(None).unwrap();
     };
     ($code:ident, $env:ident, $names:expr) => {
         let program = Program::from($code);
         let program = program.interpret(&$env).unwrap();
+
+        println!("{:#}", program.source);
+        println!("{:#?}", program);
 
         program.run_ureq($names).unwrap();
     };
