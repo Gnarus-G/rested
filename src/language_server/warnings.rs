@@ -24,8 +24,8 @@ impl<'env> EnvVarsNotInAllNamespaces<'env> {
     }
 }
 
-impl<'env> ast_visit::Visitor for EnvVarsNotInAllNamespaces<'env> {
-    fn visit_expr(&mut self, expr: &Expression) {
+impl<'env, 'source> ast_visit::Visitor<'source> for EnvVarsNotInAllNamespaces<'env> {
+    fn visit_expr(&mut self, expr: &Expression<'source>) {
         expr.visit_children_with(self);
 
         if let Expression::Call {

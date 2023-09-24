@@ -8,9 +8,12 @@ use anyhow::anyhow;
 use clap::Args;
 use rested::{
     error::ColoredMetaError,
+    error_meta::ContextualError,
     interpreter::{
-        environment::Environment, error::InterpreterError, ureq_runner::UreqRunner, Interpreter,
+        environment::Environment,
+        error::{InterpreterError, InterpreterErrorKind},
     },
+    parser::ast::Program,
 };
 
 #[derive(Debug, Args)]
@@ -39,21 +42,34 @@ impl RunArgs {
             Ok(buf)
         })?;
 
-        let mut interp = Interpreter::new(&code, env, UreqRunner);
+        let program = Program::from(&code);
 
-        interp
-            .run(self.request.map(|r| r.into()))
-            .map_err(|value| match value {
-                InterpreterError::ParseErrors(p) => {
-                    let error_string: String = p
-                        .errors
-                        .iter()
-                        .map(|e| ColoredMetaError(e).to_string())
-                        .collect();
+        let program = program.interpret(&env).map_err(|value| match value {
+            InterpreterError::ParseErrors(p) => {
+                let error_string: String = p
+                    .errors
+                    .iter()
+                    .map(|e| ColoredMetaError(e).to_string())
+                    .collect();
 
-                    return anyhow!(error_string);
-                }
-                InterpreterError::Error(e) => anyhow!(ColoredMetaError(&e).to_string()),
+                return anyhow!(error_string);
+            }
+            InterpreterError::Error(e) => anyhow!(ColoredMetaError(&e).to_string()),
+        })?;
+
+        program
+            .run_ureq(self.request.map(|r| r.into()))
+            .map_err(|err| {
+                InterpreterError::Error(
+                    ContextualError::new(
+                        InterpreterErrorKind::Other {
+                            error: err.to_string(),
+                        },
+                        err.span,
+                        &code,
+                    )
+                    .into(),
+                )
             })?;
 
         Ok(())

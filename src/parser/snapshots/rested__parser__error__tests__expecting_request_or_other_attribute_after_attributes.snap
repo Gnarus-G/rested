@@ -4,6 +4,7 @@ description: "\n            @skip\n            @dbg\n            let k = \"v\"\n
 expression: ast
 ---
 Program(
+  source: "\n            @skip\n            @dbg\n            let k = \"v\"\n            get http://localhost { header \"name\" k }",
   items: [
     Attribute(
       location: Position(

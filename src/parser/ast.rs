@@ -8,6 +8,7 @@ use crate::{
         locations::{GetSpan, Position, Span},
         Token,
     },
+    utils,
 };
 
 use self::result::ParsedNode;
@@ -18,12 +19,16 @@ type Error<'source> = ContextualError<ParseError<'source>>;
 
 #[derive(Debug, PartialEq, Serialize)]
 pub struct Program<'i> {
-    pub items: Vec<Item<'i>>,
+    pub source: &'i str,
+    pub items: utils::Array<Item<'i>>,
 }
 
 impl<'i> Program<'i> {
-    pub fn new(items: Vec<Item<'i>>) -> Self {
-        Self { items }
+    pub fn new(source: &'i str, items: Vec<Item<'i>>) -> Self {
+        Self {
+            source,
+            items: items.into(),
+        }
     }
 }
 

@@ -4,6 +4,7 @@ description: "\nlet b = {\n  \"key\": value, \n  \"key2\": \n}\n"
 expression: ast
 ---
 Program(
+  source: "\nlet b = {\n  \"key\": value, \n  \"key2\": \n}\n",
   items: [
     Let(
       identifier: Ok(Token(

@@ -4,6 +4,7 @@ description: "\nlet b = `asdf ${}` \n"
 expression: ast
 ---
 Program(
+  source: "\nlet b = `asdf ${}` \n",
   items: [
     Let(
       identifier: Ok(Token(

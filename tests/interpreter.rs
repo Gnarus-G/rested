@@ -1,7 +1,7 @@
 use std::{fs::File, io::Read, path::PathBuf, sync::Arc};
 
 use insta::assert_debug_snapshot;
-use rested::interpreter::{environment::Environment, ureq_runner::UreqRunner, Interpreter};
+use rested::{interpreter::environment::Environment, parser::ast::Program};
 
 fn new_env_with_vars(vars: &[(&str, &str)]) -> Environment {
     let mut env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();
@@ -12,6 +12,21 @@ fn new_env_with_vars(vars: &[(&str, &str)]) -> Environment {
     }
 
     return env;
+}
+
+macro_rules! run {
+    ($code:expr, $env:ident) => {
+        let program = Program::from($code);
+        let program = program.interpret(&$env).unwrap();
+
+        program.run_ureq(None).unwrap();
+    };
+    ($code:ident, $env:ident, $names:expr) => {
+        let program = Program::from($code);
+        let program = program.interpret(&$env).unwrap();
+
+        program.run_ureq($names).unwrap();
+    };
 }
 
 #[test]
@@ -87,9 +102,7 @@ fn requests_work() {
         }
     "#;
 
-    let mut program = Interpreter::new(code, env, UreqRunner);
-
-    program.run(None).unwrap();
+    run!(code, env);
 
     get_api.assert();
     get_api_v2.assert();
@@ -126,9 +139,7 @@ fn comments_are_ignored() {
     "#
     );
 
-    let mut program = Interpreter::new(&code, env, UreqRunner);
-
-    program.run(None).unwrap();
+    run!(&code, env);
 
     get_api.assert();
     get_api_v2.assert();
@@ -168,9 +179,7 @@ fn requests_are_skippable() {
         delete /api 
     "#;
 
-    let mut program = Interpreter::new(code, env, UreqRunner);
-
-    program.run(None).unwrap();
+    run!(code, env);
 
     for mock in mocks {
         mock.assert();
@@ -200,9 +209,7 @@ fn responses_can_be_logged() {
         post /api
     "#;
 
-    let mut program = Interpreter::new(code, env, UreqRunner);
-
-    program.run(None).unwrap();
+    run!(code, env);
 
     let mut input_file = File::open("tests/files/test_data.json").unwrap();
     let mut output_file = File::open("tests/output/test_data_echo.json").unwrap();
@@ -251,9 +258,7 @@ fn let_bindings_work() {
         }
     "#;
 
-    let mut program = Interpreter::new(code, env, UreqRunner);
-
-    program.run(None).unwrap();
+    run!(code, env);
 
     for mock in mocks {
         mock.assert();
@@ -295,9 +300,7 @@ fn running_specific_requests_by_name() {
         delete /api
     "#;
 
-    let mut program = Interpreter::new(code, env, UreqRunner);
-
-    program.run(Some(Arc::new(["test".to_string()]))).unwrap();
+    run!(code, env, Some(Arc::new(["test".to_string()])));
 
     for mock in mocks {
         mock.assert();
@@ -318,11 +321,7 @@ fn name_attribute_requires_value() {
         get /api {}
     "#;
 
-    let mut program = Interpreter::new(code, env, UreqRunner);
-
-    let name_att_without_arg_err = program
-        .run(Some(Arc::new(["test".to_string()])))
-        .unwrap_err();
+    let name_att_without_arg_err = Program::from(code).interpret(&env).unwrap_err();
 
     assert_debug_snapshot!(name_att_without_arg_err);
 }
@@ -337,11 +336,9 @@ fn prevents_duplicate_attributes() {
     "#;
 
     let env = new_env_with_vars(&[("b_url", "asdfasdf")]);
-    let mut program = Interpreter::new(code, env, UreqRunner);
 
-    let duped_att_err = program
-        .run(Some(Arc::new(["test".to_string()])))
-        .unwrap_err();
+    let duped_att_err = Program::from(code).interpret(&env).unwrap_err();
+
     assert_debug_snapshot!(duped_att_err);
 
     let code = r#"
@@ -352,11 +349,9 @@ fn prevents_duplicate_attributes() {
     "#;
 
     let env = new_env_with_vars(&[("b_url", "asdfasdf")]);
-    let mut program = Interpreter::new(code, env, UreqRunner);
 
-    let duped_att_err = program
-        .run(Some(Arc::new(["test".to_string()])))
-        .unwrap_err();
+    let duped_att_err = Program::from(code).interpret(&env).unwrap_err();
+
     assert_debug_snapshot!(duped_att_err);
 }
 
@@ -396,9 +391,7 @@ post /api {
         .with_status(200)
         .create();
 
-    let mut program = Interpreter::new(code, env, UreqRunner);
-
-    program.run(None).unwrap();
+    run!(code, env);
 
     mock.assert();
 }
@@ -419,7 +412,6 @@ read("file")
 "adsf"
         "#;
     let env = new_env_with_vars(&[]);
-    let mut program = Interpreter::new(code, env, UreqRunner);
 
-    program.run(None).unwrap();
+    run!(code, env);
 }

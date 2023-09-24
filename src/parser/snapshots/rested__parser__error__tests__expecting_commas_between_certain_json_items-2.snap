@@ -4,6 +4,7 @@ description: " let o = [\"joe\" \"world\"] "
 expression: ast
 ---
 Program(
+  source: " let o = [\"joe\" \"world\"] ",
   items: [
     Let(
       identifier: Ok(Token(

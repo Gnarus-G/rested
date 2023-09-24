@@ -1,64 +1,251 @@
 use std::collections::HashSet;
 
-use tower_lsp::lsp_types::{CompletionItem, CompletionItemKind, InsertTextFormat, Position};
+use tower_lsp::lsp_types::{
+    CompletionItem, CompletionItemKind, CompletionResponse, InsertTextFormat, Position,
+};
 use tracing::debug;
 
-use crate::config::env_file_path;
-use crate::interpreter::environment::Environment;
-use crate::lexer;
-use crate::parser::ast::{self, Item, ObjectEntry, Statement};
-use crate::parser::error::ParseError;
-use crate::{lexer::locations::GetSpan, parser::ast::Expression};
+use crate::{
+    config::env_file_path,
+    interpreter::environment::Environment,
+    language_server::position::ContainsPosition,
+    lexer::{self, locations::GetSpan},
+    parser::{
+        ast::{self, Expression, Item, Statement},
+        ast_visit::{self, VisitWith},
+        error::ParseError,
+    },
+    utils,
+};
 
-use super::position::ContainsPosition;
-
-#[allow(unused_macros)]
-macro_rules! dbg_comp {
-    ($value:expr) => {
-        return Some(vec![CompletionItem {
-            label: format!("{:?}", $value),
-            kind: Some(CompletionItemKind::CONSTANT),
-            ..CompletionItem::default()
-        }]);
-    };
+#[derive(Debug, PartialEq)]
+pub enum SuggestionKind {
+    Nothing,
+    Identifiers,
+    SetIdentifiers,
+    Functions,
+    StatementKeywords,
+    ItemKeywords,
+    Attributes,
+    EnvVars,
+    Headers,
 }
 
-/// For "dynamically" generated completions
-pub struct CompletionsStore {
-    pub variables: Vec<CompletionItem>,
-    pub env_args: Vec<CompletionItem>,
+impl From<SuggestionKind> for Vec<CompletionItem> {
+    fn from(value: SuggestionKind) -> Self {
+        (&value).into()
+    }
 }
 
-pub trait GetCompletions {
-    fn completions(
-        &self,
-        position: &Position,
-        comps: &CompletionsStore,
-    ) -> Option<Vec<CompletionItem>>;
+impl From<&SuggestionKind> for Vec<CompletionItem> {
+    fn from(value: &SuggestionKind) -> Self {
+        match value {
+            SuggestionKind::Nothing => vec![],
+            SuggestionKind::Identifiers => builtin_functions_completions(),
+            SuggestionKind::Functions => builtin_functions_completions(),
+            SuggestionKind::StatementKeywords => header_body_keyword_completions(),
+            SuggestionKind::ItemKeywords => item_keywords(),
+            SuggestionKind::EnvVars => env_args_completions().unwrap_or(vec![]),
+            SuggestionKind::SetIdentifiers => {
+                vec![CompletionItem {
+                    label: "BASE_URL".to_string(),
+                    kind: Some(CompletionItemKind::CONSTANT),
+                    ..CompletionItem::default()
+                }]
+            }
+            SuggestionKind::Attributes => attributes_completions(),
+            SuggestionKind::Headers => http_headers_completions(),
+        }
+    }
 }
 
-impl<'source> GetCompletions for Expression<'source> {
-    fn completions(
-        &self,
-        position: &Position,
-        comps: &CompletionsStore,
-    ) -> Option<Vec<CompletionItem>> {
-        debug!("visited expression -> {:?}", self);
+#[derive(Debug)]
+/// For collecting and deduping, different types of susgesstions and resolving
+/// them into completion items.
+struct Suggestions<'source> {
+    list: Vec<SuggestionKind>,
+    variables: utils::Array<lexer::Token<'source>>,
+}
 
-        if !self.span().contains(position) {
-            return None;
+impl<'source> Suggestions<'source> {
+    fn push(&mut self, kind: SuggestionKind) {
+        if !self.list.contains(&kind) {
+            self.list.push(kind)
+        }
+    }
+
+    fn pop(&mut self) {
+        self.list.pop();
+    }
+
+    fn first(&self) -> Option<Vec<CompletionItem>> {
+        let kind = self.list.first();
+        debug!("resolving first suggestion given: {:?}", kind);
+        return kind.map(|k| self.comps_from_kind(k));
+    }
+
+    fn comps_from_kind(&self, kind: &SuggestionKind) -> Vec<CompletionItem> {
+        let mut comps: Vec<_> = kind.into();
+        if let SuggestionKind::Identifiers = kind {
+            debug!("adding variables to {:?}", kind);
+            comps.extend(self.variables.iter().map(|var| CompletionItem {
+                label: var.text.to_string(),
+                kind: Some(CompletionItemKind::VARIABLE),
+                insert_text: Some(var.text.to_string()),
+                ..CompletionItem::default()
+            }));
+        }
+        comps
+    }
+}
+
+#[derive(Debug)]
+pub struct CompletionsCollector<'source> {
+    suggestions: Suggestions<'source>,
+    position: Position,
+}
+
+impl<'source> CompletionsCollector<'source> {
+    pub fn new(program: &ast::Program<'source>, position: Position) -> Self {
+        CompletionsCollector {
+            suggestions: Suggestions {
+                list: vec![],
+                variables: program
+                    .variables_before(lexer::locations::Location {
+                        line: position.line as usize,
+                        col: position.character as usize,
+                    })
+                    .iter()
+                    // This clone is avoidable, but I don't want to add more lifetimes params to
+                    // Suggestions struct and this struct
+                    .map(|t| (*t).clone())
+                    .collect(),
+            },
+            position,
+        }
+    }
+
+    pub fn suggest(&mut self, kind: SuggestionKind) {
+        debug!("suggesting {:?}", kind);
+        self.suggestions.push(kind);
+    }
+
+    /// Overwrite the previous suggestion (likely from deeper in the tree) the one given.
+    pub fn suggest_over_previous(&mut self, kind: SuggestionKind) {
+        debug!("suggesting {:?}", kind);
+        self.suggestions.pop();
+        self.suggestions.push(kind);
+    }
+
+    pub fn into_response(self) -> Option<CompletionResponse> {
+        // We get the first suggestion here because we traversed depth first in
+        // the visitor. The deepest node that suggested something had to have contained
+        // the cursor position
+        return self.suggestions.first().map(CompletionResponse::Array);
+    }
+}
+
+impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
+    fn visit_item(&mut self, item: &ast::Item<'source>) {
+        debug!("visited item -> {:?}", item);
+
+        if !item.span().contains(&self.position) {
+            return;
         }
 
-        return match self {
-            Expression::TemplateSringLiteral { parts, .. } => {
-                for part in parts {
-                    let some_comp = part.completions(position, comps);
-                    if some_comp.is_some() {
-                        return some_comp;
+        match item {
+            Item::Set { identifier, value } => {
+                if identifier.span().is_on_or_after(&self.position) {
+                    return self.suggest(SuggestionKind::SetIdentifiers);
+                }
+
+                self.visit_expr(value);
+
+                self.suggest(SuggestionKind::Identifiers);
+            }
+            Item::Let { value, identifier } => {
+                if identifier.span().is_on_or_after(&self.position) {
+                    return;
+                }
+
+                self.visit_expr(value);
+
+                self.suggest(SuggestionKind::Identifiers);
+            }
+            Item::Request {
+                block: Some(block), ..
+            } => {
+                if !block.span.contains(&self.position) {
+                    return;
+                }
+
+                for st in &block.statements {
+                    self.visit_statement(st);
+                }
+
+                return self.suggest(SuggestionKind::StatementKeywords);
+            }
+            Item::Attribute {
+                identifier,
+                parameters,
+                ..
+            } => {
+                if identifier.span().is_on_or_after(&self.position) {
+                    return self.suggest(SuggestionKind::Attributes);
+                }
+
+                if let Some(args) = parameters {
+                    if args.span.contains(&self.position) {
+                        return self.suggest(SuggestionKind::Identifiers);
+                    }
+
+                    for param in args.iter() {
+                        self.visit_expr(param)
                     }
                 }
-                None
             }
+            _ => {}
+        }
+    }
+
+    fn visit_statement(&mut self, statement: &ast::Statement<'source>) {
+        debug!("visited statement -> {:?}", statement);
+
+        if !statement.span().contains(&self.position) {
+            return;
+        }
+
+        statement.visit_children_with(self);
+
+        match statement {
+            Statement::Header { name, value } => {
+                if name.span().is_on_or_after(&self.position) {
+                    return self.suggest(SuggestionKind::Headers);
+                }
+
+                if value.span().is_after(&self.position) {
+                    return self.suggest(SuggestionKind::Identifiers);
+                }
+
+                self.visit_expr(value)
+            }
+            Statement::Body { .. } => {
+                self.suggest(SuggestionKind::Identifiers);
+            }
+            _ => {}
+        }
+    }
+
+    fn visit_expr(&mut self, expr: &Expression<'source>) {
+        debug!("visited expression -> {:?}", expr);
+
+        if !expr.span().contains(&self.position) {
+            return;
+        }
+
+        expr.visit_children_with(self);
+
+        return match expr {
             Expression::Call {
                 identifier,
                 arguments,
@@ -68,13 +255,17 @@ impl<'source> GetCompletions for Expression<'source> {
                     text: "env",
                     ..
                 }) => {
-                    if arguments.span.contains(position) {
+                    if arguments.span.contains(&self.position) {
                         match arguments
                             .parameters
                             .iter()
-                            .find(|p| p.span().contains(position))
+                            .find(|p| p.span().contains(&self.position))
                         {
-                            Some(Expression::String(..)) => return Some(comps.env_args.clone()),
+                            Some(Expression::String(..)) => {
+                                // This string was visited earlier with visit_children_with
+                                // and it suggested Nothing, as it should, so...
+                                self.suggest_over_previous(SuggestionKind::EnvVars)
+                            }
                             Some(Expression::Error(err))
                                 if matches!(
                                     err.inner_error,
@@ -87,160 +278,57 @@ impl<'source> GetCompletions for Expression<'source> {
                                     }
                                 ) =>
                             {
-                                return Some(comps.env_args.clone())
+                                // Same deal here as for the Expression::String above
+                                self.suggest_over_previous(SuggestionKind::EnvVars)
                             }
+                            None => self.suggest(SuggestionKind::Identifiers),
                             _ => {}
                         }
                     }
-                    None
                 }
-                ast::result::ParsedNode::Error(_) => Some(builtin_functions_completions()),
-                _ => Some([comps.variables.clone(), builtin_functions_completions()].concat()),
+                ast::result::ParsedNode::Error(_) => self.suggest(SuggestionKind::Functions),
+                _ => {
+                    if arguments.span.contains(&self.position) {
+                        self.suggest(SuggestionKind::Identifiers);
+                    }
+                }
             },
-            Expression::Array((_, elements)) => {
-                match elements.iter().find(|el| el.expr.span().contains(position)) {
-                    Some(el) => el.expr.completions(position, comps),
-                    _ => Some([comps.variables.clone(), builtin_functions_completions()].concat()),
-                }
+            Expression::Array(_) | Expression::EmptyArray(_) => {
+                self.suggest(SuggestionKind::Identifiers);
             }
+            Expression::EmptyObject(_) => self.suggest(SuggestionKind::Nothing),
             Expression::Object((_, entries)) => {
-                for ObjectEntry { key, value, .. } in entries {
-                    if key.span().contains(position) {
-                        return None;
-                    }
-
-                    if value.span().contains(position) {
-                        return value.completions(position, comps);
+                for entry in entries {
+                    if let Expression::Error(_) = entry.value {
+                        self.suggest(SuggestionKind::Identifiers)
+                    } else {
+                        self.visit_expr(&entry.value)
                     }
                 }
-
-                Some([comps.variables.clone(), builtin_functions_completions()].concat())
+                self.suggest(SuggestionKind::Nothing)
             }
-            Expression::EmptyObject(_) => None,
-            Expression::String(_) => None,
-            _ => Some([comps.variables.clone(), builtin_functions_completions()].concat()),
+            Expression::Identifier(_) => self.suggest(SuggestionKind::Identifiers),
+            Expression::String(_) => self.suggest(SuggestionKind::Nothing),
+            Expression::Error(err)
+                if matches!(
+                    err.inner_error,
+                    ParseError::ExpectedEitherOfTokens {
+                        found: lexer::Token {
+                            kind: lexer::TokenKind::UnfinishedStringLiteral,
+                            ..
+                        },
+                        ..
+                    }
+                ) =>
+            {
+                self.suggest(SuggestionKind::Nothing)
+            }
+            _ => {}
         };
     }
 }
 
-impl<'source> GetCompletions for Statement<'source> {
-    fn completions(
-        &self,
-        position: &Position,
-        comps: &CompletionsStore,
-    ) -> Option<Vec<CompletionItem>> {
-        if !self.span().contains(position) {
-            return None;
-        }
-
-        match self {
-            Statement::Header { name, value } => {
-                if name.span().is_on_or_after(position) {
-                    return Some(http_headers_completions());
-                }
-
-                if value.span().is_after(position) {
-                    return Some(
-                        [comps.variables.clone(), builtin_functions_completions()].concat(),
-                    );
-                }
-
-                value.completions(position, comps)
-            }
-            Statement::Body { value, .. } => value.completions(position, comps).or_else(|| {
-                Some([comps.variables.clone(), builtin_functions_completions()].concat())
-            }),
-            Statement::Error(..) => None,
-            _ => None,
-        }
-    }
-}
-
-impl<'source> GetCompletions for Item<'source> {
-    fn completions(
-        &self,
-        position: &Position,
-        comps: &CompletionsStore,
-    ) -> Option<Vec<CompletionItem>> {
-        if !self.span().contains(position) {
-            return None;
-        }
-
-        match self {
-            Item::Set { identifier, value } => {
-                if identifier.span().is_on_or_after(position) {
-                    return Some(vec![CompletionItem {
-                        label: "BASE_URL".to_string(),
-                        kind: Some(CompletionItemKind::CONSTANT),
-                        ..CompletionItem::default()
-                    }]);
-                }
-
-                if value.span().is_on_or_after(position) {
-                    return value.completions(position, comps);
-                }
-
-                None
-            }
-            Item::Let { value, identifier } => {
-                if identifier.span().is_on_or_after(position) {
-                    return None;
-                }
-
-                if value.span().is_on_or_after(position) {
-                    return value.completions(position, comps);
-                }
-
-                None
-            }
-            Item::LineComment(_) => None,
-            Item::Request {
-                block: Some(block), ..
-            } => {
-                if !block.span.contains(position) {
-                    return None;
-                }
-
-                for st in &block.statements {
-                    if let Some(c) = st.completions(position, comps) {
-                        return Some(c);
-                    }
-                }
-
-                return Some(header_body_keyword_completions());
-            }
-            Item::Expr(expr) => expr.completions(position, comps),
-            Item::Attribute {
-                identifier,
-                parameters,
-                ..
-            } => {
-                if identifier.span().is_on_or_after(position) {
-                    return Some(attributes_completions());
-                }
-
-                if let Some(args) = parameters {
-                    if args.span.contains(position) {
-                        return Some(
-                            [comps.variables.clone(), builtin_functions_completions()].concat(),
-                        );
-                    }
-
-                    for param in args.iter() {
-                        if let Some(c) = param.completions(position, comps) {
-                            return Some(c);
-                        }
-                    }
-                }
-
-                None
-            }
-            _ => None,
-        }
-    }
-}
-
-pub fn builtin_functions_completions() -> Vec<CompletionItem> {
+fn builtin_functions_completions() -> Vec<CompletionItem> {
     ["env", "read", "escape_new_lines"]
         .map(|keyword| CompletionItem {
             label: format!("{}(..)", keyword),
@@ -252,7 +340,7 @@ pub fn builtin_functions_completions() -> Vec<CompletionItem> {
         .to_vec()
 }
 
-pub fn item_keywords() -> Vec<CompletionItem> {
+fn item_keywords() -> Vec<CompletionItem> {
     let methods = vec!["get", "post", "put", "patch", "delete"];
 
     [vec!["let", "set"], methods]
@@ -267,7 +355,7 @@ pub fn item_keywords() -> Vec<CompletionItem> {
         .collect()
 }
 
-pub fn header_body_keyword_completions() -> Vec<CompletionItem> {
+fn header_body_keyword_completions() -> Vec<CompletionItem> {
     ["header", "body"]
         .map(|kw| kw.to_string())
         .map(|keyword| CompletionItem {
@@ -279,7 +367,7 @@ pub fn header_body_keyword_completions() -> Vec<CompletionItem> {
         .to_vec()
 }
 
-pub fn attributes_completions() -> Vec<CompletionItem> {
+fn attributes_completions() -> Vec<CompletionItem> {
     let mut comp = ["log", "name"]
         .map(|keyword| CompletionItem {
             label: format!("{}(..)", keyword),
@@ -304,7 +392,7 @@ pub fn attributes_completions() -> Vec<CompletionItem> {
     comp
 }
 
-pub fn env_args_completions() -> anyhow::Result<Vec<CompletionItem>> {
+fn env_args_completions() -> anyhow::Result<Vec<CompletionItem>> {
     let env = Environment::new(env_file_path()?)?;
     let env_args = env
         .namespaced_variables
@@ -323,7 +411,7 @@ pub fn env_args_completions() -> anyhow::Result<Vec<CompletionItem>> {
     Ok(env_args)
 }
 
-pub fn http_headers_completions() -> Vec<CompletionItem> {
+fn http_headers_completions() -> Vec<CompletionItem> {
     let headers = [
         "Accept",
         "Accept-Charset",

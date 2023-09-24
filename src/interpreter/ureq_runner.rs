@@ -1,12 +1,14 @@
 use std::error::Error;
 
+use super::runner::RunStrategy;
+
 use super::ir::RequestMethod;
 
-use super::ir::{prettify_json_string, Header, Request, Runner};
+use super::ir::{Header, Request};
 
-pub struct UreqRunner;
+pub struct UreqRun;
 
-impl Runner for UreqRunner {
+impl RunStrategy for UreqRun {
     fn run_request(&mut self, request: &Request) -> std::result::Result<String, Box<dyn Error>> {
         let path = &request.url;
 
@@ -37,6 +39,10 @@ impl Runner for UreqRunner {
 
         Ok(res)
     }
+}
+
+pub fn prettify_json_string(string: &str) -> serde_json::Result<String> {
+    serde_json::to_string_pretty(&serde_json::from_str::<serde_json::Value>(string)?)
 }
 
 #[derive(Debug)]

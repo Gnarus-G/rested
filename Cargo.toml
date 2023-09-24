@@ -30,6 +30,23 @@ tracing-subscriber = "0.3.17"
 [dev-dependencies]
 mockito = "1.0.2"
 insta = { version = "1.29.0", features = ["ron"] }
+criterion = { version = "0.5.1", features = ["html_reports"] }
+
+[[bench]]
+name = "lexer"
+harness = false
+
+[[bench]]
+name = "parser"
+harness = false
+
+[[bench]]
+name = "errors"
+harness = false
+
+[[bench]]
+name = "interpreter"
+harness = false
 
 [profile.dev.package.insta]
 opt-level = 3

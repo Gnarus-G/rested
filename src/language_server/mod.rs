@@ -2,15 +2,13 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 mod completions;
 mod position;
-mod runner;
 mod warnings;
 
 use crate::config::env_file_path;
+use crate::interpreter;
 use crate::interpreter::environment::Environment;
-use crate::interpreter::{self, Interpreter};
 use crate::lexer;
 use crate::lexer::locations::{GetSpan, Location};
-use crate::parser::ast::Program;
 use crate::parser::ast_visit::VisitWith;
 use crate::parser::{self};
 use completions::*;
@@ -20,7 +18,6 @@ use tower_lsp::{Client, LanguageServer};
 use tracing::{debug, error};
 
 use self::position::ContainsPosition;
-use self::runner::NoopRunner;
 
 trait IntoPosition {
     fn into_position(self) -> Position;
@@ -114,7 +111,7 @@ impl Backend {
 
         let mut w = warnings::EnvVarsNotInAllNamespaces::new(&env);
 
-        for item in program.items {
+        for item in program.items.iter() {
             item.visit_with(&mut w)
         }
 
@@ -122,7 +119,7 @@ impl Backend {
 
         // Done handling warnings
 
-        let Err(interp_errors) = Interpreter::new(&params.text, env, NoopRunner).run(None) else {
+        let Err(interp_errors) = program.interpret(&env) else {
             self.documents.put(params.uri.clone(), params.text);
 
             return self
@@ -236,44 +233,25 @@ impl LanguageServer for Backend {
             return Ok(None);
         };
 
-        let get_variables = |program: &Program| {
-            return program
-                .variables_before(Location {
-                    line: position.line as usize,
-                    col: position.character as usize,
-                })
-                .iter()
-                .map(|var| CompletionItem {
-                    label: var.text.to_string(),
-                    kind: Some(CompletionItemKind::VARIABLE),
-                    insert_text: Some(var.text.to_string()),
-                    ..CompletionItem::default()
-                })
-                .collect();
-        };
-
         let program = parser::Parser::new(&text).parse();
 
-        let variables = get_variables(&program);
-
-        let env_args = env_args_completions().unwrap_or(vec![]);
-
-        let completions_store = CompletionsStore {
-            variables,
-            env_args,
-        };
+        let mut completions_collector = CompletionsCollector::new(&program, position);
 
         let Some(current_item) = program.items.iter().find(|i| i.span().contains(&position)) else {
             debug!("cursor is apparently not on any items");
             debug!("{:?}", program);
-            return Ok(Some(CompletionResponse::Array(item_keywords())));
+            return Ok(Some(CompletionResponse::Array(
+                SuggestionKind::ItemKeywords.into(),
+            )));
         };
 
         debug!("cursor on item -> {:?}", current_item);
 
-        return Ok(current_item
-            .completions(&position, &completions_store)
-            .map(CompletionResponse::Array));
+        current_item.visit_with(&mut completions_collector);
+
+        debug!("done collecting completions");
+
+        return Ok(completions_collector.into_response());
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {

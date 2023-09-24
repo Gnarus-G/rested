@@ -1,7 +1,7 @@
 use super::{
     ast::{self, Program},
-    ast_errors::GetErrors,
-    error::ParseError,
+    ast_visit::VisitWith,
+    error::{ErrorsCollector, ParseError},
 };
 use crate::{
     error_meta::ContextualError,
@@ -36,11 +36,11 @@ impl<'source> Program<'source> {
     }
 
     pub fn errors(&self) -> Vec<ContextualError<ParseError<'source>>> {
-        let mut errors = vec![];
-        for item in &self.items {
-            errors.extend(item.errors())
+        let mut errors = ErrorsCollector { list: vec![] };
+        for item in self.items.iter() {
+            item.visit_with(&mut errors)
         }
 
-        errors
+        errors.list
     }
 }

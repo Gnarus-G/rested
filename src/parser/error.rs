@@ -19,12 +19,6 @@ impl<'source> std::fmt::Display for lexer::Token<'source> {
     }
 }
 
-#[derive(Debug)]
-pub struct Expectations<'i> {
-    source_code: &'i str,
-    pub start: Position,
-}
-
 #[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub enum ParseError<'source> {
     ExpectedToken {
@@ -83,6 +77,12 @@ impl<'source> std::fmt::Display for ParserErrors<'source> {
         }
         Ok(())
     }
+}
+
+#[derive(Debug)]
+pub struct Expectations<'i> {
+    source_code: &'i str,
+    pub start: Position,
 }
 
 impl<'i> Expectations<'i> {
@@ -157,6 +157,16 @@ impl<'i> Expectations<'i> {
             self.start.to_end_of(token.span()),
             self.source_code,
         )
+    }
+}
+
+pub struct ErrorsCollector<'source> {
+    pub list: Vec<ContextualError<ParseError<'source>>>,
+}
+
+impl<'source> crate::parser::ast_visit::Visitor<'source> for ErrorsCollector<'source> {
+    fn visit_error(&mut self, err: &ContextualError<ParseError<'source>>) {
+        self.list.push(err.clone());
     }
 }
 
