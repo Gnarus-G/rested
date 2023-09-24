@@ -4,12 +4,12 @@ use rested::{interpreter::environment::Environment, parser};
 const SOURCE: &str = r#"
 set BASE_URL env("base")
 
-[env("token")]
+[env("tk")]
 
 let string = "life"
 
 post /todos {
-   header "Authorization" env("token")
+   header "Authorization" env("tk")
    body {
     userId: 1,
     id: 999,
@@ -23,12 +23,12 @@ post http://lasdf.. {}
 // asdfasdf
 
 let output_file = "output/file.json"
-let token = env("auth-token")
+let t = env("fake-token")
 
 @log(output_file)
 post /asd {
   // asdfasd
-  header "Authorization" token
+  header "Authorization" t
   body `{
       "neet": "${env("var")}",
       "nerd": "${output_file}",
@@ -47,7 +47,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     let mut parser = parser::Parser::new(SOURCE);
     let program = parser.parse();
 
-    let env = Environment::new("./benches/.vars.bench.rd.json").unwrap();
+    let env = Environment::new("./benches/vars.bench.rd.json").unwrap();
 
     c.bench_function("interpret ast", |b| {
         b.iter(|| {
