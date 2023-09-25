@@ -29,7 +29,7 @@ Program(
         ),
       ), [
         ArrayElement(
-          expr: Call(
+          expr: Call(CallExpr(
             identifier: Ok(Token(
               kind: Ident,
               text: "env",
@@ -95,7 +95,7 @@ Program(
                 )),
               ],
             ),
-          ),
+          )),
           errors: [
             ContextualError(
               inner_error: ExpectedToken(

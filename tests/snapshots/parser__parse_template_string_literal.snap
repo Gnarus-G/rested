@@ -56,7 +56,7 @@ Program(
                     ),
                   ),
                 )),
-                Call(
+                Call(CallExpr(
                   identifier: Ok(Token(
                     kind: Ident,
                     text: "env",
@@ -98,7 +98,7 @@ Program(
                       )),
                     ],
                   ),
-                ),
+                )),
                 String(StringLiteral(
                   raw: ", 2: ",
                   value: ", 2: ",

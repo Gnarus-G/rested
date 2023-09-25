@@ -45,7 +45,7 @@ Program(
               ),
             ),
           )),
-          value: Call(
+          value: Call(CallExpr(
             identifier: Ok(Token(
               kind: Ident,
               text: "read",
@@ -87,7 +87,7 @@ Program(
                 )),
               ],
             ),
-          ),
+          )),
           errors: [],
         ),
         ObjectEntry(
@@ -107,7 +107,7 @@ Program(
               ),
             ),
           )),
-          value: Call(
+          value: Call(CallExpr(
             identifier: Ok(Token(
               kind: Ident,
               text: "env",
@@ -149,7 +149,7 @@ Program(
                 )),
               ],
             ),
-          ),
+          )),
           errors: [],
         ),
       ])),

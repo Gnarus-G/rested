@@ -42,7 +42,7 @@ Program(
                 ),
               ),
             )),
-            value: Call(
+            value: Call(CallExpr(
               identifier: Ok(Token(
                 kind: Ident,
                 text: "env",
@@ -84,10 +84,10 @@ Program(
                   )),
                 ],
               ),
-            ),
+            )),
           ),
           Body(
-            value: Call(
+            value: Call(CallExpr(
               identifier: Ok(Token(
                 kind: Ident,
                 text: "env",
@@ -129,7 +129,7 @@ Program(
                   )),
                 ],
               ),
-            ),
+            )),
             start: Position(
               value: 50,
               line: 0,

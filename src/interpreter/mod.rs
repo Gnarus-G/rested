@@ -252,10 +252,10 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                     .context("failed to parse as an unsigned int")
                     .expect("our parser should not allow this"),
             ),
-            Call {
+            Call(ast::CallExpr {
                 identifier,
                 arguments,
-            } => self.evaluate_call_expression(
+            }) => self.evaluate_call_expression(
                 identifier.get()?,
                 &arguments.parameters,
                 expression_span,

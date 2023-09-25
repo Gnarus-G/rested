@@ -246,10 +246,10 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
         expr.visit_children_with(self);
 
         return match expr {
-            Expression::Call {
+            Expression::Call(ast::CallExpr {
                 identifier,
                 arguments,
-            } => match identifier {
+            }) => match identifier {
                 ast::result::ParsedNode::Ok(lexer::Token {
                     kind: lexer::TokenKind::Ident,
                     text: "env",

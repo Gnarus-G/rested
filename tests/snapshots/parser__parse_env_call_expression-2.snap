@@ -16,7 +16,7 @@ Program(
           col: 4,
         ),
       )),
-      value: Call(
+      value: Call(CallExpr(
         identifier: Ok(Token(
           kind: Ident,
           text: "env",
@@ -58,7 +58,7 @@ Program(
             )),
           ],
         ),
-      ),
+      )),
     ),
   ],
 )

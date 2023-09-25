@@ -25,10 +25,9 @@ impl<'env> EnvVarsNotInAllNamespaces<'env> {
 }
 
 impl<'env, 'source> ast_visit::Visitor<'source> for EnvVarsNotInAllNamespaces<'env> {
-    fn visit_expr(&mut self, expr: &Expression<'source>) {
+    fn visit_call_expr(&mut self, expr: &ast::CallExpr<'source>) {
         expr.visit_children_with(self);
-
-        if let Expression::Call {
+        if let ast::CallExpr {
             arguments,
             identifier: ast::result::ParsedNode::Ok(Token { text: "env", .. }),
         } = expr
@@ -59,6 +58,6 @@ impl<'env, 'source> ast_visit::Visitor<'source> for EnvVarsNotInAllNamespaces<'e
                     })
                 }
             }
-        }
+        };
     }
 }

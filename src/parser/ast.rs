@@ -126,10 +126,7 @@ pub enum Expression<'source> {
     String(StringLiteral<'source>),
     Bool(Literal<'source>),
     Number(Literal<'source>),
-    Call {
-        identifier: ParsedNode<'source, Token<'source>>,
-        arguments: Arguments<'source>,
-    },
+    Call(CallExpr<'source>),
     Array(Spanned<Vec<ArrayElement<'source>>>),
     Object(Spanned<Vec<ObjectEntry<'source>>>),
     Null(Span),
@@ -140,6 +137,12 @@ pub enum Expression<'source> {
         parts: Vec<Expression<'source>>,
     },
     Error(Box<Error<'source>>),
+}
+
+#[derive(Debug, PartialEq, Serialize)]
+pub struct CallExpr<'source> {
+    pub identifier: ParsedNode<'source, Token<'source>>,
+    pub arguments: Arguments<'source>,
 }
 
 #[derive(Debug, PartialEq, Serialize)]

@@ -458,10 +458,10 @@ impl<'i> Parser<'i> {
 
         self.next_token();
 
-        Ok(Expression::Call {
+        Ok(Expression::Call(ast::CallExpr {
             identifier,
             arguments: self.parse_call_arguments(),
-        })
+        }))
     }
 
     fn parse_multiline_string_literal(&mut self) -> Result<'i, Expression<'i>> {

@@ -1,7 +1,7 @@
 use crate::{error_meta::ContextualError, lexer::locations::GetSpan};
 
 use super::{
-    ast::{result::ParsedNode, Expression, Item, Statement},
+    ast::{result::ParsedNode, CallExpr, Expression, Item, Statement},
     error::ParseError,
 };
 
@@ -18,6 +18,10 @@ where
     }
 
     fn visit_expr(&mut self, expr: &Expression<'source>) {
+        expr.visit_children_with(self);
+    }
+
+    fn visit_call_expr(&mut self, expr: &CallExpr<'source>) {
         expr.visit_children_with(self);
     }
 
@@ -99,15 +103,7 @@ impl<'source> VisitWith<'source> for Expression<'source> {
 
     fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
         match self {
-            Expression::Call {
-                identifier,
-                arguments,
-            } => {
-                visitor.visit_token(identifier);
-                for arg in &arguments.parameters {
-                    visitor.visit_expr(arg)
-                }
-            }
+            Expression::Call(expr) => visitor.visit_call_expr(expr),
             Expression::Array((_, elements)) => {
                 for ele in elements {
                     for e in &ele.errors {
@@ -134,6 +130,19 @@ impl<'source> VisitWith<'source> for Expression<'source> {
             Expression::Identifier(ident) => visitor.visit_token(ident),
             _ => {}
         };
+    }
+}
+
+impl<'source> VisitWith<'source> for CallExpr<'source> {
+    fn visit_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        visitor.visit_call_expr(self)
+    }
+
+    fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        visitor.visit_token(&self.identifier);
+        for arg in &self.arguments.parameters {
+            visitor.visit_expr(arg)
+        }
     }
 }
 

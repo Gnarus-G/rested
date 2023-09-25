@@ -1,6 +1,6 @@
 use crate::lexer::locations::{GetSpan, Span};
 
-use super::ast::{self, Endpoint, Expression, Item, Statement, StringLiteral};
+use super::ast::{self, CallExpr, Endpoint, Expression, Item, Statement, StringLiteral};
 
 impl<'source> GetSpan for Statement<'source> {
     fn span(&self) -> crate::lexer::locations::Span {
@@ -18,10 +18,10 @@ impl<'source> GetSpan for Expression<'source> {
         match self {
             Expression::Identifier(i) => i.span(),
             Expression::String(l) => l.span,
-            Expression::Call {
+            Expression::Call(CallExpr {
                 identifier,
                 arguments,
-            } => identifier.span().to_end_of(arguments.span),
+            }) => identifier.span().to_end_of(arguments.span),
             Expression::TemplateSringLiteral { span, .. } => *span,
             Expression::Array((span, ..)) => *span,
             Expression::Object((span, ..)) => *span,
