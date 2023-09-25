@@ -13,15 +13,22 @@ impl<'source> GetSpan for Statement<'source> {
     }
 }
 
+impl<'source> GetSpan for CallExpr<'source> {
+    fn span(&self) -> crate::lexer::locations::Span {
+        let CallExpr {
+            identifier,
+            arguments,
+        } = self;
+        identifier.span().to_end_of(arguments.span)
+    }
+}
+
 impl<'source> GetSpan for Expression<'source> {
     fn span(&self) -> Span {
         match self {
             Expression::Identifier(i) => i.span(),
             Expression::String(l) => l.span,
-            Expression::Call(CallExpr {
-                identifier,
-                arguments,
-            }) => identifier.span().to_end_of(arguments.span),
+            Expression::Call(expr) => expr.span(),
             Expression::TemplateSringLiteral { span, .. } => *span,
             Expression::Array((span, ..)) => *span,
             Expression::Object((span, ..)) => *span,

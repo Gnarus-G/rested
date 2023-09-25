@@ -22,3 +22,12 @@ pub fn call_env(
     env.get_variable_value(variable)
         .map(|v| v.to_owned().into())
 }
+
+pub fn escaping_new_lines(text: String) -> Value {
+    let mut s = String::new();
+    for line in text.lines() {
+        s.push_str(line);
+        s.push_str("\\n")
+    }
+    return s.into();
+}

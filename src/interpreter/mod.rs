@@ -17,7 +17,7 @@ use crate::interpreter::ir::LogDestination;
 use crate::lexer;
 use crate::parser::ast::{self, Endpoint, Expression};
 
-use crate::lexer::locations::{GetSpan, Span};
+use crate::lexer::locations::GetSpan;
 use crate::parser::error::ParserErrors;
 
 use self::error::{InterpErrorFactory, InterpreterErrorKind};
@@ -229,8 +229,6 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
     fn evaluate_expression(&self, exp: &Expression<'source>) -> Result<value::Value> {
         use Expression::*;
 
-        let expression_span = exp.span();
-
         let value = match exp {
             Identifier(token) => self.evaluate_identifier(token.get()?)?,
             String(token) => token.value.into(),
@@ -252,14 +250,7 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                     .context("failed to parse as an unsigned int")
                     .expect("our parser should not allow this"),
             ),
-            Call(ast::CallExpr {
-                identifier,
-                arguments,
-            }) => self.evaluate_call_expression(
-                identifier.get()?,
-                &arguments.parameters,
-                expression_span,
-            )?,
+            Call(expr) => self.evaluate_call_expression(expr)?,
             Array((.., values)) => {
                 let mut v = vec![];
 
@@ -291,19 +282,16 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
         Ok(value)
     }
 
-    fn evaluate_call_expression(
-        &self,
-        identifier: &lexer::Token<'source>,
-        arguments: &[Expression<'source>],
-        expression_span: Span,
-    ) -> Result<value::Value> {
-        let string_value = match identifier.text {
+    fn evaluate_call_expression(&self, expr: &ast::CallExpr) -> Result<value::Value> {
+        let expression_span = expr.span();
+        let ast::CallExpr {
+            identifier,
+            arguments,
+        } = expr;
+
+        let string_value = match identifier.get()?.text {
             "env" => {
-                let arg = arguments.first().ok_or_else(|| {
-                    self.error_factory
-                        .required_args(expression_span, 1, 0)
-                        .with_message("calls to env(..) must include a variable name argument")
-                })?;
+                let arg = self.expect_one_arg(arguments)?;
 
                 match self.evaluate_expression(arg)? {
                     value::Value::String(variable) => builtin::call_env(self.env, &variable)
@@ -321,11 +309,7 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                 }
             }
             "read" => {
-                let arg = arguments.first().ok_or_else(|| {
-                    self.error_factory
-                        .required_args(expression_span, 1, 0)
-                        .with_message("calls to read(..) must include a file name argument")
-                })?;
+                let arg = self.expect_one_arg(arguments)?;
 
                 match self.evaluate_expression(arg)? {
                     value::Value::String(file_name) => builtin::read_file(file_name)
@@ -339,14 +323,10 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                 }
             }
             "escape_new_lines" => {
-                let arg = arguments.first().ok_or_else(|| {
-                    self.error_factory
-                        .required_args(expression_span, 1, 0)
-                        .with_message("calls to escape_new_lines(..) must include an argument")
-                })?;
+                let arg = self.expect_one_arg(arguments)?;
 
                 match self.evaluate_expression(arg)? {
-                    value::Value::String(s) => escaping_new_lines(s),
+                    value::Value::String(s) => builtin::escaping_new_lines(s),
                     value => {
                         return Err(self
                             .error_factory
@@ -358,7 +338,7 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
             _ => {
                 return Err(self
                     .error_factory
-                    .undefined_callable(identifier)
+                    .undefined_callable(identifier.get()?)
                     .with_message(
                         "env(..), read(..), escape_new_lines(..) are the only calls supported",
                     )
@@ -410,13 +390,15 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
 
         Ok(strings.join("").into())
     }
-}
 
-fn escaping_new_lines(text: String) -> value::Value {
-    let mut s = String::new();
-    for line in text.lines() {
-        s.push_str(line);
-        s.push_str("\\n")
+    fn expect_one_arg<'a>(&self, args: &'a ast::Arguments<'source>) -> Result<&'a ast::Expression> {
+        if args.parameters.len() != 1 {
+            return Err(self
+                .error_factory
+                .required_args(args.span, 1, args.parameters.len())
+                .into());
+        };
+
+        Ok(args.parameters.first().expect("unreachable"))
     }
-    return s.into();
 }

@@ -9,6 +9,12 @@ pub struct Position {
     pub col: usize,
 }
 
+impl Position {
+    pub fn new(line: usize, col: usize, value: usize) -> Self {
+        Self { value, line, col }
+    }
+}
+
 impl From<Position> for Location {
     fn from(value: Position) -> Self {
         Self {
