@@ -315,7 +315,7 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                     value => {
                         return Err(self
                             .error_factory
-                            .type_mismatch(value::ValueTag::String, value, expression_span)
+                            .type_mismatch(value::ValueTag::String, value, arg.span())
                             .into())
                     }
                 }
@@ -333,7 +333,7 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                     value => {
                         return Err(self
                             .error_factory
-                            .type_mismatch(value::ValueTag::String, value, expression_span)
+                            .type_mismatch(value::ValueTag::String, value, arg.span())
                             .into())
                     }
                 }
@@ -350,7 +350,7 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                     value => {
                         return Err(self
                             .error_factory
-                            .type_mismatch(value::ValueTag::String, value, expression_span)
+                            .type_mismatch(value::ValueTag::String, value, arg.span())
                             .into())
                     }
                 }
