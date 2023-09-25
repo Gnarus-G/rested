@@ -283,7 +283,6 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
     }
 
     fn evaluate_call_expression(&self, expr: &ast::CallExpr) -> Result<value::Value> {
-        let expression_span = expr.span();
         let ast::CallExpr {
             identifier,
             arguments,
@@ -291,58 +290,17 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
 
         let string_value = match identifier.get()?.text {
             "env" => {
-                let arg = self.expect_one_arg(arguments)?;
-
-                match self.evaluate_expression(arg)? {
-                    value::Value::String(variable) => builtin::call_env(self.env, &variable)
-                        .ok_or_else(|| {
-                            return self
-                                .error_factory
-                                .env_variable_not_found(variable, expression_span);
-                        })?,
-                    value => {
-                        return Err(self
-                            .error_factory
-                            .type_mismatch(value::ValueTag::String, value, arg.span())
-                            .into())
-                    }
-                }
+                self.evaluate_env_call(arguments)?
             }
             "read" => {
-                let arg = self.expect_one_arg(arguments)?;
-
-                match self.evaluate_expression(arg)? {
-                    value::Value::String(file_name) => builtin::read_file(file_name)
-                        .map_err(|e| self.error_factory.other(expression_span, e))?,
-                    value => {
-                        return Err(self
-                            .error_factory
-                            .type_mismatch(value::ValueTag::String, value, arg.span())
-                            .into())
-                    }
-                }
+                self.evaluate_read_call(arguments)?
             }
             "escape_new_lines" => {
-                let arg = self.expect_one_arg(arguments)?;
-
-                match self.evaluate_expression(arg)? {
-                    value::Value::String(s) => builtin::escaping_new_lines(s),
-                    value => {
-                        return Err(self
-                            .error_factory
-                            .type_mismatch(value::ValueTag::String, value, arg.span())
-                            .into())
-                    }
-                }
+                
+                self.evaluate_escapes_new_lines_call(arguments)?
             }
             "json" => {
-                let arg = self.expect_one_arg(arguments)?;
-
-                let value = self.evaluate_expression(arg)?;
-
-                serde_json::to_string(&value)
-                    .expect("failed to json stringify this value; even though our parser should made sure this is value is valid")
-                    .into()
+                self.evaluate_json_call(arguments)?
             }
             _ => {
                 return Err(self
@@ -356,6 +314,75 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
         };
 
         Ok(string_value)
+    }
+
+    fn evaluate_env_call(&self, arguments: &ast::Arguments) -> Result<value::Value> {
+
+                let arg = self.expect_one_arg(arguments)?;
+
+                let value = match self.evaluate_expression(arg)? {
+                    value::Value::String(variable) => builtin::call_env(self.env, &variable)
+                        .ok_or_else(|| {
+                            return self
+                                .error_factory
+                                .env_variable_not_found(variable, arg.span());
+                        })?,
+                    value => {
+                        return Err(self
+                            .error_factory
+                            .type_mismatch(value::ValueTag::String, value, arg.span())
+                            .into())
+                    }
+                };
+
+                Ok(value)
+    }
+
+    fn evaluate_read_call(&self, arguments: &ast::Arguments) -> Result<value::Value> {
+
+                let arg = self.expect_one_arg(arguments)?;
+
+                let value = match self.evaluate_expression(arg)? {
+                    value::Value::String(file_name) => builtin::read_file(file_name)
+                        .map_err(|e| self.error_factory.other(arg.span(), e))?,
+                    value => {
+                        return Err(self
+                            .error_factory
+                            .type_mismatch(value::ValueTag::String, value, arg.span())
+                            .into())
+                    }
+                };
+
+                Ok(value)
+    }
+
+    fn evaluate_escapes_new_lines_call(&self, arguments: &ast::Arguments) -> Result<value::Value> {
+
+
+
+                let arg = self.expect_one_arg(arguments)?;
+
+
+                let v = match self.evaluate_expression(arg)? {
+                    value::Value::String(s) => builtin::escaping_new_lines(s),
+                    value => {
+                        return Err(self
+                            .error_factory
+                            .type_mismatch(value::ValueTag::String, value, arg.span())
+                            .into())
+                    }
+                };
+
+                Ok(v)
+
+    }
+
+    fn evaluate_json_call(&self, arguments: &ast::Arguments) -> Result<value::Value> {
+        let arg = self.expect_one_arg(arguments)?;
+
+        let value = self.evaluate_expression(arg)?;
+
+        Ok(builtin::json_stringify(value))
     }
 
     fn evaluate_request_endpoint(&self, endpoint: &Endpoint) -> Result<String> {
