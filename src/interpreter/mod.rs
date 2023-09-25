@@ -51,7 +51,7 @@ pub struct Interpreter<'source, 'p, 'env> {
     error_factory: InterpErrorFactory<'source>,
     env: &'env Environment,
     base_url: Option<String>,
-    let_bindings: HashMap<&'source str, String>,
+    let_bindings: HashMap<&'source str, value::Value>,
 }
 
 impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
@@ -210,8 +210,7 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                 }
                 Let { identifier, value } => {
                     let value = self.evaluate_expression(value)?;
-                    self.let_bindings
-                        .insert(identifier.get()?.text, value.to_string());
+                    self.let_bindings.insert(identifier.get()?.text, value);
                 }
                 Expr(_) => continue,
                 Error(err) => {
@@ -401,10 +400,9 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
         let value = self
             .let_bindings
             .get(token.text)
-            .map(|value| value.to_string())
             .ok_or_else(|| self.error_factory.undeclared_identifier(token))?;
 
-        Ok(value.into())
+        Ok(value.to_owned())
     }
 
     fn evaluate_template_string_literal_parts(

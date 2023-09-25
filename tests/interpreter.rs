@@ -366,6 +366,15 @@ fn request_with_json_like_data() {
     let code = r#"
 set BASE_URL env("b_url")
 
+let ident = {
+    t: 123,
+    test: "ing"
+}
+
+post /test {
+    body json(ident)
+}
+
 post /api {
     header "Content-Type" "application/json"
     body json({
@@ -389,6 +398,14 @@ post /api {
     let env = new_env_with_vars(&[("b_url", &url), ("hello", "world"), ("hi", "hello")]);
 
     let mock = server
+        .mock("POST", "/test")
+        .match_body(mockito::Matcher::PartialJsonString(
+            r#"{"t": 123.0, "test": "ing"}"#.to_string(),
+        ))
+        .with_status(200)
+        .create();
+
+    let mock1 = server
         .mock("POST", "/api")
         .match_header("Content-Type", "application/json")
         .match_body(mockito::Matcher::PartialJsonString(
@@ -400,6 +417,7 @@ post /api {
     run!(code, env);
 
     mock.assert();
+    mock1.assert();
 }
 
 #[test]
