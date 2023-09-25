@@ -290,7 +290,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
     }
 
     fn evaluate_env_call(&self, arguments: &ast::ExpressionList) -> Result<Value> {
-        let arg = self.expect_one_arg(arguments)?;
+        let [arg] = self.expect_x_args::<1>(arguments)?;
 
         let value = match self.evaluate_expression(arg)? {
             Value::String(variable) => builtin::call_env(self.env, &variable).ok_or_else(|| {
@@ -310,7 +310,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
     }
 
     fn evaluate_read_call(&self, arguments: &ast::ExpressionList) -> Result<Value> {
-        let arg = self.expect_one_arg(arguments)?;
+        let [arg] = self.expect_x_args::<1>(arguments)?;
 
         let value = match self.evaluate_expression(arg)? {
             Value::String(file_name) => builtin::read_file(file_name)
@@ -327,7 +327,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
     }
 
     fn evaluate_escapes_new_lines_call(&self, arguments: &ast::ExpressionList) -> Result<Value> {
-        let arg = self.expect_one_arg(arguments)?;
+        let [arg] = self.expect_x_args::<1>(arguments)?;
 
         let v = match self.evaluate_expression(arg)? {
             Value::String(s) => builtin::escaping_new_lines(s),
@@ -343,7 +343,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
     }
 
     fn evaluate_json_call(&self, arguments: &ast::ExpressionList) -> Result<Value> {
-        let arg = self.expect_one_arg(arguments)?;
+        let [arg] = self.expect_x_args::<1>(arguments)?;
 
         let value = self.evaluate_expression(arg)?;
 
@@ -391,7 +391,10 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
         Ok(strings.join("").into())
     }
 
-    fn expect_one_arg<'a>(&self, args: &'a ast::ExpressionList<'source>) -> Result<&'a ast::Expression> {
+    fn expect_x_args<'a, const N: usize>(
+        &self,
+        args: &'a ast::ExpressionList<'source>,
+    ) -> Result<[&'a ast::Expression; N]> {
         if args.exprs.len() != 1 {
             return Err(self
                 .error_factory
@@ -399,6 +402,17 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
                 .into());
         };
 
-        Ok(args.exprs.first().expect("unreachable"))
+        // SAFETY: we're checking above N equals how many args we got
+        // so there will be no nulls in the returned value.
+        let mut arguments = unsafe {
+            let null: *const ast::Expression = std::ptr::null();
+            [&*null; N]
+        };
+
+        for (i, arg) in args.iter().enumerate() {
+            arguments[i] = arg;
+        }
+
+        Ok(arguments)
     }
 }
