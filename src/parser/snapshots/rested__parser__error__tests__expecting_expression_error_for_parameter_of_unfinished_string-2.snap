@@ -16,18 +16,7 @@ Program(
           col: 4,
         ),
       )),
-      value: Array((Span(
-        start: Position(
-          value: 9,
-          line: 1,
-          col: 8,
-        ),
-        end: Position(
-          value: 18,
-          line: 1,
-          col: 16,
-        ),
-      ), ExpressionList(
+      value: Array(ExpressionList(
         span: Span(
           start: Position(
             value: 9,
@@ -173,7 +162,7 @@ Program(
             ),
           )),
         ],
-      ))),
+      )),
     ),
   ],
 )

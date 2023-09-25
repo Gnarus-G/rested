@@ -28,7 +28,7 @@ Program(
           col: 1,
         ),
       ), [
-        ObjectEntry(
+        Ok(ObjectEntry(
           key: Ok(StringLiteral(
             raw: "key",
             value: "key",
@@ -88,9 +88,8 @@ Program(
               ],
             ),
           )),
-          errors: [],
-        ),
-        ObjectEntry(
+        )),
+        Ok(ObjectEntry(
           key: Ok(StringLiteral(
             raw: "akey",
             value: "akey",
@@ -150,8 +149,7 @@ Program(
               ],
             ),
           )),
-          errors: [],
-        ),
+        )),
       ])),
     ),
   ],

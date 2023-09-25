@@ -11,7 +11,7 @@ use crate::{
     language_server::position::ContainsPosition,
     lexer::{self, locations::GetSpan},
     parser::{
-        ast::{self, Expression, Item, Statement},
+        ast::{self, result::ParsedNode, Expression, Item, Statement},
         ast_visit::{self, VisitWith},
         error::ParseError,
     },
@@ -250,7 +250,7 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
                 identifier,
                 arguments,
             }) => match identifier {
-                ast::result::ParsedNode::Ok(lexer::Token {
+                ParsedNode::Ok(lexer::Token {
                     kind: lexer::TokenKind::Ident,
                     text: "env",
                     ..
@@ -286,7 +286,7 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
                         }
                     }
                 }
-                ast::result::ParsedNode::Error(_) => self.suggest(SuggestionKind::Functions),
+                ParsedNode::Error(_) => self.suggest(SuggestionKind::Functions),
                 _ => {
                     if arguments.span.contains(&self.position) {
                         self.suggest(SuggestionKind::Identifiers);
@@ -298,7 +298,7 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
             }
             Expression::EmptyObject(_) => self.suggest(SuggestionKind::Nothing),
             Expression::Object((_, entries)) => {
-                for entry in entries {
+                for entry in entries.iter().flat_map(|e| e.get()) {
                     if let Expression::Error(_) = entry.value {
                         self.suggest(SuggestionKind::Identifiers)
                     } else {

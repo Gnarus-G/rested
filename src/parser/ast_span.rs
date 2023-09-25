@@ -1,6 +1,8 @@
 use crate::lexer::locations::{GetSpan, Span};
 
-use super::ast::{self, CallExpr, Endpoint, Expression, Item, Statement, StringLiteral};
+use super::ast::{
+    result::ParsedNode, CallExpr, Endpoint, Expression, Item, ObjectEntry, Statement, StringLiteral,
+};
 
 impl<'source> GetSpan for Statement<'source> {
     fn span(&self) -> crate::lexer::locations::Span {
@@ -20,6 +22,12 @@ impl<'source> GetSpan for CallExpr<'source> {
             arguments,
         } = self;
         identifier.span().to_end_of(arguments.span)
+    }
+}
+
+impl<'source> GetSpan for ObjectEntry<'source> {
+    fn span(&self) -> Span {
+        self.key.span().to_end_of(self.value.span())
     }
 }
 
@@ -77,11 +85,11 @@ impl<'source> GetSpan for StringLiteral<'source> {
     }
 }
 
-impl<'source, T: GetSpan> GetSpan for ast::result::ParsedNode<'source, T> {
+impl<'source, T: GetSpan> GetSpan for ParsedNode<'source, T> {
     fn span(&self) -> Span {
         match self {
-            ast::result::ParsedNode::Ok(ok) => ok.span(),
-            ast::result::ParsedNode::Error(error) => error.span,
+            ParsedNode::Ok(ok) => ok.span(),
+            ParsedNode::Error(error) => error.span,
         }
     }
 }

@@ -25,7 +25,7 @@ where
         expr.visit_children_with(self);
     }
 
-    fn visit_token<T: GetSpan>(&mut self, token: &ParsedNode<'source, T>) {
+    fn visit_parsed_node<T: GetSpan>(&mut self, token: &ParsedNode<'source, T>) {
         token.visit_children_with(self);
     }
 
@@ -47,11 +47,11 @@ impl<'source> VisitWith<'source> for Item<'source> {
     fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
         match self {
             Item::Set { identifier, value } => {
-                visitor.visit_token(identifier);
+                visitor.visit_parsed_node(identifier);
                 visitor.visit_expr(value);
             }
             Item::Let { identifier, value } => {
-                visitor.visit_token(identifier);
+                visitor.visit_parsed_node(identifier);
                 visitor.visit_expr(value)
             }
             Item::Request {
@@ -67,7 +67,7 @@ impl<'source> VisitWith<'source> for Item<'source> {
                 identifier,
                 ..
             } => {
-                visitor.visit_token(identifier);
+                visitor.visit_parsed_node(identifier);
                 for arg in &arguments.exprs {
                     visitor.visit_expr(arg);
                 }
@@ -86,7 +86,7 @@ impl<'source> VisitWith<'source> for Statement<'source> {
     fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
         match self {
             Statement::Header { name, value } => {
-                visitor.visit_token(name);
+                visitor.visit_parsed_node(name);
                 visitor.visit_expr(value);
             }
             Statement::Body { value, .. } => visitor.visit_expr(value),
@@ -111,11 +111,13 @@ impl<'source> VisitWith<'source> for Expression<'source> {
             }
             Expression::Object((_, entries)) => {
                 for entry in entries {
-                    visitor.visit_token(&entry.key);
-                    for e in &entry.errors {
-                        visitor.visit_error(e);
+                    match entry {
+                        ParsedNode::Ok(entry) => {
+                            visitor.visit_parsed_node(&entry.key);
+                            visitor.visit_expr(&entry.value)
+                        }
+                        ParsedNode::Error(e) => visitor.visit_error(e),
                     }
-                    visitor.visit_expr(&entry.value)
                 }
             }
             Expression::TemplateSringLiteral { parts, .. } => {
@@ -124,7 +126,7 @@ impl<'source> VisitWith<'source> for Expression<'source> {
                 }
             }
             Expression::Error(e) => visitor.visit_error(e),
-            Expression::Identifier(ident) => visitor.visit_token(ident),
+            Expression::Identifier(ident) => visitor.visit_parsed_node(ident),
             _ => {}
         };
     }
@@ -136,7 +138,7 @@ impl<'source> VisitWith<'source> for CallExpr<'source> {
     }
 
     fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
-        visitor.visit_token(&self.identifier);
+        visitor.visit_parsed_node(&self.identifier);
         for arg in &self.arguments.exprs {
             visitor.visit_expr(arg)
         }
@@ -153,7 +155,7 @@ impl<'source> VisitWith<'source> for ContextualError<ParseError<'source>> {
 
 impl<'source, T: GetSpan> VisitWith<'source> for ParsedNode<'source, T> {
     fn visit_with<V: Visitor<'source>>(&self, visitor: &mut V) {
-        visitor.visit_token(self)
+        visitor.visit_parsed_node(self)
     }
 
     fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {

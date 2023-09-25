@@ -6,6 +6,7 @@ pub mod error;
 
 use ast::{Endpoint, Expression, Item, RequestMethod, Statement};
 
+use self::ast::result::ParsedNode;
 use self::ast::{Block, ExpressionList};
 use self::error::{Expectations, ParseError};
 
@@ -201,7 +202,7 @@ impl<'source> Parser<'source> {
             Ok(i) => i.into(),
             Err(error) => {
                 return Ok(Item::Set {
-                    identifier: ast::result::ParsedNode::Error(error.clone()),
+                    identifier: ParsedNode::Error(error.clone()),
                     value: Expression::Error(error),
                 })
             }
@@ -346,22 +347,38 @@ impl<'source> Parser<'source> {
             return Expression::EmptyObject(self.span_from(e.start));
         }
 
-        let mut fields = vec![];
+        let mut entries = vec![];
 
-        while self.peek_token().kind != RBracket && self.peek_token().kind != End {
-            if self.peek_token().is(Linecomment) {
+        debug_assert_eq!(self.curr_token().kind, LBracket);
+
+        self.next_token();
+
+        while self.curr_token().kind != RBracket && self.curr_token().kind != End {
+            if self.curr_token().is(Linecomment) {
                 self.next_token();
                 continue;
             }
 
-            fields.push(self.parse_object_property());
+            let entry = self.parse_object_property();
+
+            entries.push(ParsedNode::Ok(entry));
+
+            if !self.peek_token().is(RBracket) && !self.peek_token().is(Linecomment) {
+                let e = Expectations::new(self);
+                if let Err(e) = e.expect_peek(self, Comma) {
+                    entries.push(ParsedNode::Error(e));
+                }
+            }
+
+            self.next_token();
         }
 
-        self.next_token();
+        let last_token = self.curr_token();
+        debug_assert!(last_token.kind == RBracket || last_token.kind == End);
 
         let span = e.start.to_end_of(self.curr_token().span());
 
-        Expression::Object((span, fields))
+        Expression::Object((span, entries))
     }
 
     fn parse_array_literal(&mut self) -> ast::Expression<'source> {
@@ -379,11 +396,10 @@ impl<'source> Parser<'source> {
 
     fn parse_object_property(&mut self) -> ast::ObjectEntry<'source> {
         let e = Expectations::new(self);
-        self.next_token();
 
         let key = match self.parse_object_key() {
-            Ok(k) => ast::result::ParsedNode::Ok(k),
-            Err(error) => ast::result::ParsedNode::Error(error),
+            Ok(k) => ParsedNode::Ok(k),
+            Err(error) => ParsedNode::Error(error),
         };
 
         if let Err(e) = e.expect_peek(self, TokenKind::Colon) {
@@ -392,16 +408,10 @@ impl<'source> Parser<'source> {
 
         self.next_token();
 
-        let mut entry = match self.parse_expression() {
+        let entry = match self.parse_expression() {
             Ok(exp) => ast::ObjectEntry::new(key, exp),
             Err(error) => return ast::ObjectEntry::new(key, Expression::Error(error)),
         };
-
-        if !self.peek_token().is(RBracket) {
-            if let Err(e) = e.expect_peek(self, Comma) {
-                entry.errors.push(*e)
-            }
-        }
 
         entry
     }

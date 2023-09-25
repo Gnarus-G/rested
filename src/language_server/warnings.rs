@@ -2,7 +2,7 @@ use crate::{
     interpreter,
     lexer::Token,
     parser::{
-        ast::{self, Expression},
+        ast::{self, result::ParsedNode, Expression},
         ast_visit::{self, VisitWith},
     },
 };
@@ -29,7 +29,7 @@ impl<'env, 'source> ast_visit::Visitor<'source> for EnvVarsNotInAllNamespaces<'e
         expr.visit_children_with(self);
         if let ast::CallExpr {
             arguments,
-            identifier: ast::result::ParsedNode::Ok(Token { text: "env", .. }),
+            identifier: ParsedNode::Ok(Token { text: "env", .. }),
         } = expr
         {
             if let Some(Expression::String(value)) = &arguments.exprs.first() {

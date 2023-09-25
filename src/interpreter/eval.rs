@@ -235,7 +235,8 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
             Object((.., fields)) => {
                 let mut props = HashMap::new();
 
-                for ast::ObjectEntry { key, value, .. } in fields {
+                for node in fields {
+                    let ast::ObjectEntry { key, value } = node.get()?;
                     let value = self.evaluate_expression(value)?;
                     props.insert(key.get()?.value.to_string(), value);
                 }

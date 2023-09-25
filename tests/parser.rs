@@ -191,6 +191,15 @@ let o = {
     love: "me"
 }"#
     );
+
+    assert_ast!(
+        r#"
+let o = {
+    akesy: 1323,
+    love: "you"
+        //trailing comment
+}"#
+    );
 }
 
 #[test]

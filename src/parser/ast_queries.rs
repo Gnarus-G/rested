@@ -1,5 +1,5 @@
 use super::{
-    ast::{self, Program},
+    ast::{self, result::ParsedNode, Program},
     ast_visit::VisitWith,
     error::{ErrorsCollector, ParseError},
 };
@@ -21,7 +21,7 @@ impl<'source> Program<'source> {
                 ..
             } => None,
             ast::Item::Let {
-                identifier: ast::result::ParsedNode::Ok(identifier),
+                identifier: ParsedNode::Ok(identifier),
                 ..
             } => Some((i.span(), identifier)),
             _ => None,
