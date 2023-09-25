@@ -1,96 +1,100 @@
 ---
 source: src/parser/error.rs
-description: " let o = [\"joe\" \"world\"] "
+description: "env(\"\", false 12)"
 expression: ast
 ---
 Program(
-  source: " let o = [\"joe\" \"world\"] ",
+  source: "env(\"\", false 12)",
   items: [
-    Let(
+    Expr(Call(CallExpr(
       identifier: Ok(Token(
         kind: Ident,
-        text: "o",
+        text: "env",
         start: Position(
-          value: 5,
+          value: 0,
           line: 0,
-          col: 5,
+          col: 0,
         ),
       )),
-      value: Array((Span(
-        start: Position(
-          value: 9,
-          line: 0,
-          col: 9,
-        ),
-        end: Position(
-          value: 24,
-          line: 0,
-          col: 24,
-        ),
-      ), ExpressionList(
+      arguments: ExpressionList(
         span: Span(
           start: Position(
-            value: 9,
+            value: 3,
             line: 0,
-            col: 9,
+            col: 3,
           ),
           end: Position(
-            value: 24,
+            value: 17,
             line: 0,
-            col: 24,
+            col: 17,
           ),
         ),
         exprs: [
           String(StringLiteral(
-            raw: "\"joe\"",
-            value: "joe",
+            raw: "\"\"",
+            value: "",
             span: Span(
               start: Position(
-                value: 10,
+                value: 4,
                 line: 0,
-                col: 10,
+                col: 4,
               ),
               end: Position(
-                value: 15,
+                value: 6,
                 line: 0,
-                col: 15,
+                col: 6,
+              ),
+            ),
+          )),
+          Bool(Literal(
+            value: "false",
+            span: Span(
+              start: Position(
+                value: 8,
+                line: 0,
+                col: 8,
+              ),
+              end: Position(
+                value: 13,
+                line: 0,
+                col: 13,
               ),
             ),
           )),
           Error(ContextualError(
             inner_error: ExpectedToken(
               found: Token(
-                kind: StringLiteral,
-                text: "\"world\"",
+                kind: Number,
+                text: "12",
                 start: Position(
-                  value: 16,
+                  value: 14,
                   line: 0,
-                  col: 16,
+                  col: 14,
                 ),
               ),
               expected: Comma,
             ),
             span: Span(
               start: Position(
-                value: 10,
+                value: 8,
                 line: 0,
-                col: 10,
+                col: 8,
               ),
               end: Position(
-                value: 23,
+                value: 16,
                 line: 0,
-                col: 23,
+                col: 16,
               ),
             ),
             message: None,
             context: ErrorSourceContext(
               above: None,
-              line: " let o = [\"joe\" \"world\"] ",
+              line: "env(\"\", false 12)",
               below: None,
             ),
           )),
         ],
-      ))),
-    ),
+      ),
+    ))),
   ],
 )

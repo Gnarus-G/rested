@@ -126,9 +126,21 @@ Program(
               line: 4,
               col: 25,
             ),
-          ), [
-            ArrayElement(
-              expr: String(StringLiteral(
+          ), ExpressionList(
+            span: Span(
+              start: Position(
+                value: 58,
+                line: 4,
+                col: 10,
+              ),
+              end: Position(
+                value: 73,
+                line: 4,
+                col: 25,
+              ),
+            ),
+            exprs: [
+              String(StringLiteral(
                 raw: "\"val\"",
                 value: "val",
                 span: Span(
@@ -144,10 +156,7 @@ Program(
                   ),
                 ),
               )),
-              errors: [],
-            ),
-            ArrayElement(
-              expr: String(StringLiteral(
+              String(StringLiteral(
                 raw: "\"val2\"",
                 value: "val2",
                 span: Span(
@@ -163,9 +172,8 @@ Program(
                   ),
                 ),
               )),
-              errors: [],
-            ),
-          ])),
+            ],
+          ))),
           errors: [],
         ),
         ObjectEntry(
@@ -196,9 +204,21 @@ Program(
               line: 8,
               col: 6,
             ),
-          ), [
-            ArrayElement(
-              expr: String(StringLiteral(
+          ), ExpressionList(
+            span: Span(
+              start: Position(
+                value: 86,
+                line: 5,
+                col: 11,
+              ),
+              end: Position(
+                value: 152,
+                line: 8,
+                col: 6,
+              ),
+            ),
+            exprs: [
+              String(StringLiteral(
                 raw: "\"val\"",
                 value: "val",
                 span: Span(
@@ -214,10 +234,7 @@ Program(
                   ),
                 ),
               )),
-              errors: [],
-            ),
-            ArrayElement(
-              expr: String(StringLiteral(
+              String(StringLiteral(
                 raw: "\"123\"",
                 value: "123",
                 span: Span(
@@ -233,10 +250,7 @@ Program(
                   ),
                 ),
               )),
-              errors: [],
-            ),
-            ArrayElement(
-              expr: Object((Span(
+              Object((Span(
                 start: Position(
                   value: 101,
                   line: 5,
@@ -319,9 +333,8 @@ Program(
                   errors: [],
                 ),
               ])),
-              errors: [],
-            ),
-          ])),
+            ],
+          ))),
           errors: [],
         ),
       ])),

@@ -51,8 +51,8 @@ impl<'source> GetSpan for Item<'source> {
             Item::Attribute {
                 location,
                 identifier,
-                parameters,
-            } => parameters
+                arguments,
+            } => arguments
                 .as_ref()
                 .map(|p| p.span)
                 .unwrap_or(Span::new(*location, identifier.span().end)),

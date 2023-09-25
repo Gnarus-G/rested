@@ -152,7 +152,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
                 LineComment(_) => {}
                 Attribute {
                     identifier,
-                    parameters,
+                    arguments,
                     ..
                 } => {
                     let identifier = identifier.get()?;
@@ -166,7 +166,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
                                     .into());
                             }
 
-                            let att_params = parameters.as_ref().map(|p| &p.parameters);
+                            let att_params = arguments.as_ref().map(|p| &p.exprs);
 
                             attributes.add(identifier, att_params);
                         }
@@ -227,7 +227,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
                 let mut v = vec![];
 
                 for value in values.iter() {
-                    v.push(self.evaluate_expression(&value.expr)?);
+                    v.push(self.evaluate_expression(value)?);
                 }
 
                 Value::Array(v.into())
@@ -288,7 +288,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
         Ok(string_value)
     }
 
-    fn evaluate_env_call(&self, arguments: &ast::Arguments) -> Result<Value> {
+    fn evaluate_env_call(&self, arguments: &ast::ExpressionList) -> Result<Value> {
         let arg = self.expect_one_arg(arguments)?;
 
         let value = match self.evaluate_expression(arg)? {
@@ -308,7 +308,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
         Ok(value)
     }
 
-    fn evaluate_read_call(&self, arguments: &ast::Arguments) -> Result<Value> {
+    fn evaluate_read_call(&self, arguments: &ast::ExpressionList) -> Result<Value> {
         let arg = self.expect_one_arg(arguments)?;
 
         let value = match self.evaluate_expression(arg)? {
@@ -325,7 +325,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
         Ok(value)
     }
 
-    fn evaluate_escapes_new_lines_call(&self, arguments: &ast::Arguments) -> Result<Value> {
+    fn evaluate_escapes_new_lines_call(&self, arguments: &ast::ExpressionList) -> Result<Value> {
         let arg = self.expect_one_arg(arguments)?;
 
         let v = match self.evaluate_expression(arg)? {
@@ -341,7 +341,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
         Ok(v)
     }
 
-    fn evaluate_json_call(&self, arguments: &ast::Arguments) -> Result<Value> {
+    fn evaluate_json_call(&self, arguments: &ast::ExpressionList) -> Result<Value> {
         let arg = self.expect_one_arg(arguments)?;
 
         let value = self.evaluate_expression(arg)?;
@@ -390,14 +390,14 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
         Ok(strings.join("").into())
     }
 
-    fn expect_one_arg<'a>(&self, args: &'a ast::Arguments<'source>) -> Result<&'a ast::Expression> {
-        if args.parameters.len() != 1 {
+    fn expect_one_arg<'a>(&self, args: &'a ast::ExpressionList<'source>) -> Result<&'a ast::Expression> {
+        if args.exprs.len() != 1 {
             return Err(self
                 .error_factory
-                .required_args(args.span, 1, args.parameters.len())
+                .required_args(args.span, 1, args.exprs.len())
                 .into());
         };
 
-        Ok(args.parameters.first().expect("unreachable"))
+        Ok(args.exprs.first().expect("unreachable"))
     }
 }

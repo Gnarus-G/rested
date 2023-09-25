@@ -26,7 +26,7 @@ Program(
             col: 8,
           ),
         )),
-        arguments: Arguments(
+        arguments: ExpressionList(
           span: Span(
             start: Position(
               value: 12,
@@ -39,7 +39,7 @@ Program(
               col: 14,
             ),
           ),
-          parameters: [
+          exprs: [
             Error(ContextualError(
               inner_error: ExpectedEitherOfTokens(
                 found: Token(
@@ -69,6 +69,38 @@ Program(
                 ),
                 end: Position(
                   value: 15,
+                  line: 1,
+                  col: 14,
+                ),
+              ),
+              message: None,
+              context: ErrorSourceContext(
+                above: Some(""),
+                line: "let a = env(\")",
+                below: None,
+              ),
+            )),
+            Error(ContextualError(
+              inner_error: ExpectedToken(
+                found: Token(
+                  kind: End,
+                  text: "",
+                  start: Position(
+                    value: 16,
+                    line: 1,
+                    col: 14,
+                  ),
+                ),
+                expected: Comma,
+              ),
+              span: Span(
+                start: Position(
+                  value: 13,
+                  line: 1,
+                  col: 12,
+                ),
+                end: Position(
+                  value: 16,
                   line: 1,
                   col: 14,
                 ),

@@ -21,7 +21,7 @@ Program(
           col: 13,
         ),
       )),
-      parameters: None,
+      arguments: None,
     ),
     Error(ContextualError(
       inner_error: ExpectedEitherOfTokens(

@@ -124,6 +124,19 @@ fn parse_post_with_headers_and_body_as_json_string() {
 fn parse_env_call_expression() {
     assert_ast!(r#"post http://localhost { header "name" env("auth") body env("data") }"#);
     assert_ast!("let a = env(\"\")");
+    assert_ast!(
+        r#"env("base",
+            //aasdf
+            "url")"#
+    );
+    assert_ast!(
+        r#"env("base",
+            //aasdf
+            // asdf
+            "url"
+            //trailing comment
+            )"#
+    );
 }
 
 #[test]

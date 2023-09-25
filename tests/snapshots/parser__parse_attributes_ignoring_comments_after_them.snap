@@ -21,7 +21,7 @@ Program(
           col: 1,
         ),
       )),
-      parameters: Some(Arguments(
+      arguments: Some(ExpressionList(
         span: Span(
           start: Position(
             value: 4,
@@ -34,7 +34,7 @@ Program(
             col: 20,
           ),
         ),
-        parameters: [
+        exprs: [
           String(StringLiteral(
             raw: "\"path/to/file\"",
             value: "path/to/file",

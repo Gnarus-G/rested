@@ -6,7 +6,7 @@ pub mod error;
 
 use ast::{Endpoint, Expression, Item, RequestMethod, Statement};
 
-use self::ast::{Arguments, Block};
+use self::ast::{Block, ExpressionList};
 use self::error::{Expectations, ParseError};
 
 use crate::error_meta::ContextualError;
@@ -371,45 +371,15 @@ impl<'i> Parser<'i> {
                     return Ok(Expression::EmptyArray(self.span_from(e.start)));
                 }
 
-                let mut list = vec![];
+                let l_square = self.curr_token().clone();
+                let list = self.parse_expression_list(&l_square, RSquare);
 
-                while self.peek_token().kind != RSquare && self.peek_token().kind != End {
-                    if self.peek_token().is(Linecomment) {
-                        self.next_token();
-                        continue;
-                    }
-
-                    self.next_token();
-                    list.push(self.parse_array_element());
-                }
-
-                self.next_token();
-
-                let span = e.start.to_end_of(self.curr_token().span());
-
-                Expression::Array((span, list))
+                Expression::Array((list.span, list))
             }
             _ => self.parse_expression()?,
         };
 
         Ok(object)
-    }
-
-    fn parse_array_element(&mut self) -> ast::ArrayElement<'i> {
-        let e = Expectations::new(self);
-
-        let mut value: ast::ArrayElement<'_> = match self.parse_json_like() {
-            Ok(exp) => exp.into(),
-            Err(error) => return Expression::Error(error).into(),
-        };
-
-        if !self.peek_token().is(RSquare) {
-            if let Err(e) = e.expect_peek(self, Comma) {
-                value.errors.push(*e);
-            }
-        }
-
-        value
     }
 
     fn parse_object_property(&mut self) -> ast::ObjectEntry<'i> {
@@ -456,11 +426,13 @@ impl<'i> Parser<'i> {
     fn parse_call_expression(&mut self) -> Result<'i, Expression<'i>> {
         let identifier = self.curr_token().into();
 
-        self.next_token();
+        let l_paren = self.next_token().clone();
+
+        debug_assert_eq!(l_paren.kind, LParen);
 
         Ok(Expression::Call(ast::CallExpr {
             identifier,
-            arguments: self.parse_call_arguments(),
+            arguments: self.parse_expression_list(&l_paren, RParen),
         }))
     }
 
@@ -530,48 +502,66 @@ impl<'i> Parser<'i> {
             return Ok(Item::Attribute {
                 location: e.start,
                 identifier,
-                parameters: None,
+                arguments: None,
             });
         }
 
-        self.next_token();
+        let l_paren = self.next_token().clone();
+
+        debug_assert!(l_paren.kind == LParen);
 
         Ok(Item::Attribute {
             location: e.start,
             identifier,
-            parameters: Some(self.parse_call_arguments()),
+            arguments: Some(self.parse_expression_list(&l_paren, RParen)),
         })
     }
 
-    fn parse_call_arguments(&mut self) -> Arguments<'i> {
+    fn parse_expression_list(&mut self, start_token: &Token, end: TokenKind) -> ExpressionList<'i> {
         let mut params = vec![];
-        let params_start = self.curr_token().start;
+        let params_start = start_token.start;
+
+        debug_assert!(matches!(self.curr_token().kind, LSquare | LParen));
 
         self.next_token();
 
-        while self.curr_token().kind != TokenKind::RParen
-            && self.curr_token().kind != TokenKind::End
-        {
+        while self.curr_token().kind != end && self.curr_token().kind != TokenKind::End {
+            if self.curr_token().is(Linecomment) {
+                self.next_token();
+                continue;
+            }
+
             let exp = match self.parse_expression() {
                 Ok(exp) => exp,
                 Err(error) => Expression::Error(error),
             };
 
+            dbg!(self.curr_token().kind);
+            dbg!(&exp);
+
             params.push(exp);
+
+            if !self.peek_token().is(end) && !self.peek_token().is(Linecomment) {
+                let e = Expectations::new(self);
+                if let Err(e) = e.expect_peek(self, Comma) {
+                    params.push(Expression::Error(e));
+                }
+            }
 
             self.next_token();
         }
 
-        let last_token = self.curr_token();
-        // debug_assert_eq!(last_token.kind, RParen);
-        debug_assert!(matches!(last_token.kind, RParen | End));
+        dbg!(self.curr_token().kind);
 
-        Arguments {
+        let last_token = self.curr_token();
+        debug_assert!(last_token.kind == end || last_token.kind == End);
+
+        ExpressionList {
             span: Span {
                 start: params_start,
                 end: last_token.span().end,
             },
-            parameters: params,
+            exprs: params,
         }
     }
 

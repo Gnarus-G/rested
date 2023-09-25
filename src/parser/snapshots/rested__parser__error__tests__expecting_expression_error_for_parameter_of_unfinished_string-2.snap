@@ -27,9 +27,21 @@ Program(
           line: 1,
           col: 16,
         ),
-      ), [
-        ArrayElement(
-          expr: Call(CallExpr(
+      ), ExpressionList(
+        span: Span(
+          start: Position(
+            value: 9,
+            line: 1,
+            col: 8,
+          ),
+          end: Position(
+            value: 18,
+            line: 1,
+            col: 16,
+          ),
+        ),
+        exprs: [
+          Call(CallExpr(
             identifier: Ok(Token(
               kind: Ident,
               text: "env",
@@ -39,7 +51,7 @@ Program(
                 col: 9,
               ),
             )),
-            arguments: Arguments(
+            arguments: ExpressionList(
               span: Span(
                 start: Position(
                   value: 13,
@@ -52,7 +64,7 @@ Program(
                   col: 16,
                 ),
               ),
-              parameters: [
+              exprs: [
                 Error(ContextualError(
                   inner_error: ExpectedEitherOfTokens(
                     found: Token(
@@ -93,45 +105,75 @@ Program(
                     below: None,
                   ),
                 )),
+                Error(ContextualError(
+                  inner_error: ExpectedToken(
+                    found: Token(
+                      kind: End,
+                      text: "",
+                      start: Position(
+                        value: 18,
+                        line: 1,
+                        col: 16,
+                      ),
+                    ),
+                    expected: Comma,
+                  ),
+                  span: Span(
+                    start: Position(
+                      value: 14,
+                      line: 1,
+                      col: 13,
+                    ),
+                    end: Position(
+                      value: 18,
+                      line: 1,
+                      col: 16,
+                    ),
+                  ),
+                  message: None,
+                  context: ErrorSourceContext(
+                    above: Some(""),
+                    line: "let b = [env(\")]",
+                    below: None,
+                  ),
+                )),
               ],
             ),
           )),
-          errors: [
-            ContextualError(
-              inner_error: ExpectedToken(
-                found: Token(
-                  kind: End,
-                  text: "",
-                  start: Position(
-                    value: 18,
-                    line: 1,
-                    col: 16,
-                  ),
-                ),
-                expected: Comma,
-              ),
-              span: Span(
+          Error(ContextualError(
+            inner_error: ExpectedToken(
+              found: Token(
+                kind: End,
+                text: "",
                 start: Position(
-                  value: 10,
-                  line: 1,
-                  col: 9,
-                ),
-                end: Position(
                   value: 18,
                   line: 1,
                   col: 16,
                 ),
               ),
-              message: None,
-              context: ErrorSourceContext(
-                above: Some(""),
-                line: "let b = [env(\")]",
-                below: None,
+              expected: Comma,
+            ),
+            span: Span(
+              start: Position(
+                value: 18,
+                line: 1,
+                col: 16,
+              ),
+              end: Position(
+                value: 18,
+                line: 1,
+                col: 16,
               ),
             ),
-          ],
-        ),
-      ])),
+            message: None,
+            context: ErrorSourceContext(
+              above: Some(""),
+              line: "let b = [env(\")]",
+              below: None,
+            ),
+          )),
+        ],
+      ))),
     ),
   ],
 )

@@ -1,0 +1,69 @@
+---
+source: tests/parser.rs
+description: "env(\"base\",\n            //aasdf\n            // asdf\n            \"url\"\n            //trailing comment\n            )"
+expression: ast
+---
+Program(
+  source: "env(\"base\",\n            //aasdf\n            // asdf\n            \"url\"\n            //trailing comment\n            )",
+  items: [
+    Expr(Call(CallExpr(
+      identifier: Ok(Token(
+        kind: Ident,
+        text: "env",
+        start: Position(
+          value: 0,
+          line: 0,
+          col: 0,
+        ),
+      )),
+      arguments: ExpressionList(
+        span: Span(
+          start: Position(
+            value: 3,
+            line: 0,
+            col: 3,
+          ),
+          end: Position(
+            value: 114,
+            line: 5,
+            col: 13,
+          ),
+        ),
+        exprs: [
+          String(StringLiteral(
+            raw: "\"base\"",
+            value: "base",
+            span: Span(
+              start: Position(
+                value: 4,
+                line: 0,
+                col: 4,
+              ),
+              end: Position(
+                value: 10,
+                line: 0,
+                col: 10,
+              ),
+            ),
+          )),
+          String(StringLiteral(
+            raw: "\"url\"",
+            value: "url",
+            span: Span(
+              start: Position(
+                value: 64,
+                line: 3,
+                col: 12,
+              ),
+              end: Position(
+                value: 69,
+                line: 3,
+                col: 17,
+              ),
+            ),
+          )),
+        ],
+      ),
+    ))),
+  ],
+)

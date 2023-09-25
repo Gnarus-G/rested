@@ -187,14 +187,14 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
             }
             Item::Attribute {
                 identifier,
-                parameters,
+                arguments,
                 ..
             } => {
                 if identifier.span().is_on_or_after(&self.position) {
                     return self.suggest(SuggestionKind::Attributes);
                 }
 
-                if let Some(args) = parameters {
+                if let Some(args) = arguments {
                     if args.span.contains(&self.position) {
                         return self.suggest(SuggestionKind::Identifiers);
                     }
@@ -257,7 +257,7 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
                 }) => {
                     if arguments.span.contains(&self.position) {
                         match arguments
-                            .parameters
+                            .exprs
                             .iter()
                             .find(|p| p.span().contains(&self.position))
                         {

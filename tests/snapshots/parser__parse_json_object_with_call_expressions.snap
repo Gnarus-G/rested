@@ -55,7 +55,7 @@ Program(
                 col: 9,
               ),
             )),
-            arguments: Arguments(
+            arguments: ExpressionList(
               span: Span(
                 start: Position(
                   value: 24,
@@ -68,7 +68,7 @@ Program(
                   col: 21,
                 ),
               ),
-              parameters: [
+              exprs: [
                 String(StringLiteral(
                   raw: "\"test\"",
                   value: "test",
@@ -117,7 +117,7 @@ Program(
                 col: 10,
               ),
             )),
-            arguments: Arguments(
+            arguments: ExpressionList(
               span: Span(
                 start: Position(
                   value: 47,
@@ -130,7 +130,7 @@ Program(
                   col: 20,
                 ),
               ),
-              parameters: [
+              exprs: [
                 String(StringLiteral(
                   raw: "\"url\"",
                   value: "url",

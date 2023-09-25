@@ -91,9 +91,21 @@ Program(
               line: 8,
               col: 5,
             ),
-          ), [
-            ArrayElement(
-              expr: String(StringLiteral(
+          ), ExpressionList(
+            span: Span(
+              start: Position(
+                value: 57,
+                line: 4,
+                col: 10,
+              ),
+              end: Position(
+                value: 108,
+                line: 8,
+                col: 5,
+              ),
+            ),
+            exprs: [
+              String(StringLiteral(
                 raw: "\"asdf\"",
                 value: "asdf",
                 span: Span(
@@ -109,10 +121,7 @@ Program(
                   ),
                 ),
               )),
-              errors: [],
-            ),
-            ArrayElement(
-              expr: Number(Literal(
+              Number(Literal(
                 value: "12",
                 span: Span(
                   start: Position(
@@ -127,9 +136,8 @@ Program(
                   ),
                 ),
               )),
-              errors: [],
-            ),
-          ])),
+            ],
+          ))),
           errors: [],
         ),
       ])),
