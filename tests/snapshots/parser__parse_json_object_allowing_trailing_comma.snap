@@ -28,7 +28,7 @@ Program(
           col: 1,
         ),
       ), [
-        ObjectEntry(
+        Ok(ObjectEntry(
           key: Ok(StringLiteral(
             raw: "key",
             value: "key",
@@ -61,9 +61,8 @@ Program(
               ),
             ),
           )),
-          errors: [],
-        ),
-        ObjectEntry(
+        )),
+        Ok(ObjectEntry(
           key: Ok(StringLiteral(
             raw: "akey",
             value: "akey",
@@ -80,20 +79,21 @@ Program(
               ),
             ),
           )),
-          value: Array((Span(
-            start: Position(
-              value: 39,
-              line: 3,
-              col: 10,
+          value: Array(ExpressionList(
+            span: Span(
+              start: Position(
+                value: 39,
+                line: 3,
+                col: 10,
+              ),
+              end: Position(
+                value: 49,
+                line: 3,
+                col: 20,
+              ),
             ),
-            end: Position(
-              value: 49,
-              line: 3,
-              col: 20,
-            ),
-          ), [
-            ArrayElement(
-              expr: Number(Literal(
+            exprs: [
+              Number(Literal(
                 value: "1",
                 span: Span(
                   start: Position(
@@ -108,10 +108,7 @@ Program(
                   ),
                 ),
               )),
-              errors: [],
-            ),
-            ArrayElement(
-              expr: Number(Literal(
+              Number(Literal(
                 value: "2",
                 span: Span(
                   start: Position(
@@ -126,10 +123,7 @@ Program(
                   ),
                 ),
               )),
-              errors: [],
-            ),
-            ArrayElement(
-              expr: Number(Literal(
+              Number(Literal(
                 value: "3",
                 span: Span(
                   start: Position(
@@ -144,12 +138,10 @@ Program(
                   ),
                 ),
               )),
-              errors: [],
-            ),
-          ])),
-          errors: [],
-        ),
-        ObjectEntry(
+            ],
+          )),
+        )),
+        Ok(ObjectEntry(
           key: Ok(StringLiteral(
             raw: "love",
             value: "love",
@@ -182,9 +174,8 @@ Program(
               ),
             ),
           )),
-          errors: [],
-        ),
-        ObjectEntry(
+        )),
+        Ok(ObjectEntry(
           key: Ok(StringLiteral(
             raw: "\"test\"",
             value: "test",
@@ -213,7 +204,7 @@ Program(
               col: 36,
             ),
           ), [
-            ObjectEntry(
+            Ok(ObjectEntry(
               key: Ok(StringLiteral(
                 raw: "a",
                 value: "a",
@@ -246,9 +237,8 @@ Program(
                   ),
                 ),
               )),
-              errors: [],
-            ),
-            ObjectEntry(
+            )),
+            Ok(ObjectEntry(
               key: Ok(StringLiteral(
                 raw: "b",
                 value: "b",
@@ -280,9 +270,8 @@ Program(
                   ),
                 ),
               )),
-              errors: [],
-            ),
-            ObjectEntry(
+            )),
+            Ok(ObjectEntry(
               key: Ok(StringLiteral(
                 raw: "c",
                 value: "c",
@@ -314,11 +303,9 @@ Program(
                   ),
                 ),
               )),
-              errors: [],
-            ),
+            )),
           ])),
-          errors: [],
-        ),
+        )),
       ])),
     ),
   ],

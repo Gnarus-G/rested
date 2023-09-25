@@ -11,7 +11,7 @@ use crate::{
     language_server::position::ContainsPosition,
     lexer::{self, locations::GetSpan},
     parser::{
-        ast::{self, Expression, Item, Statement},
+        ast::{self, result::ParsedNode, Expression, Item, Statement},
         ast_visit::{self, VisitWith},
         error::ParseError,
     },
@@ -187,14 +187,14 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
             }
             Item::Attribute {
                 identifier,
-                parameters,
+                arguments,
                 ..
             } => {
                 if identifier.span().is_on_or_after(&self.position) {
                     return self.suggest(SuggestionKind::Attributes);
                 }
 
-                if let Some(args) = parameters {
+                if let Some(args) = arguments {
                     if args.span.contains(&self.position) {
                         return self.suggest(SuggestionKind::Identifiers);
                     }
@@ -246,18 +246,18 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
         expr.visit_children_with(self);
 
         return match expr {
-            Expression::Call {
+            Expression::Call(ast::CallExpr {
                 identifier,
                 arguments,
-            } => match identifier {
-                ast::result::ParsedNode::Ok(lexer::Token {
+            }) => match identifier {
+                ParsedNode::Ok(lexer::Token {
                     kind: lexer::TokenKind::Ident,
                     text: "env",
                     ..
                 }) => {
                     if arguments.span.contains(&self.position) {
                         match arguments
-                            .parameters
+                            .exprs
                             .iter()
                             .find(|p| p.span().contains(&self.position))
                         {
@@ -286,7 +286,7 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
                         }
                     }
                 }
-                ast::result::ParsedNode::Error(_) => self.suggest(SuggestionKind::Functions),
+                ParsedNode::Error(_) => self.suggest(SuggestionKind::Functions),
                 _ => {
                     if arguments.span.contains(&self.position) {
                         self.suggest(SuggestionKind::Identifiers);
@@ -298,7 +298,7 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
             }
             Expression::EmptyObject(_) => self.suggest(SuggestionKind::Nothing),
             Expression::Object((_, entries)) => {
-                for entry in entries {
+                for entry in entries.iter().flat_map(|e| e.get()) {
                     if let Expression::Error(_) = entry.value {
                         self.suggest(SuggestionKind::Identifiers)
                     } else {
@@ -329,7 +329,7 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
 }
 
 fn builtin_functions_completions() -> Vec<CompletionItem> {
-    ["env", "read", "escape_new_lines"]
+    ["env", "read", "json", "escape_new_lines"]
         .map(|keyword| CompletionItem {
             label: format!("{}(..)", keyword),
             kind: Some(CompletionItemKind::FUNCTION),

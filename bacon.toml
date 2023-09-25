@@ -11,6 +11,10 @@ default_job = "install"
 command = ["cargo", "check", "--color", "always"]
 need_stdout = false
 
+[jobs.fmt]
+command = ["cargo", "fmt", "--", "--color", "always"]
+need_stdout = false
+
 [jobs.check-all]
 command = ["cargo", "check", "--all-targets", "--color", "always"]
 need_stdout = false

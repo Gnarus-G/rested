@@ -1,48 +1,48 @@
 ---
 source: src/parser/error.rs
-description: " let o = [\"joe\" \"world\"] "
+description: "env(\"base\" \"url\")"
 expression: ast
 ---
 Program(
-  source: " let o = [\"joe\" \"world\"] ",
+  source: "env(\"base\" \"url\")",
   items: [
-    Let(
+    Expr(Call(CallExpr(
       identifier: Ok(Token(
         kind: Ident,
-        text: "o",
+        text: "env",
         start: Position(
-          value: 5,
+          value: 0,
           line: 0,
-          col: 5,
+          col: 0,
         ),
       )),
-      value: Array(ExpressionList(
+      arguments: ExpressionList(
         span: Span(
           start: Position(
-            value: 9,
+            value: 3,
             line: 0,
-            col: 9,
+            col: 3,
           ),
           end: Position(
-            value: 24,
+            value: 17,
             line: 0,
-            col: 24,
+            col: 17,
           ),
         ),
         exprs: [
           String(StringLiteral(
-            raw: "\"joe\"",
-            value: "joe",
+            raw: "\"base\"",
+            value: "base",
             span: Span(
               start: Position(
+                value: 4,
+                line: 0,
+                col: 4,
+              ),
+              end: Position(
                 value: 10,
                 line: 0,
                 col: 10,
-              ),
-              end: Position(
-                value: 15,
-                line: 0,
-                col: 15,
               ),
             ),
           )),
@@ -50,36 +50,36 @@ Program(
             inner_error: ExpectedToken(
               found: Token(
                 kind: StringLiteral,
-                text: "\"world\"",
+                text: "\"url\"",
                 start: Position(
-                  value: 16,
+                  value: 11,
                   line: 0,
-                  col: 16,
+                  col: 11,
                 ),
               ),
               expected: Comma,
             ),
             span: Span(
               start: Position(
-                value: 10,
+                value: 4,
                 line: 0,
-                col: 10,
+                col: 4,
               ),
               end: Position(
-                value: 23,
+                value: 16,
                 line: 0,
-                col: 23,
+                col: 16,
               ),
             ),
             message: None,
             context: ErrorSourceContext(
               above: None,
-              line: " let o = [\"joe\" \"world\"] ",
+              line: "env(\"base\" \"url\")",
               below: None,
             ),
           )),
         ],
-      )),
-    ),
+      ),
+    ))),
   ],
 )

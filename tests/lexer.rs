@@ -58,7 +58,7 @@ fn lex_bools() {
 
 #[test]
 fn lex_numbers() {
-    assert_lexes!("123124 1.0");
+    assert_lexes!("123124 1.0 23.8635");
 }
 
 #[test]

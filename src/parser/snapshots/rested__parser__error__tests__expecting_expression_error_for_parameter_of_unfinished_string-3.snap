@@ -28,7 +28,7 @@ Program(
           col: 1,
         ),
       ), [
-        ObjectEntry(
+        Ok(ObjectEntry(
           key: Ok(StringLiteral(
             raw: "key",
             value: "key",
@@ -45,7 +45,7 @@ Program(
               ),
             ),
           )),
-          value: Call(
+          value: Call(CallExpr(
             identifier: Ok(Token(
               kind: Ident,
               text: "env",
@@ -55,7 +55,7 @@ Program(
                 col: 9,
               ),
             )),
-            arguments: Arguments(
+            arguments: ExpressionList(
               span: Span(
                 start: Position(
                   value: 23,
@@ -68,7 +68,7 @@ Program(
                   col: 1,
                 ),
               ),
-              parameters: [
+              exprs: [
                 Error(ContextualError(
                   inner_error: ExpectedEitherOfTokens(
                     found: Token(
@@ -110,7 +110,7 @@ Program(
                   ),
                 )),
                 Error(ContextualError(
-                  inner_error: ExpectedEitherOfTokens(
+                  inner_error: ExpectedToken(
                     found: Token(
                       kind: RBracket,
                       text: "}",
@@ -120,21 +120,13 @@ Program(
                         col: 0,
                       ),
                     ),
-                    expected: [
-                      Ident,
-                      StringLiteral,
-                      Boolean,
-                      Number,
-                      LBracket,
-                      LSquare,
-                      Null,
-                    ],
+                    expected: Comma,
                   ),
                   span: Span(
                     start: Position(
-                      value: 27,
-                      line: 3,
-                      col: 0,
+                      value: 24,
+                      line: 2,
+                      col: 13,
                     ),
                     end: Position(
                       value: 28,
@@ -151,42 +143,40 @@ Program(
                 )),
               ],
             ),
-          ),
-          errors: [
-            ContextualError(
-              inner_error: ExpectedToken(
-                found: Token(
-                  kind: End,
-                  text: "",
-                  start: Position(
-                    value: 29,
-                    line: 3,
-                    col: 1,
-                  ),
-                ),
-                expected: Comma,
-              ),
-              span: Span(
-                start: Position(
-                  value: 9,
-                  line: 1,
-                  col: 8,
-                ),
-                end: Position(
-                  value: 29,
-                  line: 3,
-                  col: 1,
-                ),
-              ),
-              message: None,
-              context: ErrorSourceContext(
-                above: Some("    key: env(\")"),
-                line: "}",
-                below: None,
+          )),
+        )),
+        Error(ContextualError(
+          inner_error: ExpectedToken(
+            found: Token(
+              kind: End,
+              text: "",
+              start: Position(
+                value: 29,
+                line: 3,
+                col: 1,
               ),
             ),
-          ],
-        ),
+            expected: Comma,
+          ),
+          span: Span(
+            start: Position(
+              value: 29,
+              line: 3,
+              col: 1,
+            ),
+            end: Position(
+              value: 29,
+              line: 3,
+              col: 1,
+            ),
+          ),
+          message: None,
+          context: ErrorSourceContext(
+            above: Some("    key: env(\")"),
+            line: "}",
+            below: None,
+          ),
+        )),
       ])),
     ),
   ],

@@ -16,7 +16,7 @@ Program(
           col: 4,
         ),
       )),
-      value: Call(
+      value: Call(CallExpr(
         identifier: Ok(Token(
           kind: Ident,
           text: "env",
@@ -26,7 +26,7 @@ Program(
             col: 8,
           ),
         )),
-        arguments: Arguments(
+        arguments: ExpressionList(
           span: Span(
             start: Position(
               value: 11,
@@ -39,7 +39,7 @@ Program(
               col: 15,
             ),
           ),
-          parameters: [
+          exprs: [
             String(StringLiteral(
               raw: "\"\"",
               value: "",
@@ -58,7 +58,7 @@ Program(
             )),
           ],
         ),
-      ),
+      )),
     ),
   ],
 )

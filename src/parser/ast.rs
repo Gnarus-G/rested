@@ -72,7 +72,7 @@ pub enum Item<'source> {
     Attribute {
         location: Position,
         identifier: ParsedNode<'source, Token<'source>>,
-        parameters: Option<Arguments<'source>>,
+        arguments: Option<ExpressionList<'source>>,
     },
     Error(Box<Error<'source>>),
 }
@@ -107,14 +107,14 @@ pub enum Statement<'i> {
 }
 
 #[derive(Debug, PartialEq, Serialize)]
-pub struct Arguments<'source> {
+pub struct ExpressionList<'source> {
     pub span: Span,
-    pub parameters: Vec<Expression<'source>>,
+    pub exprs: Vec<Expression<'source>>,
 }
 
-impl<'source> Arguments<'source> {
+impl<'source> ExpressionList<'source> {
     pub fn iter(&self) -> impl Iterator<Item = &Expression<'source>> {
-        self.parameters.iter()
+        self.exprs.iter()
     }
 }
 
@@ -126,12 +126,9 @@ pub enum Expression<'source> {
     String(StringLiteral<'source>),
     Bool(Literal<'source>),
     Number(Literal<'source>),
-    Call {
-        identifier: ParsedNode<'source, Token<'source>>,
-        arguments: Arguments<'source>,
-    },
-    Array(Spanned<Vec<ArrayElement<'source>>>),
-    Object(Spanned<Vec<ObjectEntry<'source>>>),
+    Call(CallExpr<'source>),
+    Array(ExpressionList<'source>),
+    Object(Spanned<Vec<ParsedNode<'source, ObjectEntry<'source>>>>),
     Null(Span),
     EmptyArray(Span),
     EmptyObject(Span),
@@ -143,18 +140,15 @@ pub enum Expression<'source> {
 }
 
 #[derive(Debug, PartialEq, Serialize)]
-pub struct ArrayElement<'source> {
-    pub expr: Expression<'source>,
-    // For missing commas actually. I don't know if this is a good idea generally though.
-    pub errors: Vec<Error<'source>>,
+pub struct CallExpr<'source> {
+    pub identifier: ParsedNode<'source, Token<'source>>,
+    pub arguments: ExpressionList<'source>,
 }
 
 #[derive(Debug, PartialEq, Serialize)]
 pub struct ObjectEntry<'source> {
     pub key: ParsedNode<'source, StringLiteral<'source>>,
     pub value: Expression<'source>,
-    // For missing commas...
-    pub errors: Vec<Error<'source>>,
 }
 
 impl<'source> ObjectEntry<'source> {
@@ -162,11 +156,7 @@ impl<'source> ObjectEntry<'source> {
         key: ParsedNode<'source, StringLiteral<'source>>,
         value: Expression<'source>,
     ) -> Self {
-        Self {
-            key,
-            value,
-            errors: vec![],
-        }
+        Self { key, value }
     }
 }
 
@@ -245,15 +235,6 @@ mod convert {
             match value {
                 Ok(value) => ParsedNode::Ok(value),
                 Err(error) => ParsedNode::Error(error),
-            }
-        }
-    }
-
-    impl<'source> From<Expression<'source>> for ArrayElement<'source> {
-        fn from(value: Expression<'source>) -> Self {
-            Self {
-                expr: value,
-                errors: vec![],
             }
         }
     }

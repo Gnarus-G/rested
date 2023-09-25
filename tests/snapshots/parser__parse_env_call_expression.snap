@@ -42,7 +42,7 @@ Program(
                 ),
               ),
             )),
-            value: Call(
+            value: Call(CallExpr(
               identifier: Ok(Token(
                 kind: Ident,
                 text: "env",
@@ -52,7 +52,7 @@ Program(
                   col: 38,
                 ),
               )),
-              arguments: Arguments(
+              arguments: ExpressionList(
                 span: Span(
                   start: Position(
                     value: 41,
@@ -65,7 +65,7 @@ Program(
                     col: 49,
                   ),
                 ),
-                parameters: [
+                exprs: [
                   String(StringLiteral(
                     raw: "\"auth\"",
                     value: "auth",
@@ -84,10 +84,10 @@ Program(
                   )),
                 ],
               ),
-            ),
+            )),
           ),
           Body(
-            value: Call(
+            value: Call(CallExpr(
               identifier: Ok(Token(
                 kind: Ident,
                 text: "env",
@@ -97,7 +97,7 @@ Program(
                   col: 55,
                 ),
               )),
-              arguments: Arguments(
+              arguments: ExpressionList(
                 span: Span(
                   start: Position(
                     value: 58,
@@ -110,7 +110,7 @@ Program(
                     col: 66,
                   ),
                 ),
-                parameters: [
+                exprs: [
                   String(StringLiteral(
                     raw: "\"data\"",
                     value: "data",
@@ -129,7 +129,7 @@ Program(
                   )),
                 ],
               ),
-            ),
+            )),
             start: Position(
               value: 50,
               line: 0,

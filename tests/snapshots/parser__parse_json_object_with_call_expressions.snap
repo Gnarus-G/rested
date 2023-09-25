@@ -28,7 +28,7 @@ Program(
           col: 1,
         ),
       ), [
-        ObjectEntry(
+        Ok(ObjectEntry(
           key: Ok(StringLiteral(
             raw: "key",
             value: "key",
@@ -45,7 +45,7 @@ Program(
               ),
             ),
           )),
-          value: Call(
+          value: Call(CallExpr(
             identifier: Ok(Token(
               kind: Ident,
               text: "read",
@@ -55,7 +55,7 @@ Program(
                 col: 9,
               ),
             )),
-            arguments: Arguments(
+            arguments: ExpressionList(
               span: Span(
                 start: Position(
                   value: 24,
@@ -68,7 +68,7 @@ Program(
                   col: 21,
                 ),
               ),
-              parameters: [
+              exprs: [
                 String(StringLiteral(
                   raw: "\"test\"",
                   value: "test",
@@ -87,10 +87,9 @@ Program(
                 )),
               ],
             ),
-          ),
-          errors: [],
-        ),
-        ObjectEntry(
+          )),
+        )),
+        Ok(ObjectEntry(
           key: Ok(StringLiteral(
             raw: "akey",
             value: "akey",
@@ -107,7 +106,7 @@ Program(
               ),
             ),
           )),
-          value: Call(
+          value: Call(CallExpr(
             identifier: Ok(Token(
               kind: Ident,
               text: "env",
@@ -117,7 +116,7 @@ Program(
                 col: 10,
               ),
             )),
-            arguments: Arguments(
+            arguments: ExpressionList(
               span: Span(
                 start: Position(
                   value: 47,
@@ -130,7 +129,7 @@ Program(
                   col: 20,
                 ),
               ),
-              parameters: [
+              exprs: [
                 String(StringLiteral(
                   raw: "\"url\"",
                   value: "url",
@@ -149,9 +148,8 @@ Program(
                 )),
               ],
             ),
-          ),
-          errors: [],
-        ),
+          )),
+        )),
       ])),
     ),
   ],

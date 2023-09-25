@@ -19,11 +19,17 @@ macro_rules! run {
         let program = Program::from($code);
         let program = program.interpret(&$env).unwrap();
 
+        println!("{:#}", program.source);
+        println!("{:#?}", program);
+
         program.run_ureq(None).unwrap();
     };
     ($code:ident, $env:ident, $names:expr) => {
         let program = Program::from($code);
         let program = program.interpret(&$env).unwrap();
+
+        println!("{:#}", program.source);
+        println!("{:#?}", program);
 
         program.run_ureq($names).unwrap();
     };
@@ -360,9 +366,18 @@ fn request_with_json_like_data() {
     let code = r#"
 set BASE_URL env("b_url")
 
+let ident = {
+    t: 123,
+    test: "ing"
+}
+
+post /test {
+    body json(ident)
+}
+
 post /api {
     header "Content-Type" "application/json"
-    body {
+    body json({
         neet: 1337,
         nothing: null,
         arr: ["yo", {h: "i"}],
@@ -374,7 +389,7 @@ post /api {
             e: {},
             em: []
         },
-    }
+    })
 }
         "#;
 
@@ -383,10 +398,18 @@ post /api {
     let env = new_env_with_vars(&[("b_url", &url), ("hello", "world"), ("hi", "hello")]);
 
     let mock = server
+        .mock("POST", "/test")
+        .match_body(mockito::Matcher::PartialJsonString(
+            r#"{"t": 123.0, "test": "ing"}"#.to_string(),
+        ))
+        .with_status(200)
+        .create();
+
+    let mock1 = server
         .mock("POST", "/api")
         .match_header("Content-Type", "application/json")
         .match_body(mockito::Matcher::PartialJsonString(
-            r#"{"neet": 1337, "nothing": null, "arr": ["yo", {"h": "i"}], "hello": {"w": "world", "warudo": "world", "fun": true, "notFun": false, "e": {}, "em": []}}"#.to_string(),
+            r#"{"neet": 1337.0, "nothing": null, "arr": ["yo", {"h": "i"}], "hello": {"w": "world", "warudo": "world", "fun": true, "notFun": false, "e": {}, "em": []}}"#.to_string(),
         ))
         .with_status(200)
         .create();
@@ -394,6 +417,7 @@ post /api {
     run!(code, env);
 
     mock.assert();
+    mock1.assert();
 }
 
 #[test]

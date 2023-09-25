@@ -2,7 +2,7 @@ use crate::{
     interpreter,
     lexer::Token,
     parser::{
-        ast::{self, Expression},
+        ast::{self, result::ParsedNode, Expression},
         ast_visit::{self, VisitWith},
     },
 };
@@ -25,15 +25,14 @@ impl<'env> EnvVarsNotInAllNamespaces<'env> {
 }
 
 impl<'env, 'source> ast_visit::Visitor<'source> for EnvVarsNotInAllNamespaces<'env> {
-    fn visit_expr(&mut self, expr: &Expression<'source>) {
+    fn visit_call_expr(&mut self, expr: &ast::CallExpr<'source>) {
         expr.visit_children_with(self);
-
-        if let Expression::Call {
+        if let ast::CallExpr {
             arguments,
-            identifier: ast::result::ParsedNode::Ok(Token { text: "env", .. }),
+            identifier: ParsedNode::Ok(Token { text: "env", .. }),
         } = expr
         {
-            if let Some(Expression::String(value)) = &arguments.parameters.first() {
+            if let Some(Expression::String(value)) = &arguments.exprs.first() {
                 let namespaces_from_which_var_is_missing = self
                     .env
                     .namespaced_variables
@@ -59,6 +58,6 @@ impl<'env, 'source> ast_visit::Visitor<'source> for EnvVarsNotInAllNamespaces<'e
                     })
                 }
             }
-        }
+        };
     }
 }

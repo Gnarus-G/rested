@@ -292,4 +292,10 @@ let b = {
 "#
         );
     }
+
+    #[test]
+    fn expected_comma_before_more_parameters() {
+        assert_ast!(r#"env("base" "url")"#);
+        assert_ast!(r#"env("", false 12)"#);
+    }
 }
