@@ -535,9 +535,6 @@ impl<'source> Parser<'source> {
                 Err(error) => Expression::Error(error),
             };
 
-            dbg!(self.curr_token().kind);
-            dbg!(&exp);
-
             params.push(exp);
 
             if !self.peek_token().is(end) && !self.peek_token().is(Linecomment) {
@@ -549,8 +546,6 @@ impl<'source> Parser<'source> {
 
             self.next_token();
         }
-
-        dbg!(self.curr_token().kind);
 
         let last_token = self.curr_token();
         debug_assert!(last_token.kind == end || last_token.kind == End);
