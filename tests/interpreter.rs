@@ -368,7 +368,7 @@ set BASE_URL env("b_url")
 
 post /api {
     header "Content-Type" "application/json"
-    body {
+    body json({
         neet: 1337,
         nothing: null,
         arr: ["yo", {h: "i"}],
@@ -380,7 +380,7 @@ post /api {
             e: {},
             em: []
         },
-    }
+    })
 }
         "#;
 

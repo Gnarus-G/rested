@@ -317,64 +317,58 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
     }
 
     fn evaluate_env_call(&self, arguments: &ast::Arguments) -> Result<value::Value> {
+        let arg = self.expect_one_arg(arguments)?;
 
-                let arg = self.expect_one_arg(arguments)?;
+        let value = match self.evaluate_expression(arg)? {
+            value::Value::String(variable) => {
+                builtin::call_env(self.env, &variable).ok_or_else(|| {
+                    return self
+                        .error_factory
+                        .env_variable_not_found(variable, arg.span());
+                })?
+            }
+            value => {
+                return Err(self
+                    .error_factory
+                    .type_mismatch(value::ValueTag::String, value, arg.span())
+                    .into())
+            }
+        };
 
-                let value = match self.evaluate_expression(arg)? {
-                    value::Value::String(variable) => builtin::call_env(self.env, &variable)
-                        .ok_or_else(|| {
-                            return self
-                                .error_factory
-                                .env_variable_not_found(variable, arg.span());
-                        })?,
-                    value => {
-                        return Err(self
-                            .error_factory
-                            .type_mismatch(value::ValueTag::String, value, arg.span())
-                            .into())
-                    }
-                };
-
-                Ok(value)
+        Ok(value)
     }
 
     fn evaluate_read_call(&self, arguments: &ast::Arguments) -> Result<value::Value> {
+        let arg = self.expect_one_arg(arguments)?;
 
-                let arg = self.expect_one_arg(arguments)?;
+        let value = match self.evaluate_expression(arg)? {
+            value::Value::String(file_name) => builtin::read_file(file_name)
+                .map_err(|e| self.error_factory.other(arg.span(), e))?,
+            value => {
+                return Err(self
+                    .error_factory
+                    .type_mismatch(value::ValueTag::String, value, arg.span())
+                    .into())
+            }
+        };
 
-                let value = match self.evaluate_expression(arg)? {
-                    value::Value::String(file_name) => builtin::read_file(file_name)
-                        .map_err(|e| self.error_factory.other(arg.span(), e))?,
-                    value => {
-                        return Err(self
-                            .error_factory
-                            .type_mismatch(value::ValueTag::String, value, arg.span())
-                            .into())
-                    }
-                };
-
-                Ok(value)
+        Ok(value)
     }
 
     fn evaluate_escapes_new_lines_call(&self, arguments: &ast::Arguments) -> Result<value::Value> {
+        let arg = self.expect_one_arg(arguments)?;
 
+        let v = match self.evaluate_expression(arg)? {
+            value::Value::String(s) => builtin::escaping_new_lines(s),
+            value => {
+                return Err(self
+                    .error_factory
+                    .type_mismatch(value::ValueTag::String, value, arg.span())
+                    .into())
+            }
+        };
 
-
-                let arg = self.expect_one_arg(arguments)?;
-
-
-                let v = match self.evaluate_expression(arg)? {
-                    value::Value::String(s) => builtin::escaping_new_lines(s),
-                    value => {
-                        return Err(self
-                            .error_factory
-                            .type_mismatch(value::ValueTag::String, value, arg.span())
-                            .into())
-                    }
-                };
-
-                Ok(v)
-
+        Ok(v)
     }
 
     fn evaluate_json_call(&self, arguments: &ast::Arguments) -> Result<value::Value> {
