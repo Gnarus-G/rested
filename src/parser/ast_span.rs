@@ -30,7 +30,7 @@ impl<'source> GetSpan for Expression<'source> {
             Expression::String(l) => l.span,
             Expression::Call(expr) => expr.span(),
             Expression::TemplateSringLiteral { span, .. } => *span,
-            Expression::Array((span, ..)) => *span,
+            Expression::Array(list) => list.span,
             Expression::Object((span, ..)) => *span,
             Expression::Bool(l) => l.span,
             Expression::Number(l) => l.span,

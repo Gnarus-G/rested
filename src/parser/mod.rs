@@ -374,7 +374,7 @@ impl<'source> Parser<'source> {
         let l_square = self.curr_token().clone();
         let list = self.parse_expression_list(&l_square, RSquare);
 
-        Expression::Array((list.span, list))
+        Expression::Array(list)
     }
 
     fn parse_object_property(&mut self) -> ast::ObjectEntry<'source> {

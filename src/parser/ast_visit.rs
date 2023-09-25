@@ -104,7 +104,7 @@ impl<'source> VisitWith<'source> for Expression<'source> {
     fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
         match self {
             Expression::Call(expr) => visitor.visit_call_expr(expr),
-            Expression::Array((_, ExpressionList { exprs, .. })) => {
+            Expression::Array(ExpressionList { exprs, .. }) => {
                 for expr in exprs {
                     visitor.visit_expr(expr)
                 }

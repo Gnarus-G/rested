@@ -223,7 +223,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
                     .expect("our parser should not allow this"),
             ),
             Call(expr) => self.evaluate_call_expression(expr)?,
-            Array((.., values)) => {
+            Array(values) => {
                 let mut v = vec![];
 
                 for value in values.iter() {

@@ -127,7 +127,7 @@ pub enum Expression<'source> {
     Bool(Literal<'source>),
     Number(Literal<'source>),
     Call(CallExpr<'source>),
-    Array(Spanned<ExpressionList<'source>>),
+    Array(ExpressionList<'source>),
     Object(Spanned<Vec<ObjectEntry<'source>>>),
     Null(Span),
     EmptyArray(Span),
