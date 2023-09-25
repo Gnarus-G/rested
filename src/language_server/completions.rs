@@ -329,7 +329,7 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
 }
 
 fn builtin_functions_completions() -> Vec<CompletionItem> {
-    ["env", "read", "escape_new_lines"]
+    ["env", "read", "json", "escape_new_lines"]
         .map(|keyword| CompletionItem {
             label: format!("{}(..)", keyword),
             kind: Some(CompletionItemKind::FUNCTION),

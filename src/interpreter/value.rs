@@ -48,10 +48,3 @@ impl Display for Value {
         }
     }
 }
-
-impl Value {
-    pub fn to_json(&self) -> String {
-        serde_json::to_string(self)
-            .expect("failed to json stringify this value; even though our parser should made sure this is value is valid")
-    }
-}

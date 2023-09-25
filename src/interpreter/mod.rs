@@ -104,7 +104,7 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                                 }
                                 ast::Statement::Body { value, .. } => {
                                     if body.is_none() {
-                                        body = Some(self.evaluate_expression(value)?.to_json());
+                                        body = Some(self.evaluate_expression(value)?.to_string());
                                     }
                                 }
                                 ast::Statement::LineComment(_) => {}
@@ -335,12 +335,21 @@ impl<'source, 'p, 'env> Interpreter<'source, 'p, 'env> {
                     }
                 }
             }
+            "json" => {
+                let arg = self.expect_one_arg(arguments)?;
+
+                let value = self.evaluate_expression(arg)?;
+
+                serde_json::to_string(&value)
+                    .expect("failed to json stringify this value; even though our parser should made sure this is value is valid")
+                    .into()
+            }
             _ => {
                 return Err(self
                     .error_factory
                     .undefined_callable(identifier.get()?)
                     .with_message(
-                        "env(..), read(..), escape_new_lines(..) are the only calls supported",
+                        "env(..), read(..), json(..), and escape_new_lines(..) are the only calls supported",
                     )
                     .into())
             }
