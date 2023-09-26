@@ -10,12 +10,12 @@ let string = "death"
 
 post /todos {
    header "Authorization" env("token")
-   body {
+   body json({
     userId: 1,
     id: 999,
     "title": `delectus aut ${string}`,
     "completed": env("base")
-  }
+  })
 }
 "#;
 

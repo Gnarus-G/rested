@@ -312,8 +312,20 @@ impl<'source> Parser<'source> {
             Ident if self.peek_token().kind == LParen => self.parse_call_expression().into(),
             Ident => Expression::Identifier(self.curr_token().into()),
             StringLiteral => Expression::String(self.curr_token().into()),
-            Boolean => Expression::Bool(self.curr_token().into()),
-            Number => Expression::Number(self.curr_token().into()),
+            Boolean => Expression::Bool((
+                self.curr_token().span(),
+                self.curr_token()
+                    .text
+                    .parse()
+                    .expect("failed to parse as a boolean"),
+            )),
+            Number => Expression::Number((
+                self.curr_token().span(),
+                self.curr_token()
+                    .text
+                    .parse()
+                    .expect("failed to parse as an unsigned int"),
+            )),
             TemplateString { head: true, .. } => self.parse_multiline_string_literal(),
             LBracket => self.parse_object_literal(),
             LSquare => self.parse_array_literal(),

@@ -109,21 +109,18 @@ Program(
                   ),
                 ),
               )),
-              Number(Literal(
-                value: "12",
-                span: Span(
-                  start: Position(
-                    value: 100,
-                    line: 7,
-                    col: 8,
-                  ),
-                  end: Position(
-                    value: 102,
-                    line: 7,
-                    col: 10,
-                  ),
+              Number((Span(
+                start: Position(
+                  value: 100,
+                  line: 7,
+                  col: 8,
                 ),
-              )),
+                end: Position(
+                  value: 102,
+                  line: 7,
+                  col: 10,
+                ),
+              ), 12.0)),
             ],
           )),
         )),

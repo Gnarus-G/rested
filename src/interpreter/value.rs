@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::Display};
+use std::collections::HashMap;
 
 #[derive(Debug, enum_tags::Tag, Clone, serde::Serialize)]
 #[serde(untagged)]
@@ -20,31 +20,5 @@ impl From<&str> for Value {
 impl From<String> for Value {
     fn from(value: String) -> Self {
         Self::String(value)
-    }
-}
-
-impl Display for Value {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Value::String(s) => f.write_str(s),
-            Value::Array(elements) => f.write_str(&format!(
-                "[{}]",
-                elements
-                    .iter()
-                    .map(|value| value.to_string())
-                    .collect::<Vec<_>>()
-                    .join(",")
-            )),
-            Value::Object(map) => f.write_str(&format!(
-                "{{{}}}",
-                map.iter()
-                    .map(|(key, value)| format!("\"{}\": {}", key, value))
-                    .collect::<Vec<_>>()
-                    .join(",")
-            )),
-            Value::Null => f.write_str("null"),
-            Value::Bool(b) => write!(f, "{b}"),
-            Value::Number(n) => write!(f, "{n}"),
-        }
     }
 }

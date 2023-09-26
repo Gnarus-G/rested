@@ -118,17 +118,15 @@ impl<'source> ExpressionList<'source> {
     }
 }
 
-pub type Spanned<T> = (Span, T);
-
 #[derive(Debug, PartialEq, Serialize)]
 pub enum Expression<'source> {
     Identifier(ParsedNode<'source, Token<'source>>),
     String(StringLiteral<'source>),
-    Bool(Literal<'source>),
-    Number(Literal<'source>),
+    Bool((Span, bool)),
+    Number((Span, f64)),
     Call(CallExpr<'source>),
     Array(ExpressionList<'source>),
-    Object(Spanned<Vec<ParsedNode<'source, ObjectEntry<'source>>>>),
+    Object((Span, Vec<ParsedNode<'source, ObjectEntry<'source>>>)),
     Null(Span),
     EmptyArray(Span),
     EmptyObject(Span),

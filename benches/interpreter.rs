@@ -10,12 +10,12 @@ let string = "life"
 
 post /todos {
    header "Authorization" env("tk")
-   body {
+   body json({
     userId: 1,
     id: 999,
     "title": `delectus aut ${string}`,
     "completed": env("base")
-  }
+  })
 }
 
 set BASE_URL "httas..."

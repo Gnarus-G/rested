@@ -45,21 +45,18 @@ Program(
               ),
             ),
           )),
-          value: Number(Literal(
-            value: "1323",
-            span: Span(
-              start: Position(
-                value: 22,
-                line: 2,
-                col: 11,
-              ),
-              end: Position(
-                value: 26,
-                line: 2,
-                col: 15,
-              ),
+          value: Number((Span(
+            start: Position(
+              value: 22,
+              line: 2,
+              col: 11,
             ),
-          )),
+            end: Position(
+              value: 26,
+              line: 2,
+              col: 15,
+            ),
+          ), 1323.0)),
         )),
         Ok(ObjectEntry(
           key: Ok(StringLiteral(
