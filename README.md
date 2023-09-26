@@ -68,16 +68,20 @@ rstd run requests.rd
 set BASE_URL "http://localhost:8080/api/v2"
 ```
 
-setting BASE_URL like so, allows you to be able to request to pathnames
+setting BASE_URL like so, allows you to be able to make request to just pathnames
 
 ```rd
+// This will make a request to "http://localhost:8080/api/v2/potatoes"
 get /potatoes
 ```
 
 ## Let bindings
 
 ```rd
-let variable = "Bearer <token>"
+let token = "<token>"
+
+// template string literals
+let bearer_token = `Bearer ${token}`
 ```
 
 ## Defining request headers and request body
@@ -86,11 +90,11 @@ let variable = "Bearer <token>"
 post /potatoes {
    header "Authorization" "Bearer token"
 
-   // template string literals
-   body `{"neet": 1337}`
-
-   // or json-like expressions
-   body { neet: 1337 }
+   // json expressions
+   body json({
+       neet: 1337,
+       stuff: [1, true, "three"]
+   })
 }
 ```
 
@@ -117,6 +121,23 @@ It's also possible to namespace the variables.
 rstd env set <name> <value> -n <namespace>
 ```
 
+```
+Operate on the environment variables available in the runtime
+
+Usage: rstd env [OPTIONS] <COMMAND>
+
+Commands:
+  show  View environment variables available in the runtime
+  edit  Edit environment variables in your default editor
+  set   Set environment variables available in the runtime
+  ns    Operate on the variables namespaces available in the runtime
+  help  Print this message or the help of the given subcommand(s)
+
+Options:
+  -l, --level <LEVEL>  Set log level, one of trace, debug, info, warn, error [default: info]
+  -h, --help           Print help
+```
+
 ## Reading files
 
 ```rd
@@ -128,9 +149,18 @@ post /tomatoes {
 ## Attributes
 
 ```rd
+// prints response body to stdout
+@log
+get /yams
+```
+
+```rd
+// prints response body to a file
 @log("output/yams.json")
 get /yams
 ```
+
+There are more, but I'm kind of ashamed of these attributes, so let's stop.
 
 # Lsp setup
 
