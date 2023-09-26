@@ -6,14 +6,12 @@ use crate::interpreter::{
 };
 use string_utils::*;
 
-use crate::utils::{self, Array};
-
 use std::error::Error;
 
 use tracing::info;
 
 impl<'source> ir::Program<'source> {
-    pub fn run_ureq(self, request_names: Option<Array<String>>) -> error::Result<'source> {
+    pub fn run_ureq(self, request_names: Option<&[String]>) -> error::Result<'source> {
         Runner::new(self.items, Box::new(UreqRun)).run(request_names)
     }
 }
@@ -24,16 +22,16 @@ pub trait RunStrategy {
 }
 
 pub struct Runner {
-    requests: utils::Array<RequestItem>,
+    requests: Box<[RequestItem]>,
     strategy: Box<dyn RunStrategy>,
 }
 
 impl Runner {
-    pub fn new(requests: utils::Array<RequestItem>, strategy: Box<dyn RunStrategy>) -> Self {
+    pub fn new(requests: Box<[RequestItem]>, strategy: Box<dyn RunStrategy>) -> Self {
         Self { requests, strategy }
     }
 
-    pub fn run(&mut self, request_names: Option<Array<String>>) -> error::Result {
+    pub fn run(&mut self, request_names: Option<&[String]>) -> error::Result {
         let requests = self
             .requests
             .iter()

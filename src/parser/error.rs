@@ -1,7 +1,6 @@
 use crate::lexer;
 use crate::lexer::locations::Position;
 use crate::lexer::{locations::GetSpan, Token, TokenKind};
-use crate::utils::Array;
 
 use crate::error_meta::ContextualError;
 
@@ -27,7 +26,7 @@ pub enum ParseError<'source> {
     },
     ExpectedEitherOfTokens {
         found: lexer::Token<'source>,
-        expected: Array<TokenKind>,
+        expected: Box<[TokenKind]>,
     },
 }
 

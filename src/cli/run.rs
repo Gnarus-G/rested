@@ -64,17 +64,15 @@ impl RunArgs {
             }
         })?;
 
-        program
-            .run_ureq(self.request.map(|r| r.into()))
-            .map_err(|err| {
-                ContextualError::new(
-                    InterpreterErrorKind::Other {
-                        error: err.to_string(),
-                    },
-                    err.span,
-                    &code,
-                )
-            })?;
+        program.run_ureq(self.request.as_deref()).map_err(|err| {
+            ContextualError::new(
+                InterpreterErrorKind::Other {
+                    error: err.to_string(),
+                },
+                err.span,
+                &code,
+            )
+        })?;
 
         Ok(())
     }

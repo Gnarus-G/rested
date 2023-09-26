@@ -10,7 +10,6 @@ use crate::{
         locations::{GetSpan, Location},
         Token,
     },
-    utils::Array,
 };
 
 impl<'source> Program<'source> {
@@ -28,7 +27,7 @@ impl<'source> Program<'source> {
         })
     }
 
-    pub fn variables_before(&self, location: Location) -> Array<&Token<'source>> {
+    pub fn variables_before(&self, location: Location) -> Box<[&Token<'source>]> {
         self.variables()
             .filter(|(item_span, _)| Into::<Location>::into(item_span.end).is_before(location))
             .map(|(_, token)| token)

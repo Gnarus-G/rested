@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read, path::PathBuf, sync::Arc};
+use std::{fs::File, io::Read, path::PathBuf};
 
 use insta::assert_debug_snapshot;
 use rested::{interpreter::environment::Environment, parser::ast::Program};
@@ -306,7 +306,7 @@ fn running_specific_requests_by_name() {
         delete /api
     "#;
 
-    run!(code, env, Some(Arc::new(["test".to_string()])));
+    run!(code, env, Some(&["test".to_string()]));
 
     for mock in mocks {
         mock.assert();
