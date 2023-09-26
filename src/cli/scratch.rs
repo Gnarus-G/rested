@@ -6,7 +6,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use clap::{Args, Subcommand};
+use clap::{Args, Subcommand, ValueEnum};
 use colored::Colorize;
 use rested::{config::Config, editing::edit, interpreter::environment::Environment};
 
@@ -34,9 +34,14 @@ pub struct ScratchCommandArgs {
 pub enum ScratchCommand {
     /// List all the scratch files created or edited from oldest to newest
     History {
-        // Don't show scratch file previews
+        /// Don't show scratch file previews
         #[arg(short, long)]
         quiet: bool,
+
+        /// Show the index position for each scratch file relative to the first (since) or last
+        /// file (ago)
+        #[arg(short = 'm', long = "index-mode", default_value = "ago")]
+        index_mode: HistoryIndexMode,
     },
 
     /// Create a new scratch file
@@ -57,16 +62,37 @@ pub enum ScratchCommand {
     Pick {
         /// The position of a scratch file in the list of scratch files.
         /// If if can't find one by this number, a new scratch file is created.
-        number: i32,
+        number: usize,
+
+        /// Whether to pick a file at some position before the last scratch file created, or since the first
+        /// one.
+        #[arg(value_enum)]
+        mode: HistoryIndexMode,
     },
+}
+
+#[derive(Debug, Clone, ValueEnum)]
+pub enum HistoryIndexMode {
+    /// To pick a file at some position before the last scratch file.
+    Ago,
+    /// To pick a file at some position since the first scratch file.
+    Since,
 }
 
 impl ScratchCommandArgs {
     pub fn handle(&self, env: Environment) -> anyhow::Result<()> {
         match &self.command {
             Some(command) => match command {
-                ScratchCommand::History { quiet } => {
-                    for file_path in fetch_scratch_files()? {
+                ScratchCommand::History { quiet, index_mode } => {
+                    let files = fetch_scratch_files()?;
+                    let len = files.len();
+
+                    for (i, file_path) in files.into_iter().enumerate() {
+                        match index_mode {
+                            HistoryIndexMode::Ago => eprint!("{} ago: ", len - i - 1),
+                            HistoryIndexMode::Since => eprint!("{} since: ", i),
+                        };
+
                         println!("{}", file_path.to_string_lossy().bold());
 
                         if !quiet {
@@ -97,13 +123,12 @@ impl ScratchCommandArgs {
                     }
                     .handle(env)?;
                 }
-                ScratchCommand::Pick { number } => {
+                ScratchCommand::Pick { number, mode } => {
                     let files = fetch_scratch_files()?;
 
-                    let index = if number.is_negative() {
-                        files.len() - (-*number) as usize
-                    } else {
-                        *number as usize
+                    let index = match mode {
+                        HistoryIndexMode::Ago => files.len() - number - 1,
+                        HistoryIndexMode::Since => *number,
                     };
 
                     let file_name = if let Some(file) = fetch_scratch_files()?.get(index).cloned() {
