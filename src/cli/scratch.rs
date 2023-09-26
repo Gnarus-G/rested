@@ -35,11 +35,11 @@ pub struct ScratchCommandArgs {
 pub enum ScratchCommand {
     /// List all the scratch files created or edited from oldest to newest
     History {
-        /// Don't show scratch file previews
+        /// Don't show scratch file previews, just show paths.
         #[arg(short, long)]
         quiet: bool,
 
-        /// Show the index position for each scratch file relative to the first (since) or last
+        /// Show the index position for each scratch file relative to the oldest edited (since) or newest edited
         /// file (ago)
         #[arg(short = 'm', long = "index-mode", default_value = "ago")]
         index_mode: HistoryIndexMode,
@@ -64,8 +64,8 @@ pub enum ScratchCommand {
         /// The position of a scratch file in the list of scratch files.
         number: usize,
 
-        /// Whether to pick a file at some position before the last scratch file created, or since the first
-        /// one.
+        /// Whether to pick a file at some position before the last scratch file edited, or since the oldest
+        /// one edited.
         #[arg(value_enum)]
         mode: HistoryIndexMode,
     },
@@ -73,9 +73,9 @@ pub enum ScratchCommand {
 
 #[derive(Debug, Clone, ValueEnum)]
 pub enum HistoryIndexMode {
-    /// To pick a file at some position before the last scratch file.
+    /// To pick a file at some position before the latest scratch file.
     Ago,
-    /// To pick a file at some position since the first scratch file.
+    /// To pick a file at some position since the oldest scratch file.
     Since,
 }
 
@@ -185,21 +185,38 @@ fn create_scratch_file() -> anyhow::Result<PathBuf> {
 fn fetch_scratch_files() -> anyhow::Result<Vec<PathBuf>> {
     let prefix_path = Config::load()?.scratch_dir;
 
-    let entries = fs::read_dir(prefix_path)?
-        .map(|res| res.map(|e| e.path()))
-        .collect::<Result<Vec<_>, std::io::Error>>()?;
+    let mut entries = fs::read_dir(prefix_path)?
+        .map(|res| {
+            res.context("failed to get a directory entry")
+                .and_then(|e| {
+                    e.metadata()
+                        .context("failed to get metadata")
+                        .and_then(|meta| {
+                            meta.modified()
+                                .context("failed to get a last modified time")
+                        })
+                        .and_then(|m| {
+                            m.duration_since(UNIX_EPOCH)
+                                .map(|d| d.as_millis())
+                                .context("failed to convert last modified time to milliseconds")
+                        })
+                        .map(|last_mod_time| (e.path(), last_mod_time))
+                })
+        })
+        .collect::<Result<Vec<_>, anyhow::Error>>()?;
 
-    let mut scratch_files = entries
+    entries.sort_by(|(_, a), (_, b)| a.cmp(b));
+
+    let scratch_files = entries
         .into_iter()
-        .filter(|e| {
+        .map(|(path, _)| path)
+        .filter(|path| {
             matches!(
-                e.extension().map(|e| e.to_string_lossy()),
+                path.extension().map(|e| e.to_string_lossy()),
                 Some(Cow::Borrowed("rd"))
             )
         })
         .collect::<Vec<_>>();
-
-    scratch_files.sort();
 
     Ok(scratch_files)
 }
