@@ -6,6 +6,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
+use anyhow::{anyhow, Context};
 use clap::{Args, Subcommand, ValueEnum};
 use colored::Colorize;
 use rested::{config::Config, editing::edit, interpreter::environment::Environment};
@@ -61,7 +62,6 @@ pub enum ScratchCommand {
     /// Pick a scratch file to edit
     Pick {
         /// The position of a scratch file in the list of scratch files.
-        /// If if can't find one by this number, a new scratch file is created.
         number: usize,
 
         /// Whether to pick a file at some position before the last scratch file created, or since the first
@@ -131,11 +131,16 @@ impl ScratchCommandArgs {
                         HistoryIndexMode::Since => *number,
                     };
 
-                    let file_name = if let Some(file) = fetch_scratch_files()?.get(index).cloned() {
-                        file
-                    } else {
-                        create_scratch_file()?
-                    };
+                    let file_name = files
+                        .get(index)
+                        .ok_or_else(|| {
+                            anyhow!(
+                                "index '{}' is out of bounds, there are {} scratch files",
+                                number,
+                                files.len()
+                            )
+                        })
+                        .context("no scratch file found")?;
 
                     edit(file_name)?;
                 }
