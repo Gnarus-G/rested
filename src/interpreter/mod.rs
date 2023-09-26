@@ -26,9 +26,9 @@ impl<'source> ast::Program<'source> {
             return Err(ParserErrors::new(parse_errors).into());
         }
 
-        let mut interp = eval::Evaluator::new(self, env);
+        let interp = eval::Evaluator::new(self, env);
 
-        let items = interp.evaluate()?;
+        let items = interp.evaluate().map_err(InterpreterError::EvalErrors)?;
 
         Ok(ir::Program::new(self.source, items.into()))
     }

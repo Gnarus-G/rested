@@ -72,7 +72,7 @@ impl std::fmt::Display for InterpreterErrorKind {
 
 pub enum InterpreterError<'source> {
     ParseErrors(ParserErrors<'source>),
-    Error(Box<ContextualError<InterpreterErrorKind>>),
+    EvalErrors(Box<[ContextualError<InterpreterErrorKind>]>),
 }
 
 impl<'source> std::error::Error for InterpreterError<'source> {}
@@ -86,7 +86,12 @@ impl<'source> std::fmt::Debug for InterpreterError<'source> {
 impl<'source> std::fmt::Display for InterpreterError<'source> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            InterpreterError::Error(err) => write!(f, "{err}"),
+            InterpreterError::EvalErrors(errors) => {
+                for err in errors.iter() {
+                    write!(f, "{err}")?
+                }
+                Ok(())
+            }
             InterpreterError::ParseErrors(ParserErrors { errors }) => {
                 for err in errors.iter() {
                     write!(f, "{err}")?
@@ -94,34 +99,6 @@ impl<'source> std::fmt::Display for InterpreterError<'source> {
                 Ok(())
             }
         }
-    }
-}
-
-impl<'source> From<Box<ContextualError<InterpreterErrorKind>>> for InterpreterError<'source> {
-    fn from(value: Box<ContextualError<InterpreterErrorKind>>) -> Self {
-        Self::Error(value)
-    }
-}
-
-impl<'source> From<ContextualError<InterpreterErrorKind>> for InterpreterError<'source> {
-    fn from(value: ContextualError<InterpreterErrorKind>) -> Self {
-        Self::Error(value.into())
-    }
-}
-
-impl<'source> From<Box<ContextualError<ParseError<'source>>>> for InterpreterError<'source> {
-    fn from(value: Box<ContextualError<ParseError<'source>>>) -> Self {
-        Self::Error(
-            ContextualError {
-                inner_error: InterpreterErrorKind::Other {
-                    error: value.inner_error.to_string(),
-                },
-                span: value.span,
-                message: value.message,
-                context: value.context,
-            }
-            .into(),
-        )
     }
 }
 

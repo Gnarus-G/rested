@@ -8,7 +8,9 @@ pub mod parser;
 
 mod utils {
     use std::sync::Arc;
-    pub type Array<T> = Arc<[T]>;
+
+    // Rc -> Because this is very cheap to clone
+    // Arc -> Because we implement a language_server with an async runtime
     pub type String = Arc<str>;
 }
 

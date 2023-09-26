@@ -57,7 +57,7 @@ impl<'source> VisitWith<'source> for Item<'source> {
             Item::Request {
                 block: Some(block), ..
             } => {
-                for statement in &block.statements {
+                for statement in block.statements.iter() {
                     visitor.visit_statement(statement)
                 }
             }
@@ -68,7 +68,7 @@ impl<'source> VisitWith<'source> for Item<'source> {
                 ..
             } => {
                 visitor.visit_parsed_node(identifier);
-                for arg in &arguments.exprs {
+                for arg in arguments.exprs.iter() {
                     visitor.visit_expr(arg);
                 }
             }
@@ -105,12 +105,12 @@ impl<'source> VisitWith<'source> for Expression<'source> {
         match self {
             Expression::Call(expr) => visitor.visit_call_expr(expr),
             Expression::Array(ExpressionList { exprs, .. }) => {
-                for expr in exprs {
+                for expr in exprs.iter() {
                     visitor.visit_expr(expr)
                 }
             }
             Expression::Object((_, entries)) => {
-                for entry in entries {
+                for entry in entries.iter() {
                     match entry {
                         ParsedNode::Ok(entry) => {
                             visitor.visit_parsed_node(&entry.key);
@@ -121,7 +121,7 @@ impl<'source> VisitWith<'source> for Expression<'source> {
                 }
             }
             Expression::TemplateSringLiteral { parts, .. } => {
-                for expr in parts {
+                for expr in parts.iter() {
                     visitor.visit_expr(expr)
                 }
             }
@@ -139,7 +139,7 @@ impl<'source> VisitWith<'source> for CallExpr<'source> {
 
     fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
         visitor.visit_parsed_node(&self.identifier);
-        for arg in &self.arguments.exprs {
+        for arg in self.arguments.exprs.iter() {
             visitor.visit_expr(arg)
         }
     }

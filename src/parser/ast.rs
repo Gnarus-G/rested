@@ -8,7 +8,6 @@ use crate::{
         locations::{GetSpan, Position, Span},
         Token,
     },
-    utils,
 };
 
 use self::result::ParsedNode;
@@ -20,7 +19,7 @@ type Error<'source> = ContextualError<ParseError<'source>>;
 #[derive(Debug, PartialEq, Serialize)]
 pub struct Program<'i> {
     pub source: &'i str,
-    pub items: utils::Array<Item<'i>>,
+    pub items: Box<[Item<'i>]>,
 }
 
 impl<'i> Program<'i> {
@@ -47,7 +46,7 @@ pub struct StringLiteral<'source> {
 
 #[derive(Debug, PartialEq, Serialize)]
 pub struct Block<'source> {
-    pub statements: Vec<Statement<'source>>,
+    pub statements: Box<[Statement<'source>]>,
     pub span: Span,
 }
 
@@ -109,7 +108,7 @@ pub enum Statement<'i> {
 #[derive(Debug, PartialEq, Serialize)]
 pub struct ExpressionList<'source> {
     pub span: Span,
-    pub exprs: Vec<Expression<'source>>,
+    pub exprs: Box<[Expression<'source>]>,
 }
 
 impl<'source> ExpressionList<'source> {
@@ -126,13 +125,13 @@ pub enum Expression<'source> {
     Number((Span, f64)),
     Call(CallExpr<'source>),
     Array(ExpressionList<'source>),
-    Object((Span, Vec<ParsedNode<'source, ObjectEntry<'source>>>)),
+    Object((Span, Box<[ParsedNode<'source, ObjectEntry<'source>>]>)),
     Null(Span),
     EmptyArray(Span),
     EmptyObject(Span),
     TemplateSringLiteral {
         span: Span,
-        parts: Vec<Expression<'source>>,
+        parts: Box<[Expression<'source>]>,
     },
     Error(Box<Error<'source>>),
 }

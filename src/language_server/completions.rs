@@ -15,7 +15,6 @@ use crate::{
         ast_visit::{self, VisitWith},
         error::ParseError,
     },
-    utils,
 };
 
 #[derive(Debug, PartialEq)]
@@ -64,7 +63,7 @@ impl From<&SuggestionKind> for Vec<CompletionItem> {
 /// them into completion items.
 struct Suggestions<'source> {
     list: Vec<SuggestionKind>,
-    variables: utils::Array<lexer::Token<'source>>,
+    variables: Box<[lexer::Token<'source>]>,
 }
 
 impl<'source> Suggestions<'source> {
@@ -179,7 +178,7 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
                     return;
                 }
 
-                for st in &block.statements {
+                for st in block.statements.iter() {
                     self.visit_statement(st);
                 }
 

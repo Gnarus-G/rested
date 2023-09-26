@@ -1,14 +1,14 @@
+use crate::lexer::locations::Span;
 pub use crate::parser::ast::RequestMethod;
-use crate::{lexer::locations::Span, utils};
 
 #[derive(Debug)]
 pub struct Program<'source> {
     pub source: &'source str,
-    pub items: utils::Array<RequestItem>,
+    pub items: Box<[RequestItem]>,
 }
 
 impl<'source> Program<'source> {
-    pub fn new(source: &'source str, items: utils::Array<RequestItem>) -> Self {
+    pub fn new(source: &'source str, items: Box<[RequestItem]>) -> Self {
         Self { source, items }
     }
 }
@@ -44,6 +44,6 @@ impl Header {
 pub struct Request {
     pub method: RequestMethod,
     pub url: String,
-    pub headers: utils::Array<Header>,
+    pub headers: Box<[Header]>,
     pub body: Option<String>,
 }

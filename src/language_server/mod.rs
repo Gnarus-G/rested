@@ -153,16 +153,18 @@ impl Backend {
                     }
                 }
             }
-            interpreter::error::InterpreterError::Error(err) => {
-                let range = Range {
-                    start: err.span.start.into_position(),
-                    end: err.span.end.into_position(),
-                };
+            interpreter::error::InterpreterError::EvalErrors(errors) => {
+                for err in errors.iter() {
+                    let range = Range {
+                        start: err.span.start.into_position(),
+                        end: err.span.end.into_position(),
+                    };
 
-                diagnostics.push(Diagnostic::new_simple(range, err.inner_error.to_string()));
+                    diagnostics.push(Diagnostic::new_simple(range, err.inner_error.to_string()));
 
-                if let Some(msg) = err.message.clone() {
-                    diagnostics.push(Diagnostic::new_simple(range, msg.to_string()))
+                    if let Some(msg) = err.message.clone() {
+                        diagnostics.push(Diagnostic::new_simple(range, msg.to_string()))
+                    }
                 }
             }
         }
