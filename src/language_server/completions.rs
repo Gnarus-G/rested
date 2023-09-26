@@ -179,7 +179,7 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
                     return;
                 }
 
-                for st in &block.statements {
+                for st in block.statements.iter() {
                     self.visit_statement(st);
                 }
 

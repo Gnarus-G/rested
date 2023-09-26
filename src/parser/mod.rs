@@ -243,7 +243,7 @@ impl<'source> Parser<'source> {
         }
 
         return Some(Block {
-            statements,
+            statements: statements.into(),
             span: Span::new(span_start, self.curr_token().start), // span to RBracket's location
         });
     }
@@ -390,7 +390,7 @@ impl<'source> Parser<'source> {
 
         let span = e.start.to_end_of(self.curr_token().span());
 
-        Expression::Object((span, entries))
+        Expression::Object((span, entries.into()))
     }
 
     fn parse_array_literal(&mut self) -> ast::Expression<'source> {
@@ -506,7 +506,7 @@ impl<'source> Parser<'source> {
 
         Expression::TemplateSringLiteral {
             span: Span::new(e.start, end),
-            parts,
+            parts: parts.into(),
         }
     }
 
@@ -539,8 +539,8 @@ impl<'source> Parser<'source> {
         start_token: &Token,
         end: TokenKind,
     ) -> ExpressionList<'source> {
-        let mut params = vec![];
-        let params_start = start_token.start;
+        let mut expressions = vec![];
+        let start_of_expressions_list = start_token.start;
 
         debug_assert!(matches!(self.curr_token().kind, LSquare | LParen));
 
@@ -557,12 +557,12 @@ impl<'source> Parser<'source> {
                 Err(error) => Expression::Error(error),
             };
 
-            params.push(exp);
+            expressions.push(exp);
 
             if !self.peek_token().is(end) && !self.peek_token().is(Linecomment) {
                 let e = Expectations::new(self);
                 if let Err(e) = e.expect_peek(self, Comma) {
-                    params.push(Expression::Error(e));
+                    expressions.push(Expression::Error(e));
                 }
             }
 
@@ -574,10 +574,10 @@ impl<'source> Parser<'source> {
 
         ExpressionList {
             span: Span {
-                start: params_start,
+                start: start_of_expressions_list,
                 end: last_token.span().end,
             },
-            exprs: params,
+            exprs: expressions.into(),
         }
     }
 
