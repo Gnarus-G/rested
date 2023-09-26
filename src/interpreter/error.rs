@@ -30,7 +30,10 @@ impl std::fmt::Display for InterpreterErrorKind {
                 format!("trying to set an unknown constant {}", constant)
             }
             InterpreterErrorKind::RequiredArguments { required, recieved } => {
-                format!("{} argument(s) expected, recieved {}", required, recieved)
+                match required {
+                    1usize =>  format!("{} argument expected, recieved {}", required, recieved),
+                    _ => format!("{} arguments expected, recieved {}", required, recieved)
+                }
             }
             InterpreterErrorKind::EnvVariableNotFound { name } => {
                 format!("no variable found by the name {:?}", name)

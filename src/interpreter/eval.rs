@@ -12,7 +12,7 @@ use crate::parser::ast::{self, Endpoint, Expression};
 
 use crate::lexer::locations::GetSpan;
 
-use super::attributes::AttributeStore;
+use super::attributes::AttributeStack;
 use super::error::{InterpErrorFactory, InterpreterErrorKind};
 use super::ir::Header;
 use super::ir::RequestItem;
@@ -41,7 +41,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
     pub fn evaluate(&mut self) -> Result<Vec<RequestItem>> {
         use ast::Item::*;
 
-        let mut attributes = AttributeStore::new();
+        let mut attributes = AttributeStack::new();
 
         let mut requests = vec![];
 
@@ -70,14 +70,36 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
                         for statement in statements.iter() {
                             match statement {
                                 ast::Statement::Header { name, value } => {
-                                    headers.push(Header::new(
-                                        name.get()?.value.to_string(),
-                                        self.evaluate_expression(value)?.to_string(),
-                                    ))
+                                    match self.evaluate_expression(value)? {
+                                        Value::String(value) => headers.push(Header::new(
+                                            name.get()?.value.to_string(),
+                                            value,
+                                        )),
+                                        val => {
+                                            return Err(self
+                                                .error_factory
+                                                .type_mismatch(ValueTag::String, val, value.span())
+                                                .with_message("maybe you want to stringify it with a json(..) call")
+                                                .into())
+                                        }
+                                    }
                                 }
                                 ast::Statement::Body { value, .. } => {
                                     if body.is_none() {
-                                        body = Some(self.evaluate_expression(value)?.to_string());
+                                        body = match self.evaluate_expression(value)? {
+                                            Value::String(value) => Some(value),
+                                            val => {
+                                                return Err(self
+                                                    .error_factory
+                                                    .type_mismatch(
+                                                        ValueTag::String,
+                                                        val,
+                                                        value.span(),
+                                                    )
+                                                    .with_message("maybe you want to stringify it with a json(..) call")
+                                                    .into())
+                                            }
+                                        }
                                     }
                                 }
                                 ast::Statement::LineComment(_) => {}
@@ -93,24 +115,43 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
 
                     let name_of_request = match attributes.get("name") {
                         Some(att) => {
-                            let exp = att.first_params().ok_or_else(|| {
-                                self.error_factory
-                                    .required_args(att.span, 1, 0)
+                            if let Some(args) = att.params {
+                                let [arg] = self.expect_x_args::<1>(args)?;
+                                let value = match self.evaluate_expression(arg)? {
+                                    Value::String(value) => value,
+                                    val => {
+                                        return Err(self
+                                            .error_factory
+                                            .type_mismatch(ValueTag::String, val, arg.span())
+                                            .into())
+                                    }
+                                };
+                                Some(value)
+                            } else {
+                                return Err(self
+                                    .error_factory
+                                    .required_args(att.identifier.span(), 1, 0)
                                     .with_message(
-                                    "@name(..) must be given an argument, like @name(\"req_1\")",
-                                )
-                            })?;
-
-                            Some(self.evaluate_expression(exp)?)
+                                        "@name(..) must be given an argument, like @name(\"req_1\")",
+                                    ).into());
+                            }
                         }
                         None => None,
                     };
 
                     let log_destination = if let Some(att) = attributes.get("log") {
-                        if let Some(arg_exp) = att.first_params() {
-                            let value = self.evaluate_expression(arg_exp)?;
-                            let file_path = value.to_string().into();
-                            Some(LogDestination::File(file_path))
+                        if let Some(args) = att.params {
+                            let [arg] = self.expect_x_args::<1>(args)?;
+                            let file_path = match self.evaluate_expression(arg)? {
+                                Value::String(value) => value,
+                                val => {
+                                    return Err(self
+                                        .error_factory
+                                        .type_mismatch(ValueTag::String, val, arg.span())
+                                        .into())
+                                }
+                            };
+                            Some(LogDestination::File(file_path.into()))
                         } else {
                             Some(LogDestination::Std)
                         }
@@ -119,7 +160,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
                     };
 
                     requests.push(RequestItem {
-                        name: name_of_request.map(|nr| nr.to_string()),
+                        name: name_of_request,
                         dbg: attributes.get("dbg").is_some(),
                         log_destination,
                         span,
@@ -166,9 +207,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
                                     .into());
                             }
 
-                            let att_params = arguments.as_ref().map(|p| &p.exprs);
-
-                            attributes.add(identifier, att_params);
+                            attributes.add(identifier, arguments.as_ref());
                         }
                         _ => {
                             return Err(self
@@ -262,19 +301,10 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
         } = expr;
 
         let string_value = match identifier.get()?.text {
-            "env" => {
-                self.evaluate_env_call(arguments)?
-            }
-            "read" => {
-                self.evaluate_read_call(arguments)?
-            }
-            "escape_new_lines" => {
-                
-                self.evaluate_escapes_new_lines_call(arguments)?
-            }
-            "json" => {
-                self.evaluate_json_call(arguments)?
-            }
+            "env" => self.evaluate_env_call(arguments)?,
+            "read" => self.evaluate_read_call(arguments)?,
+            "escape_new_lines" => self.evaluate_escapes_new_lines_call(arguments)?,
+            "json" => self.evaluate_json_call(arguments)?,
             _ => {
                 return Err(self
                     .error_factory
