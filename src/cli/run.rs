@@ -54,21 +54,25 @@ impl RunArgs {
 
                 return anyhow!(error_string);
             }
-            InterpreterError::Error(e) => anyhow!(ColoredMetaError(&e).to_string()),
+            InterpreterError::EvalErrors(errors) => {
+                let error_string: String = errors
+                    .iter()
+                    .map(|e| ColoredMetaError(e).to_string())
+                    .collect();
+
+                return anyhow!(error_string);
+            }
         })?;
 
         program
             .run_ureq(self.request.map(|r| r.into()))
             .map_err(|err| {
-                InterpreterError::Error(
-                    ContextualError::new(
-                        InterpreterErrorKind::Other {
-                            error: err.to_string(),
-                        },
-                        err.span,
-                        &code,
-                    )
-                    .into(),
+                ContextualError::new(
+                    InterpreterErrorKind::Other {
+                        error: err.to_string(),
+                    },
+                    err.span,
+                    &code,
                 )
             })?;
 

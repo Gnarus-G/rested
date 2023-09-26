@@ -7,7 +7,7 @@ use crate::error_meta::ContextualError;
 use crate::interpreter::ir::LogDestination;
 use crate::interpreter::value::ValueTag;
 use crate::lexer;
-use crate::parser::ast::{self, Endpoint, Expression};
+use crate::parser::ast::{self, Endpoint, Expression, Item};
 
 use crate::lexer::locations::GetSpan;
 
@@ -24,6 +24,8 @@ pub struct Evaluator<'source, 'p, 'env> {
     env: &'env Environment,
     base_url: Option<String>,
     let_bindings: HashMap<&'source str, Value>,
+    attributes: AttributeStack<'source, 'p>,
+    errors_in_items: Vec<ContextualError<InterpreterErrorKind>>,
 }
 
 impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
@@ -34,58 +36,72 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
             env,
             base_url: None,
             let_bindings: HashMap::new(),
+            attributes: AttributeStack::new(),
+            errors_in_items: vec![],
         }
     }
 
-    pub fn evaluate(&mut self) -> Result<Vec<RequestItem>> {
-        use ast::Item::*;
-
-        let mut attributes = AttributeStack::new();
-
+    pub fn evaluate(
+        mut self,
+    ) -> std::result::Result<Vec<RequestItem>, Box<[ContextualError<InterpreterErrorKind>]>> {
         let mut requests = vec![];
 
         for item in self.program.items.iter() {
-            match item {
-                Request {
-                    method,
-                    endpoint,
-                    block,
-                    span,
-                } => {
-                    // Handle @skip
-                    if attributes.get("skip").is_some() {
-                        attributes.clear();
-                        continue;
-                    }
+            match self.evaluate_item(item) {
+                Ok(Some(r)) => requests.push(r),
+                Err(error) => self.errors_in_items.push(*error),
+                _ => {}
+            };
+        }
 
-                    let span = span.to_end_of(endpoint.span());
+        if !self.errors_in_items.is_empty() {
+            return Err(self.errors_in_items.into());
+        }
 
-                    let path = self.evaluate_request_endpoint(endpoint)?;
+        Ok(requests)
+    }
 
-                    let mut headers = vec![];
-                    let mut body: Option<String> = None;
+    fn evaluate_item(&mut self, item: &'p Item<'source>) -> Result<Option<RequestItem>> {
+        use ast::Item::*;
+        match item {
+            Request {
+                method,
+                endpoint,
+                block,
+                span,
+            } => {
+                // Handle @skip
+                if self.attributes.get("skip").is_some() {
+                    self.attributes.clear();
+                    return Ok(None);
+                }
 
-                    if let Some(statements) = block.as_ref().map(|b| &b.statements) {
-                        for statement in statements.iter() {
-                            match statement {
-                                ast::Statement::Header { name, value } => {
-                                    match self.evaluate_expression(value)? {
-                                        Value::String(value) => headers.push(Header::new(
-                                            name.get()?.value.to_string(),
-                                            value,
-                                        )),
-                                        val => {
-                                            return Err(self
-                                                .error_factory
-                                                .type_mismatch(ValueTag::String, val, value.span())
-                                                .with_message("maybe you want to stringify it with a json(..) call")
-                                                .into())
-                                        }
-                                    }
+                let span = span.to_end_of(endpoint.span());
+
+                let path = self.evaluate_request_endpoint(endpoint)?;
+
+                let mut headers = vec![];
+                let mut body: Option<String> = None;
+
+                if let Some(statements) = block.as_ref().map(|b| &b.statements) {
+                    for statement in statements.iter() {
+                        match statement {
+                            ast::Statement::Header { name, value } => {
+                                match self.evaluate_expression(value)? {
+                                    Value::String(value) => headers
+                                        .push(Header::new(name.get()?.value.to_string(), value)),
+                                    val => return Err(self
+                                        .error_factory
+                                        .type_mismatch(ValueTag::String, val, value.span())
+                                        .with_message(
+                                            "maybe you want to stringify it with a json(..) call",
+                                        )
+                                        .into()),
                                 }
-                                ast::Statement::Body { value, .. } => {
-                                    if body.is_none() {
-                                        body = match self.evaluate_expression(value)? {
+                            }
+                            ast::Statement::Body { value, .. } => {
+                                if body.is_none() {
+                                    body = match self.evaluate_expression(value)? {
                                             Value::String(value) => Some(value),
                                             val => {
                                                 return Err(self
@@ -99,49 +115,24 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
                                                     .into())
                                             }
                                         }
-                                    }
                                 }
-                                ast::Statement::LineComment(_) => {}
-                                ast::Statement::Error(err) => {
-                                    unreachable!(
-                                        "all syntax errors should have been caught, but found {}",
-                                        err
-                                    )
-                                }
+                            }
+                            ast::Statement::LineComment(_) => {}
+                            ast::Statement::Error(err) => {
+                                unreachable!(
+                                    "all syntax errors should have been caught, but found {}",
+                                    err
+                                )
                             }
                         }
                     }
+                }
 
-                    let name_of_request = match attributes.get("name") {
-                        Some(att) => {
-                            if let Some(args) = att.params {
-                                let [arg] = self.expect_x_args::<1>(args)?;
-                                let value = match self.evaluate_expression(arg)? {
-                                    Value::String(value) => value,
-                                    val => {
-                                        return Err(self
-                                            .error_factory
-                                            .type_mismatch(ValueTag::String, val, arg.span())
-                                            .into())
-                                    }
-                                };
-                                Some(value)
-                            } else {
-                                return Err(self
-                                    .error_factory
-                                    .required_args(att.identifier.span(), 1, 0)
-                                    .with_message(
-                                        "@name(..) must be given an argument, like @name(\"req_1\")",
-                                    ).into());
-                            }
-                        }
-                        None => None,
-                    };
-
-                    let log_destination = if let Some(att) = attributes.get("log") {
+                let name_of_request = match self.attributes.get("name") {
+                    Some(att) => {
                         if let Some(args) = att.params {
                             let [arg] = self.expect_x_args::<1>(args)?;
-                            let file_path = match self.evaluate_expression(arg)? {
+                            let value = match self.evaluate_expression(arg)? {
                                 Value::String(value) => value,
                                 val => {
                                     return Err(self
@@ -150,90 +141,114 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
                                         .into())
                                 }
                             };
-                            Some(LogDestination::File(file_path.into()))
+                            Some(value)
                         } else {
-                            Some(LogDestination::Std)
-                        }
-                    } else {
-                        None
-                    };
-
-                    requests.push(RequestItem {
-                        name: name_of_request,
-                        dbg: attributes.get("dbg").is_some(),
-                        log_destination,
-                        span,
-                        request: super::ir::Request {
-                            method: *method,
-                            url: path,
-                            headers: headers.into(),
-                            body,
-                        },
-                    });
-
-                    attributes.clear();
-                }
-                Set { identifier, value } => {
-                    let identifier = identifier.get()?;
-                    if identifier.text != "BASE_URL" {
-                        return Err(self.error_factory.unknown_constant(identifier).into());
-                    }
-
-                    self.base_url = match self.evaluate_expression(value)? {
-                        Value::String(s) => Some(s),
-                        expr => {
                             return Err(self
                                 .error_factory
-                                .type_mismatch(ValueTag::String, expr, value.span())
-                                .into())
-                        }
-                    };
-                }
-                LineComment(_) => {}
-                Attribute {
-                    identifier,
-                    arguments,
-                    ..
-                } => {
-                    let identifier = identifier.get()?;
-
-                    match identifier.text {
-                        "name" | "log" | "dbg" | "skip" => {
-                            if attributes.has(identifier.text) {
-                                return Err(self
-                                    .error_factory
-                                    .duplicate_attribute(identifier)
-                                    .into());
-                            }
-
-                            attributes.add(identifier, arguments.as_ref());
-                        }
-                        _ => {
-                            return Err(self
-                                .error_factory
-                                .unsupported_attribute(identifier)
+                                .required_args(att.identifier.span(), 1, 0)
                                 .with_message(
-                                    "@name, @log, @skip and @dbg are the only supported attributes",
+                                    "@name(..) must be given an argument, like @name(\"req_1\")",
                                 )
                                 .into());
                         }
                     }
+                    None => None,
+                };
+
+                let log_destination = if let Some(att) = self.attributes.get("log") {
+                    if let Some(args) = att.params {
+                        let [arg] = self.expect_x_args::<1>(args)?;
+                        let file_path = match self.evaluate_expression(arg)? {
+                            Value::String(value) => value,
+                            val => {
+                                return Err(self
+                                    .error_factory
+                                    .type_mismatch(ValueTag::String, val, arg.span())
+                                    .into())
+                            }
+                        };
+                        Some(LogDestination::File(file_path.into()))
+                    } else {
+                        Some(LogDestination::Std)
+                    }
+                } else {
+                    None
+                };
+
+                let r = RequestItem {
+                    name: name_of_request,
+                    dbg: self.attributes.get("dbg").is_some(),
+                    log_destination,
+                    span,
+                    request: super::ir::Request {
+                        method: *method,
+                        url: path,
+                        headers: headers.into(),
+                        body,
+                    },
+                };
+
+                self.attributes.clear();
+
+                return Ok(Some(r));
+            }
+            Set { identifier, value } => {
+                let identifier = identifier.get()?;
+                if identifier.text != "BASE_URL" {
+                    return Err(self.error_factory.unknown_constant(identifier).into());
                 }
-                Let { identifier, value } => {
-                    let value = self.evaluate_expression(value)?;
-                    self.let_bindings.insert(identifier.get()?.text, value);
+
+                self.base_url = match self.evaluate_expression(value)? {
+                    Value::String(s) => Some(s),
+                    expr => {
+                        return Err(self
+                            .error_factory
+                            .type_mismatch(ValueTag::String, expr, value.span())
+                            .into())
+                    }
+                };
+            }
+            LineComment(_) => {}
+            Attribute {
+                identifier,
+                arguments,
+                ..
+            } => {
+                let identifier = identifier.get()?;
+
+                match identifier.text {
+                    "name" | "log" | "dbg" | "skip" => {
+                        if self.attributes.has(identifier.text) {
+                            return Err(self.error_factory.duplicate_attribute(identifier).into());
+                        }
+
+                        self.attributes.add(identifier, arguments.as_ref());
+                    }
+                    _ => {
+                        return Err(self
+                            .error_factory
+                            .unsupported_attribute(identifier)
+                            .with_message(
+                                "@name, @log, @skip and @dbg are the only supported attributes",
+                            )
+                            .into());
+                    }
                 }
-                Expr(_) => continue,
-                Error(err) => {
-                    unreachable!(
-                        "all syntax errors should have been caught, but found {}",
-                        err
-                    )
-                }
+            }
+            Let { identifier, value } => {
+                let value = self.evaluate_expression(value)?;
+                self.let_bindings.insert(identifier.get()?.text, value);
+            }
+            Expr(_) => {}
+            Error(err) => {
+                unreachable!(
+                    "all syntax errors should have been caught, but found {}",
+                    err
+                )
             }
         }
 
-        Ok(requests)
+        Ok(None)
     }
 
     fn evaluate_expression(&self, exp: &Expression<'source>) -> Result<Value> {
