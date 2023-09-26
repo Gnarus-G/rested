@@ -26,7 +26,6 @@ confy = { version = "0.5.1", features = ["ron_conf"], default-features = false }
 anyhow = "1.0.75"
 tracing = "0.1.37"
 tracing-subscriber = "0.3.17"
-thiserror = "1.0.48"
 enum-tags = "0.1.0"
 enum-tags-macros = { version = "0.1.0" }
 enum-tags-traits = { version = "0.1.0" }
@@ -53,7 +52,4 @@ name = "interpreter"
 harness = false
 
 [profile.dev.package.insta]
-opt-level = 3
-
-[profile.dev.package.similar]
 opt-level = 3

@@ -1253,7 +1253,6 @@ dependencies = [
  "mockito",
  "serde",
  "serde_json",
- "thiserror",
  "tokio",
  "tower-lsp",
  "tracing",
