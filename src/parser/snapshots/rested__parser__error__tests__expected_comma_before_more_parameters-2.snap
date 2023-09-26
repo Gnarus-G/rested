@@ -46,21 +46,18 @@ Program(
               ),
             ),
           )),
-          Bool(Literal(
-            value: "false",
-            span: Span(
-              start: Position(
-                value: 8,
-                line: 0,
-                col: 8,
-              ),
-              end: Position(
-                value: 13,
-                line: 0,
-                col: 13,
-              ),
+          Bool((Span(
+            start: Position(
+              value: 8,
+              line: 0,
+              col: 8,
             ),
-          )),
+            end: Position(
+              value: 13,
+              line: 0,
+              col: 13,
+            ),
+          ), false)),
           Error(ContextualError(
             inner_error: ExpectedToken(
               found: Token(

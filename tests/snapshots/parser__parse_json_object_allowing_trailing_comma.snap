@@ -93,51 +93,42 @@ Program(
               ),
             ),
             exprs: [
-              Number(Literal(
-                value: "1",
-                span: Span(
-                  start: Position(
-                    value: 40,
-                    line: 3,
-                    col: 11,
-                  ),
-                  end: Position(
-                    value: 41,
-                    line: 3,
-                    col: 12,
-                  ),
+              Number((Span(
+                start: Position(
+                  value: 40,
+                  line: 3,
+                  col: 11,
                 ),
-              )),
-              Number(Literal(
-                value: "2",
-                span: Span(
-                  start: Position(
-                    value: 43,
-                    line: 3,
-                    col: 14,
-                  ),
-                  end: Position(
-                    value: 44,
-                    line: 3,
-                    col: 15,
-                  ),
+                end: Position(
+                  value: 41,
+                  line: 3,
+                  col: 12,
                 ),
-              )),
-              Number(Literal(
-                value: "3",
-                span: Span(
-                  start: Position(
-                    value: 46,
-                    line: 3,
-                    col: 17,
-                  ),
-                  end: Position(
-                    value: 47,
-                    line: 3,
-                    col: 18,
-                  ),
+              ), 1.0)),
+              Number((Span(
+                start: Position(
+                  value: 43,
+                  line: 3,
+                  col: 14,
                 ),
-              )),
+                end: Position(
+                  value: 44,
+                  line: 3,
+                  col: 15,
+                ),
+              ), 2.0)),
+              Number((Span(
+                start: Position(
+                  value: 46,
+                  line: 3,
+                  col: 17,
+                ),
+                end: Position(
+                  value: 47,
+                  line: 3,
+                  col: 18,
+                ),
+              ), 3.0)),
             ],
           )),
         )),
@@ -255,21 +246,18 @@ Program(
                   ),
                 ),
               )),
-              value: Number(Literal(
-                value: "1",
-                span: Span(
-                  start: Position(
-                    value: 94,
-                    line: 5,
-                    col: 27,
-                  ),
-                  end: Position(
-                    value: 95,
-                    line: 5,
-                    col: 28,
-                  ),
+              value: Number((Span(
+                start: Position(
+                  value: 94,
+                  line: 5,
+                  col: 27,
                 ),
-              )),
+                end: Position(
+                  value: 95,
+                  line: 5,
+                  col: 28,
+                ),
+              ), 1.0)),
             )),
             Ok(ObjectEntry(
               key: Ok(StringLiteral(
@@ -288,21 +276,18 @@ Program(
                   ),
                 ),
               )),
-              value: Number(Literal(
-                value: "3",
-                span: Span(
-                  start: Position(
-                    value: 100,
-                    line: 5,
-                    col: 33,
-                  ),
-                  end: Position(
-                    value: 101,
-                    line: 5,
-                    col: 34,
-                  ),
+              value: Number((Span(
+                start: Position(
+                  value: 100,
+                  line: 5,
+                  col: 33,
                 ),
-              )),
+                end: Position(
+                  value: 101,
+                  line: 5,
+                  col: 34,
+                ),
+              ), 3.0)),
             )),
           ])),
         )),

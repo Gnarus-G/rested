@@ -1,7 +1,6 @@
 use super::builtin;
 use super::environment::Environment;
 use super::value::Value;
-use anyhow::Context;
 use std::collections::HashMap;
 
 use crate::error_meta::ContextualError;
@@ -246,21 +245,8 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
             TemplateSringLiteral { parts, .. } => {
                 self.evaluate_template_string_literal_parts(parts)?
             }
-            Bool(literal) => Value::Bool(
-                literal
-                    .value
-                    // TODO: do this in the parser
-                    .parse()
-                    .expect("our parse should not allow this"),
-            ),
-            Number(literal) => Value::Number(
-                literal
-                    .value
-                    // TODO: do this in the parser
-                    .parse()
-                    .context("failed to parse as an unsigned int")
-                    .expect("our parser should not allow this"),
-            ),
+            Bool((_, b)) => Value::Bool(*b),
+            Number((_, n)) => Value::Number(*n),
             Call(expr) => self.evaluate_call_expression(expr)?,
             Array(values) => {
                 let mut v = vec![];

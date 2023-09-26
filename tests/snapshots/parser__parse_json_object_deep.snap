@@ -79,21 +79,18 @@ Program(
               ),
             ),
           )),
-          value: Bool(Literal(
-            value: "false",
-            span: Span(
-              start: Position(
-                value: 39,
-                line: 3,
-                col: 10,
-              ),
-              end: Position(
-                value: 44,
-                line: 3,
-                col: 15,
-              ),
+          value: Bool((Span(
+            start: Position(
+              value: 39,
+              line: 3,
+              col: 10,
             ),
-          )),
+            end: Position(
+              value: 44,
+              line: 3,
+              col: 15,
+            ),
+          ), false)),
         )),
         Ok(ObjectEntry(
           key: Ok(StringLiteral(
@@ -233,21 +230,18 @@ Program(
                           ),
                         ),
                       )),
-                      value: Number(Literal(
-                        value: "2.123",
-                        span: Span(
-                          start: Position(
-                            value: 133,
-                            line: 8,
-                            col: 21,
-                          ),
-                          end: Position(
-                            value: 138,
-                            line: 8,
-                            col: 26,
-                          ),
+                      value: Number((Span(
+                        start: Position(
+                          value: 133,
+                          line: 8,
+                          col: 21,
                         ),
-                      )),
+                        end: Position(
+                          value: 138,
+                          line: 8,
+                          col: 26,
+                        ),
+                      ), 2.123)),
                     )),
                     Ok(ObjectEntry(
                       key: Ok(StringLiteral(
