@@ -59,12 +59,14 @@ impl<'source> std::fmt::Display for ParseError<'source> {
 
 #[derive(Debug)]
 pub struct ParserErrors<'source> {
-    pub errors: Vec<ContextualError<ParseError<'source>>>,
+    pub errors: Box<[ContextualError<ParseError<'source>>]>,
 }
 
 impl<'source> ParserErrors<'source> {
     pub fn new(errors: Vec<ContextualError<ParseError<'source>>>) -> Self {
-        Self { errors }
+        Self {
+            errors: errors.into(),
+        }
     }
 }
 
