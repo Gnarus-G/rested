@@ -52,6 +52,13 @@ pub enum ScratchCommand {
         #[arg(short = 'r', long, num_args(1..))]
         request: Option<Vec<String>>,
     },
+
+    /// Pick a scratch file to edit
+    Pick {
+        /// The position of a scratch file in the list of scratch files.
+        /// If if can't find one by this number, a new scratch file is created.
+        number: i32,
+    },
 }
 
 impl ScratchCommandArgs {
@@ -89,6 +96,23 @@ impl ScratchCommandArgs {
                         file: Some(file_name),
                     }
                     .handle(env)?;
+                }
+                ScratchCommand::Pick { number } => {
+                    let files = fetch_scratch_files()?;
+
+                    let index = if number.is_negative() {
+                        files.len() - (-*number) as usize
+                    } else {
+                        *number as usize
+                    };
+
+                    let file_name = if let Some(file) = fetch_scratch_files()?.get(index).cloned() {
+                        file
+                    } else {
+                        create_scratch_file()?
+                    };
+
+                    edit(file_name)?;
                 }
             },
             None => {
