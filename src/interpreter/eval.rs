@@ -420,10 +420,10 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
         &self,
         args: &'a ast::ExpressionList<'source>,
     ) -> Result<[&'a ast::Expression; N]> {
-        if args.exprs.len() != 1 {
+        if args.exprs.len() != N {
             return Err(self
                 .error_factory
-                .required_args(args.span, 1, args.exprs.len())
+                .required_args(args.span, N, args.exprs.len())
                 .into());
         };
 
