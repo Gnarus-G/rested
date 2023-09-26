@@ -400,7 +400,16 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
         let mut strings = vec![];
 
         for part in parts {
-            let value = self.evaluate_expression(part)?;
+            let value = match self.evaluate_expression(part)? {
+                Value::String(value) => value,
+                val => {
+                    return Err(Box::new(
+                        self.error_factory
+                            .type_mismatch(ValueTag::String, val, part.span())
+                            .with_message("try a json(..) call to stringify this expression"),
+                    ))
+                }
+            };
             strings.push(value.to_string());
         }
 
