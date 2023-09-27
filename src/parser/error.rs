@@ -194,8 +194,7 @@ mod tests {
 
     #[test]
     fn expected_url_after_method() {
-        assert_ast!("get {}");
-
+        assert_ast!("get");
         assert_ast!("post");
     }
 

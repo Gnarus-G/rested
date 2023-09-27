@@ -221,7 +221,6 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
                         if self.attributes.has(identifier.text) {
                             return Err(self.error_factory.duplicate_attribute(identifier).into());
                         }
-
                         self.attributes.add(identifier, arguments.as_ref());
                     }
                     _ => {
@@ -394,6 +393,15 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
                     return Err(self.error_factory.unset_base_url(pn.span).into());
                 }
             }
+            Endpoint::Expr(expr) => match self.evaluate_expression(expr)? {
+                Value::String(s) => s,
+                value => {
+                    return Err(self
+                        .error_factory
+                        .type_mismatch(ValueTag::String, value, expr.span())
+                        .into())
+                }
+            },
         };
 
         Ok(url)

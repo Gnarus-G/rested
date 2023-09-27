@@ -6,22 +6,46 @@ expression: ast
 Program(
   source: "post",
   items: [
-    Error(ContextualError(
-      inner_error: ExpectedEitherOfTokens(
-        found: Token(
-          kind: End,
-          text: "",
+    Request(
+      method: POST,
+      endpoint: Expr(Error(ContextualError(
+        inner_error: ExpectedEitherOfTokens(
+          found: Token(
+            kind: End,
+            text: "",
+            start: Position(
+              value: 4,
+              line: 0,
+              col: 3,
+            ),
+          ),
+          expected: [
+            Url,
+            Pathname,
+            StringLiteral,
+            Ident,
+          ],
+        ),
+        span: Span(
           start: Position(
+            value: 0,
+            line: 0,
+            col: 0,
+          ),
+          end: Position(
             value: 4,
             line: 0,
             col: 3,
           ),
         ),
-        expected: [
-          Url,
-          Pathname,
-        ],
-      ),
+        message: None,
+        context: ErrorSourceContext(
+          above: None,
+          line: "post",
+          below: None,
+        ),
+      ))),
+      block: None,
       span: Span(
         start: Position(
           value: 0,
@@ -34,12 +58,6 @@ Program(
           col: 3,
         ),
       ),
-      message: Some("expecting only a url and pathname here"),
-      context: ErrorSourceContext(
-        above: None,
-        line: "post",
-        below: None,
-      ),
-    )),
+    ),
   ],
 )

@@ -52,6 +52,17 @@ fn parse_get_urls() {
         r#"get http://localhost:8080
         get http://localhost:8080 {}"#
     );
+
+    assert_ast!(
+        r#"get "http://localhost:8080"
+        get env("url")"#
+    );
+
+    assert_ast!(
+        r#"get `${url}/api`
+        get `${env(`${uri}:8080`)}/api`
+        get `${env("url")}/api`"#
+    );
 }
 
 #[test]

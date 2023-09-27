@@ -75,6 +75,7 @@ impl<'source> GetSpan for Endpoint<'source> {
         match self {
             Endpoint::Url(l) => l.span,
             Endpoint::Pathname(l) => l.span,
+            Endpoint::Expr(e) => e.span(),
         }
     }
 }

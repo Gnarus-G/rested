@@ -1,0 +1,101 @@
+---
+source: tests/parser.rs
+description: "get \"http://localhost:8080\"\n        get env(\"url\")"
+expression: ast
+---
+Program(
+  source: "get \"http://localhost:8080\"\n        get env(\"url\")",
+  items: [
+    Request(
+      method: GET,
+      endpoint: Expr(String(StringLiteral(
+        raw: "\"http://localhost:8080\"",
+        value: "http://localhost:8080",
+        span: Span(
+          start: Position(
+            value: 4,
+            line: 0,
+            col: 4,
+          ),
+          end: Position(
+            value: 27,
+            line: 0,
+            col: 27,
+          ),
+        ),
+      ))),
+      block: None,
+      span: Span(
+        start: Position(
+          value: 0,
+          line: 0,
+          col: 0,
+        ),
+        end: Position(
+          value: 27,
+          line: 0,
+          col: 27,
+        ),
+      ),
+    ),
+    Request(
+      method: GET,
+      endpoint: Expr(Call(CallExpr(
+        identifier: Ok(Token(
+          kind: Ident,
+          text: "env",
+          start: Position(
+            value: 40,
+            line: 1,
+            col: 12,
+          ),
+        )),
+        arguments: ExpressionList(
+          span: Span(
+            start: Position(
+              value: 43,
+              line: 1,
+              col: 15,
+            ),
+            end: Position(
+              value: 50,
+              line: 1,
+              col: 22,
+            ),
+          ),
+          exprs: [
+            String(StringLiteral(
+              raw: "\"url\"",
+              value: "url",
+              span: Span(
+                start: Position(
+                  value: 44,
+                  line: 1,
+                  col: 16,
+                ),
+                end: Position(
+                  value: 49,
+                  line: 1,
+                  col: 21,
+                ),
+              ),
+            )),
+          ],
+        ),
+      ))),
+      block: None,
+      span: Span(
+        start: Position(
+          value: 36,
+          line: 1,
+          col: 8,
+        ),
+        end: Position(
+          value: 50,
+          line: 1,
+          col: 22,
+        ),
+      ),
+    ),
+  ],
+)

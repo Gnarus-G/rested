@@ -170,22 +170,14 @@ impl<'source> Parser<'source> {
     fn parse_request(&mut self, method: RequestMethod) -> Result<'source, Item<'source>> {
         let e = Expectations::new(self);
 
-        let url = self.next_token();
-
-        let endpoint = match_or_throw! { url.kind; e; self;
-            Url => Endpoint::Url(url.into()),
-            Pathname => Endpoint::Pathname(url.into()),
-            "expecting only a url and pathname here"
-        };
-
-        let url_span: Span = url.span();
+        let endpoint = self.parse_endpoint();
 
         let block = self.parse_block();
 
         let span_next = if let Some(b) = block.as_ref() {
             b.span
         } else {
-            url_span
+            endpoint.span()
         };
 
         Ok(Item::Request {
@@ -194,6 +186,29 @@ impl<'source> Parser<'source> {
             endpoint,
             block,
         })
+    }
+
+    fn parse_endpoint(&mut self) -> Endpoint<'source> {
+        let e = Expectations::new(self);
+
+        self.next_token();
+
+        let peek_kind = self.peek_token().kind;
+
+        let endpoint = match self.curr_token().kind {
+            Url => return Endpoint::Url(self.curr_token().into()),
+            Pathname => return Endpoint::Pathname(self.curr_token().into()),
+            Ident if peek_kind == LParen => self.parse_call_expression().into(),
+            Ident => Expression::Identifier(self.curr_token().into()),
+            StringLiteral => Expression::String(self.curr_token().into()),
+            TemplateString { head: true, .. } => self.parse_multiline_string_literal(),
+            _ => Expression::Error(
+                e.expected_one_of_tokens(self.curr_token(), &[Url, Pathname, StringLiteral, Ident])
+                    .into(),
+            ),
+        };
+
+        Endpoint::Expr(endpoint)
     }
 
     fn parse_set_statement(&mut self) -> Result<'source, Item<'source>> {

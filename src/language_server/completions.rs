@@ -172,8 +172,12 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
                 self.suggest(SuggestionKind::Identifiers);
             }
             Item::Request {
-                block: Some(block), ..
+                block: Some(block),
+                endpoint,
+                ..
             } => {
+                self.visit_endpoint(endpoint);
+
                 if !block.span.contains(&self.position) {
                     return;
                 }
@@ -183,6 +187,14 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
                 }
 
                 return self.suggest(SuggestionKind::StatementKeywords);
+            }
+            Item::Request {
+                endpoint,
+                block: None,
+                ..
+            } => {
+                self.visit_endpoint(endpoint);
+                self.suggest(SuggestionKind::Identifiers);
             }
             Item::Attribute {
                 identifier,
@@ -233,6 +245,16 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
             }
             _ => {}
         }
+    }
+
+    fn visit_endpoint(&mut self, endpoint: &ast::Endpoint<'source>) {
+        endpoint.visit_children_with(self);
+
+        if !endpoint.span().contains(&self.position) {
+            return;
+        }
+
+        self.suggest(SuggestionKind::Identifiers)
     }
 
     fn visit_expr(&mut self, expr: &Expression<'source>) {
