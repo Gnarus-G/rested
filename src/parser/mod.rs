@@ -171,14 +171,16 @@ impl<'source> Parser<'source> {
         let e = Expectations::new(self);
 
         let url = self.next_token();
-
-        let endpoint = match_or_throw! { url.kind; e; self;
-            Url => Endpoint::Url(url.into()),
-            Pathname => Endpoint::Pathname(url.into()),
-            "expecting only a url and pathname here"
-        };
-
         let url_span: Span = url.span();
+
+        let endpoint =
+            match url.kind {
+                Url => Endpoint::Url(url.into()),
+                Pathname => Endpoint::Pathname(url.into()),
+                _ => Endpoint::Expr(self.parse_expression().map_err(|e| {
+                    e.with_message("expecting a 'string', 'url', or 'pathname' here")
+                })?),
+            };
 
         let block = self.parse_block();
 

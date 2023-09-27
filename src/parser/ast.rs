@@ -158,9 +158,10 @@ impl<'source> ObjectEntry<'source> {
 }
 
 #[derive(Debug, PartialEq, Serialize)]
-pub enum Endpoint<'i> {
-    Url(Literal<'i>),
-    Pathname(Literal<'i>),
+pub enum Endpoint<'source> {
+    Expr(Expression<'source>),
+    Url(Literal<'source>),
+    Pathname(Literal<'source>),
 }
 
 pub mod result {

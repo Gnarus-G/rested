@@ -1,43 +1,48 @@
 ---
 source: src/parser/error.rs
-description: "get {}"
+description: get
 expression: ast
 ---
 Program(
-  source: "get {}",
+  source: "get",
   items: [
     Error(ContextualError(
       inner_error: ExpectedEitherOfTokens(
         found: Token(
-          kind: LBracket,
-          text: "{",
+          kind: End,
+          text: "",
           start: Position(
-            value: 4,
+            value: 3,
             line: 0,
-            col: 4,
+            col: 2,
           ),
         ),
         expected: [
-          Url,
-          Pathname,
+          Ident,
+          StringLiteral,
+          Boolean,
+          Number,
+          LBracket,
+          LSquare,
+          Null,
         ],
       ),
       span: Span(
         start: Position(
-          value: 0,
+          value: 3,
           line: 0,
-          col: 0,
+          col: 2,
         ),
         end: Position(
-          value: 5,
+          value: 3,
           line: 0,
-          col: 5,
+          col: 2,
         ),
       ),
-      message: Some("expecting only a url and pathname here"),
+      message: Some("expecting only a \'string\', \'url\', or \'pathname\' here"),
       context: ErrorSourceContext(
         above: None,
-        line: "get {}",
+        line: "get",
         below: None,
       ),
     )),
