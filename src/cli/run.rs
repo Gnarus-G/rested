@@ -8,11 +8,7 @@ use anyhow::anyhow;
 use clap::Args;
 use rested::{
     error::ColoredMetaError,
-    error_meta::ContextualError,
-    interpreter::{
-        environment::Environment,
-        error::{InterpreterError, InterpreterErrorKind},
-    },
+    interpreter::{environment::Environment, error::InterpreterError},
     parser::ast::Program,
 };
 
@@ -64,15 +60,7 @@ impl RunArgs {
             }
         })?;
 
-        program.run_ureq(self.request.as_deref()).map_err(|err| {
-            ContextualError::new(
-                InterpreterErrorKind::Other {
-                    error: err.to_string(),
-                },
-                err.span,
-                &code,
-            )
-        })?;
+        program.run_ureq(self.request.as_deref());
 
         Ok(())
     }

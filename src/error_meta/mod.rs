@@ -110,6 +110,17 @@ impl<E: Display + std::error::Error + Clone> ContextualError<E> {
     }
 }
 
+pub trait ToContextualError: Display + std::error::Error + Clone {
+    fn to_contextual_error(self, span: Span, source_code: &str) -> ContextualError<Self> {
+        ContextualError {
+            inner_error: self,
+            message: None,
+            context: ErrorSourceContext::new(&span.end.into(), source_code),
+            span,
+        }
+    }
+}
+
 impl<E: Display + std::error::Error + Clone> ErrorDisplay<utils::String> for ContextualError<E> {
     fn formatted_error(&self) -> utils::String {
         self.inner_error.to_string().into()

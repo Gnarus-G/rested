@@ -1,18 +1,22 @@
 pub use crate::parser::ast::RequestMethod;
 
-use crate::interpreter::{
-    ir::{self, *},
-    ureq_runner::UreqRun,
+use crate::{
+    error::ColoredMetaError,
+    error_meta::ToContextualError,
+    interpreter::{
+        ir::{self, *},
+        ureq_runner::UreqRun,
+    },
 };
 use string_utils::*;
 
 use std::error::Error;
 
-use tracing::info;
+use tracing::{error, info};
 
 impl<'source> ir::Program<'source> {
-    pub fn run_ureq(self, request_names: Option<&[String]>) -> error::Result<'source> {
-        Runner::new(self.items, Box::new(UreqRun)).run(request_names)
+    pub fn run_ureq(self, request_names: Option<&[String]>) {
+        Runner::new(self, Box::new(UreqRun)).run(request_names)
     }
 }
 
@@ -21,19 +25,20 @@ pub trait RunStrategy {
     fn run_request(&mut self, request: &Request) -> std::result::Result<String, Box<dyn Error>>;
 }
 
-pub struct Runner {
-    requests: Box<[RequestItem]>,
+struct Runner<'source> {
+    program: ir::Program<'source>,
     strategy: Box<dyn RunStrategy>,
 }
 
-impl Runner {
-    pub fn new(requests: Box<[RequestItem]>, strategy: Box<dyn RunStrategy>) -> Self {
-        Self { requests, strategy }
+impl<'source> Runner<'source> {
+    pub fn new(program: ir::Program<'source>, strategy: Box<dyn RunStrategy>) -> Self {
+        Self { program, strategy }
     }
 
-    pub fn run(&mut self, request_names: Option<&[String]>) -> error::Result {
+    pub fn run(&mut self, request_names: Option<&[String]>) {
         let requests = self
-            .requests
+            .program
+            .items
             .iter()
             .filter(|r| match (&request_names, &r.name) {
                 (None, _) => true,
@@ -71,55 +76,61 @@ impl Runner {
                 );
             }
 
-            let res = self
-                .strategy
-                .run_request(request)
-                .map_err(|e| error::RunError {
-                    span: *span,
-                    source: e,
-                })?;
+            let res = match self.strategy.run_request(request) {
+                Ok(res) => res,
+                Err(error) => {
+                    error!(
+                        "{:#}",
+                        ColoredMetaError(
+                            &error::RunError(error.to_string())
+                                .to_contextual_error(*span, self.program.source)
+                        )
+                    );
+                    continue;
+                }
+            };
 
             if let Some(log_destination) = log_destination {
                 match log_destination {
                     LogDestination::Std => {
                         println!("{}", indent_lines(&res, 4));
                     }
-                    LogDestination::File(file_path) => {
-                        log(&res, file_path).map_err(|error| error::RunError {
-                            span: *span,
-                            source: error.into(),
-                        })?;
-
-                        info!("{}", format!("saved response to {:?}", file_path).blue());
-                    }
+                    LogDestination::File(file_path) => match log(&res, file_path) {
+                        Ok(_) => {
+                            info!("{}", format!("saved response to {:?}", file_path).blue());
+                        }
+                        Err(error) => {
+                            error!(
+                                "{:#}",
+                                ColoredMetaError(
+                                    &error::RunError(error.to_string())
+                                        .to_contextual_error(*span, self.program.source)
+                                )
+                            )
+                        }
+                    },
                 }
             }
         }
-
-        Ok(())
     }
 }
 
 mod error {
     use std::error::Error;
 
-    use crate::lexer::locations::Span;
+    use crate::error_meta::ToContextualError;
 
-    pub type Result<'source> = std::result::Result<(), RunError>;
-
-    #[derive(Debug)]
-    pub struct RunError {
-        pub span: Span,
-        pub source: Box<dyn Error>,
-    }
+    #[derive(Debug, Clone)]
+    pub struct RunError(pub String);
 
     impl Error for RunError {}
     impl std::fmt::Display for RunError {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            f.write_str("RunError: ")?;
-            self.source.fmt(f)
+            self.0.fmt(f)
         }
     }
+
+    impl ToContextualError for RunError {}
 }
 
 mod string_utils {
