@@ -6,32 +6,51 @@ expression: ast
 Program(
   source: "get",
   items: [
-    Error(ContextualError(
-      inner_error: ExpectedEitherOfTokens(
-        found: Token(
-          kind: End,
-          text: "",
+    Request(
+      method: GET,
+      endpoint: Expr(Error(ContextualError(
+        inner_error: ExpectedEitherOfTokens(
+          found: Token(
+            kind: End,
+            text: "",
+            start: Position(
+              value: 3,
+              line: 0,
+              col: 2,
+            ),
+          ),
+          expected: [
+            Url,
+            Pathname,
+            StringLiteral,
+            Ident,
+          ],
+        ),
+        span: Span(
           start: Position(
+            value: 0,
+            line: 0,
+            col: 0,
+          ),
+          end: Position(
             value: 3,
             line: 0,
             col: 2,
           ),
         ),
-        expected: [
-          Ident,
-          StringLiteral,
-          Boolean,
-          Number,
-          LBracket,
-          LSquare,
-          Null,
-        ],
-      ),
+        message: None,
+        context: ErrorSourceContext(
+          above: None,
+          line: "get",
+          below: None,
+        ),
+      ))),
+      block: None,
       span: Span(
         start: Position(
-          value: 3,
+          value: 0,
           line: 0,
-          col: 2,
+          col: 0,
         ),
         end: Position(
           value: 3,
@@ -39,12 +58,6 @@ Program(
           col: 2,
         ),
       ),
-      message: Some("expecting only a \'string\', \'url\', or \'pathname\' here"),
-      context: ErrorSourceContext(
-        above: None,
-        line: "get",
-        below: None,
-      ),
-    )),
+    ),
   ],
 )

@@ -1,0 +1,338 @@
+---
+source: tests/parser.rs
+description: "get `${url}/api`\n        get `${env(`${uri}:8080`)}/api`\n        get `${env(\"url\")}/api`"
+expression: ast
+---
+Program(
+  source: "get `${url}/api`\n        get `${env(`${uri}:8080`)}/api`\n        get `${env(\"url\")}/api`",
+  items: [
+    Request(
+      method: GET,
+      endpoint: Expr(TemplateSringLiteral(
+        span: Span(
+          start: Position(
+            value: 4,
+            line: 0,
+            col: 4,
+          ),
+          end: Position(
+            value: 16,
+            line: 0,
+            col: 16,
+          ),
+        ),
+        parts: [
+          String(StringLiteral(
+            raw: "`",
+            value: "",
+            span: Span(
+              start: Position(
+                value: 4,
+                line: 0,
+                col: 4,
+              ),
+              end: Position(
+                value: 5,
+                line: 0,
+                col: 5,
+              ),
+            ),
+          )),
+          Identifier(Ok(Token(
+            kind: Ident,
+            text: "url",
+            start: Position(
+              value: 7,
+              line: 0,
+              col: 7,
+            ),
+          ))),
+          String(StringLiteral(
+            raw: "/api`",
+            value: "/api",
+            span: Span(
+              start: Position(
+                value: 11,
+                line: 0,
+                col: 11,
+              ),
+              end: Position(
+                value: 16,
+                line: 0,
+                col: 16,
+              ),
+            ),
+          )),
+        ],
+      )),
+      block: None,
+      span: Span(
+        start: Position(
+          value: 0,
+          line: 0,
+          col: 0,
+        ),
+        end: Position(
+          value: 16,
+          line: 0,
+          col: 16,
+        ),
+      ),
+    ),
+    Request(
+      method: GET,
+      endpoint: Expr(TemplateSringLiteral(
+        span: Span(
+          start: Position(
+            value: 29,
+            line: 1,
+            col: 12,
+          ),
+          end: Position(
+            value: 56,
+            line: 1,
+            col: 39,
+          ),
+        ),
+        parts: [
+          String(StringLiteral(
+            raw: "`",
+            value: "",
+            span: Span(
+              start: Position(
+                value: 29,
+                line: 1,
+                col: 12,
+              ),
+              end: Position(
+                value: 30,
+                line: 1,
+                col: 13,
+              ),
+            ),
+          )),
+          Call(CallExpr(
+            identifier: Ok(Token(
+              kind: Ident,
+              text: "env",
+              start: Position(
+                value: 32,
+                line: 1,
+                col: 15,
+              ),
+            )),
+            arguments: ExpressionList(
+              span: Span(
+                start: Position(
+                  value: 35,
+                  line: 1,
+                  col: 18,
+                ),
+                end: Position(
+                  value: 50,
+                  line: 1,
+                  col: 33,
+                ),
+              ),
+              exprs: [
+                TemplateSringLiteral(
+                  span: Span(
+                    start: Position(
+                      value: 36,
+                      line: 1,
+                      col: 19,
+                    ),
+                    end: Position(
+                      value: 49,
+                      line: 1,
+                      col: 32,
+                    ),
+                  ),
+                  parts: [
+                    String(StringLiteral(
+                      raw: "`",
+                      value: "",
+                      span: Span(
+                        start: Position(
+                          value: 36,
+                          line: 1,
+                          col: 19,
+                        ),
+                        end: Position(
+                          value: 37,
+                          line: 1,
+                          col: 20,
+                        ),
+                      ),
+                    )),
+                    Identifier(Ok(Token(
+                      kind: Ident,
+                      text: "uri",
+                      start: Position(
+                        value: 39,
+                        line: 1,
+                        col: 22,
+                      ),
+                    ))),
+                    String(StringLiteral(
+                      raw: ":8080`",
+                      value: ":8080",
+                      span: Span(
+                        start: Position(
+                          value: 43,
+                          line: 1,
+                          col: 26,
+                        ),
+                        end: Position(
+                          value: 49,
+                          line: 1,
+                          col: 32,
+                        ),
+                      ),
+                    )),
+                  ],
+                ),
+              ],
+            ),
+          )),
+          String(StringLiteral(
+            raw: "/api`",
+            value: "/api",
+            span: Span(
+              start: Position(
+                value: 51,
+                line: 1,
+                col: 34,
+              ),
+              end: Position(
+                value: 56,
+                line: 1,
+                col: 39,
+              ),
+            ),
+          )),
+        ],
+      )),
+      block: None,
+      span: Span(
+        start: Position(
+          value: 25,
+          line: 1,
+          col: 8,
+        ),
+        end: Position(
+          value: 56,
+          line: 1,
+          col: 39,
+        ),
+      ),
+    ),
+    Request(
+      method: GET,
+      endpoint: Expr(TemplateSringLiteral(
+        span: Span(
+          start: Position(
+            value: 69,
+            line: 2,
+            col: 12,
+          ),
+          end: Position(
+            value: 88,
+            line: 2,
+            col: 31,
+          ),
+        ),
+        parts: [
+          String(StringLiteral(
+            raw: "`",
+            value: "",
+            span: Span(
+              start: Position(
+                value: 69,
+                line: 2,
+                col: 12,
+              ),
+              end: Position(
+                value: 70,
+                line: 2,
+                col: 13,
+              ),
+            ),
+          )),
+          Call(CallExpr(
+            identifier: Ok(Token(
+              kind: Ident,
+              text: "env",
+              start: Position(
+                value: 72,
+                line: 2,
+                col: 15,
+              ),
+            )),
+            arguments: ExpressionList(
+              span: Span(
+                start: Position(
+                  value: 75,
+                  line: 2,
+                  col: 18,
+                ),
+                end: Position(
+                  value: 82,
+                  line: 2,
+                  col: 25,
+                ),
+              ),
+              exprs: [
+                String(StringLiteral(
+                  raw: "\"url\"",
+                  value: "url",
+                  span: Span(
+                    start: Position(
+                      value: 76,
+                      line: 2,
+                      col: 19,
+                    ),
+                    end: Position(
+                      value: 81,
+                      line: 2,
+                      col: 24,
+                    ),
+                  ),
+                )),
+              ],
+            ),
+          )),
+          String(StringLiteral(
+            raw: "/api`",
+            value: "/api",
+            span: Span(
+              start: Position(
+                value: 83,
+                line: 2,
+                col: 26,
+              ),
+              end: Position(
+                value: 88,
+                line: 2,
+                col: 31,
+              ),
+            ),
+          )),
+        ],
+      )),
+      block: None,
+      span: Span(
+        start: Position(
+          value: 65,
+          line: 2,
+          col: 8,
+        ),
+        end: Position(
+          value: 88,
+          line: 2,
+          col: 31,
+        ),
+      ),
+    ),
+  ],
+)

@@ -17,6 +17,10 @@ where
         statement.visit_children_with(self);
     }
 
+    fn visit_endpoint(&mut self, endpoint: &Endpoint<'source>) {
+        endpoint.visit_children_with(self);
+    }
+
     fn visit_expr(&mut self, expr: &Expression<'source>) {
         expr.visit_children_with(self);
     }
@@ -59,18 +63,12 @@ impl<'source> VisitWith<'source> for Item<'source> {
                 endpoint,
                 ..
             } => {
-                if let Endpoint::Expr(e) = endpoint {
-                    visitor.visit_expr(e)
-                }
+                visitor.visit_endpoint(endpoint);
                 for statement in block.statements.iter() {
                     visitor.visit_statement(statement)
                 }
             }
-            Item::Request { endpoint, .. } => {
-                if let Endpoint::Expr(e) = endpoint {
-                    visitor.visit_expr(e)
-                }
-            }
+            Item::Request { endpoint, .. } => visitor.visit_endpoint(endpoint),
             Item::Expr(expr) => visitor.visit_expr(expr),
             Item::Attribute {
                 arguments: Some(arguments),
@@ -102,6 +100,18 @@ impl<'source> VisitWith<'source> for Statement<'source> {
             Statement::Body { value, .. } => visitor.visit_expr(value),
             Statement::Error(e) => visitor.visit_error(e),
             Statement::LineComment(_) => {}
+        }
+    }
+}
+
+impl<'source> VisitWith<'source> for Endpoint<'source> {
+    fn visit_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        visitor.visit_endpoint(self)
+    }
+
+    fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        if let Endpoint::Expr(e) = self {
+            visitor.visit_expr(e)
         }
     }
 }
