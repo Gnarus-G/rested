@@ -22,7 +22,7 @@ macro_rules! run {
         println!("{:#}", program.source);
         println!("{:#?}", program);
 
-        program.run_ureq(None).unwrap();
+        program.run_ureq(None);
     };
     ($code:ident, $env:ident, $names:expr) => {
         let program = Program::from($code);
@@ -31,7 +31,7 @@ macro_rules! run {
         println!("{:#}", program.source);
         println!("{:#?}", program);
 
-        program.run_ureq($names).unwrap();
+        program.run_ureq($names);
     };
 }
 
