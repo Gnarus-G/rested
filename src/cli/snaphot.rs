@@ -66,7 +66,6 @@ impl ToCurlString for RequestItem {
 
         if let Some(dest) = &self.log_destination {
             match dest {
-                LogDestination::Std => {}
                 LogDestination::File(path) => {
                     buffer.push_str(&format!(" 1> {}", path.to_string_lossy()))
                 }

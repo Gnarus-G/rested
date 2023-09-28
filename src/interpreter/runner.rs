@@ -92,9 +92,6 @@ impl<'source> Runner<'source> {
 
             if let Some(log_destination) = log_destination {
                 match log_destination {
-                    LogDestination::Std => {
-                        println!("{}", indent_lines(&res, 4));
-                    }
                     LogDestination::File(file_path) => match log(&res, file_path) {
                         Ok(_) => {
                             info!("{}", format!("saved response to {:?}", file_path).blue());
@@ -111,6 +108,8 @@ impl<'source> Runner<'source> {
                     },
                 }
             }
+
+            println!("{}", indent_lines(&res, 4));
         }
     }
 }
