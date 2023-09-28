@@ -169,7 +169,11 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
                         };
                         Some(LogDestination::File(file_path.into()))
                     } else {
-                        Some(LogDestination::Std)
+                        return Err(self
+                            .error_factory
+                            .required_args(att.identifier.span(), 1, 0)
+                            .with_message("@log(..) must be given a file path argument")
+                            .into());
                     }
                 } else {
                     None

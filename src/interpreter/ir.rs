@@ -24,7 +24,6 @@ pub struct RequestItem {
 
 #[derive(Debug)]
 pub enum LogDestination {
-    Std,
     File(std::path::PathBuf),
 }
 
