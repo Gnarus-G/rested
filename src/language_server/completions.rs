@@ -206,12 +206,12 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
                 }
 
                 if let Some(args) = arguments {
-                    if args.span.contains(&self.position) {
-                        return self.suggest(SuggestionKind::Identifiers);
-                    }
-
                     for param in args.iter() {
                         self.visit_expr(param)
+                    }
+
+                    if args.span.contains(&self.position) {
+                        return self.suggest(SuggestionKind::Identifiers);
                     }
                 }
             }
