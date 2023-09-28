@@ -2,11 +2,13 @@ use std::{
     borrow::Cow,
     fs,
     io::{BufRead, BufReader},
+    ops::RangeInclusive,
     path::PathBuf,
+    str::FromStr,
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use anyhow::{anyhow, Context};
+use anyhow::{anyhow, Context, Ok};
 use clap::{Args, Subcommand, ValueEnum};
 use colored::Colorize;
 use rested::{config::Config, editing::edit, interpreter::environment::Environment};
@@ -38,6 +40,10 @@ pub enum ScratchCommand {
         /// Don't show scratch file previews, just show paths.
         #[arg(short, long)]
         quiet: bool,
+
+        /// Select a subset of the history by a number, or a range like 1..3 (inclusive)
+        #[arg(short, long)]
+        select: Option<HistorySubsetSelection>,
 
         /// Show the index position for each scratch file relative to the oldest edited (since) or newest edited
         /// file (ago)
@@ -71,6 +77,31 @@ pub enum ScratchCommand {
     },
 }
 
+#[derive(Debug, Clone)]
+pub enum HistorySubsetSelection {
+    Range(RangeInclusive<usize>),
+    Single(usize),
+}
+
+impl FromStr for HistorySubsetSelection {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let parts = s
+            .split("..")
+            .map(|n| n.parse::<usize>())
+            .collect::<Result<Vec<_>, _>>()?;
+
+        match parts.as_slice() {
+            [l, r] => Ok(HistorySubsetSelection::Range(*l..=*r)),
+            [s] => Ok(HistorySubsetSelection::Single(*s)),
+            _ => Err(anyhow!(
+                "invalid selection defined, should be a number like 1 or a range like 1..3"
+            )),
+        }
+    }
+}
+
 #[derive(Debug, Clone, ValueEnum)]
 pub enum HistoryIndexMode {
     /// To pick a file at some position before the latest scratch file.
@@ -83,16 +114,39 @@ impl ScratchCommandArgs {
     pub fn handle(&self, env: Environment) -> anyhow::Result<()> {
         match &self.command {
             Some(command) => match command {
-                ScratchCommand::History { quiet, index_mode } => {
+                ScratchCommand::History {
+                    quiet,
+                    index_mode,
+                    select,
+                } => {
                     let files = fetch_scratch_files()?;
                     let len = files.len();
 
-                    for (i, file_path) in files.into_iter().enumerate() {
-                        match index_mode {
-                            HistoryIndexMode::Ago => eprint!("{} ago: ", len - i - 1),
-                            HistoryIndexMode::Since => eprint!("{} since: ", i),
-                        };
+                    let iterations = files
+                        .into_iter()
+                        .enumerate()
+                        .map(|(i, path)| {
+                            (
+                                match index_mode {
+                                    HistoryIndexMode::Ago => len - i - 1,
+                                    HistoryIndexMode::Since => i,
+                                },
+                                path,
+                            )
+                        })
+                        .filter(|(i, _)| match select {
+                            Some(HistorySubsetSelection::Range(r)) => r.contains(i),
+                            Some(HistorySubsetSelection::Single(s)) => s == i,
+                            _ => true,
+                        })
+                        .inspect(|(i, _)| {
+                            match index_mode {
+                                HistoryIndexMode::Ago => eprint!("{} ago: ", i),
+                                HistoryIndexMode::Since => eprint!("{} since: ", i),
+                            };
+                        });
 
+                    for (_, file_path) in iterations {
                         println!("{}", file_path.to_string_lossy().bold());
 
                         if !quiet {
