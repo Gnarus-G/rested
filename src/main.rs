@@ -4,6 +4,7 @@ use clap::{CommandFactory, Parser, Subcommand};
 use cli::config::ConfigArgs;
 use cli::run::RunArgs;
 use cli::scratch::ScratchCommandArgs;
+use cli::snaphot::SnapshotArgs;
 use rested::editing::edit;
 use rested::interpreter::environment::Environment;
 use tracing::error;
@@ -29,6 +30,8 @@ enum Command {
     Run(RunArgs),
     /// Open your default editor to start editing a temporary file
     Scratch(ScratchCommandArgs),
+    /// Generate a static snapshot of the requests with all dynamic values evaluated.
+    Snap(SnapshotArgs),
     /// Operate on the environment variables available in the runtime
     Env {
         #[command(subcommand)]
@@ -133,6 +136,7 @@ fn run(cli: Cli) -> anyhow::Result<()> {
         Command::Run(run) => run.handle(env)?,
         Command::Scratch(scratch) => scratch.handle(env)?,
         Command::Config(config) => config.handle()?,
+        Command::Snap(snap) => snap.handle(env)?,
     };
 
     Ok(())

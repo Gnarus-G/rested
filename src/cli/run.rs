@@ -8,7 +8,7 @@ use anyhow::anyhow;
 use clap::Args;
 use rested::{
     error::ColoredMetaError,
-    interpreter::{environment::Environment, error::InterpreterError},
+    interpreter::{environment::Environment, error::InterpreterError, ir},
     parser::ast::Program,
 };
 
@@ -32,36 +32,46 @@ impl RunArgs {
             env.select_variables_namespace(ns);
         }
 
-        let code = self.file.map(fs::read_to_string).unwrap_or_else(|| {
-            let mut buf = String::new();
-            stdin().read_to_string(&mut buf)?;
-            Ok(buf)
-        })?;
+        let code = read_program_text(self.file)?;
 
-        let program = Program::from(&code);
-
-        let program = program.interpret(&env).map_err(|value| match value {
-            InterpreterError::ParseErrors(p) => {
-                let error_string: String = p
-                    .errors
-                    .iter()
-                    .map(|e| ColoredMetaError(e).to_string())
-                    .collect();
-
-                return anyhow!(error_string);
-            }
-            InterpreterError::EvalErrors(errors) => {
-                let error_string: String = errors
-                    .iter()
-                    .map(|e| ColoredMetaError(e).to_string())
-                    .collect();
-
-                return anyhow!(error_string);
-            }
-        })?;
-
-        program.run_ureq(self.request.as_deref());
+        interpret_program_file(&code, env)?.run_ureq(self.request.as_deref());
 
         Ok(())
     }
+}
+
+pub fn interpret_program_file(code: &str, env: Environment) -> anyhow::Result<ir::Program<'_>> {
+    let program = Program::from(code);
+
+    let program = program.interpret(&env).map_err(|value| match value {
+        InterpreterError::ParseErrors(p) => {
+            let error_string: String = p
+                .errors
+                .iter()
+                .map(|e| ColoredMetaError(e).to_string())
+                .collect();
+
+            return anyhow!(error_string);
+        }
+        InterpreterError::EvalErrors(errors) => {
+            let error_string: String = errors
+                .iter()
+                .map(|e| ColoredMetaError(e).to_string())
+                .collect();
+
+            return anyhow!(error_string);
+        }
+    })?;
+
+    Ok(program)
+}
+
+pub fn read_program_text(file: Option<PathBuf>) -> anyhow::Result<String> {
+    let code = file.map(fs::read_to_string).unwrap_or_else(|| {
+        let mut buf = String::new();
+        stdin().read_to_string(&mut buf)?;
+        Ok(buf)
+    })?;
+
+    Ok(code)
 }
