@@ -336,8 +336,8 @@ fn name_attribute_requires_value() {
 fn prevents_duplicate_attributes() {
     let code = r#"
         set BASE_URL env("b_url")
-        @log
-        @log
+        @log("file.json")
+        @log("otherfile.json")
         get /api {}
     "#;
 

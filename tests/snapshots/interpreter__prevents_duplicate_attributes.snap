@@ -1,9 +1,9 @@
 ---
-source: interpreter/tests/interpreter.rs
+source: tests/interpreter.rs
 expression: duped_att_err
 ---
-        @log
-        @log
+        @log("file.json")
+        @log("otherfile.json")
          ≈≈≈
          ↳ [4:10] duplicate attribute: @log is already set for this request
         get /api {}
