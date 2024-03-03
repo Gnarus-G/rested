@@ -1,7 +1,10 @@
 use crate::{error_meta::ContextualError, lexer::locations::GetSpan};
 
 use super::{
-    ast::{result::ParsedNode, CallExpr, Endpoint, Expression, ExpressionList, Item, Statement},
+    ast::{
+        result::ParsedNode, CallExpr, Endpoint, Expression, ExpressionList, Item, Program,
+        Statement,
+    },
     error::ParseError,
 };
 
@@ -9,6 +12,10 @@ pub trait Visitor<'source>
 where
     Self: std::marker::Sized,
 {
+    fn visit_program(&mut self, program: &Program<'source>) {
+        program.visit_children_with(self);
+    }
+
     fn visit_item(&mut self, item: &Item<'source>) {
         item.visit_children_with(self);
     }
@@ -23,6 +30,10 @@ where
 
     fn visit_expr(&mut self, expr: &Expression<'source>) {
         expr.visit_children_with(self);
+    }
+
+    fn visit_expr_list(&mut self, expr_list: &ExpressionList<'source>) {
+        expr_list.visit_children_with(self);
     }
 
     fn visit_call_expr(&mut self, expr: &CallExpr<'source>) {
@@ -41,6 +52,18 @@ where
 pub trait VisitWith<'source> {
     fn visit_with<V: Visitor<'source>>(&self, visitor: &mut V);
     fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V);
+}
+
+impl<'source> VisitWith<'source> for Program<'source> {
+    fn visit_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        visitor.visit_program(self);
+    }
+
+    fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        for item in self.items.iter() {
+            visitor.visit_item(item);
+        }
+    }
 }
 
 impl<'source> VisitWith<'source> for Item<'source> {
@@ -112,6 +135,18 @@ impl<'source> VisitWith<'source> for Endpoint<'source> {
     fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
         if let Endpoint::Expr(e) = self {
             visitor.visit_expr(e)
+        }
+    }
+}
+
+impl<'source> VisitWith<'source> for ExpressionList<'source> {
+    fn visit_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        visitor.visit_expr_list(self)
+    }
+
+    fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        for expr in self.exprs.iter() {
+            visitor.visit_expr(expr);
         }
     }
 }
