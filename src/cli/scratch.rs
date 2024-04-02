@@ -63,6 +63,10 @@ pub enum ScratchCommand {
         /// One or more names of the specific request(s) to run
         #[arg(short = 'r', long, num_args(1..))]
         request: Option<Vec<String>>,
+
+        /// Rested will prompt you for which request to pick
+        #[arg(long)]
+        prompt: bool,
     },
 
     /// Pick a scratch file to edit
@@ -152,7 +156,7 @@ impl ScratchCommandArgs {
                         if !quiet {
                             let three_lines = fs::File::open(file_path)
                                 .map(BufReader::new)
-                                .map(|reader| reader.lines().flatten().take(3))?;
+                                .map(|reader| reader.lines().map_while(Result::ok).take(3))?;
 
                             for (idx, line) in three_lines.enumerate() {
                                 eprintln!("{}", format!("  {}|  {}", idx + 1, line).dimmed());
@@ -164,7 +168,11 @@ impl ScratchCommandArgs {
                     let file_name = create_scratch_file()?;
                     edit(file_name)?;
                 }
-                ScratchCommand::Run { namespace, request } => {
+                ScratchCommand::Run {
+                    namespace,
+                    request,
+                    prompt,
+                } => {
                     let file_name = match fetch_scratch_files()?.last().cloned() {
                         Some(last) => last,
                         None => create_scratch_file()?,
@@ -174,6 +182,7 @@ impl ScratchCommandArgs {
                         request: request.clone(),
                         namespace: namespace.clone(),
                         file: Some(file_name),
+                        prompt: *prompt,
                     }
                     .handle(env)?;
                 }
@@ -213,6 +222,7 @@ impl ScratchCommandArgs {
                         request: self.request.clone(),
                         namespace: self.namespace.clone(),
                         file: Some(file_name),
+                        prompt: false,
                     }
                     .handle(env)?;
                 }
