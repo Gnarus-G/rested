@@ -11,6 +11,7 @@ use crate::lexer;
 use crate::lexer::locations::{GetSpan, Location};
 use crate::parser::ast_visit::VisitWith;
 use crate::parser::{self};
+use anyhow::Context;
 use completions::*;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::{lsp_types::*, LspService, Server};
@@ -76,7 +77,7 @@ impl TextDocuments {
 struct ChangedDocumentItem {
     pub uri: Url,
 
-    pub version: i32,
+    pub version: Option<i32>,
 
     pub text: String,
 }
@@ -101,7 +102,7 @@ impl Backend {
 
             return self
                 .client
-                .publish_diagnostics(params.uri, vec![], Some(params.version))
+                .publish_diagnostics(params.uri, vec![], params.version)
                 .await;
         };
 
@@ -124,7 +125,7 @@ impl Backend {
 
             return self
                 .client
-                .publish_diagnostics(params.uri, diagnostics, Some(params.version))
+                .publish_diagnostics(params.uri, diagnostics, params.version)
                 .await;
         };
 
@@ -174,7 +175,7 @@ impl Backend {
         diagnostics.reverse();
 
         self.client
-            .publish_diagnostics(params.uri, diagnostics, Some(params.version))
+            .publish_diagnostics(params.uri, diagnostics, params.version)
             .await;
     }
 }
@@ -205,15 +206,6 @@ impl LanguageServer for Backend {
 
     async fn hover(&self, _params: HoverParams) -> Result<Option<Hover>> {
         Ok(None)
-    }
-
-    async fn did_open(&self, params: DidOpenTextDocumentParams) {
-        self.on_change(ChangedDocumentItem {
-            uri: params.text_document.uri,
-            version: params.text_document.version,
-            text: params.text_document.text,
-        })
-        .await;
     }
 
     async fn completion(&self, params: CompletionParams) -> Result<Option<CompletionResponse>> {
@@ -256,10 +248,40 @@ impl LanguageServer for Backend {
         return Ok(completions_collector.into_response());
     }
 
+    async fn did_open(&self, params: DidOpenTextDocumentParams) {
+        self.on_change(ChangedDocumentItem {
+            uri: params.text_document.uri,
+            version: Some(params.text_document.version),
+            text: params.text_document.text,
+        })
+        .await;
+    }
+
+    async fn did_save(&self, params: DidSaveTextDocumentParams) {
+        let text = match std::fs::read_to_string(params.text_document.uri.path())
+            .context("failed to read file after save")
+        {
+            Ok(text) => text,
+            Err(err) => {
+                self.client
+                    .log_message(MessageType::WARNING, format!("{err:#}"))
+                    .await;
+                return;
+            }
+        };
+
+        self.on_change(ChangedDocumentItem {
+            uri: params.text_document.uri,
+            version: None,
+            text,
+        })
+        .await;
+    }
+
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         self.on_change(ChangedDocumentItem {
             uri: params.text_document.uri,
-            version: params.text_document.version,
+            version: Some(params.text_document.version),
             text: params.content_changes[0].text.clone(),
         })
         .await;
