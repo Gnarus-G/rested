@@ -44,7 +44,7 @@ impl From<&SuggestionKind> for Vec<CompletionItem> {
             SuggestionKind::Functions => builtin_functions_completions(),
             SuggestionKind::StatementKeywords => header_body_keyword_completions(),
             SuggestionKind::ItemKeywords => item_keywords(),
-            SuggestionKind::EnvVars => env_args_completions().unwrap_or(vec![]),
+            SuggestionKind::EnvVars => env_args_completions().unwrap_or_default(),
             SuggestionKind::SetIdentifiers => {
                 vec![CompletionItem {
                     label: "BASE_URL".to_string(),
