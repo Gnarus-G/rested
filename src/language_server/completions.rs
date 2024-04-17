@@ -6,7 +6,6 @@ use tower_lsp::lsp_types::{
 use tracing::debug;
 
 use crate::{
-    config::env_file_path,
     interpreter::environment::Environment,
     language_server::position::ContainsPosition,
     lexer::{self, locations::GetSpan},
@@ -24,38 +23,11 @@ pub enum SuggestionKind {
     SetIdentifiers,
     Functions,
     StatementKeywords,
-    ItemKeywords,
+    #[allow(dead_code)]
+    ItemKeywords, // not used, but it's here to complete the intent with this type
     Attributes,
     EnvVars,
     Headers,
-}
-
-impl From<SuggestionKind> for Vec<CompletionItem> {
-    fn from(value: SuggestionKind) -> Self {
-        (&value).into()
-    }
-}
-
-impl From<&SuggestionKind> for Vec<CompletionItem> {
-    fn from(value: &SuggestionKind) -> Self {
-        match value {
-            SuggestionKind::Nothing => vec![],
-            SuggestionKind::Identifiers => builtin_functions_completions(),
-            SuggestionKind::Functions => builtin_functions_completions(),
-            SuggestionKind::StatementKeywords => header_body_keyword_completions(),
-            SuggestionKind::ItemKeywords => item_keywords(),
-            SuggestionKind::EnvVars => env_args_completions().unwrap_or_default(),
-            SuggestionKind::SetIdentifiers => {
-                vec![CompletionItem {
-                    label: "BASE_URL".to_string(),
-                    kind: Some(CompletionItemKind::CONSTANT),
-                    ..CompletionItem::default()
-                }]
-            }
-            SuggestionKind::Attributes => attributes_completions(),
-            SuggestionKind::Headers => http_headers_completions(),
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -64,6 +36,7 @@ impl From<&SuggestionKind> for Vec<CompletionItem> {
 struct Suggestions<'source> {
     list: Vec<SuggestionKind>,
     variables: Box<[lexer::Token<'source>]>,
+    env: Environment,
 }
 
 impl<'source> Suggestions<'source> {
@@ -84,7 +57,24 @@ impl<'source> Suggestions<'source> {
     }
 
     fn comps_from_kind(&self, kind: &SuggestionKind) -> Vec<CompletionItem> {
-        let mut comps: Vec<_> = kind.into();
+        let mut comps = match kind {
+            SuggestionKind::Nothing => vec![],
+            SuggestionKind::Identifiers => builtin_functions_completions(),
+            SuggestionKind::Functions => builtin_functions_completions(),
+            SuggestionKind::StatementKeywords => header_body_keyword_completions(),
+            SuggestionKind::ItemKeywords => item_keywords(),
+            SuggestionKind::EnvVars => env_args_completions(&self.env).unwrap_or_default(),
+            SuggestionKind::SetIdentifiers => {
+                vec![CompletionItem {
+                    label: "BASE_URL".to_string(),
+                    kind: Some(CompletionItemKind::CONSTANT),
+                    ..CompletionItem::default()
+                }]
+            }
+            SuggestionKind::Attributes => attributes_completions(),
+            SuggestionKind::Headers => http_headers_completions(),
+        };
+
         if let SuggestionKind::Identifiers = kind {
             debug!("adding variables to {:?}", kind);
             comps.extend(self.variables.iter().map(|var| CompletionItem {
@@ -105,10 +95,11 @@ pub struct CompletionsCollector<'source> {
 }
 
 impl<'source> CompletionsCollector<'source> {
-    pub fn new(program: &ast::Program<'source>, position: Position) -> Self {
+    pub fn new(program: &ast::Program<'source>, position: Position, env: Environment) -> Self {
         CompletionsCollector {
             suggestions: Suggestions {
                 list: vec![],
+                env,
                 variables: program
                     .variables_before(lexer::locations::Location {
                         line: position.line as usize,
@@ -361,7 +352,7 @@ fn builtin_functions_completions() -> Vec<CompletionItem> {
         .to_vec()
 }
 
-fn item_keywords() -> Vec<CompletionItem> {
+pub fn item_keywords() -> Vec<CompletionItem> {
     let methods = vec!["get", "post", "put", "patch", "delete"];
 
     [vec!["let", "set"], methods]
@@ -413,8 +404,7 @@ fn attributes_completions() -> Vec<CompletionItem> {
     comp
 }
 
-fn env_args_completions() -> anyhow::Result<Vec<CompletionItem>> {
-    let env = Environment::new(env_file_path()?)?;
+fn env_args_completions(env: &Environment) -> anyhow::Result<Vec<CompletionItem>> {
     let env_args = env
         .namespaced_variables
         .values()

@@ -4,7 +4,7 @@ mod completions;
 mod position;
 mod warnings;
 
-use crate::config::env_file_path;
+use crate::config::get_env_from_dir_path_or_from_home_dir;
 use crate::interpreter;
 use crate::interpreter::environment::Environment;
 use crate::lexer;
@@ -83,19 +83,41 @@ struct ChangedDocumentItem {
 }
 
 impl Backend {
-    async fn on_change(&self, params: ChangedDocumentItem) {
-        let Ok(env_file) = env_file_path() else {
-            self.client
-                .log_message(MessageType::ERROR, "failed to load configs")
-                .await;
+    async fn workspace_uris(&self) -> Result<Option<Vec<Url>>> {
+        let paths = self
+            .client
+            .workspace_folders()
+            .await?
+            .map(|folders| folders.into_iter().map(|f| f.uri).collect::<Vec<_>>());
 
-            return self
-                .client
-                .publish_diagnostics(params.uri, vec![], Some(params.version))
-                .await;
+        Ok(paths)
+    }
+
+    async fn get_env(&self) -> anyhow::Result<Environment> {
+        let workspace_uris = match self.workspace_uris().await {
+            Ok(workspace_uris) => workspace_uris,
+            _ => {
+                self.client
+                    .log_message(
+                        MessageType::WARNING,
+                        "didn't define the root_dir for rstdls",
+                    )
+                    .await;
+                None
+            }
         };
 
-        let Ok(env) = Environment::new(env_file) else {
+        let env = get_env_from_dir_path_or_from_home_dir(
+            workspace_uris
+                .and_then(|uris| uris.first().and_then(|uri| uri.to_file_path().ok()))
+                .as_deref(),
+        )?;
+
+        return Ok(env);
+    }
+
+    async fn on_change(&self, params: ChangedDocumentItem) {
+        let Ok(env) = self.get_env().await else {
             self.client
                 .log_message(MessageType::ERROR, "failed to initialize the environment")
                 .await;
@@ -229,14 +251,22 @@ impl LanguageServer for Backend {
 
         let program = parser::Parser::new(&text).parse();
 
-        let mut completions_collector = CompletionsCollector::new(&program, position);
+        let env = match self.get_env().await {
+            Ok(env) => env,
+            Err(err) => {
+                self.client
+                    .log_message(MessageType::ERROR, format!("{err:#}"))
+                    .await;
+                return Ok(None);
+            }
+        };
+
+        let mut completions_collector = CompletionsCollector::new(&program, position, env);
 
         let Some(current_item) = program.items.iter().find(|i| i.span().contains(&position)) else {
             debug!("cursor is apparently not on any items");
             debug!("{:?}", program);
-            return Ok(Some(CompletionResponse::Array(
-                SuggestionKind::ItemKeywords.into(),
-            )));
+            return Ok(Some(CompletionResponse::Array(item_keywords())));
         };
 
         debug!("cursor on item -> {:?}", current_item);

@@ -4,7 +4,7 @@ use insta::assert_debug_snapshot;
 use rested::{interpreter::environment::Environment, parser::ast::Program};
 
 fn new_env_with_vars(vars: &[(&str, &str)]) -> Environment {
-    let mut env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();
+    let mut env = Environment::new(PathBuf::from(".env.rd.json")).unwrap();
 
     for (key, value) in vars {
         env.set_variable(key.to_string(), value.to_string())
@@ -124,7 +124,7 @@ fn comments_are_ignored() {
 
     let url = server.url();
 
-    let env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();
+    let env = Environment::new(PathBuf::from(".env.rd.json")).unwrap();
 
     let get_api = server
         .mock("GET", "/api")
@@ -155,7 +155,7 @@ fn comments_are_ignored() {
 fn requests_are_skippable() {
     let mut server = mockito::Server::new();
     let url = server.url();
-    let mut env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();
+    let mut env = Environment::new(PathBuf::from(".env.rd.json")).unwrap();
 
     env.set_variable("b_url".to_string(), url).unwrap();
 
@@ -196,7 +196,7 @@ fn requests_are_skippable() {
 fn responses_can_be_logged() {
     let mut server = mockito::Server::new();
     let url = server.url();
-    let mut env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();
+    let mut env = Environment::new(PathBuf::from(".env.rd.json")).unwrap();
 
     env.set_variable("b_url".to_string(), url).unwrap();
 
@@ -237,7 +237,7 @@ fn responses_can_be_logged() {
 fn let_bindings_work() {
     let mut server = mockito::Server::new();
     let url = server.url();
-    let mut env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();
+    let mut env = Environment::new(PathBuf::from(".env.rd.json")).unwrap();
 
     env.set_variable("test".to_string(), "12345".to_string())
         .unwrap();
@@ -316,7 +316,7 @@ fn running_specific_requests_by_name() {
 
 #[test]
 fn name_attribute_requires_value() {
-    let mut env = Environment::new(PathBuf::from(".vars.rd.json")).unwrap();
+    let mut env = Environment::new(PathBuf::from(".env.rd.json")).unwrap();
 
     env.set_variable("b_url".to_string(), "asdfasdf".to_string())
         .unwrap();

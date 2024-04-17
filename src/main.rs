@@ -5,8 +5,8 @@ use cli::config::ConfigArgs;
 use cli::run::RunArgs;
 use cli::scratch::ScratchCommandArgs;
 use cli::snaphot::SnapshotArgs;
+use rested::config::get_env_from_dir_path_or_from_home_dir;
 use rested::editing::edit;
-use rested::interpreter::environment::Environment;
 use tracing::error;
 
 use std::collections::HashMap;
@@ -102,7 +102,8 @@ fn main() {
 }
 
 fn run(cli: Cli) -> anyhow::Result<()> {
-    let mut env = Environment::new(rested::config::env_file_path()?)?;
+    let cwd = std::env::current_dir()?;
+    let mut env = get_env_from_dir_path_or_from_home_dir(Some(&cwd))?;
 
     match cli.command {
         Command::Env { command } => match command {
