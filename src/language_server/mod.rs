@@ -265,6 +265,14 @@ impl LanguageServer for Backend {
         .await;
     }
 
+    async fn did_close(&self, params: DidCloseTextDocumentParams) {
+        self.documents
+            .inner
+            .lock()
+            .expect("failed to get lock for text documents")
+            .remove(&params.text_document.uri);
+    }
+
     async fn shutdown(&self) -> Result<()> {
         Ok(())
     }
