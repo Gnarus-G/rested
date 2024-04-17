@@ -56,7 +56,7 @@ fn get_home_dir() -> anyhow::Result<PathBuf> {
     Ok(home.into())
 }
 
-fn get_env_from_home_dir() -> anyhow::Result<Environment> {
+pub fn get_env_from_home_dir() -> anyhow::Result<Environment> {
     let env = get_home_dir()
         .map(|home| home.join(".env.rd.json"))
         .context("failed to resolve the environment vars definition file from home dir: should be `.env.rd.json` in your home dir")

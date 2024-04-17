@@ -5,7 +5,7 @@ use cli::config::ConfigArgs;
 use cli::run::RunArgs;
 use cli::scratch::ScratchCommandArgs;
 use cli::snaphot::SnapshotArgs;
-use rested::config::get_env_from_dir_path_or_from_home_dir;
+use rested::config::{get_env_from_dir_path_or_from_home_dir, get_env_from_home_dir};
 use rested::editing::edit;
 use tracing::error;
 
@@ -32,7 +32,8 @@ enum Command {
     Scratch(ScratchCommandArgs),
     /// Generate a static snapshot of the requests with all dynamic values evaluated.
     Snap(SnapshotArgs),
-    /// Operate on the environment variables available in the runtime
+    /// Operate on the environment variables available in the runtime.
+    /// Looking into the `.env.rd.json` in the current directory, or that in the home directory.
     Env {
         #[command(subcommand)]
         command: EnvCommand,
@@ -102,42 +103,55 @@ fn main() {
 }
 
 fn run(cli: Cli) -> anyhow::Result<()> {
-    let cwd = std::env::current_dir()?;
-    let mut env = get_env_from_dir_path_or_from_home_dir(Some(&cwd))?;
-
     match cli.command {
-        Command::Env { command } => match command {
-            EnvCommand::Set {
-                name,
-                value,
-                namespace,
-            } => {
-                if let Some(ns) = namespace {
-                    env.select_variables_namespace(ns);
+        Command::Env { command } => {
+            let cwd = std::env::current_dir()?;
+            let mut env = get_env_from_dir_path_or_from_home_dir(Some(&cwd))?;
+
+            match command {
+                EnvCommand::Set {
+                    name,
+                    value,
+                    namespace,
+                } => {
+                    if let Some(ns) = namespace {
+                        env.select_variables_namespace(ns);
+                    }
+                    env.set_variable(name, value)?;
                 }
-                env.set_variable(name, value)?;
+                EnvCommand::NS { command } => match command {
+                    EnvNamespaceCommand::Add { name } => {
+                        env.namespaced_variables.insert(name, HashMap::new());
+                        env.save_to_file()?;
+                    }
+                    EnvNamespaceCommand::Rm { name } => {
+                        env.namespaced_variables.remove(&name);
+                        env.save_to_file()?;
+                    }
+                },
+                EnvCommand::Show => println!("{}", fs::read_to_string(env.env_file_name)?),
+                EnvCommand::Edit => edit(&env.env_file_name)?,
             }
-            EnvCommand::NS { command } => match command {
-                EnvNamespaceCommand::Add { name } => {
-                    env.namespaced_variables.insert(name, HashMap::new());
-                    env.save_to_file()?;
-                }
-                EnvNamespaceCommand::Rm { name } => {
-                    env.namespaced_variables.remove(&name);
-                    env.save_to_file()?;
-                }
-            },
-            EnvCommand::Show => println!("{}", fs::read_to_string(env.env_file_name)?),
-            EnvCommand::Edit => edit(&env.env_file_name)?,
-        },
+        }
         Command::Completion { shell } => {
             clap_complete::generate(shell, &mut Cli::command(), "rstd", &mut std::io::stdout())
         }
         Command::Lsp => rested::language_server::start(cli.level),
-        Command::Run(run) => run.handle(env)?,
-        Command::Scratch(scratch) => scratch.handle(env)?,
+        Command::Run(run) => {
+            let workspace = run.file.as_ref().and_then(|path| path.canonicalize().ok());
+            let env = get_env_from_dir_path_or_from_home_dir(workspace.as_deref())?;
+            run.handle(env)?
+        }
+        Command::Scratch(scratch) => {
+            let env = get_env_from_home_dir()?;
+            scratch.handle(env)?
+        }
         Command::Config(config) => config.handle()?,
-        Command::Snap(snap) => snap.handle(env)?,
+        Command::Snap(snap) => {
+            let workspace = snap.file.as_ref().and_then(|path| path.canonicalize().ok());
+            let env = get_env_from_dir_path_or_from_home_dir(workspace.as_deref())?;
+            snap.handle(env)?
+        }
     };
 
     Ok(())
