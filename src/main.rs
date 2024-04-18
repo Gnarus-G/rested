@@ -7,7 +7,7 @@ use cli::scratch::ScratchCommandArgs;
 use cli::snaphot::SnapshotArgs;
 use rested::config::{get_env_from_dir_path_or_from_home_dir, get_env_from_home_dir};
 use rested::editing::edit;
-use tracing::error;
+use tracing::{error, info};
 
 use std::collections::HashMap;
 use std::fs;
@@ -128,14 +128,17 @@ fn run(cli: Cli) -> anyhow::Result<()> {
                     if let Some(ns) = namespace {
                         env.select_variables_namespace(ns);
                     }
+                    info!("setting variable '{}' with value '{}'", name, value);
                     env.set_variable(name, value)?;
                 }
                 EnvCommand::NS { command } => match command {
                     EnvNamespaceCommand::Add { name } => {
+                        info!("adding namespace: {name}");
                         env.namespaced_variables.insert(name, HashMap::new());
                         env.save_to_file()?;
                     }
                     EnvNamespaceCommand::Rm { name } => {
+                        info!("removing namespace: {name}");
                         env.namespaced_variables.remove(&name);
                         env.save_to_file()?;
                     }
