@@ -35,6 +35,12 @@ enum Command {
     /// Operate on the environment variables available in the runtime.
     /// Looking into the `.env.rd.json` in the current directory, or that in the home directory.
     Env {
+        /// Set to look at the `.env.rd.json` file in the current working directory.
+        /// Otherwise this command and its subcommands operate on the `.env.rd.json` file in your
+        /// home directory.
+        #[arg(long)]
+        cwd: bool,
+
         #[command(subcommand)]
         command: EnvCommand,
     },
@@ -104,9 +110,14 @@ fn main() {
 
 fn run(cli: Cli) -> anyhow::Result<()> {
     match cli.command {
-        Command::Env { command } => {
-            let cwd = std::env::current_dir()?;
-            let mut env = get_env_from_dir_path_or_from_home_dir(Some(&cwd))?;
+        Command::Env { command, cwd } => {
+            let cwd = if cwd {
+                Some(std::env::current_dir()?)
+            } else {
+                None
+            };
+
+            let mut env = get_env_from_dir_path_or_from_home_dir(cwd.as_deref())?;
 
             match command {
                 EnvCommand::Set {
