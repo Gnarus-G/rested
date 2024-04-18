@@ -42,8 +42,6 @@ impl Environment {
                 HashMap::from([("default".to_string(), HashMap::new())])
             });
 
-        dbg!(&self.namespaced_variables);
-
         Ok(())
     }
 
