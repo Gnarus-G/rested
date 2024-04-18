@@ -9,8 +9,8 @@ use crate::interpreter;
 use crate::interpreter::environment::Environment;
 use crate::lexer;
 use crate::lexer::locations::{GetSpan, Location};
-use crate::parser::ast_visit::VisitWith;
-use crate::parser::{self};
+use crate::parser::ast_visit::{self, VisitWith};
+use crate::parser::{self, ast};
 use anyhow::Context;
 use completions::*;
 use tower_lsp::jsonrpc::Result;
@@ -226,8 +226,107 @@ impl LanguageServer for Backend {
             .await;
     }
 
-    async fn hover(&self, _params: HoverParams) -> Result<Option<Hover>> {
-        Ok(None)
+    async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
+        let uri = params.text_document_position_params.text_document.uri;
+        let current_position = params.text_document_position_params.position;
+
+        debug!("cursor position -> {:?}", current_position);
+
+        let Some(text) = self.documents.get(uri.clone()) else {
+            error!("failed to get the text by uri: {}", uri);
+
+            debug!("{:?}", self.documents);
+
+            return Ok(None);
+        };
+
+        let program = parser::Parser::new(&text).parse();
+
+        let env = match self.get_env().await {
+            Ok(env) => env,
+            Err(err) => {
+                self.client
+                    .log_message(MessageType::ERROR, format!("{err:#}"))
+                    .await;
+                return Ok(None);
+            }
+        };
+
+        struct OnHoverFinder {
+            position: Position,
+            docs: Option<String>,
+        }
+
+        impl<'source> ast_visit::Visitor<'source> for OnHoverFinder {
+            fn visit_call_expr(&mut self, expr: &ast::CallExpr<'source>) {
+                if expr.identifier.span().contains(&self.position) {
+                    if let ast::result::ParsedNode::Ok(ident) = &expr.identifier {
+                        let docs = match ident.text {
+                            "env" => [
+                                "Read env file to grab values.",
+                                "Read `.env.rd.json` from the current workspace if there is one,",
+                                "otherwise read that in the home directory.",
+                                "```typescript",
+                                "(builtin) env(variable: string): string",
+                                "```",
+                            ]
+                            .join("\n"),
+                            "json" => [
+                                "Convert any value to a json string.",
+                                "```typescript",
+                                "(builtin) json(value: any): string",
+                                "```",
+                            ]
+                            .join("\n"),
+                            "read" => [
+                                "Read file contents into a string and returns that string.",
+                                "```typescript",
+                                "(builtin) read(filename: string): string",
+                                "```",
+                            ]
+                            .join("\n"),
+                            "escape_new_lines" => [
+                                "Escape the '\\n' characters in a string.",
+                                "```typescript",
+                                "(builtin) escape_new_lines(value: string): string",
+                                "```",
+                            ]
+                            .join("\n"),
+                            _ => "".to_string(),
+                        };
+
+                        self.docs = Some(docs);
+                        return;
+                    };
+                }
+                expr.visit_children_with(self);
+            }
+        }
+
+        let mut finder = OnHoverFinder {
+            position: current_position,
+            docs: None,
+        };
+
+        let Some(current_item) = program
+            .items
+            .iter()
+            .find(|i| i.span().contains(&current_position))
+        else {
+            debug!("cursor is apparently not on any items");
+            debug!("{:?}", program);
+            return Ok(None);
+        };
+
+        current_item.visit_with(&mut finder);
+
+        Ok(Some(Hover {
+            contents: HoverContents::Markup(MarkupContent {
+                kind: MarkupKind::Markdown,
+                value: finder.docs.unwrap_or_default(),
+            }),
+            range: None,
+        }))
     }
 
     async fn completion(&self, params: CompletionParams) -> Result<Option<CompletionResponse>> {
