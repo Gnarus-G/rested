@@ -1,7 +1,10 @@
 use crate::{error_meta::ContextualError, lexer::locations::GetSpan};
 
 use super::{
-    ast::{result::ParsedNode, CallExpr, Endpoint, Expression, ExpressionList, Item, Statement},
+    ast::{
+        result::ParsedNode, CallExpr, Endpoint, Expression, ExpressionList, Item, Request,
+        Statement,
+    },
     error::ParseError,
 };
 
@@ -58,17 +61,17 @@ impl<'source> VisitWith<'source> for Item<'source> {
                 visitor.visit_parsed_node(identifier);
                 visitor.visit_expr(value)
             }
-            Item::Request {
+            Item::Request(Request {
                 block: Some(block),
                 endpoint,
                 ..
-            } => {
+            }) => {
                 visitor.visit_endpoint(endpoint);
                 for statement in block.statements.iter() {
                     visitor.visit_statement(statement)
                 }
             }
-            Item::Request { endpoint, .. } => visitor.visit_endpoint(endpoint),
+            Item::Request(Request { endpoint, .. }) => visitor.visit_endpoint(endpoint),
             Item::Expr(expr) => visitor.visit_expr(expr),
             Item::Attribute {
                 arguments: Some(arguments),

@@ -51,6 +51,14 @@ pub struct Block<'source> {
 }
 
 #[derive(Debug, PartialEq, Serialize)]
+pub struct Request<'source> {
+    pub method: RequestMethod,
+    pub endpoint: Endpoint<'source>,
+    pub block: Option<Block<'source>>,
+    pub span: Span,
+}
+
+#[derive(Debug, PartialEq, Serialize)]
 pub enum Item<'source> {
     Set {
         identifier: ParsedNode<'source, Token<'source>>,
@@ -61,12 +69,7 @@ pub enum Item<'source> {
         value: Expression<'source>,
     },
     LineComment(Literal<'source>),
-    Request {
-        method: RequestMethod,
-        endpoint: Endpoint<'source>,
-        block: Option<Block<'source>>,
-        span: Span,
-    },
+    Request(Request<'source>),
     Expr(Expression<'source>),
     Attribute {
         location: Position,

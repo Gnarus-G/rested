@@ -180,12 +180,12 @@ impl<'source> Parser<'source> {
             endpoint.span()
         };
 
-        Ok(Item::Request {
+        Ok(Item::Request(ast::Request {
             span: e.start.to_end_of(span_next),
             method,
             endpoint,
             block,
-        })
+        }))
     }
 
     fn parse_endpoint(&mut self) -> Endpoint<'source> {

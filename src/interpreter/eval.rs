@@ -64,12 +64,12 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
     fn evaluate_item(&mut self, item: &'p Item<'source>) -> Result<Option<RequestItem>> {
         use ast::Item::*;
         match item {
-            Request {
+            Request(ast::Request {
                 method,
                 endpoint,
                 block,
                 span,
-            } => {
+            }) => {
                 // Handle @skip
                 if self.attributes.get("skip").is_some() {
                     self.attributes.clear();

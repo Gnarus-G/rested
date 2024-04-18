@@ -162,11 +162,11 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
 
                 self.suggest(SuggestionKind::Identifiers);
             }
-            Item::Request {
+            Item::Request(ast::Request {
                 block: Some(block),
                 endpoint,
                 ..
-            } => {
+            }) => {
                 self.visit_endpoint(endpoint);
 
                 if !block.span.contains(&self.position) {
@@ -179,11 +179,11 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
 
                 return self.suggest(SuggestionKind::StatementKeywords);
             }
-            Item::Request {
+            Item::Request(ast::Request {
                 endpoint,
                 block: None,
                 ..
-            } => {
+            }) => {
                 self.visit_endpoint(endpoint);
                 self.suggest(SuggestionKind::Identifiers);
             }
