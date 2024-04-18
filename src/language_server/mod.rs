@@ -5,8 +5,8 @@ mod position;
 mod warnings;
 
 use crate::config::get_env_from_dir_path_or_from_home_dir;
-use crate::interpreter;
 use crate::interpreter::environment::Environment;
+use crate::interpreter::{self, ir};
 use crate::lexer;
 use crate::lexer::locations::{GetSpan, Location};
 use crate::parser::ast_visit::{self, VisitWith};
@@ -16,7 +16,7 @@ use completions::*;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::{lsp_types::*, LspService, Server};
 use tower_lsp::{Client, LanguageServer};
-use tracing::{debug, error};
+use tracing::{debug, error, warn};
 
 use self::position::ContainsPosition;
 
@@ -252,12 +252,13 @@ impl LanguageServer for Backend {
             }
         };
 
-        struct OnHoverFinder {
+        struct OnHoverFinder<'source> {
+            program: ir::Program<'source>,
             position: Position,
             docs: Option<String>,
         }
 
-        impl<'source> ast_visit::Visitor<'source> for OnHoverFinder {
+        impl<'source> ast_visit::Visitor<'source> for OnHoverFinder<'source> {
             fn visit_call_expr(&mut self, expr: &ast::CallExpr<'source>) {
                 if expr.identifier.span().contains(&self.position) {
                     if let ast::result::ParsedNode::Ok(ident) = &expr.identifier {
@@ -301,12 +302,28 @@ impl LanguageServer for Backend {
                 }
                 expr.visit_children_with(self);
             }
-        }
 
-        let mut finder = OnHoverFinder {
-            position: current_position,
-            docs: None,
-        };
+            fn visit_endpoint(&mut self, endpoint: &ast::Endpoint<'source>) {
+                if endpoint.span().contains(&self.position) {
+                    let item_at_position = self
+                        .program
+                        .items
+                        .iter()
+                        .find(|i| i.span.contains(&self.position));
+
+                    match item_at_position {
+                        Some(item) => {
+                            self.docs = Some(item.request.url.clone());
+                            return;
+                        }
+                        None => {
+                            warn!("didn't find a evaluated request item for endpoint on cursor")
+                        }
+                    };
+                }
+                endpoint.visit_children_with(self);
+            }
+        }
 
         let Some(current_item) = program
             .items
@@ -316,6 +333,22 @@ impl LanguageServer for Backend {
             debug!("cursor is apparently not on any items");
             debug!("{:?}", program);
             return Ok(None);
+        };
+
+        let program = match program.interpret(&env) {
+            Ok(program) => program,
+            Err(err) => {
+                self.client
+                    .log_message(MessageType::ERROR, format!("{err:#}"))
+                    .await;
+                return Ok(None);
+            }
+        };
+
+        let mut finder = OnHoverFinder {
+            program,
+            position: current_position,
+            docs: None,
         };
 
         current_item.visit_with(&mut finder);
