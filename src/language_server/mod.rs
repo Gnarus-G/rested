@@ -256,10 +256,18 @@ impl LanguageServer for Backend {
             program: ir::Program<'source>,
             position: Position,
             docs: Option<String>,
+            is_in_env_call: bool,
+            env: Environment,
         }
 
         impl<'source> ast_visit::Visitor<'source> for OnHoverFinder<'source> {
             fn visit_call_expr(&mut self, expr: &ast::CallExpr<'source>) {
+                if let ast::result::ParsedNode::Ok(ident) = &expr.identifier {
+                    if ident.text == "env" {
+                        self.is_in_env_call = true
+                    }
+                };
+
                 if expr.identifier.span().contains(&self.position) {
                     if let ast::result::ParsedNode::Ok(ident) = &expr.identifier {
                         let docs = match ident.text {
@@ -300,7 +308,21 @@ impl LanguageServer for Backend {
                         return;
                     };
                 }
+
                 expr.visit_children_with(self);
+            }
+
+            fn visit_string(&mut self, stringlit: &ast::StringLiteral<'source>) {
+                if stringlit.span.contains(&self.position) && self.is_in_env_call {
+                    let var = &stringlit.value.to_string();
+                    match self.env.get_variable_value(var).cloned() {
+                        Some(value) => {
+                            self.docs = Some(value);
+                            return;
+                        }
+                        None => warn!("didn't get a value for the variable {var}"),
+                    }
+                }
             }
 
             fn visit_endpoint(&mut self, endpoint: &ast::Endpoint<'source>) {
@@ -349,6 +371,8 @@ impl LanguageServer for Backend {
             program,
             position: current_position,
             docs: None,
+            is_in_env_call: false,
+            env,
         };
 
         current_item.visit_with(&mut finder);
