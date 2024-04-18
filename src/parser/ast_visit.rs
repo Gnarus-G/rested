@@ -16,6 +16,10 @@ where
         item.visit_children_with(self);
     }
 
+    fn visit_request(&mut self, item: &Request<'source>) {
+        item.visit_children_with(self);
+    }
+
     fn visit_statement(&mut self, statement: &Statement<'source>) {
         statement.visit_children_with(self);
     }
@@ -61,17 +65,9 @@ impl<'source> VisitWith<'source> for Item<'source> {
                 visitor.visit_parsed_node(identifier);
                 visitor.visit_expr(value)
             }
-            Item::Request(Request {
-                block: Some(block),
-                endpoint,
-                ..
-            }) => {
-                visitor.visit_endpoint(endpoint);
-                for statement in block.statements.iter() {
-                    visitor.visit_statement(statement)
-                }
+            Item::Request(req) => {
+                visitor.visit_request(req);
             }
-            Item::Request(Request { endpoint, .. }) => visitor.visit_endpoint(endpoint),
             Item::Expr(expr) => visitor.visit_expr(expr),
             Item::Attribute {
                 arguments: Some(arguments),
@@ -85,6 +81,28 @@ impl<'source> VisitWith<'source> for Item<'source> {
             }
             Item::Error(e) => visitor.visit_error(e),
             _ => {}
+        }
+    }
+}
+
+impl<'source> VisitWith<'source> for Request<'source> {
+    fn visit_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        visitor.visit_request(self);
+    }
+
+    fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        match self {
+            Request {
+                endpoint,
+                block: Some(block),
+                ..
+            } => {
+                visitor.visit_endpoint(endpoint);
+                for statement in block.statements.iter() {
+                    visitor.visit_statement(statement)
+                }
+            }
+            Request { endpoint, .. } => visitor.visit_endpoint(endpoint),
         }
     }
 }
