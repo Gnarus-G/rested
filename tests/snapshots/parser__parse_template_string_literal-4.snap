@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "\nlet b = `asdf ${}` \nlet c = {}\n",
   items: [
-    Let(
+    Let(VariableDeclaration(
       identifier: Ok(Token(
         kind: Ident,
         text: "b",
@@ -64,8 +64,8 @@ Program(
           )),
         ],
       ),
-    ),
-    Let(
+    )),
+    Let(VariableDeclaration(
       identifier: Ok(Token(
         kind: Ident,
         text: "c",
@@ -87,6 +87,6 @@ Program(
           col: 10,
         ),
       )),
-    ),
+    )),
   ],
 )

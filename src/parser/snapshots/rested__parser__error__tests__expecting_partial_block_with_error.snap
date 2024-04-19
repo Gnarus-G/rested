@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "get /hello { header \"test\" \"value\" header }",
   items: [
-    Request(
+    Request(Request(
       method: GET,
       endpoint: Pathname(Literal(
         value: "/hello",
@@ -159,6 +159,6 @@ Program(
           col: 42,
         ),
       ),
-    ),
+    )),
   ],
 )

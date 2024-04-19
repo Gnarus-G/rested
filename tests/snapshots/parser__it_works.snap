@@ -33,7 +33,7 @@ Program(
         ),
       )),
     ),
-    Request(
+    Request(Request(
       method: POST,
       endpoint: Url(Literal(
         value: "http://lasdf..",
@@ -77,7 +77,7 @@ Program(
           col: 21,
         ),
       ),
-    ),
+    )),
     LineComment(Literal(
       value: "// asdfasdf",
       span: Span(
@@ -93,7 +93,7 @@ Program(
         ),
       ),
     )),
-    Let(
+    Let(VariableDeclaration(
       identifier: Ok(Token(
         kind: Ident,
         text: "output_file",
@@ -119,8 +119,8 @@ Program(
           ),
         ),
       )),
-    ),
-    Let(
+    )),
+    Let(VariableDeclaration(
       identifier: Ok(Token(
         kind: Ident,
         text: "token",
@@ -173,7 +173,7 @@ Program(
           ],
         ),
       )),
-    ),
+    )),
     Attribute(
       location: Position(
         value: 129,
@@ -215,7 +215,7 @@ Program(
         ],
       )),
     ),
-    Request(
+    Request(Request(
       method: POST,
       endpoint: Pathname(Literal(
         value: "/asd",
@@ -425,7 +425,7 @@ Program(
           col: 0,
         ),
       ),
-    ),
+    )),
     Attribute(
       location: Position(
         value: 284,
@@ -443,7 +443,7 @@ Program(
       )),
       arguments: None,
     ),
-    Request(
+    Request(Request(
       method: GET,
       endpoint: Pathname(Literal(
         value: "/api",
@@ -487,8 +487,8 @@ Program(
           col: 10,
         ),
       ),
-    ),
-    Request(
+    )),
+    Request(Request(
       method: PUT,
       endpoint: Pathname(Literal(
         value: "/api",
@@ -532,8 +532,8 @@ Program(
           col: 10,
         ),
       ),
-    ),
-    Request(
+    )),
+    Request(Request(
       method: PATCH,
       endpoint: Pathname(Literal(
         value: "/api",
@@ -577,8 +577,8 @@ Program(
           col: 12,
         ),
       ),
-    ),
-    Request(
+    )),
+    Request(Request(
       method: DELETE,
       endpoint: Pathname(Literal(
         value: "/api",
@@ -622,6 +622,6 @@ Program(
           col: 13,
         ),
       ),
-    ),
+    )),
   ],
 )

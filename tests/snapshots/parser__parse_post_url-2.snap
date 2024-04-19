@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "post /api/v2",
   items: [
-    Request(
+    Request(Request(
       method: POST,
       endpoint: Pathname(Literal(
         value: "/api/v2",
@@ -36,6 +36,6 @@ Program(
           col: 12,
         ),
       ),
-    ),
+    )),
   ],
 )

@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "get http://localhost:8080\n        get http://localhost:8080 {}",
   items: [
-    Request(
+    Request(Request(
       method: GET,
       endpoint: Url(Literal(
         value: "http://localhost:8080",
@@ -36,8 +36,8 @@ Program(
           col: 25,
         ),
       ),
-    ),
-    Request(
+    )),
+    Request(Request(
       method: GET,
       endpoint: Url(Literal(
         value: "http://localhost:8080",
@@ -81,6 +81,6 @@ Program(
           col: 35,
         ),
       ),
-    ),
+    )),
   ],
 )

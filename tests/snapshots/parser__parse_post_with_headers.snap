@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "\n        post http://localhost {\n        header \"Authorization\" \"Bearer token\"\n        header \"random\" \"tokener Bear\"\n        }",
   items: [
-    Request(
+    Request(Request(
       method: POST,
       endpoint: Url(Literal(
         value: "http://localhost",
@@ -119,6 +119,6 @@ Program(
           col: 8,
         ),
       ),
-    ),
+    )),
   ],
 )

@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "\n        post /api {\n            body `{\"neet\": ${env(\"love\")}, 2: ${\"two\"}}`\n        }",
   items: [
-    Request(
+    Request(Request(
       method: POST,
       endpoint: Pathname(Literal(
         value: "/api",
@@ -181,6 +181,6 @@ Program(
           col: 8,
         ),
       ),
-    ),
+    )),
   ],
 )

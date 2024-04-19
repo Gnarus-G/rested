@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "\nlet o = {\n    key: \"value\",\n    akey: 123,\n    love: \"me\"\n}",
   items: [
-    Let(
+    Let(VariableDeclaration(
       identifier: Ok(Token(
         kind: Ident,
         text: "o",
@@ -127,6 +127,6 @@ Program(
           )),
         )),
       ])),
-    ),
+    )),
   ],
 )
