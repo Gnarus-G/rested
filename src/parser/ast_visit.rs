@@ -3,7 +3,7 @@ use crate::{error_meta::ContextualError, lexer::locations::GetSpan};
 use super::{
     ast::{
         result::ParsedNode, CallExpr, Endpoint, Expression, ExpressionList, Item, Request,
-        Statement, StringLiteral,
+        Statement, StringLiteral, VariableDeclaration,
     },
     error::ParseError,
 };
@@ -14,6 +14,10 @@ where
 {
     fn visit_item(&mut self, item: &Item<'source>) {
         item.visit_children_with(self);
+    }
+
+    fn visit_variable_declaration(&mut self, declaration: &VariableDeclaration<'source>) {
+        declaration.visit_children_with(self);
     }
 
     fn visit_request(&mut self, request: &Request<'source>) {
@@ -65,9 +69,8 @@ impl<'source> VisitWith<'source> for Item<'source> {
                 visitor.visit_parsed_node(identifier);
                 visitor.visit_expr(value);
             }
-            Item::Let { identifier, value } => {
-                visitor.visit_parsed_node(identifier);
-                visitor.visit_expr(value)
+            Item::Let(d) => {
+                visitor.visit_variable_declaration(d);
             }
             Item::Request(req) => {
                 visitor.visit_request(req);
@@ -86,6 +89,19 @@ impl<'source> VisitWith<'source> for Item<'source> {
             Item::Error(e) => visitor.visit_error(e),
             _ => {}
         }
+    }
+}
+
+impl<'source> VisitWith<'source> for VariableDeclaration<'source> {
+    fn visit_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        visitor.visit_variable_declaration(self);
+    }
+
+    fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        let VariableDeclaration { identifier, value } = self;
+
+        visitor.visit_parsed_node(identifier);
+        visitor.visit_expr(value)
     }
 }
 

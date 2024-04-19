@@ -153,7 +153,7 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
 
                 self.suggest(SuggestionKind::Identifiers);
             }
-            Item::Let { value, identifier } => {
+            Item::Let(ast::VariableDeclaration { value, identifier }) => {
                 if identifier.span().is_on_or_after(&self.position) {
                     return;
                 }

@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+
+use crate::interpreter::value::Value;
 use crate::lexer::locations::Span;
 pub use crate::parser::ast::RequestMethod;
 
@@ -5,11 +8,20 @@ pub use crate::parser::ast::RequestMethod;
 pub struct Program<'source> {
     pub source: &'source str,
     pub items: Box<[RequestItem]>,
+    pub let_bindings: HashMap<Box<str>, Value>,
 }
 
 impl<'source> Program<'source> {
-    pub fn new(source: &'source str, items: Box<[RequestItem]>) -> Self {
-        Self { source, items }
+    pub fn new(
+        source: &'source str,
+        items: Box<[RequestItem]>,
+        let_bindings: HashMap<Box<str>, Value>,
+    ) -> Self {
+        Self {
+            source,
+            items,
+            let_bindings,
+        }
     }
 }
 

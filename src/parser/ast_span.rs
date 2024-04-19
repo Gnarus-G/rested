@@ -2,7 +2,7 @@ use crate::lexer::locations::{GetSpan, Span};
 
 use super::ast::{
     result::ParsedNode, CallExpr, Endpoint, Expression, Item, ObjectEntry, Request, Statement,
-    StringLiteral,
+    StringLiteral, VariableDeclaration,
 };
 
 impl<'source> GetSpan for Statement<'source> {
@@ -54,7 +54,9 @@ impl<'source> GetSpan for Item<'source> {
     fn span(&self) -> Span {
         match self {
             Item::Set { identifier, value } => identifier.span().to_end_of(value.span()),
-            Item::Let { identifier, value } => identifier.span().to_end_of(value.span()),
+            Item::Let(VariableDeclaration { identifier, value }) => {
+                identifier.span().to_end_of(value.span())
+            }
             Item::LineComment(l) => l.span,
             Item::Request(Request { span, .. }) => *span,
             Item::Attribute {

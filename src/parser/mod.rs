@@ -604,17 +604,17 @@ impl<'source> Parser<'source> {
 
         self.next_token();
 
-        Ok(Item::Let {
+        Ok(Item::Let(ast::VariableDeclaration {
             value: match self.parse_expression() {
                 Ok(e) => e,
                 Err(error) => {
-                    return Ok(Item::Let {
+                    return Ok(Item::Let(ast::VariableDeclaration {
                         identifier,
                         value: Expression::Error(error),
-                    })
+                    }))
                 }
             },
             identifier,
-        })
+        }))
     }
 }

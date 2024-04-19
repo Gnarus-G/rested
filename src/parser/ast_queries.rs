@@ -1,5 +1,5 @@
 use super::{
-    ast::{self, result::ParsedNode, Program},
+    ast::{self, result::ParsedNode, Program, VariableDeclaration},
     ast_visit::VisitWith,
     error::{ErrorsCollector, ParseError},
 };
@@ -15,14 +15,14 @@ use crate::{
 impl<'source> Program<'source> {
     pub fn variables(&self) -> impl Iterator<Item = (lexer::locations::Span, &Token<'source>)> {
         self.items.iter().filter_map(|i| match i {
-            ast::Item::Let {
+            ast::Item::Let(VariableDeclaration {
                 value: ast::Expression::Error(..),
                 ..
-            } => None,
-            ast::Item::Let {
+            }) => None,
+            ast::Item::Let(VariableDeclaration {
                 identifier: ParsedNode::Ok(identifier),
                 ..
-            } => Some((i.span(), identifier)),
+            }) => Some((i.span(), identifier)),
             _ => None,
         })
     }
