@@ -49,7 +49,7 @@ impl Environment {
         self.selected_namespace = Some(ns);
     }
 
-    fn selected_namespace(&self) -> String {
+    pub fn selected_namespace(&self) -> String {
         self.selected_namespace
             .clone()
             .unwrap_or("default".to_string())
@@ -62,6 +62,16 @@ impl Environment {
             .unwrap();
 
         variables_map.get(name)
+    }
+
+    pub fn get_variable_value_per_namespace(&self, name: &String) -> Vec<(&String, &String)> {
+        let variables_per_ns = self
+            .namespaced_variables
+            .iter()
+            .filter_map(|(ns, vars)| vars.get(name).map(|var| (ns, var)))
+            .collect::<Vec<_>>();
+
+        variables_per_ns
     }
 
     pub fn set_variable(&mut self, name: String, value: String) -> anyhow::Result<()> {

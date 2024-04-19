@@ -315,12 +315,44 @@ impl LanguageServer for Backend {
             fn visit_string(&mut self, stringlit: &ast::StringLiteral<'source>) {
                 if stringlit.span.contains(&self.position) && self.is_in_env_call {
                     let var = &stringlit.value.to_string();
-                    match self.env.get_variable_value(var).cloned() {
-                        Some(value) => {
-                            self.docs = Some(value);
-                            return;
-                        }
-                        None => warn!("didn't get a value for the variable {var}"),
+                    let values: Vec<String> = self
+                        .env
+                        .get_variable_value_per_namespace(var)
+                        .iter()
+                        .map(|&(ns, value)| {
+                            let suffix = if self.env.selected_namespace() == *ns {
+                                Some("(current)")
+                            } else {
+                                None
+                            };
+
+                            let doc = format!("{ns}: {value:?} {}", suffix.unwrap_or_default());
+
+                            doc
+                        })
+                        .collect::<Vec<_>>();
+
+                    if values.is_empty() {
+                        warn!("didn't get a value for the variable {var}")
+                    } else {
+                        let current_value = self
+                            .env
+                            .get_variable_value(var)
+                            .map(|value| format!("```json\n{value:?}\n```"))
+                            .unwrap_or_default();
+
+                        let values = values.join("\n");
+                        let docs = [
+                            &current_value,
+                            "Resolved from env file:",
+                            "```sh",
+                            &self.env.env_file_name.to_string_lossy(),
+                            "```",
+                            "```js",
+                            &values,
+                            "```",
+                        ];
+                        self.docs = Some(docs.join("\n"));
                     }
                 }
             }
