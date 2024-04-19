@@ -253,7 +253,7 @@ impl LanguageServer for Backend {
         };
 
         struct OnHoverFinder<'source> {
-            program: ir::Program<'source>,
+            program: Option<ir::Program<'source>>,
             position: Position,
             docs: Option<String>,
             is_in_env_call: bool,
@@ -329,9 +329,8 @@ impl LanguageServer for Backend {
                 if endpoint.span().contains(&self.position) {
                     let item_at_position = self
                         .program
-                        .items
-                        .iter()
-                        .find(|i| i.span.contains(&self.position));
+                        .as_ref()
+                        .and_then(|p| p.items.iter().find(|i| i.span.contains(&self.position)));
 
                     match item_at_position {
                         Some(item) => {
@@ -358,12 +357,12 @@ impl LanguageServer for Backend {
         };
 
         let program = match program.interpret(&env) {
-            Ok(program) => program,
+            Ok(program) => Some(program),
             Err(err) => {
                 self.client
                     .log_message(MessageType::ERROR, format!("{err:#}"))
                     .await;
-                return Ok(None);
+                None
             }
         };
 
