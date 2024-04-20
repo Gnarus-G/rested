@@ -1,7 +1,7 @@
 use std::{collections::HashMap, path::PathBuf};
 
 use anyhow::Context;
-use tracing::{info, warn};
+use tracing::info;
 
 #[derive(Debug)]
 pub struct Environment {
@@ -36,9 +36,10 @@ impl Environment {
         let reader = std::io::BufReader::new(file);
 
         self.namespaced_variables = serde_json::from_reader(reader)
-            .context("failed to read env file")
+            .context("failed to read env file as json")
             .unwrap_or_else(|err| {
-                warn!("{err:#}");
+                info!("{err:#}");
+                info!("creating new configuration with a 'default' namespace");
                 HashMap::from([("default".to_string(), HashMap::new())])
             });
 

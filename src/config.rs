@@ -68,29 +68,16 @@ pub fn get_env_from_home_dir() -> anyhow::Result<Environment> {
 }
 
 fn get_env_from_dir_path(path: &std::path::Path) -> anyhow::Result<Environment> {
-    let env_rd_json = (|| {
-        if !path.is_dir() {
-            return Err(anyhow::anyhow!(
-                "path given needs to be a directory: '{}'",
-                path.display()
-            ));
-        }
+    if !path.is_dir() {
+        return Err(anyhow::anyhow!(
+            "path given needs to be a directory: '{}'",
+            path.display()
+        ));
+    }
 
-        let path = std::path::Path::new(&path).join(".env.rd.json");
+    let path = std::path::Path::new(&path).join(".env.rd.json");
 
-        if !path.exists() {
-            return Err(anyhow::anyhow!(
-                "couldn't find a `.env.rd.json` in the current workspace '{}'",
-                path.display()
-            ));
-        }
-
-        Ok(path)
-    })();
-
-    let env = env_rd_json
-        .context("failed to resolve the environment vars definition file: should be `.env.rd.json` in the working directory")
-        .and_then(|path| Environment::new(path).context("failed to load the environment for rstd"))?;
+    let env = Environment::new(path).context("failed to load the environment for rstd")?;
 
     return Ok(env);
 }
