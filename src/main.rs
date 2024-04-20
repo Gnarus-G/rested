@@ -152,7 +152,12 @@ fn run(cli: Cli) -> anyhow::Result<()> {
         }
         Command::Lsp => rested::language_server::start(cli.level),
         Command::Run(run) => {
-            let workspace = run.file.as_ref().and_then(|path| path.canonicalize().ok());
+            let workspace = run
+                .file
+                .as_ref()
+                .and_then(|p| p.parent())
+                .and_then(|path| path.canonicalize().ok());
+
             let env = get_env_from_dir_path_or_from_home_dir(workspace.as_deref())?;
             run.handle(env)?
         }
@@ -162,7 +167,12 @@ fn run(cli: Cli) -> anyhow::Result<()> {
         }
         Command::Config(config) => config.handle()?,
         Command::Snap(snap) => {
-            let workspace = snap.file.as_ref().and_then(|path| path.canonicalize().ok());
+            let workspace = snap
+                .file
+                .as_ref()
+                .and_then(|p| p.parent())
+                .and_then(|path| path.canonicalize().ok());
+
             let env = get_env_from_dir_path_or_from_home_dir(workspace.as_deref())?;
             snap.handle(env)?
         }
