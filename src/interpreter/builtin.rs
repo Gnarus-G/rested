@@ -34,6 +34,6 @@ pub fn escaping_new_lines(text: String) -> Value {
 
 pub fn json_stringify(value: Value) -> Value {
     serde_json::to_string(&value)
-      .expect("failed to json stringify this value; even though our parser should made sure this is value is valid")
+      .expect("failed to json stringify this value; even though our parser should have made sure this value is valid")
       .into()
 }
