@@ -5,7 +5,7 @@ use anyhow::Context;
 use super::value::Value;
 
 pub fn read_file<P: Into<PathBuf>>(file_name: P) -> anyhow::Result<Value> {
-    let mut file = File::open(file_name.into()).context("failed to open a file for reading")?;
+    let mut file = File::open(file_name.into()).context("failed to open file for reading")?;
 
     let mut string = String::new();
 
