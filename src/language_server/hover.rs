@@ -170,10 +170,44 @@ impl<'source> ast_visit::Visitor<'source> for HoverDocsResolver<'source> {
                             "```",
                         ]
                         .join("\n"),
-                    )
+                    );
+
+                    return;
                 }
             }
         }
+
+        declaration.visit_children_with(self);
+    }
+
+    fn visit_expr(&mut self, expr: &ast::Expression<'source>) {
+        if expr.span().contains(&self.position) {
+            if let ast::Expression::Identifier(ParsedNode::Ok(ident)) = expr {
+                if let Some(value) = self
+                    .program
+                    .as_ref()
+                    .and_then(|program| program.let_bindings.get(ident.text))
+                {
+                    let _type = typeof_value(value);
+                    if let Ok(value) = serde_json::to_string_pretty(value) {
+                        self.docs = Some(
+                            [
+                                "```typescript",
+                                &format!("let {}: {_type}", ident.text),
+                                "```",
+                                "```json",
+                                &value,
+                                "```",
+                            ]
+                            .join("\n"),
+                        );
+                        return;
+                    };
+                }
+            }
+        }
+
+        expr.visit_children_with(self)
     }
 }
 
