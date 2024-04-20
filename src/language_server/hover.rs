@@ -2,10 +2,10 @@ use tower_lsp::lsp_types::Position;
 use tracing::warn;
 
 use crate::{
-    interpreter::{environment::Environment, ir},
+    interpreter::{environment::Environment, ir, value::Value},
     lexer::locations::GetSpan,
     parser::{
-        ast,
+        ast::{self, result::ParsedNode},
         ast_visit::{self, VisitWith},
     },
 };
@@ -151,5 +151,39 @@ impl<'source> ast_visit::Visitor<'source> for HoverDocsResolver<'source> {
             };
         }
         endpoint.visit_children_with(self);
+    }
+
+    fn visit_variable_declaration(&mut self, declaration: &ast::VariableDeclaration<'source>) {
+        if declaration.identifier.span().contains(&self.position) {
+            if let ParsedNode::Ok(ident) = &declaration.identifier {
+                if let Some(value) = self
+                    .program
+                    .as_ref()
+                    .and_then(|program| program.let_bindings.get(ident.text))
+                {
+                    let _type = typeof_value(value);
+
+                    self.docs = Some(
+                        [
+                            "```typescript",
+                            &format!("let {}: {_type}", ident.text),
+                            "```",
+                        ]
+                        .join("\n"),
+                    )
+                }
+            }
+        }
+    }
+}
+
+fn typeof_value(value: &Value) -> &str {
+    match value {
+        Value::Null => "null",
+        Value::String(_) => "string",
+        Value::Bool(_) => "boolean",
+        Value::Number(_) => "number",
+        Value::Array(_) => "any[]",
+        Value::Object(_) => "object",
     }
 }

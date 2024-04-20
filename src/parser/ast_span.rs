@@ -50,13 +50,12 @@ impl<'source> GetSpan for Expression<'source> {
         }
     }
 }
+
 impl<'source> GetSpan for Item<'source> {
     fn span(&self) -> Span {
         match self {
             Item::Set { identifier, value } => identifier.span().to_end_of(value.span()),
-            Item::Let(VariableDeclaration { identifier, value }) => {
-                identifier.span().to_end_of(value.span())
-            }
+            Item::Let(decl) => decl.span(),
             Item::LineComment(l) => l.span,
             Item::Request(Request { span, .. }) => *span,
             Item::Attribute {
@@ -70,6 +69,13 @@ impl<'source> GetSpan for Item<'source> {
             Item::Expr(e) => e.span(),
             Item::Error(e) => e.span,
         }
+    }
+}
+
+impl<'source> GetSpan for VariableDeclaration<'source> {
+    fn span(&self) -> Span {
+        let VariableDeclaration { identifier, value } = self;
+        identifier.span().to_end_of(value.span())
     }
 }
 
