@@ -1,6 +1,6 @@
 {
   "name": "rstd",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Language/Interpreter for easily defining and running requests to an http server.",
   "bin": {
     "rstd": "./npm/run.js"
