@@ -23,7 +23,8 @@ pub struct RunArgs {
     #[arg(short = 'r', long, num_args(1..))]
     pub request: Option<Vec<String>>,
 
-    /// Path to the script to run
+    /// Path to the script to run. If none is provided, script is read
+    /// from stdin
     pub file: Option<PathBuf>,
 
     /// Rested will prompt you for which request to pick

@@ -152,8 +152,18 @@ fn run(cli: Cli) -> anyhow::Result<()> {
         }
         Command::Lsp => rested::language_server::start(cli.level),
         Command::Run(run) => {
-            let workspace = run.file.as_ref().and_then(|path| path.canonicalize().ok());
-            let env = get_env_from_dir_path_or_from_home_dir(workspace.as_deref())?;
+            let full_path = run.file.as_ref().and_then(|path| path.canonicalize().ok());
+            let workspace = full_path.as_ref().and_then(|p| p.parent());
+
+            if let Some(path) = full_path.as_ref() {
+                info!("script to run: {:?}", path);
+            }
+
+            if let Some(workspace) = workspace.as_ref() {
+                info!("indentified workspace: {:?}", workspace);
+            }
+
+            let env = get_env_from_dir_path_or_from_home_dir(workspace)?;
             run.handle(env)?
         }
         Command::Scratch(scratch) => {
@@ -162,8 +172,18 @@ fn run(cli: Cli) -> anyhow::Result<()> {
         }
         Command::Config(config) => config.handle()?,
         Command::Snap(snap) => {
-            let workspace = snap.file.as_ref().and_then(|path| path.canonicalize().ok());
-            let env = get_env_from_dir_path_or_from_home_dir(workspace.as_deref())?;
+            let full_path = snap.file.as_ref().and_then(|path| path.canonicalize().ok());
+            let workspace = full_path.as_ref().and_then(|p| p.parent());
+
+            if let Some(path) = full_path.as_ref() {
+                info!("script to snapshot: {:?}", path);
+            }
+
+            if let Some(workspace) = workspace.as_ref() {
+                info!("indentified workspace: {:?}", workspace);
+            }
+
+            let env = get_env_from_dir_path_or_from_home_dir(workspace)?;
             snap.handle(env)?
         }
     };
