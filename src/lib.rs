@@ -93,7 +93,7 @@ pub mod fmt {
                 Item::Set(s) => self.visit_constant_declaration(s),
                 Item::LineComment(lit) => self.push_str(lit.value),
                 Item::Request(_) => todo!(),
-                Item::Expr(_) => todo!(),
+                Item::Expr(expr) => self.visit_expr(expr),
                 Item::Attribute {
                     location,
                     identifier,
