@@ -180,12 +180,12 @@ impl<'source> Parser<'source> {
             endpoint.span()
         };
 
-        Ok(Item::Request {
+        Ok(Item::Request(ast::Request {
             span: e.start.to_end_of(span_next),
             method,
             endpoint,
             block,
-        })
+        }))
     }
 
     fn parse_endpoint(&mut self) -> Endpoint<'source> {
@@ -604,17 +604,17 @@ impl<'source> Parser<'source> {
 
         self.next_token();
 
-        Ok(Item::Let {
+        Ok(Item::Let(ast::VariableDeclaration {
             value: match self.parse_expression() {
                 Ok(e) => e,
                 Err(error) => {
-                    return Ok(Item::Let {
+                    return Ok(Item::Let(ast::VariableDeclaration {
                         identifier,
                         value: Expression::Error(error),
-                    })
+                    }))
                 }
             },
             identifier,
-        })
+        }))
     }
 }

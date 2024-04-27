@@ -7,7 +7,7 @@ use crate::error_meta::ContextualError;
 use crate::interpreter::ir::LogDestination;
 use crate::interpreter::value::ValueTag;
 use crate::lexer;
-use crate::parser::ast::{self, Endpoint, Expression, Item};
+use crate::parser::ast::{self, Endpoint, Expression, Item, VariableDeclaration};
 
 use crate::lexer::locations::GetSpan;
 
@@ -23,9 +23,8 @@ pub struct Evaluator<'source, 'p, 'env> {
     error_factory: InterpErrorFactory<'source>,
     env: &'env Environment,
     base_url: Option<String>,
-    let_bindings: HashMap<&'source str, Value>,
+    pub let_bindings: HashMap<&'source str, Value>,
     attributes: AttributeStack<'source, 'p>,
-    errors_in_items: Vec<ContextualError<InterpreterErrorKind>>,
 }
 
 impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
@@ -37,25 +36,26 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
             base_url: None,
             let_bindings: HashMap::new(),
             attributes: AttributeStack::new(),
-            errors_in_items: vec![],
         }
     }
 
     pub fn evaluate(
-        mut self,
+        &mut self,
     ) -> std::result::Result<Vec<RequestItem>, Box<[ContextualError<InterpreterErrorKind>]>> {
         let mut requests = vec![];
+
+        let mut errors_in_items: Vec<ContextualError<InterpreterErrorKind>> = vec![];
 
         for item in self.program.items.iter() {
             match self.evaluate_item(item) {
                 Ok(Some(r)) => requests.push(r),
-                Err(error) => self.errors_in_items.push(*error),
+                Err(error) => errors_in_items.push(*error),
                 _ => {}
             };
         }
 
-        if !self.errors_in_items.is_empty() {
-            return Err(self.errors_in_items.into());
+        if !errors_in_items.is_empty() {
+            return Err(errors_in_items.into());
         }
 
         Ok(requests)
@@ -64,12 +64,12 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
     fn evaluate_item(&mut self, item: &'p Item<'source>) -> Result<Option<RequestItem>> {
         use ast::Item::*;
         match item {
-            Request {
+            Request(ast::Request {
                 method,
                 endpoint,
                 block,
                 span,
-            } => {
+            }) => {
                 // Handle @skip
                 if self.attributes.get("skip").is_some() {
                     self.attributes.clear();
@@ -238,7 +238,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
                     }
                 }
             }
-            Let { identifier, value } => {
+            Let(VariableDeclaration { identifier, value }) => {
                 let value = self.evaluate_expression(value)?;
                 self.let_bindings.insert(identifier.get()?.text, value);
             }

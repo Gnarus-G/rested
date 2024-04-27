@@ -1,6 +1,10 @@
+use core::panic;
 use std::{fs, path::PathBuf};
 
 use anyhow::Context;
+use tracing::warn;
+
+use crate::interpreter::environment::Environment;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Config {
@@ -52,7 +56,47 @@ fn get_home_dir() -> anyhow::Result<PathBuf> {
     Ok(home.into())
 }
 
-#[inline]
-pub fn env_file_path() -> anyhow::Result<PathBuf> {
-    get_home_dir().map(|home| home.join(".env.rd.json"))
+pub fn get_env_from_home_dir() -> anyhow::Result<Environment> {
+    let env = get_home_dir()
+        .map(|home| home.join(".env.rd.json"))
+        .context("failed to resolve the environment vars definition file from home dir: should be `.env.rd.json` in your home dir")
+        .and_then(|path| {
+            Environment::new(path).context("failed to load the environment for rstd")
+        })?;
+
+    return Ok(env);
+}
+
+fn get_env_from_dir_path(path: &std::path::Path) -> anyhow::Result<Environment> {
+    if !path.is_dir() {
+        return Err(anyhow::anyhow!(
+            "path given needs to be a directory: '{}'",
+            path.display()
+        ));
+    }
+
+    let path = std::path::Path::new(&path).join(".env.rd.json");
+
+    let env = Environment::new(path).context("failed to load the environment for rstd")?;
+
+    return Ok(env);
+}
+
+pub fn get_env_from_dir_path_or_from_home_dir(
+    path: Option<&std::path::Path>,
+) -> anyhow::Result<Environment> {
+    let Some(path) = path else {
+        return get_env_from_home_dir();
+    };
+
+    return get_env_from_dir_path(path).or_else(|e| {
+        warn!(
+            "{:#}",
+            e.context(format!("failed to get env from path: {}", path.display()))
+        );
+
+        warn!("falling back to `.env.rd.json` in home dir");
+
+        get_env_from_home_dir().context("failed to get env from home dir")
+    });
 }

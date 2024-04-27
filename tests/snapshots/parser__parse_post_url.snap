@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "post http://localhost",
   items: [
-    Request(
+    Request(Request(
       method: POST,
       endpoint: Url(Literal(
         value: "http://localhost",
@@ -36,6 +36,6 @@ Program(
           col: 21,
         ),
       ),
-    ),
+    )),
   ],
 )

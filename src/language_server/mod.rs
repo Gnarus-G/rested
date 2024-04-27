@@ -1,16 +1,18 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
 mod completions;
+mod hover;
 mod position;
 mod warnings;
 
-use crate::config::env_file_path;
-use crate::interpreter;
+use crate::config::get_env_from_dir_path_or_from_home_dir;
 use crate::interpreter::environment::Environment;
+use crate::interpreter::{self};
 use crate::lexer;
 use crate::lexer::locations::{GetSpan, Location};
 use crate::parser::ast_visit::VisitWith;
 use crate::parser::{self};
+use anyhow::Context;
 use completions::*;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::{lsp_types::*, LspService, Server};
@@ -76,32 +78,54 @@ impl TextDocuments {
 struct ChangedDocumentItem {
     pub uri: Url,
 
-    pub version: i32,
+    pub version: Option<i32>,
 
     pub text: String,
 }
 
 impl Backend {
-    async fn on_change(&self, params: ChangedDocumentItem) {
-        let Ok(env_file) = env_file_path() else {
-            self.client
-                .log_message(MessageType::ERROR, "failed to load configs")
-                .await;
+    async fn workspace_uris(&self) -> Result<Option<Vec<Url>>> {
+        let paths = self
+            .client
+            .workspace_folders()
+            .await?
+            .map(|folders| folders.into_iter().map(|f| f.uri).collect::<Vec<_>>());
 
-            return self
-                .client
-                .publish_diagnostics(params.uri, vec![], Some(params.version))
-                .await;
+        Ok(paths)
+    }
+
+    async fn get_env(&self) -> anyhow::Result<Environment> {
+        let workspace_uris = match self.workspace_uris().await {
+            Ok(workspace_uris) => workspace_uris,
+            _ => {
+                self.client
+                    .log_message(
+                        MessageType::WARNING,
+                        "didn't define the root_dir for rstdls",
+                    )
+                    .await;
+                None
+            }
         };
 
-        let Ok(env) = Environment::new(env_file) else {
+        let env = get_env_from_dir_path_or_from_home_dir(
+            workspace_uris
+                .and_then(|uris| uris.first().and_then(|uri| uri.to_file_path().ok()))
+                .as_deref(),
+        )?;
+
+        return Ok(env);
+    }
+
+    async fn on_change(&self, params: ChangedDocumentItem) {
+        let Ok(env) = self.get_env().await else {
             self.client
                 .log_message(MessageType::ERROR, "failed to initialize the environment")
                 .await;
 
             return self
                 .client
-                .publish_diagnostics(params.uri, vec![], Some(params.version))
+                .publish_diagnostics(params.uri, vec![], params.version)
                 .await;
         };
 
@@ -124,7 +148,7 @@ impl Backend {
 
             return self
                 .client
-                .publish_diagnostics(params.uri, diagnostics, Some(params.version))
+                .publish_diagnostics(params.uri, diagnostics, params.version)
                 .await;
         };
 
@@ -174,7 +198,7 @@ impl Backend {
         diagnostics.reverse();
 
         self.client
-            .publish_diagnostics(params.uri, diagnostics, Some(params.version))
+            .publish_diagnostics(params.uri, diagnostics, params.version)
             .await;
     }
 }
@@ -203,17 +227,63 @@ impl LanguageServer for Backend {
             .await;
     }
 
-    async fn hover(&self, _params: HoverParams) -> Result<Option<Hover>> {
-        Ok(None)
-    }
+    async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
+        let uri = params.text_document_position_params.text_document.uri;
+        let current_position = params.text_document_position_params.position;
 
-    async fn did_open(&self, params: DidOpenTextDocumentParams) {
-        self.on_change(ChangedDocumentItem {
-            uri: params.text_document.uri,
-            version: params.text_document.version,
-            text: params.text_document.text,
-        })
-        .await;
+        debug!("cursor position -> {:?}", current_position);
+
+        let Some(text) = self.documents.get(uri.clone()) else {
+            error!("failed to get the text by uri: {}", uri);
+
+            debug!("{:?}", self.documents);
+
+            return Ok(None);
+        };
+
+        let program = parser::Parser::new(&text).parse();
+
+        let env = match self.get_env().await {
+            Ok(env) => env,
+            Err(err) => {
+                self.client
+                    .log_message(MessageType::ERROR, format!("{err:#}"))
+                    .await;
+                return Ok(None);
+            }
+        };
+
+        let Some(current_item) = program
+            .items
+            .iter()
+            .find(|i| i.span().contains(&current_position))
+        else {
+            debug!("cursor is apparently not on any items");
+            debug!("{:?}", program);
+            return Ok(None);
+        };
+
+        let program = match program.interpret(&env) {
+            Ok(program) => Some(program),
+            Err(err) => {
+                self.client
+                    .log_message(MessageType::ERROR, format!("{err:#}"))
+                    .await;
+                None
+            }
+        };
+
+        let mut hover = hover::HoverDocsResolver::new(program, current_position, env);
+
+        current_item.visit_with(&mut hover);
+
+        Ok(Some(Hover {
+            contents: HoverContents::Markup(MarkupContent {
+                kind: MarkupKind::Markdown,
+                value: hover.docs.unwrap_or_default(),
+            }),
+            range: None,
+        }))
     }
 
     async fn completion(&self, params: CompletionParams) -> Result<Option<CompletionResponse>> {
@@ -237,14 +307,22 @@ impl LanguageServer for Backend {
 
         let program = parser::Parser::new(&text).parse();
 
-        let mut completions_collector = CompletionsCollector::new(&program, position);
+        let env = match self.get_env().await {
+            Ok(env) => env,
+            Err(err) => {
+                self.client
+                    .log_message(MessageType::ERROR, format!("{err:#}"))
+                    .await;
+                return Ok(None);
+            }
+        };
+
+        let mut completions_collector = CompletionsCollector::new(&program, position, env);
 
         let Some(current_item) = program.items.iter().find(|i| i.span().contains(&position)) else {
             debug!("cursor is apparently not on any items");
             debug!("{:?}", program);
-            return Ok(Some(CompletionResponse::Array(
-                SuggestionKind::ItemKeywords.into(),
-            )));
+            return Ok(Some(CompletionResponse::Array(item_keywords())));
         };
 
         debug!("cursor on item -> {:?}", current_item);
@@ -256,13 +334,51 @@ impl LanguageServer for Backend {
         return Ok(completions_collector.into_response());
     }
 
+    async fn did_open(&self, params: DidOpenTextDocumentParams) {
+        self.on_change(ChangedDocumentItem {
+            uri: params.text_document.uri,
+            version: Some(params.text_document.version),
+            text: params.text_document.text,
+        })
+        .await;
+    }
+
+    async fn did_save(&self, params: DidSaveTextDocumentParams) {
+        let text = match std::fs::read_to_string(params.text_document.uri.path())
+            .context("failed to read file after save")
+        {
+            Ok(text) => text,
+            Err(err) => {
+                self.client
+                    .log_message(MessageType::WARNING, format!("{err:#}"))
+                    .await;
+                return;
+            }
+        };
+
+        self.on_change(ChangedDocumentItem {
+            uri: params.text_document.uri,
+            version: None,
+            text,
+        })
+        .await;
+    }
+
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         self.on_change(ChangedDocumentItem {
             uri: params.text_document.uri,
-            version: params.text_document.version,
+            version: Some(params.text_document.version),
             text: params.content_changes[0].text.clone(),
         })
         .await;
+    }
+
+    async fn did_close(&self, params: DidCloseTextDocumentParams) {
+        self.documents
+            .inner
+            .lock()
+            .expect("failed to get lock for text documents")
+            .remove(&params.text_document.uri);
     }
 
     async fn shutdown(&self) -> Result<()> {

@@ -30,7 +30,7 @@ pub mod editing {
 
 pub mod fmt {
     use crate::parser::{
-        ast::{result::ParsedNode, Expression, Item, ObjectEntry},
+        ast::{result::ParsedNode, Expression, Item, ObjectEntry, VariableDeclaration},
         ast_visit::{VisitWith, Visitor},
     };
 
@@ -81,7 +81,7 @@ pub mod fmt {
     impl<'source> Visitor<'source> for FormattedPrinter {
         fn visit_item(&mut self, item: &crate::parser::ast::Item<'source>) {
             match item {
-                Item::Let { identifier, value } => {
+                Item::Let(VariableDeclaration { identifier, value }) => {
                     self.push_str("let ");
 
                     self.visit_parsed_node(identifier);

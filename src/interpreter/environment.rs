@@ -1,6 +1,7 @@
 use std::{collections::HashMap, path::PathBuf};
 
 use anyhow::Context;
+use tracing::info;
 
 #[derive(Debug)]
 pub struct Environment {
@@ -27,12 +28,20 @@ impl Environment {
             .read(true)
             .write(true)
             .create(true)
+            .truncate(false)
             .open(&self.env_file_name)?;
+
+        info!("loading env from file: {}", self.env_file_name.display());
 
         let reader = std::io::BufReader::new(file);
 
         self.namespaced_variables = serde_json::from_reader(reader)
-            .unwrap_or(HashMap::from([("default".to_string(), HashMap::new())]));
+            .context("failed to read env file as json")
+            .unwrap_or_else(|err| {
+                info!("{err:#}");
+                info!("creating new configuration with a 'default' namespace");
+                HashMap::from([("default".to_string(), HashMap::new())])
+            });
 
         Ok(())
     }
@@ -41,7 +50,7 @@ impl Environment {
         self.selected_namespace = Some(ns);
     }
 
-    fn selected_namespace(&self) -> String {
+    pub fn selected_namespace(&self) -> String {
         self.selected_namespace
             .clone()
             .unwrap_or("default".to_string())
@@ -54,6 +63,16 @@ impl Environment {
             .unwrap();
 
         variables_map.get(name)
+    }
+
+    pub fn get_variable_value_per_namespace(&self, name: &String) -> Vec<(&String, &String)> {
+        let variables_per_ns = self
+            .namespaced_variables
+            .iter()
+            .filter_map(|(ns, vars)| vars.get(name).map(|var| (ns, var)))
+            .collect::<Vec<_>>();
+
+        variables_per_ns
     }
 
     pub fn set_variable(&mut self, name: String, value: String) -> anyhow::Result<()> {

@@ -6,7 +6,7 @@ mod eval;
 pub mod ir;
 pub mod runner;
 pub mod ureq_runner;
-mod value;
+pub mod value;
 
 use environment::Environment;
 use error::InterpreterError;
@@ -26,10 +26,20 @@ impl<'source> ast::Program<'source> {
             return Err(ParserErrors::new(parse_errors).into());
         }
 
-        let interp = eval::Evaluator::new(self, env);
+        let mut interpreter = eval::Evaluator::new(self, env);
 
-        let items = interp.evaluate().map_err(InterpreterError::EvalErrors)?;
+        let items = interpreter
+            .evaluate()
+            .map_err(InterpreterError::EvalErrors)?;
 
-        Ok(ir::Program::new(self.source, items.into()))
+        Ok(ir::Program::new(
+            self.source,
+            items.into(),
+            interpreter
+                .let_bindings
+                .into_iter()
+                .map(|(key, value)| (key.into(), value))
+                .collect(),
+        ))
     }
 }

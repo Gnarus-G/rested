@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "\nget /adsf {\n  header\n  body a\n}\n",
   items: [
-    Request(
+    Request(Request(
       method: GET,
       endpoint: Pathname(Literal(
         value: "/adsf",
@@ -94,6 +94,6 @@ Program(
           col: 0,
         ),
       ),
-    ),
+    )),
   ],
 )

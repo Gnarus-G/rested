@@ -34,6 +34,7 @@ Usage: rstd [OPTIONS] <COMMAND>
 Commands:
   run         Run a script written in the language
   scratch     Open your default editor to start editing a temporary file
+  snap        Generate a static snapshot of the requests with all dynamic values evaluated
   env         Operate on the environment variables available in the runtime
   completion  Generate a completions file for a specified shell
   lsp         Start the rested language server
@@ -184,6 +185,7 @@ end
 nvim_lsp.rstdls.setup({
   on_attach = on_attach, --[[your on_attach function goes here]]
   single_file_support = true,
+  root_dir = nvim_lsp.util.root_pattern(".env.rd.json"),
   capabilities = require('cmp_nvim_lsp')
       .default_capabilities(vim.lsp.protocol.make_client_capabilities())
 })

@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "get \"http://localhost:8080\"\n        get env(\"url\")",
   items: [
-    Request(
+    Request(Request(
       method: GET,
       endpoint: Expr(String(StringLiteral(
         raw: "\"http://localhost:8080\"",
@@ -37,8 +37,8 @@ Program(
           col: 27,
         ),
       ),
-    ),
-    Request(
+    )),
+    Request(Request(
       method: GET,
       endpoint: Expr(Call(CallExpr(
         identifier: Ok(Token(
@@ -96,6 +96,6 @@ Program(
           col: 22,
         ),
       ),
-    ),
+    )),
   ],
 )

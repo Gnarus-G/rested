@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "\nlet b = [env(\")]\n",
   items: [
-    Let(
+    Let(VariableDeclaration(
       identifier: Ok(Token(
         kind: Ident,
         text: "b",
@@ -163,6 +163,6 @@ Program(
           )),
         ],
       )),
-    ),
+    )),
   ],
 )

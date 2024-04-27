@@ -2,8 +2,8 @@ use crate::{error_meta::ContextualError, lexer::locations::GetSpan};
 
 use super::{
     ast::{
-        result::ParsedNode, CallExpr, Endpoint, Expression, ExpressionList, Item, Program,
-        Statement,
+        result::ParsedNode, CallExpr, Endpoint, Expression, ExpressionList, Item, Program, Request,
+        Statement, StringLiteral, VariableDeclaration,
     },
     error::ParseError,
 };
@@ -20,6 +20,14 @@ where
         item.visit_children_with(self);
     }
 
+    fn visit_variable_declaration(&mut self, declaration: &VariableDeclaration<'source>) {
+        declaration.visit_children_with(self);
+    }
+
+    fn visit_request(&mut self, request: &Request<'source>) {
+        request.visit_children_with(self);
+    }
+
     fn visit_statement(&mut self, statement: &Statement<'source>) {
         statement.visit_children_with(self);
     }
@@ -34,6 +42,10 @@ where
 
     fn visit_expr_list(&mut self, expr_list: &ExpressionList<'source>) {
         expr_list.visit_children_with(self);
+    }
+
+    fn visit_string(&mut self, stringlit: &StringLiteral<'source>) {
+        stringlit.visit_children_with(self);
     }
 
     fn visit_call_expr(&mut self, expr: &CallExpr<'source>) {
@@ -77,21 +89,12 @@ impl<'source> VisitWith<'source> for Item<'source> {
                 visitor.visit_parsed_node(identifier);
                 visitor.visit_expr(value);
             }
-            Item::Let { identifier, value } => {
-                visitor.visit_parsed_node(identifier);
-                visitor.visit_expr(value)
+            Item::Let(d) => {
+                visitor.visit_variable_declaration(d);
             }
-            Item::Request {
-                block: Some(block),
-                endpoint,
-                ..
-            } => {
-                visitor.visit_endpoint(endpoint);
-                for statement in block.statements.iter() {
-                    visitor.visit_statement(statement)
-                }
+            Item::Request(req) => {
+                visitor.visit_request(req);
             }
-            Item::Request { endpoint, .. } => visitor.visit_endpoint(endpoint),
             Item::Expr(expr) => visitor.visit_expr(expr),
             Item::Attribute {
                 arguments: Some(arguments),
@@ -105,6 +108,41 @@ impl<'source> VisitWith<'source> for Item<'source> {
             }
             Item::Error(e) => visitor.visit_error(e),
             _ => {}
+        }
+    }
+}
+
+impl<'source> VisitWith<'source> for VariableDeclaration<'source> {
+    fn visit_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        visitor.visit_variable_declaration(self);
+    }
+
+    fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        let VariableDeclaration { identifier, value } = self;
+
+        visitor.visit_parsed_node(identifier);
+        visitor.visit_expr(value)
+    }
+}
+
+impl<'source> VisitWith<'source> for Request<'source> {
+    fn visit_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        visitor.visit_request(self);
+    }
+
+    fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        match self {
+            Request {
+                endpoint,
+                block: Some(block),
+                ..
+            } => {
+                visitor.visit_endpoint(endpoint);
+                for statement in block.statements.iter() {
+                    visitor.visit_statement(statement)
+                }
+            }
+            Request { endpoint, .. } => visitor.visit_endpoint(endpoint),
         }
     }
 }
@@ -182,9 +220,18 @@ impl<'source> VisitWith<'source> for Expression<'source> {
             }
             Expression::Error(e) => visitor.visit_error(e),
             Expression::Identifier(ident) => visitor.visit_parsed_node(ident),
+            Expression::String(s) => visitor.visit_string(s),
             _ => {}
         };
     }
+}
+
+impl<'source> VisitWith<'source> for StringLiteral<'source> {
+    fn visit_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        visitor.visit_string(self)
+    }
+
+    fn visit_children_with<V: Visitor<'source>>(&self, _visitor: &mut V) {}
 }
 
 impl<'source> VisitWith<'source> for CallExpr<'source> {

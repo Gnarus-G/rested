@@ -36,15 +36,12 @@ impl<'source> Runner<'source> {
     }
 
     pub fn run(&mut self, request_names: Option<&[String]>) {
-        let requests = self
-            .program
-            .items
-            .iter()
-            .filter(|r| match (&request_names, &r.name) {
+        let requests = self.program.items.iter().filter(|r| {
+            match (&request_names, r.name.as_deref().unwrap_or(&r.request.url)) {
                 (None, _) => true,
-                (Some(_), None) => false,
-                (Some(desired), Some(name)) => desired.contains(name),
-            });
+                (Some(desired), name) => desired.iter().any(|n| n == name),
+            }
+        });
 
         for RequestItem {
             span,

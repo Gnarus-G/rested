@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "post",
   items: [
-    Request(
+    Request(Request(
       method: POST,
       endpoint: Expr(Error(ContextualError(
         inner_error: ExpectedEitherOfTokens(
@@ -58,6 +58,6 @@ Program(
           col: 3,
         ),
       ),
-    ),
+    )),
   ],
 )

@@ -63,7 +63,7 @@ Program(
         below: Some("            get http://localhost { header \"name\" k }"),
       ),
     )),
-    Let(
+    Let(VariableDeclaration(
       identifier: Ok(Token(
         kind: Ident,
         text: "k",
@@ -89,8 +89,8 @@ Program(
           ),
         ),
       )),
-    ),
-    Request(
+    )),
+    Request(Request(
       method: GET,
       endpoint: Url(Literal(
         value: "http://localhost",
@@ -162,6 +162,6 @@ Program(
           col: 51,
         ),
       ),
-    ),
+    )),
   ],
 )

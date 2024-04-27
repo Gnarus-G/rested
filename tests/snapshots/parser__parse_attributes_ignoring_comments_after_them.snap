@@ -69,7 +69,7 @@ Program(
         ),
       ),
     )),
-    Request(
+    Request(Request(
       method: GET,
       endpoint: Pathname(Literal(
         value: "/api",
@@ -99,6 +99,6 @@ Program(
           col: 24,
         ),
       ),
-    ),
+    )),
   ],
 )

@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "get `${url}/api`\n        get `${env(`${uri}:8080`)}/api`\n        get `${env(\"url\")}/api`",
   items: [
-    Request(
+    Request(Request(
       method: GET,
       endpoint: Expr(TemplateSringLiteral(
         span: Span(
@@ -78,8 +78,8 @@ Program(
           col: 16,
         ),
       ),
-    ),
-    Request(
+    )),
+    Request(Request(
       method: GET,
       endpoint: Expr(TemplateSringLiteral(
         span: Span(
@@ -226,8 +226,8 @@ Program(
           col: 39,
         ),
       ),
-    ),
-    Request(
+    )),
+    Request(Request(
       method: GET,
       endpoint: Expr(TemplateSringLiteral(
         span: Span(
@@ -333,6 +333,6 @@ Program(
           col: 31,
         ),
       ),
-    ),
+    )),
   ],
 )
