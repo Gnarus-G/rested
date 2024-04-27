@@ -7,7 +7,9 @@ use crate::error_meta::ContextualError;
 use crate::interpreter::ir::LogDestination;
 use crate::interpreter::value::ValueTag;
 use crate::lexer;
-use crate::parser::ast::{self, Endpoint, Expression, Item, VariableDeclaration};
+use crate::parser::ast::{
+    self, ConstantDeclaration, Endpoint, Expression, Item, VariableDeclaration,
+};
 
 use crate::lexer::locations::GetSpan;
 
@@ -196,7 +198,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
 
                 return Ok(Some(r));
             }
-            Set { identifier, value } => {
+            Set(ConstantDeclaration { identifier, value }) => {
                 let identifier = identifier.get()?;
                 if identifier.text != "BASE_URL" {
                     return Err(self.error_factory.unknown_constant(identifier).into());

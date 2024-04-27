@@ -65,11 +65,14 @@ pub struct VariableDeclaration<'source> {
 }
 
 #[derive(Debug, PartialEq, Serialize)]
+pub struct ConstantDeclaration<'source> {
+    pub identifier: ParsedNode<'source, Token<'source>>,
+    pub value: Expression<'source>,
+}
+
+#[derive(Debug, PartialEq, Serialize)]
 pub enum Item<'source> {
-    Set {
-        identifier: ParsedNode<'source, Token<'source>>,
-        value: Expression<'source>,
-    },
+    Set(ConstantDeclaration<'source>),
     Let(VariableDeclaration<'source>),
     LineComment(Literal<'source>),
     Request(Request<'source>),

@@ -216,27 +216,27 @@ impl<'source> Parser<'source> {
         let identifier = match e.expect_peek(self, TokenKind::Ident) {
             Ok(i) => i.into(),
             Err(error) => {
-                return Ok(Item::Set {
+                return Ok(Item::Set(ast::ConstantDeclaration {
                     identifier: ParsedNode::Error(error.clone()),
                     value: Expression::Error(error),
-                })
+                }))
             }
         };
 
         self.next_token();
 
-        Ok(Item::Set {
+        Ok(Item::Set(ast::ConstantDeclaration {
             value: match self.parse_expression() {
                 Ok(expr) => expr,
                 Err(error) => {
-                    return Ok(Item::Set {
+                    return Ok(Item::Set(ast::ConstantDeclaration {
                         identifier,
                         value: Expression::Error(error),
-                    })
+                    }))
                 }
             },
             identifier,
-        })
+        }))
     }
 
     fn parse_block(&mut self) -> Option<Block<'source>> {

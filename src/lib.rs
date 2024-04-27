@@ -30,7 +30,10 @@ pub mod editing {
 
 pub mod fmt {
     use crate::parser::{
-        ast::{result::ParsedNode, Expression, Item, ObjectEntry, VariableDeclaration},
+        ast::{
+            result::ParsedNode, ConstantDeclaration, Expression, Item, ObjectEntry,
+            VariableDeclaration,
+        },
         ast_visit::{VisitWith, Visitor},
     };
 
@@ -49,6 +52,10 @@ pub mod fmt {
                 indent: 0,
                 output: String::new(),
             }
+        }
+
+        fn push_char(&mut self, s: char) {
+            self.output.push(s)
         }
 
         fn push_str(&mut self, s: &str) {
@@ -81,23 +88,54 @@ pub mod fmt {
     impl<'source> Visitor<'source> for FormattedPrinter {
         fn visit_item(&mut self, item: &crate::parser::ast::Item<'source>) {
             match item {
-                Item::Let(VariableDeclaration { identifier, value }) => {
-                    self.push_str("let ");
-
-                    self.visit_parsed_node(identifier);
-
-                    if let ParsedNode::Ok(ident) = identifier {
-                        self.push_str(ident.text);
-                    }
-
-                    self.push_str(" = ");
-                    self.visit_expr(value);
-                }
+                Item::Let(d) => self.visit_variable_declaration(d),
                 Item::Error(e) => self.visit_error(e),
-                _ => {}
+                Item::Set(s) => self.visit_constant_declaration(s),
+                Item::LineComment(lit) => self.push_str(lit.value),
+                Item::Request(_) => todo!(),
+                Item::Expr(_) => todo!(),
+                Item::Attribute {
+                    location,
+                    identifier,
+                    arguments,
+                } => todo!(),
             }
 
-            self.push_str("\n\n");
+            self.push_str("\n");
+        }
+
+        fn visit_constant_declaration(
+            &mut self,
+            ConstantDeclaration { identifier, value }: &ConstantDeclaration<'source>,
+        ) {
+            self.push_str("set ");
+
+            self.visit_parsed_node(identifier);
+
+            if let ParsedNode::Ok(ident) = identifier {
+                self.push_str(ident.text);
+            }
+
+            self.push_str(" = ");
+            self.visit_expr(value);
+            self.new_line();
+        }
+
+        fn visit_variable_declaration(
+            &mut self,
+            VariableDeclaration { identifier, value }: &VariableDeclaration<'source>,
+        ) {
+            self.push_str("let ");
+
+            self.visit_parsed_node(identifier);
+
+            if let ParsedNode::Ok(ident) = identifier {
+                self.push_str(ident.text);
+            }
+
+            self.push_str(" = ");
+            self.visit_expr(value);
+            self.new_line();
         }
 
         fn visit_expr(&mut self, expr: &crate::parser::ast::Expression<'source>) {

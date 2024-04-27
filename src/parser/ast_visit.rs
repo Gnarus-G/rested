@@ -2,8 +2,8 @@ use crate::{error_meta::ContextualError, lexer::locations::GetSpan};
 
 use super::{
     ast::{
-        result::ParsedNode, CallExpr, Endpoint, Expression, ExpressionList, Item, Program, Request,
-        Statement, StringLiteral, VariableDeclaration,
+        result::ParsedNode, CallExpr, ConstantDeclaration, Endpoint, Expression, ExpressionList,
+        Item, Program, Request, Statement, StringLiteral, VariableDeclaration,
     },
     error::ParseError,
 };
@@ -21,6 +21,10 @@ where
     }
 
     fn visit_variable_declaration(&mut self, declaration: &VariableDeclaration<'source>) {
+        declaration.visit_children_with(self);
+    }
+
+    fn visit_constant_declaration(&mut self, declaration: &ConstantDeclaration<'source>) {
         declaration.visit_children_with(self);
     }
 
@@ -85,12 +89,11 @@ impl<'source> VisitWith<'source> for Item<'source> {
 
     fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
         match self {
-            Item::Set { identifier, value } => {
-                visitor.visit_parsed_node(identifier);
-                visitor.visit_expr(value);
+            Item::Set(set_d) => {
+                visitor.visit_constant_declaration(set_d);
             }
-            Item::Let(d) => {
-                visitor.visit_variable_declaration(d);
+            Item::Let(let_d) => {
+                visitor.visit_variable_declaration(let_d);
             }
             Item::Request(req) => {
                 visitor.visit_request(req);
@@ -112,6 +115,19 @@ impl<'source> VisitWith<'source> for Item<'source> {
     }
 }
 
+impl<'source> VisitWith<'source> for ConstantDeclaration<'source> {
+    fn visit_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        visitor.visit_constant_declaration(self);
+    }
+
+    fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        let ConstantDeclaration { identifier, value } = self;
+
+        visitor.visit_parsed_node(identifier);
+        visitor.visit_expr(value);
+    }
+}
+
 impl<'source> VisitWith<'source> for VariableDeclaration<'source> {
     fn visit_with<V: Visitor<'source>>(&self, visitor: &mut V) {
         visitor.visit_variable_declaration(self);
@@ -121,7 +137,7 @@ impl<'source> VisitWith<'source> for VariableDeclaration<'source> {
         let VariableDeclaration { identifier, value } = self;
 
         visitor.visit_parsed_node(identifier);
-        visitor.visit_expr(value)
+        visitor.visit_expr(value);
     }
 }
 

@@ -10,7 +10,7 @@ use crate::{
     language_server::position::ContainsPosition,
     lexer::{self, locations::GetSpan},
     parser::{
-        ast::{self, result::ParsedNode, Expression, Item, Statement},
+        ast::{self, result::ParsedNode, ConstantDeclaration, Expression, Item, Statement},
         ast_visit::{self, VisitWith},
         error::ParseError,
     },
@@ -144,7 +144,7 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
         }
 
         match item {
-            Item::Set { identifier, value } => {
+            Item::Set(ConstantDeclaration { identifier, value }) => {
                 if identifier.span().is_on_or_after(&self.position) {
                     return self.suggest(SuggestionKind::SetIdentifiers);
                 }
