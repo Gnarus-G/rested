@@ -23,9 +23,9 @@ Program(
           col: 8,
         ),
         end: Position(
-          value: 60,
+          value: 59,
           line: 5,
-          col: 1,
+          col: 0,
         ),
       ), [
         Ok(ObjectEntry(
@@ -39,9 +39,9 @@ Program(
                 col: 4,
               ),
               end: Position(
-                value: 18,
+                value: 17,
                 line: 2,
-                col: 7,
+                col: 6,
               ),
             ),
           )),
@@ -55,9 +55,9 @@ Program(
                 col: 9,
               ),
               end: Position(
-                value: 27,
+                value: 26,
                 line: 2,
-                col: 16,
+                col: 15,
               ),
             ),
           )),
@@ -73,9 +73,9 @@ Program(
                 col: 4,
               ),
               end: Position(
-                value: 37,
+                value: 36,
                 line: 3,
-                col: 8,
+                col: 7,
               ),
             ),
           )),
@@ -86,9 +86,9 @@ Program(
               col: 10,
             ),
             end: Position(
-              value: 42,
+              value: 41,
               line: 3,
-              col: 13,
+              col: 12,
             ),
           ), 123.0)),
         )),
@@ -103,9 +103,9 @@ Program(
                 col: 4,
               ),
               end: Position(
-                value: 52,
+                value: 51,
                 line: 4,
-                col: 8,
+                col: 7,
               ),
             ),
           )),
@@ -119,9 +119,9 @@ Program(
                 col: 10,
               ),
               end: Position(
-                value: 58,
+                value: 57,
                 line: 4,
-                col: 14,
+                col: 13,
               ),
             ),
           )),

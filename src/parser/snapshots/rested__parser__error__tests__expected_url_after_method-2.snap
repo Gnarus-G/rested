@@ -33,9 +33,9 @@ Program(
             col: 0,
           ),
           end: Position(
-            value: 4,
+            value: 3,
             line: 0,
-            col: 3,
+            col: 2,
           ),
         ),
         message: None,
@@ -53,9 +53,9 @@ Program(
           col: 0,
         ),
         end: Position(
-          value: 4,
+          value: 3,
           line: 0,
-          col: 3,
+          col: 2,
         ),
       ),
     )),

@@ -17,9 +17,9 @@ Program(
             col: 5,
           ),
           end: Position(
-            value: 21,
+            value: 20,
             line: 0,
-            col: 21,
+            col: 20,
           ),
         ),
       )),
@@ -36,9 +36,9 @@ Program(
                   col: 31,
                 ),
                 end: Position(
-                  value: 37,
+                  value: 36,
                   line: 0,
-                  col: 37,
+                  col: 36,
                 ),
               ),
             )),
@@ -60,9 +60,9 @@ Program(
                     col: 41,
                   ),
                   end: Position(
-                    value: 49,
+                    value: 48,
                     line: 0,
-                    col: 49,
+                    col: 48,
                   ),
                 ),
                 exprs: [
@@ -76,9 +76,9 @@ Program(
                         col: 42,
                       ),
                       end: Position(
-                        value: 48,
+                        value: 47,
                         line: 0,
-                        col: 48,
+                        col: 47,
                       ),
                     ),
                   )),
@@ -105,9 +105,9 @@ Program(
                     col: 58,
                   ),
                   end: Position(
-                    value: 66,
+                    value: 65,
                     line: 0,
-                    col: 66,
+                    col: 65,
                   ),
                 ),
                 exprs: [
@@ -121,9 +121,9 @@ Program(
                         col: 59,
                       ),
                       end: Position(
-                        value: 65,
+                        value: 64,
                         line: 0,
-                        col: 65,
+                        col: 64,
                       ),
                     ),
                   )),

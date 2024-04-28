@@ -24,9 +24,9 @@ Program(
             col: 3,
           ),
           end: Position(
-            value: 50,
+            value: 49,
             line: 2,
-            col: 18,
+            col: 17,
           ),
         ),
         exprs: [
@@ -40,9 +40,9 @@ Program(
                 col: 4,
               ),
               end: Position(
-                value: 10,
+                value: 9,
                 line: 0,
-                col: 10,
+                col: 9,
               ),
             ),
           )),
@@ -56,9 +56,9 @@ Program(
                 col: 12,
               ),
               end: Position(
-                value: 49,
+                value: 48,
                 line: 2,
-                col: 17,
+                col: 16,
               ),
             ),
           )),

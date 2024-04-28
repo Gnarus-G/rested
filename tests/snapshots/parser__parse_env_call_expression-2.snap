@@ -34,9 +34,9 @@ Program(
               col: 11,
             ),
             end: Position(
-              value: 15,
+              value: 14,
               line: 0,
-              col: 15,
+              col: 14,
             ),
           ),
           exprs: [
@@ -50,9 +50,9 @@ Program(
                   col: 12,
                 ),
                 end: Position(
-                  value: 14,
+                  value: 13,
                   line: 0,
-                  col: 14,
+                  col: 13,
                 ),
               ),
             )),

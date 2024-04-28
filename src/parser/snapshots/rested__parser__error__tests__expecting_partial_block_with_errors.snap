@@ -17,9 +17,9 @@ Program(
             col: 4,
           ),
           end: Position(
-            value: 10,
+            value: 9,
             line: 1,
-            col: 9,
+            col: 8,
           ),
         ),
       )),
@@ -46,9 +46,9 @@ Program(
                   col: 2,
                 ),
                 end: Position(
-                  value: 28,
+                  value: 27,
                   line: 3,
-                  col: 6,
+                  col: 5,
                 ),
               ),
               message: None,

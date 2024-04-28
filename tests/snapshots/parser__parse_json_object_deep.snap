@@ -23,9 +23,9 @@ Program(
           col: 8,
         ),
         end: Position(
-          value: 195,
+          value: 194,
           line: 13,
-          col: 1,
+          col: 0,
         ),
       ), [
         Ok(ObjectEntry(
@@ -39,9 +39,9 @@ Program(
                 col: 4,
               ),
               end: Position(
-                value: 18,
+                value: 17,
                 line: 2,
-                col: 7,
+                col: 6,
               ),
             ),
           )),
@@ -55,9 +55,9 @@ Program(
                 col: 9,
               ),
               end: Position(
-                value: 27,
+                value: 26,
                 line: 2,
-                col: 16,
+                col: 15,
               ),
             ),
           )),
@@ -73,9 +73,9 @@ Program(
                 col: 4,
               ),
               end: Position(
-                value: 37,
+                value: 36,
                 line: 3,
-                col: 8,
+                col: 7,
               ),
             ),
           )),
@@ -86,9 +86,9 @@ Program(
               col: 10,
             ),
             end: Position(
-              value: 44,
+              value: 43,
               line: 3,
-              col: 15,
+              col: 14,
             ),
           ), false)),
         )),
@@ -103,9 +103,9 @@ Program(
                 col: 4,
               ),
               end: Position(
-                value: 54,
+                value: 53,
                 line: 4,
-                col: 8,
+                col: 7,
               ),
             ),
           )),
@@ -116,9 +116,9 @@ Program(
               col: 10,
             ),
             end: Position(
-              value: 193,
+              value: 192,
               line: 12,
-              col: 5,
+              col: 4,
             ),
           ), [
             Ok(ObjectEntry(
@@ -132,9 +132,9 @@ Program(
                     col: 8,
                   ),
                   end: Position(
-                    value: 71,
+                    value: 70,
                     line: 5,
-                    col: 13,
+                    col: 12,
                   ),
                 ),
               )),
@@ -145,9 +145,9 @@ Program(
                   col: 15,
                 ),
                 end: Position(
-                  value: 187,
+                  value: 186,
                   line: 11,
-                  col: 9,
+                  col: 8,
                 ),
               ), [
                 Ok(ObjectEntry(
@@ -161,9 +161,9 @@ Program(
                         col: 12,
                       ),
                       end: Position(
-                        value: 88,
+                        value: 87,
                         line: 6,
-                        col: 13,
+                        col: 12,
                       ),
                     ),
                   )),
@@ -177,9 +177,9 @@ Program(
                         col: 15,
                       ),
                       end: Position(
-                        value: 93,
+                        value: 92,
                         line: 6,
-                        col: 18,
+                        col: 17,
                       ),
                     ),
                   )),
@@ -195,9 +195,9 @@ Program(
                         col: 12,
                       ),
                       end: Position(
-                        value: 108,
+                        value: 107,
                         line: 7,
-                        col: 13,
+                        col: 12,
                       ),
                     ),
                   )),
@@ -208,9 +208,9 @@ Program(
                       col: 15,
                     ),
                     end: Position(
-                      value: 177,
+                      value: 176,
                       line: 10,
-                      col: 13,
+                      col: 12,
                     ),
                   ), [
                     Ok(ObjectEntry(
@@ -224,9 +224,9 @@ Program(
                             col: 16,
                           ),
                           end: Position(
-                            value: 131,
+                            value: 130,
                             line: 8,
-                            col: 19,
+                            col: 18,
                           ),
                         ),
                       )),
@@ -237,9 +237,9 @@ Program(
                           col: 21,
                         ),
                         end: Position(
-                          value: 138,
+                          value: 137,
                           line: 8,
-                          col: 26,
+                          col: 25,
                         ),
                       ), 2.123)),
                     )),
@@ -254,9 +254,9 @@ Program(
                             col: 16,
                           ),
                           end: Position(
-                            value: 159,
+                            value: 158,
                             line: 9,
-                            col: 19,
+                            col: 18,
                           ),
                         ),
                       )),
@@ -267,9 +267,9 @@ Program(
                           col: 21,
                         ),
                         end: Position(
-                          value: 163,
+                          value: 162,
                           line: 9,
-                          col: 23,
+                          col: 22,
                         ),
                       )),
                     )),

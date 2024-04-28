@@ -34,9 +34,9 @@ Program(
               col: 11,
             ),
             end: Position(
-              value: 16,
+              value: 15,
               line: 1,
-              col: 14,
+              col: 13,
             ),
           ),
           exprs: [
@@ -68,9 +68,9 @@ Program(
                   col: 12,
                 ),
                 end: Position(
-                  value: 15,
+                  value: 14,
                   line: 1,
-                  col: 14,
+                  col: 13,
                 ),
               ),
               message: None,
@@ -100,9 +100,9 @@ Program(
                   col: 12,
                 ),
                 end: Position(
-                  value: 16,
+                  value: 15,
                   line: 1,
-                  col: 14,
+                  col: 13,
                 ),
               ),
               message: None,

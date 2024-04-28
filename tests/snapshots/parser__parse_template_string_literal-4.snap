@@ -24,9 +24,9 @@ Program(
             col: 8,
           ),
           end: Position(
-            value: 19,
+            value: 18,
             line: 1,
-            col: 18,
+            col: 17,
           ),
         ),
         parts: [
@@ -40,9 +40,9 @@ Program(
                 col: 8,
               ),
               end: Position(
-                value: 15,
+                value: 14,
                 line: 1,
-                col: 14,
+                col: 13,
               ),
             ),
           )),
@@ -56,9 +56,9 @@ Program(
                 col: 17,
               ),
               end: Position(
-                value: 19,
+                value: 18,
                 line: 1,
-                col: 18,
+                col: 17,
               ),
             ),
           )),
@@ -82,9 +82,9 @@ Program(
           col: 8,
         ),
         end: Position(
-          value: 31,
+          value: 30,
           line: 2,
-          col: 10,
+          col: 9,
         ),
       )),
     )),
