@@ -71,17 +71,20 @@ pub struct ConstantDeclaration<'source> {
 }
 
 #[derive(Debug, PartialEq, Serialize)]
+pub struct Attribute<'source> {
+    pub location: Position,
+    pub identifier: ParsedNode<'source, Token<'source>>,
+    pub arguments: Option<ExpressionList<'source>>,
+}
+
+#[derive(Debug, PartialEq, Serialize)]
 pub enum Item<'source> {
     Set(ConstantDeclaration<'source>),
     Let(VariableDeclaration<'source>),
     LineComment(Literal<'source>),
     Request(Request<'source>),
     Expr(Expression<'source>),
-    Attribute {
-        location: Position,
-        identifier: ParsedNode<'source, Token<'source>>,
-        arguments: Option<ExpressionList<'source>>,
-    },
+    Attribute(Attribute<'source>),
     Error(Box<Error<'source>>),
 }
 

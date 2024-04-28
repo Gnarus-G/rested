@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "\n            @skip\n            @dbg\n            let k = \"v\"\n            get http://localhost { header \"name\" k }",
   items: [
-    Attribute(
+    Attribute(Attribute(
       location: Position(
         value: 13,
         line: 1,
@@ -22,7 +22,7 @@ Program(
         ),
       )),
       arguments: None,
-    ),
+    )),
     Error(ContextualError(
       inner_error: ExpectedEitherOfTokens(
         found: Token(

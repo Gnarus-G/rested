@@ -113,19 +113,7 @@ pub mod fmt {
                 }
             }
 
-            match item {
-                Item::Let(d) => self.visit_variable_declaration(d),
-                Item::Error(e) => self.visit_error(e),
-                Item::Set(s) => self.visit_constant_declaration(s),
-                Item::LineComment(lit) => self.visit_line_comment(lit),
-                Item::Request(r) => self.visit_request(r),
-                Item::Expr(expr) => self.visit_expr(expr),
-                Item::Attribute {
-                    location,
-                    identifier,
-                    arguments,
-                } => todo!(),
-            }
+            item.visit_children_with(self)
         }
 
         fn visit_line_comment(&mut self, comment: &ast::Literal<'source>) {

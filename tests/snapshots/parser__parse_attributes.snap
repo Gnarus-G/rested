@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "@log(\"path/to/file\") get /api",
   items: [
-    Attribute(
+    Attribute(Attribute(
       location: Position(
         value: 0,
         line: 0,
@@ -53,7 +53,7 @@ Program(
           )),
         ],
       )),
-    ),
+    )),
     Request(Request(
       method: GET,
       endpoint: Pathname(Literal(

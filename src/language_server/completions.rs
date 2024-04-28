@@ -10,7 +10,9 @@ use crate::{
     language_server::position::ContainsPosition,
     lexer::{self, locations::GetSpan},
     parser::{
-        ast::{self, result::ParsedNode, ConstantDeclaration, Expression, Item, Statement},
+        ast::{
+            self, result::ParsedNode, Attribute, ConstantDeclaration, Expression, Item, Statement,
+        },
         ast_visit::{self, VisitWith},
         error::ParseError,
     },
@@ -187,11 +189,11 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
                 self.visit_endpoint(endpoint);
                 self.suggest(SuggestionKind::Identifiers);
             }
-            Item::Attribute {
+            Item::Attribute(Attribute {
                 identifier,
                 arguments,
                 ..
-            } => {
+            }) => {
                 if identifier.span().is_on_or_after(&self.position) {
                     return self.suggest(SuggestionKind::Attributes);
                 }

@@ -15,6 +15,7 @@ use crate::lexer::locations::{GetSpan, Position, Span};
 use crate::lexer::TokenKind;
 use crate::lexer::TokenKind::*;
 use crate::lexer::{Lexer, Token};
+use crate::parser::ast::Attribute;
 
 macro_rules! match_or_throw {
     ($expression:expr; $expectations:ident; $self:ident; $( $( $pattern:ident )|+ $( if $guard: expr )? => $arm:expr $(,)? )+ $( ,$message:literal )? ) => {
@@ -531,22 +532,22 @@ impl<'source> Parser<'source> {
         let identifier = e.expect_peek(self, TokenKind::Ident)?.into();
 
         if self.peek_token().kind != TokenKind::LParen {
-            return Ok(Item::Attribute {
+            return Ok(Item::Attribute(Attribute {
                 location: e.start,
                 identifier,
                 arguments: None,
-            });
+            }));
         }
 
         let l_paren = self.next_token().clone();
 
         debug_assert!(l_paren.kind == LParen);
 
-        Ok(Item::Attribute {
+        Ok(Item::Attribute(Attribute {
             location: e.start,
             identifier,
             arguments: Some(self.parse_expression_list(&l_paren, RParen)),
-        })
+        }))
     }
 
     fn parse_expression_list(

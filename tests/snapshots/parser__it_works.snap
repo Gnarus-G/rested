@@ -174,7 +174,7 @@ Program(
         ),
       )),
     )),
-    Attribute(
+    Attribute(Attribute(
       location: Position(
         value: 129,
         line: 8,
@@ -214,7 +214,7 @@ Program(
           ))),
         ],
       )),
-    ),
+    )),
     Request(Request(
       method: POST,
       endpoint: Pathname(Literal(
@@ -426,7 +426,7 @@ Program(
         ),
       ),
     )),
-    Attribute(
+    Attribute(Attribute(
       location: Position(
         value: 284,
         line: 18,
@@ -442,7 +442,7 @@ Program(
         ),
       )),
       arguments: None,
-    ),
+    )),
     Request(Request(
       method: GET,
       endpoint: Pathname(Literal(

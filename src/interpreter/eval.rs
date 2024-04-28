@@ -215,11 +215,11 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
                 };
             }
             LineComment(_) => {}
-            Attribute {
+            Attribute(ast::Attribute {
                 identifier,
                 arguments,
                 ..
-            } => {
+            }) => {
                 let identifier = identifier.get()?;
 
                 match identifier.text {

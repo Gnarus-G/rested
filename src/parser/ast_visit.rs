@@ -2,8 +2,9 @@ use crate::{error_meta::ContextualError, lexer::locations::GetSpan};
 
 use super::{
     ast::{
-        result::ParsedNode, CallExpr, ConstantDeclaration, Endpoint, Expression, ExpressionList,
-        Item, Literal, Program, Request, Statement, StringLiteral, VariableDeclaration,
+        result::ParsedNode, Attribute, CallExpr, ConstantDeclaration, Endpoint, Expression,
+        ExpressionList, Item, Literal, Program, Request, Statement, StringLiteral,
+        VariableDeclaration,
     },
     error::ParseError,
 };
@@ -42,6 +43,10 @@ where
 
     fn visit_expr(&mut self, expr: &Expression<'source>) {
         expr.visit_children_with(self);
+    }
+
+    fn visit_attribute(&mut self, attribute: &Attribute<'source>) {
+        attribute.visit_children_with(self);
     }
 
     fn visit_line_comment(&mut self, comment: &Literal<'source>) {
@@ -107,18 +112,9 @@ impl<'source> VisitWith<'source> for Item<'source> {
                 visitor.visit_request(req);
             }
             Item::Expr(expr) => visitor.visit_expr(expr),
-            Item::Attribute {
-                arguments: Some(arguments),
-                identifier,
-                ..
-            } => {
-                visitor.visit_parsed_node(identifier);
-                for arg in arguments.exprs.iter() {
-                    visitor.visit_expr(arg);
-                }
-            }
+            Item::Attribute(att) => visitor.visit_attribute(att),
             Item::Error(e) => visitor.visit_error(e),
-            _ => {}
+            Item::LineComment(comment) => visitor.visit_line_comment(comment),
         }
     }
 }
@@ -247,6 +243,26 @@ impl<'source> VisitWith<'source> for Expression<'source> {
             Expression::String(s) => visitor.visit_string(s),
             _ => {}
         };
+    }
+}
+
+impl<'source> VisitWith<'source> for Attribute<'source> {
+    fn visit_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        visitor.visit_attribute(self);
+    }
+
+    fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        visitor.visit_parsed_node(&self.identifier);
+
+        if let Attribute {
+            arguments: Some(arguments),
+            ..
+        } = self
+        {
+            for arg in arguments.exprs.iter() {
+                visitor.visit_expr(arg);
+            }
+        }
     }
 }
 
