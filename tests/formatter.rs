@@ -91,6 +91,34 @@ post `${env
     ("b_url")}/asdf${}` {
    header "Content-Type" "application/json"
    body m }
+
+
+let sort = "asc"
+let filter = "active"
+@dbg
+get `http://localhost:8080/api?sort=${sort}&filter=${filter}`
+
+
+@name(
+    "lovely"
+    )
+get 
+    `http://localhost:8080/api?sort=${sort}&filter=${filter}`
+
+let a = read("testasdf.rd")
+
+let string = `
+${
+    a
+}
+content
+text content
+
+`
+
+post /time {
+  body a
+}
 "#
     );
 }

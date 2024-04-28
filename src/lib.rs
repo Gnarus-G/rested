@@ -30,10 +30,7 @@ pub mod editing {
 
 pub mod fmt {
     use crate::parser::{
-        ast::{
-            self, result::ParsedNode, ConstantDeclaration, Expression, Item, ObjectEntry,
-            VariableDeclaration,
-        },
+        ast::{self, ConstantDeclaration, Expression, Item, ObjectEntry, VariableDeclaration},
         ast_visit::{VisitWith, Visitor},
     };
 
@@ -169,10 +166,6 @@ pub mod fmt {
 
             self.visit_parsed_node(identifier);
 
-            if let ParsedNode::Ok(ident) = identifier {
-                self.push_str(ident.text);
-            }
-
             self.push_str(" = ");
             self.visit_expr(value);
         }
@@ -184,10 +177,6 @@ pub mod fmt {
             self.push_str("let ");
 
             self.visit_parsed_node(identifier);
-
-            if let ParsedNode::Ok(ident) = identifier {
-                self.push_str(ident.text);
-            }
 
             self.push_str(" = ");
             self.visit_expr(value);
@@ -208,6 +197,22 @@ pub mod fmt {
             }
         }
 
+        fn visit_attribute(&mut self, attribute: &ast::Attribute<'source>) {
+            self.push_char('@');
+
+            self.visit_parsed_node(&attribute.identifier);
+
+            if let Some(args) = &attribute.arguments {
+                self.push_char('(');
+                self.visit_expr_list(args);
+                self.push_char(')');
+            }
+        }
+
+        fn visit_token(&mut self, token: &crate::lexer::Token<'source>) {
+            self.push_str(token.text);
+        }
+
         fn visit_expr(&mut self, expr: &crate::parser::ast::Expression<'source>) {
             match expr {
                 Expression::String(s) => self.push_str(s.raw),
@@ -216,10 +221,6 @@ pub mod fmt {
                 Expression::Null(_) => self.push_str("null"),
                 Expression::Identifier(node) => {
                     self.visit_parsed_node(node);
-
-                    if let ParsedNode::Ok(ident) = node {
-                        self.push_str(ident.text);
-                    }
                 }
                 Expression::Array(list) => {
                     self.push_str("[");
@@ -238,18 +239,6 @@ pub mod fmt {
 
                         self.visit_parsed_node(node);
 
-                        if let ParsedNode::Ok(ObjectEntry { key, value }) = node {
-                            self.visit_parsed_node(key);
-
-                            if let ParsedNode::Ok(ident) = key {
-                                self.push_str(ident.raw);
-                            }
-
-                            self.push_str(": ");
-
-                            self.visit_expr(value)
-                        }
-
                         if i != entries.len() - 1 {
                             self.push_str(",");
                         }
@@ -265,10 +254,6 @@ pub mod fmt {
                 Expression::Error(e) => self.visit_error(e),
                 Expression::Call(call) => {
                     self.visit_parsed_node(&call.identifier);
-
-                    if let ParsedNode::Ok(ident) = &call.identifier {
-                        self.push_str(ident.text)
-                    }
 
                     self.push_str("(");
 
@@ -291,6 +276,20 @@ pub mod fmt {
                     }
                 }
             }
+        }
+
+        fn visit_object_entry(&mut self, entry: &ObjectEntry<'source>) {
+            let ObjectEntry { key, value } = entry;
+
+            self.visit_parsed_node(key);
+
+            self.push_str(": ");
+
+            self.visit_expr(value)
+        }
+
+        fn visit_string(&mut self, stringlit: &ast::StringLiteral<'source>) {
+            self.push_str(stringlit.raw);
         }
 
         fn visit_expr_list(&mut self, expr_list: &crate::parser::ast::ExpressionList<'source>) {

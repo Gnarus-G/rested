@@ -1,9 +1,12 @@
-use crate::{error_meta::ContextualError, lexer::locations::GetSpan};
+use crate::{
+    error_meta::ContextualError,
+    lexer::{self, locations::GetSpan},
+};
 
 use super::{
     ast::{
         result::ParsedNode, Attribute, CallExpr, ConstantDeclaration, Endpoint, Expression,
-        ExpressionList, Item, Literal, Program, Request, Statement, StringLiteral,
+        ExpressionList, Item, Literal, ObjectEntry, Program, Request, Statement, StringLiteral,
         VariableDeclaration,
     },
     error::ParseError,
@@ -45,6 +48,10 @@ where
         expr.visit_children_with(self);
     }
 
+    fn visit_object_entry(&mut self, entry: &ObjectEntry<'source>) {
+        entry.visit_children_with(self);
+    }
+
     fn visit_attribute(&mut self, attribute: &Attribute<'source>) {
         attribute.visit_children_with(self);
     }
@@ -69,8 +76,15 @@ where
         expr.visit_children_with(self);
     }
 
-    fn visit_parsed_node<T: GetSpan>(&mut self, token: &ParsedNode<'source, T>) {
+    fn visit_token(&mut self, token: &lexer::Token<'source>) {
         token.visit_children_with(self);
+    }
+
+    fn visit_parsed_node<T: GetSpan + VisitWith<'source>>(
+        &mut self,
+        node: &ParsedNode<'source, T>,
+    ) {
+        node.visit_children_with(self);
     }
 
     fn visit_error(&mut self, err: &ContextualError<ParseError<'source>>) {
@@ -225,10 +239,7 @@ impl<'source> VisitWith<'source> for Expression<'source> {
             Expression::Object((_, entries)) => {
                 for entry in entries.iter() {
                     match entry {
-                        ParsedNode::Ok(entry) => {
-                            visitor.visit_parsed_node(&entry.key);
-                            visitor.visit_expr(&entry.value)
-                        }
+                        ParsedNode::Ok(entry) => visitor.visit_object_entry(entry),
                         ParsedNode::Error(e) => visitor.visit_error(e),
                     }
                 }
@@ -243,6 +254,17 @@ impl<'source> VisitWith<'source> for Expression<'source> {
             Expression::String(s) => visitor.visit_string(s),
             _ => {}
         };
+    }
+}
+
+impl<'source> VisitWith<'source> for ObjectEntry<'source> {
+    fn visit_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        visitor.visit_object_entry(self);
+    }
+
+    fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        visitor.visit_parsed_node(&self.key);
+        visitor.visit_expr(&self.value)
     }
 }
 
@@ -282,6 +304,14 @@ impl<'source> VisitWith<'source> for StringLiteral<'source> {
     fn visit_children_with<V: Visitor<'source>>(&self, _visitor: &mut V) {}
 }
 
+impl<'source> VisitWith<'source> for lexer::Token<'source> {
+    fn visit_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        visitor.visit_token(self)
+    }
+
+    fn visit_children_with<V: Visitor<'source>>(&self, _visitor: &mut V) {}
+}
+
 impl<'source> VisitWith<'source> for CallExpr<'source> {
     fn visit_with<V: Visitor<'source>>(&self, visitor: &mut V) {
         visitor.visit_call_expr(self)
@@ -303,14 +333,17 @@ impl<'source> VisitWith<'source> for ContextualError<ParseError<'source>> {
     fn visit_children_with<V: Visitor<'source>>(&self, _visitor: &mut V) {}
 }
 
-impl<'source, T: GetSpan> VisitWith<'source> for ParsedNode<'source, T> {
+impl<'source, T: GetSpan + VisitWith<'source>> VisitWith<'source> for ParsedNode<'source, T> {
     fn visit_with<V: Visitor<'source>>(&self, visitor: &mut V) {
         visitor.visit_parsed_node(self)
     }
 
     fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
-        if let ParsedNode::Error(e) = self {
-            visitor.visit_error(e)
+        match self {
+            ParsedNode::Ok(node) => node.visit_with(visitor),
+            ParsedNode::Error(e) => {
+                visitor.visit_error(e);
+            }
         }
     }
 }
