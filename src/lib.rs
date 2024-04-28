@@ -184,6 +184,10 @@ pub mod fmt {
 
             if let Some(block) = &request.block {
                 self.push('{');
+                if block.statements.is_empty() {
+                    self.push('}');
+                    return;
+                }
                 self.new_line();
 
                 let len = block.statements.len();

@@ -121,6 +121,11 @@ post /time {
 }
 
 get `${env("base")}/wer` {}
+
+post /adsf {
+  header "Authorization" env("token") 
+  body json(true)
+}
 "#
     );
 }

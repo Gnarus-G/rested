@@ -73,6 +73,9 @@ post /time {
     body a
 }
 
-get `${env("base")}/wer` {
+get `${env("base")}/wer` {}
 
+post /adsf {
+    header "Authorization" env("token")
+    body json(true)
 }
