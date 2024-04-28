@@ -176,6 +176,15 @@ let t = {
 let one = 1
 
 let two = 3
+// line comment
+// line comment 2
+// 33
+//
+//
+
+    let s = "tring"
+    let str = "ing"
+    let st = "ring"
 
 
 post `${env

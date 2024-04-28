@@ -94,6 +94,8 @@ pub mod fmt {
         fn hanle_new_line_before_item(&mut self, item: &Item) {
             match item {
                 Item::LineComment(_) => {
+                    self.let_statement_streak = 0;
+
                     self.line_comment_streak += 1;
 
                     if self.line_comment_streak == 1 {
@@ -103,6 +105,8 @@ pub mod fmt {
                     self.new_line();
                 }
                 Item::Let(_) => {
+                    self.line_comment_streak = 0;
+
                     self.let_statement_streak += 1;
 
                     if self.let_statement_streak == 1 {
