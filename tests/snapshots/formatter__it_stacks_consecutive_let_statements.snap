@@ -31,7 +31,7 @@ let str = "ing"
 let st = "ring"
 
 post `${env("b_url")}/asdf` {
-    header "application/json"
+    header "Content-Type" "application/json"
     // This a line comment
     // And this is another
     body m

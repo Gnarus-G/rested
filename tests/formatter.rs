@@ -119,6 +119,8 @@ text content
 post /time {
   body a
 }
+
+get `${env("base")}/wer` {}
 "#
     );
 }

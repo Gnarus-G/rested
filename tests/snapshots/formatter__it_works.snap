@@ -35,7 +35,7 @@ let c = json([{
 }])
 
 get /admin {
-    header "application/json"
+    header "Content-Type" "application/json"
     body json({
         "a": 12,
         t: true
@@ -48,7 +48,7 @@ get /admin {
 }]
 
 post `${env("b_url")}/asdf` {
-    header "application/json"
+    header "Content-Type" "application/json"
     body m
 }
 
@@ -71,4 +71,8 @@ text content
 
 post /time {
     body a
+}
+
+get `${env("base")}/wer` {
+
 }

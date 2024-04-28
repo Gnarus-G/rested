@@ -232,8 +232,10 @@ pub mod fmt {
 
         fn visit_statement(&mut self, statement: &crate::parser::ast::Statement<'source>) {
             match statement {
-                ast::Statement::Header { value, .. } => {
+                ast::Statement::Header { value, name, .. } => {
                     self.push_str("header ");
+                    self.visit_parsed_node(name);
+                    self.push(' ');
                     self.visit_expr(value);
                 }
                 ast::Statement::Body { value, .. } => {
