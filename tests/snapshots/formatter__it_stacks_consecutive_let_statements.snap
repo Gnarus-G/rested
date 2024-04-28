@@ -2,7 +2,7 @@
 source: tests/formatter.rs
 expression: formatter.into_output()
 ---
-set BASE_URL = env("hi")
+set BASE_URL env("hi")
 
 let t = {
     value: 23,

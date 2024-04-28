@@ -214,7 +214,7 @@ pub mod fmt {
 
             self.visit_parsed_node(identifier);
 
-            self.push_str(" = ");
+            self.push(' ');
             self.visit_expr(value);
         }
 
