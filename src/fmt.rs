@@ -38,7 +38,7 @@ impl<'source> FormattedPrinter<'source> {
     pub fn new() -> Self {
         Self {
             error: None,
-            tab_size: 4,
+            tab_size: 2,
             indent: 0,
             output: String::new(),
             is_first_item: true,
