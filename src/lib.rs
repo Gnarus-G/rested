@@ -56,7 +56,7 @@ pub mod fmt {
             }
         }
 
-        fn push_char(&mut self, s: char) {
+        fn push(&mut self, s: char) {
             self.output.push(s)
         }
 
@@ -124,7 +124,7 @@ pub mod fmt {
 
         fn visit_request(&mut self, request: &crate::parser::ast::Request<'source>) {
             self.push_str(&request.method.to_string().to_lowercase());
-            self.push_char(' ');
+            self.push(' ');
 
             match &request.endpoint {
                 ast::Endpoint::Expr(expr) => self.visit_expr(expr),
@@ -132,10 +132,10 @@ pub mod fmt {
                 ast::Endpoint::Pathname(path) => self.push_str(path.value),
             }
 
-            self.push_char(' ');
+            self.push(' ');
 
             if let Some(block) = &request.block {
-                self.push_char('{');
+                self.push('{');
                 self.new_line();
 
                 let len = block.statements.len();
@@ -154,7 +154,7 @@ pub mod fmt {
                 }
 
                 self.new_line();
-                self.push_char('}');
+                self.push('}');
             }
         }
 
@@ -198,14 +198,14 @@ pub mod fmt {
         }
 
         fn visit_attribute(&mut self, attribute: &ast::Attribute<'source>) {
-            self.push_char('@');
+            self.push('@');
 
             self.visit_parsed_node(&attribute.identifier);
 
             if let Some(args) = &attribute.arguments {
-                self.push_char('(');
+                self.push('(');
                 self.visit_expr_list(args);
-                self.push_char(')');
+                self.push(')');
             }
         }
 
