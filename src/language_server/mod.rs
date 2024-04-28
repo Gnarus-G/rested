@@ -403,11 +403,13 @@ impl LanguageServer for Backend {
         };
 
         let start = Position::new(0, 0);
-        let Some(end) = program
-            .items
-            .last()
-            .map(|item| item.span().end.into_position())
-        else {
+        let Some(end) = program.items.last().map(|item| {
+            let pos = item.span().end;
+            Position {
+                line: (pos.line as u32) + 1,
+                character: (pos.col as u32),
+            }
+        }) else {
             info!("document has no items to format: {uri}");
             return Ok(None);
         };
