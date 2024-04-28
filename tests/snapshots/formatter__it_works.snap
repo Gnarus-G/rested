@@ -5,51 +5,51 @@ expression: formatter.into_output()
 set BASE_URL env("hi")
 
 let t = {
-    value: 23,
-    love: "you",
-    hello: {
-        world: true,
-        test: {
-            ing: "true",
-            wow: {
-                b: 122
-            }
-        }
+  value: 23,
+  love: "you",
+  hello: {
+    world: true,
+    test: {
+      ing: "true",
+      wow: {
+        b: 122
+      }
     }
+  }
 }
 let l = t
 let l = [null, t]
 let l = {
-    l: l,
-    k: "asdf"
+  l: l,
+  k: "asdf"
 }
 let m = json(l)
 let a = [m]
 let c = json([{
-    "asdf": true,
-    test: 12434,
-    a: 124,
-    b: [{
-        we: 123
-    }]
+  asdf: true,
+  test: 12434,
+  a: 124,
+  b: [{
+    we: 123
+  }]
 }])
 
 get /admin {
-    header "Content-Type" "application/json"
-    body json({
-        "a": 12,
-        t: true
-    })
+  header "Content-Type" "application/json"
+  body json({
+    a: 12,
+    t: true
+  })
 }
 
 [test, 12, {
-    ness: false,
-    wow: [1, 2, 3]
+  ness: false,
+  wow: [1, 2, 3]
 }]
 
 post `${env("b_url")}/asdf` {
-    header "Content-Type" "application/json"
-    body m
+  header "Content-Type" "application/json"
+  body m
 }
 
 let sort = "asc"
@@ -70,12 +70,12 @@ text content
 `
 
 post /time {
-    body a
+  body a
 }
 
 get `${env("base")}/wer` {}
 
 post /adsf {
-    header "Authorization" env("token")
-    body json(true)
+  header "Authorization" env("token")
+  body json(true)
 }
