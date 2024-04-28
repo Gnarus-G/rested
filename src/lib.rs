@@ -29,14 +29,34 @@ pub mod editing {
 }
 
 pub mod fmt {
-    use crate::parser::{
-        ast::{self, ConstantDeclaration, Expression, Item, ObjectEntry, VariableDeclaration},
-        ast_visit::{VisitWith, Visitor},
+    use crate::{
+        error_meta,
+        parser::{
+            self,
+            ast::{self, ConstantDeclaration, Expression, Item, ObjectEntry, VariableDeclaration},
+            ast_visit::{VisitWith, Visitor},
+        },
     };
 
+    impl<'source> ast::Program<'source> {
+        pub fn to_formatted_string(
+            &self,
+        ) -> Result<String, Box<error_meta::ContextualError<parser::error::ParseError<'source>>>>
+        {
+            let mut formatter = FormattedPrinter::new();
+
+            self.visit_with(&mut formatter);
+
+            if let Some(err) = formatter.error {
+                return Err(Box::new(err));
+            } else {
+                return Ok(formatter.into_output());
+            }
+        }
+    }
+
     pub struct FormattedPrinter<'source> {
-        pub error:
-            Option<crate::error_meta::ContextualError<crate::parser::error::ParseError<'source>>>,
+        pub error: Option<error_meta::ContextualError<parser::error::ParseError<'source>>>,
         tab_size: u8,
         indent: usize,
         output: String,
@@ -320,7 +340,7 @@ pub mod fmt {
             self.push_str(stringlit.raw);
         }
 
-        fn visit_expr_list(&mut self, expr_list: &crate::parser::ast::ExpressionList<'source>) {
+        fn visit_expr_list(&mut self, expr_list: &parser::ast::ExpressionList<'source>) {
             for (i, expr) in expr_list.exprs.iter().enumerate() {
                 self.visit_expr(expr);
                 if i != expr_list.exprs.len() - 1 {
@@ -331,7 +351,7 @@ pub mod fmt {
 
         fn visit_error(
             &mut self,
-            err: &crate::error_meta::ContextualError<crate::parser::error::ParseError<'source>>,
+            err: &error_meta::ContextualError<parser::error::ParseError<'source>>,
         ) {
             self.error = Some(err.clone());
             err.visit_children_with(self);

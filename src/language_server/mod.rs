@@ -11,13 +11,13 @@ use crate::interpreter::{self};
 use crate::lexer;
 use crate::lexer::locations::{GetSpan, Location};
 use crate::parser::ast_visit::VisitWith;
-use crate::parser::{self};
+use crate::parser::{self, ast};
 use anyhow::Context;
 use completions::*;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::{lsp_types::*, LspService, Server};
 use tower_lsp::{Client, LanguageServer};
-use tracing::{debug, error};
+use tracing::{debug, error, info, warn};
 
 use self::position::ContainsPosition;
 
@@ -61,9 +61,9 @@ impl TextDocuments {
         }
     }
 
-    fn get(&self, uri: Url) -> Option<String> {
+    fn get(&self, uri: &Url) -> Option<String> {
         match self.inner.lock() {
-            Ok(map) => map.get(&uri).cloned(),
+            Ok(map) => map.get(uri).cloned(),
             Err(_) => None,
         }
     }
@@ -216,6 +216,7 @@ impl LanguageServer for Backend {
                     ..CompletionOptions::default()
                 }),
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
+                document_formatting_provider: Some(OneOf::Left(true)),
                 ..ServerCapabilities::default()
             },
         })
@@ -233,7 +234,7 @@ impl LanguageServer for Backend {
 
         debug!("cursor position -> {:?}", current_position);
 
-        let Some(text) = self.documents.get(uri.clone()) else {
+        let Some(text) = self.documents.get(&uri) else {
             error!("failed to get the text by uri: {}", uri);
 
             debug!("{:?}", self.documents);
@@ -293,7 +294,7 @@ impl LanguageServer for Backend {
 
         let Some(text) = self
             .documents
-            .get(params.text_document_position.text_document.uri.clone())
+            .get(&params.text_document_position.text_document.uri)
         else {
             error!(
                 "failed to get the text by uri: {}",
@@ -379,6 +380,42 @@ impl LanguageServer for Backend {
             .lock()
             .expect("failed to get lock for text documents")
             .remove(&params.text_document.uri);
+    }
+
+    async fn formatting(&self, params: DocumentFormattingParams) -> Result<Option<Vec<TextEdit>>> {
+        let uri = params.text_document.uri;
+        let Some(text) = self.documents.get(&uri) else {
+            warn!(
+                "formatting request for an unknown document, by uri: {}",
+                uri
+            );
+            return Ok(None);
+        };
+
+        let program = ast::Program::from(&text);
+        let formatted_text = match program.to_formatted_string() {
+            Ok(formatted_text) => formatted_text,
+            Err(err) => {
+                error!("failed to format the source text");
+                error!("{err:#}");
+                return Ok(None);
+            }
+        };
+
+        let start = Position::new(0, 0);
+        let Some(end) = program
+            .items
+            .last()
+            .map(|item| item.span().end.into_position())
+        else {
+            info!("document has no items to format: {uri}");
+            return Ok(None);
+        };
+
+        Ok(Some(vec![TextEdit {
+            range: Range::new(start, end),
+            new_text: formatted_text,
+        }]))
     }
 
     async fn shutdown(&self) -> Result<()> {

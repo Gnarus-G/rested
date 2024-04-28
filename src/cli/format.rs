@@ -6,11 +6,7 @@ use std::{
 
 use anyhow::anyhow;
 use clap::Args;
-use rested::{
-    error::ColoredMetaError,
-    fmt,
-    parser::{ast::Program, ast_visit::VisitWith},
-};
+use rested::{error::ColoredMetaError, parser::ast::Program};
 
 #[derive(Debug, Args)]
 pub struct FormatArgs {
@@ -28,15 +24,11 @@ impl FormatArgs {
 
         let program = Program::from(&code);
 
-        let mut formatter = fmt::FormattedPrinter::new();
+        let formatted_text = program
+            .to_formatted_string()
+            .map_err(|err| anyhow!(ColoredMetaError(&err).to_string()))?;
 
-        program.visit_with(&mut formatter);
-
-        if let Some(err) = formatter.error {
-            return Err(anyhow!(ColoredMetaError(&err).to_string()));
-        } else {
-            println!("{}", formatter.into_output());
-        }
+        println!("{}", formatted_text);
 
         Ok(())
     }
