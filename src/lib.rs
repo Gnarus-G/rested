@@ -93,7 +93,7 @@ pub mod fmt {
         }
 
         fn reset_line_comment_streak(&mut self) {
-            self.line_comment_streak += 0;
+            self.line_comment_streak = 0;
         }
     }
 

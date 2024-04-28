@@ -13,10 +13,6 @@ set BASE_URL = env("hi")
 //     }
 //   }
 // }
-// let l 
-// = t
-//
-//         let l = [null, t]
 
 post `${env("b_url")}/asdf` {
     header "application/json"
@@ -24,3 +20,8 @@ post `${env("b_url")}/asdf` {
     // And this is another
     body m
 }
+
+// let l 
+// = t
+//
+//         let l = [null, t]
