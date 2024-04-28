@@ -42,6 +42,7 @@ pub mod fmt {
         output: String,
         is_first_item: bool,
         line_comment_streak: u16,
+        is_after_attribute: bool,
     }
 
     impl<'source> FormattedPrinter<'source> {
@@ -53,6 +54,7 @@ pub mod fmt {
                 output: String::new(),
                 is_first_item: true,
                 line_comment_streak: 0,
+                is_after_attribute: false,
             }
         }
 
@@ -103,14 +105,22 @@ pub mod fmt {
                 self.reset_line_comment_streak();
 
                 if !self.is_first_item {
-                    self.new_line();
+                    if !self.is_after_attribute {
+                        self.new_line();
+                    }
                     self.new_line();
                 } else {
                     self.is_first_item = false;
                 }
             }
 
-            item.visit_children_with(self)
+            item.visit_children_with(self);
+
+            if let Item::Attribute(_) = item {
+                self.is_after_attribute = true;
+            } else {
+                self.is_after_attribute = false;
+            }
         }
 
         fn visit_line_comment(&mut self, comment: &ast::Literal<'source>) {
