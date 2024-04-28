@@ -158,6 +158,45 @@ post `${env
 }
 
 #[test]
+fn it_stacks_consecutive_let_statements() {
+    assert_fmt!(
+        r#"
+set BASE_URL 
+  env("hi")
+
+let t = {
+  value: 23,
+  love: "you",
+  hello: {
+    world: true, test: {
+      ing: "true", wow: { b: 122 }
+    }
+  }
+}
+let one = 1
+
+let two = 3
+
+
+post `${env
+    ("b_url")}/asdf${}` {
+   header "Content-Type" "application/json"
+       // This a line comment
+       // And this is another
+   body m }
+
+
+let l 
+= t
+
+        let l = [null, t]
+        let aa = ["true", true, { a: 5
+        }]
+"#
+    );
+}
+
+#[test]
 fn it_collect_an_error_on_bad_syntax() {
     assert_error!(
         r#"

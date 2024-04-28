@@ -17,20 +17,14 @@ let t = {
         }
     }
 }
-
 let l = t
-
 let l = [null, t]
-
 let l = {
     l: l,
     k: "asdf"
 }
-
 let m = json(l)
-
 let a = [m]
-
 let c = json([{
     "asdf": true,
     test: 12434,
@@ -59,7 +53,6 @@ post `${env("b_url")}/asdf` {
 }
 
 let sort = "asc"
-
 let filter = "active"
 
 @dbg
@@ -69,7 +62,6 @@ get `http://localhost:8080/api?sort=${sort}&filter=${filter}`
 get `http://localhost:8080/api?sort=${sort}&filter=${filter}` 
 
 let a = read("testasdf.rd")
-
 let string = `
 ${a}
 content

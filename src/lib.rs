@@ -41,6 +41,7 @@ pub mod fmt {
         indent: usize,
         output: String,
         is_first_item: bool,
+        let_statement_streak: u16,
         line_comment_streak: u16,
         is_after_attribute: bool,
     }
@@ -53,6 +54,7 @@ pub mod fmt {
                 indent: 0,
                 output: String::new(),
                 is_first_item: true,
+                let_statement_streak: 0,
                 line_comment_streak: 0,
                 is_after_attribute: false,
             }
@@ -88,31 +90,48 @@ pub mod fmt {
             self.output
         }
 
-        fn bump_line_comment_streak(&mut self) {
-            self.line_comment_streak += 1;
-        }
+        /// Prints one or two new lines when applicable.
+        fn hanle_new_line_before_item(&mut self, item: &Item) {
+            match item {
+                Item::LineComment(_) => {
+                    self.line_comment_streak += 1;
 
-        fn reset_line_comment_streak(&mut self) {
-            self.line_comment_streak = 0;
+                    if self.line_comment_streak == 1 {
+                        self.new_line();
+                    }
+
+                    self.new_line();
+                }
+                Item::Let(_) => {
+                    self.let_statement_streak += 1;
+
+                    if self.let_statement_streak == 1 {
+                        self.new_line();
+                    }
+
+                    self.new_line();
+                }
+                _ => {
+                    self.line_comment_streak = 0;
+                    self.let_statement_streak = 0;
+
+                    if !self.is_first_item {
+                        if !self.is_after_attribute {
+                            self.new_line();
+                        }
+
+                        self.new_line();
+                    } else {
+                        self.is_first_item = false;
+                    }
+                }
+            }
         }
     }
 
     impl<'source> Visitor<'source> for FormattedPrinter<'source> {
         fn visit_item(&mut self, item: &crate::parser::ast::Item<'source>) {
-            if let Item::LineComment(_) = item {
-                self.bump_line_comment_streak();
-            } else {
-                self.reset_line_comment_streak();
-
-                if !self.is_first_item {
-                    if !self.is_after_attribute {
-                        self.new_line();
-                    }
-                    self.new_line();
-                } else {
-                    self.is_first_item = false;
-                }
-            }
+            self.hanle_new_line_before_item(item);
 
             item.visit_children_with(self);
 
@@ -124,11 +143,6 @@ pub mod fmt {
         }
 
         fn visit_line_comment(&mut self, comment: &ast::Literal<'source>) {
-            if self.line_comment_streak == 1 {
-                self.new_line();
-            }
-
-            self.new_line();
             self.push_str(comment.value);
         }
 
