@@ -31,23 +31,24 @@ pub mod editing {
 pub mod fmt {
     use crate::parser::{
         ast::{
-            result::ParsedNode, ConstantDeclaration, Expression, Item, ObjectEntry,
+            self, result::ParsedNode, ConstantDeclaration, Expression, Item, ObjectEntry,
             VariableDeclaration,
         },
         ast_visit::{VisitWith, Visitor},
     };
 
-    pub struct FormattedPrinter {
-        pub has_error: bool,
+    pub struct FormattedPrinter<'source> {
+        pub error:
+            Option<crate::error_meta::ContextualError<crate::parser::error::ParseError<'source>>>,
         tab_size: u8,
         indent: usize,
         output: String,
     }
 
-    impl FormattedPrinter {
+    impl<'source> FormattedPrinter<'source> {
         pub fn new() -> Self {
             Self {
-                has_error: false,
+                error: None,
                 tab_size: 4,
                 indent: 0,
                 output: String::new(),
@@ -85,14 +86,14 @@ pub mod fmt {
         }
     }
 
-    impl<'source> Visitor<'source> for FormattedPrinter {
+    impl<'source> Visitor<'source> for FormattedPrinter<'source> {
         fn visit_item(&mut self, item: &crate::parser::ast::Item<'source>) {
             match item {
                 Item::Let(d) => self.visit_variable_declaration(d),
                 Item::Error(e) => self.visit_error(e),
                 Item::Set(s) => self.visit_constant_declaration(s),
                 Item::LineComment(lit) => self.push_str(lit.value),
-                Item::Request(_) => todo!(),
+                Item::Request(r) => self.visit_request(r),
                 Item::Expr(expr) => self.visit_expr(expr),
                 Item::Attribute {
                     location,
@@ -102,6 +103,44 @@ pub mod fmt {
             }
 
             self.push_str("\n");
+        }
+
+        fn visit_request(&mut self, request: &crate::parser::ast::Request<'source>) {
+            self.push_str(&request.method.to_string().to_lowercase());
+            self.push_char(' ');
+
+            match &request.endpoint {
+                ast::Endpoint::Expr(expr) => self.visit_expr(expr),
+                ast::Endpoint::Url(url) => self.push_str(url.value),
+                ast::Endpoint::Pathname(path) => self.push_str(path.value),
+            }
+
+            self.push_char(' ');
+
+            if let Some(block) = &request.block {
+                self.push_char('{');
+                self.new_line();
+
+                let len = block.statements.len();
+                let mut i = 0;
+                for statement in block.statements.iter() {
+                    self.push_indent();
+
+                    self.visit_statement(statement);
+                    i += 1;
+
+                    if i < len {
+                        self.new_line();
+                    }
+
+                    self.pop_indent();
+                }
+
+                self.new_line();
+                self.push_char('}');
+            }
+
+            self.new_line();
         }
 
         fn visit_constant_declaration(
@@ -136,6 +175,21 @@ pub mod fmt {
             self.push_str(" = ");
             self.visit_expr(value);
             self.new_line();
+        }
+
+        fn visit_statement(&mut self, statement: &crate::parser::ast::Statement<'source>) {
+            match statement {
+                ast::Statement::Header { value, .. } => {
+                    self.push_str("header ");
+                    self.visit_expr(value);
+                }
+                ast::Statement::Body { value, .. } => {
+                    self.push_str("body ");
+                    self.visit_expr(value);
+                }
+                ast::Statement::LineComment(comment) => self.push_str(comment.value),
+                ast::Statement::Error(error) => self.visit_error(error),
+            }
         }
 
         fn visit_expr(&mut self, expr: &crate::parser::ast::Expression<'source>) {
@@ -236,7 +290,7 @@ pub mod fmt {
             &mut self,
             err: &crate::error_meta::ContextualError<crate::parser::error::ParseError<'source>>,
         ) {
-            self.has_error = true;
+            self.error = Some(err.clone());
             err.visit_children_with(self);
         }
     }

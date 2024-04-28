@@ -4,8 +4,10 @@ use std::{
     path::PathBuf,
 };
 
+use anyhow::anyhow;
 use clap::Args;
 use rested::{
+    error::ColoredMetaError,
     fmt,
     parser::{ast::Program, ast_visit::VisitWith},
 };
@@ -30,7 +32,9 @@ impl FormatArgs {
 
         program.visit_with(&mut formatter);
 
-        if !formatter.has_error {
+        if let Some(err) = formatter.error {
+            return Err(anyhow!(ColoredMetaError(&err).to_string()));
+        } else {
             println!("{}", formatter.into_output());
         }
 

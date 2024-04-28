@@ -40,8 +40,21 @@ let c = json([{
     }]
 }])
 
+get /admin {
+    header "application/json"
+    body json({
+        "a": 12,
+        t: true
+    })
+}
+
 [test, 12, {
     ness: false,
     wow: [1, 2, 3]
 }]
+post `${env("b_url")}/asdf` {
+    header "application/json"
+    body m
+}
+
 
