@@ -2,7 +2,10 @@ use crate::{
     error_meta,
     parser::{
         self,
-        ast::{self, ConstantDeclaration, Expression, Item, ObjectEntry, VariableDeclaration},
+        ast::{
+            self, ConstantDeclaration, Expression, Item, ObjectEntry, StringLiteral,
+            VariableDeclaration,
+        },
         ast_visit::{VisitWith, Visitor},
     },
 };
@@ -303,7 +306,16 @@ impl<'source> Visitor<'source> for FormattedPrinter<'source> {
     fn visit_object_entry(&mut self, entry: &ObjectEntry<'source>) {
         let ObjectEntry { key, value } = entry;
 
-        self.visit_parsed_node(key);
+        let unquoted_string_literal: ast::result::ParsedNode<StringLiteral> = key
+            .get()
+            .map(|slit| StringLiteral {
+                raw: slit.value,
+                value: slit.value,
+                span: slit.span,
+            })
+            .into();
+
+        self.visit_parsed_node(&unquoted_string_literal);
 
         self.push_str(": ");
 
