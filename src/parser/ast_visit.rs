@@ -3,7 +3,7 @@ use crate::{error_meta::ContextualError, lexer::locations::GetSpan};
 use super::{
     ast::{
         result::ParsedNode, CallExpr, ConstantDeclaration, Endpoint, Expression, ExpressionList,
-        Item, Program, Request, Statement, StringLiteral, VariableDeclaration,
+        Item, Literal, Program, Request, Statement, StringLiteral, VariableDeclaration,
     },
     error::ParseError,
 };
@@ -44,8 +44,16 @@ where
         expr.visit_children_with(self);
     }
 
+    fn visit_line_comment(&mut self, comment: &Literal<'source>) {
+        comment.visit_children_with(self);
+    }
+
     fn visit_expr_list(&mut self, expr_list: &ExpressionList<'source>) {
         expr_list.visit_children_with(self);
+    }
+
+    fn visit_literal(&mut self, stringlit: &Literal<'source>) {
+        stringlit.visit_children_with(self);
     }
 
     fn visit_string(&mut self, stringlit: &StringLiteral<'source>) {
@@ -240,6 +248,14 @@ impl<'source> VisitWith<'source> for Expression<'source> {
             _ => {}
         };
     }
+}
+
+impl<'source> VisitWith<'source> for Literal<'source> {
+    fn visit_with<V: Visitor<'source>>(&self, visitor: &mut V) {
+        visitor.visit_literal(self);
+    }
+
+    fn visit_children_with<V: Visitor<'source>>(&self, _visitor: &mut V) {}
 }
 
 impl<'source> VisitWith<'source> for StringLiteral<'source> {

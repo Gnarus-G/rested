@@ -43,6 +43,8 @@ pub mod fmt {
         tab_size: u8,
         indent: usize,
         output: String,
+        is_first_item: bool,
+        line_comment_streak: u16,
     }
 
     impl<'source> FormattedPrinter<'source> {
@@ -52,6 +54,8 @@ pub mod fmt {
                 tab_size: 4,
                 indent: 0,
                 output: String::new(),
+                is_first_item: true,
+                line_comment_streak: 0,
             }
         }
 
@@ -84,15 +88,36 @@ pub mod fmt {
         pub fn into_output(self) -> String {
             self.output
         }
+
+        fn bump_line_comment_streak(&mut self) {
+            self.line_comment_streak += 1;
+        }
+
+        fn reset_line_comment_streak(&mut self) {
+            self.line_comment_streak += 0;
+        }
     }
 
     impl<'source> Visitor<'source> for FormattedPrinter<'source> {
         fn visit_item(&mut self, item: &crate::parser::ast::Item<'source>) {
+            if let Item::LineComment(_) = item {
+                self.bump_line_comment_streak();
+            } else {
+                self.reset_line_comment_streak();
+
+                if !self.is_first_item {
+                    self.new_line();
+                    self.new_line();
+                } else {
+                    self.is_first_item = false;
+                }
+            }
+
             match item {
                 Item::Let(d) => self.visit_variable_declaration(d),
                 Item::Error(e) => self.visit_error(e),
                 Item::Set(s) => self.visit_constant_declaration(s),
-                Item::LineComment(lit) => self.push_str(lit.value),
+                Item::LineComment(lit) => self.visit_line_comment(lit),
                 Item::Request(r) => self.visit_request(r),
                 Item::Expr(expr) => self.visit_expr(expr),
                 Item::Attribute {
@@ -101,8 +126,15 @@ pub mod fmt {
                     arguments,
                 } => todo!(),
             }
+        }
 
-            self.push_str("\n");
+        fn visit_line_comment(&mut self, comment: &ast::Literal<'source>) {
+            if self.line_comment_streak == 1 {
+                self.new_line();
+            }
+
+            self.new_line();
+            self.push_str(comment.value);
         }
 
         fn visit_request(&mut self, request: &crate::parser::ast::Request<'source>) {
@@ -139,8 +171,6 @@ pub mod fmt {
                 self.new_line();
                 self.push_char('}');
             }
-
-            self.new_line();
         }
 
         fn visit_constant_declaration(
@@ -157,7 +187,6 @@ pub mod fmt {
 
             self.push_str(" = ");
             self.visit_expr(value);
-            self.new_line();
         }
 
         fn visit_variable_declaration(
@@ -174,7 +203,6 @@ pub mod fmt {
 
             self.push_str(" = ");
             self.visit_expr(value);
-            self.new_line();
         }
 
         fn visit_statement(&mut self, statement: &crate::parser::ast::Statement<'source>) {
