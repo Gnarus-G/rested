@@ -70,10 +70,12 @@ impl<'source> Token<'source> {
     }
 
     pub fn end_position(&self) -> Position {
+        let len = self.text.len();
         Position {
             line: self.start.line,
-            value: self.start.value + self.text.len(),
-            col: self.start.col + self.text.len(),
+            // Columns are zero-indexed so we must subtract one for each
+            value: self.start.value + len - 1,
+            col: self.start.col + len - 1,
         }
     }
 }

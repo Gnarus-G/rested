@@ -619,3 +619,41 @@ impl<'source> Parser<'source> {
         }))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        lexer::locations::{self, GetSpan, Span},
+        parser::ast::Program,
+    };
+
+    #[test]
+    fn it_collects_the_full_span_of_request_blocks() {
+        let s = r#"
+get `http://localhost:8080/api?sort=${sort}&filter=${filter}`
+
+post /time {
+  body a
+}"#;
+
+        let p = Program::from(s);
+
+        let item = p.items.first().unwrap();
+        assert_eq!(
+            item.span(),
+            Span::new(
+                locations::Position::new(1, 0, 1),
+                locations::Position::new(1, 60, 61)
+            )
+        );
+
+        let item = p.items.last().unwrap();
+        assert_eq!(
+            item.span(),
+            Span::new(
+                locations::Position::new(3, 0, 64),
+                locations::Position::new(5, 0, 86)
+            )
+        );
+    }
+}
