@@ -254,4 +254,10 @@ let hey = `asdf ${
 
 let port = "3000""#
     );
+
+    assert_fmt!(
+        r#"get    `http://localhost:8080/api?sort=${sort}&filter=${
+        filter
+    }` // line comment"#
+    );
 }

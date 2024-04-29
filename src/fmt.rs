@@ -155,9 +155,9 @@ impl<'source> Visitor<'source> for FormattedPrinter<'source> {
             ast::Endpoint::Pathname(path) => self.push_str(path.value),
         }
 
-        self.push(' ');
-
         if let Some(block) = &request.block {
+            self.push(' ');
+
             self.push('{');
             if block.statements.is_empty() {
                 self.push('}');
@@ -294,8 +294,8 @@ impl<'source> Visitor<'source> for FormattedPrinter<'source> {
             Expression::EmptyObject(_) => self.push_str("{}"),
             Expression::TemplateSringLiteral { parts, .. } => {
                 self.push('`');
-                for expr in parts.iter() {
-                    match expr {
+                for part in parts.iter() {
+                    match part {
                         ast::TemplateSringPart::ExpressionPart(expr) => {
                             self.push_str("${");
                             self.visit_expr(expr);
