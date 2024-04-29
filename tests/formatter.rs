@@ -128,6 +128,20 @@ post /adsf {
 }
 "#
     );
+
+    assert_fmt!(
+        r#"let base = env("base")
+
+set BASE_URL base
+        "#
+    );
+
+    assert_fmt!(
+        r#"//let base = env("base")
+
+set BASE_URL base
+        "#
+    );
 }
 
 #[test]
@@ -232,5 +246,18 @@ post `${env
    header "Content-Type" "application/json"
    body m }
 "#
+    );
+}
+
+#[test]
+fn it_formats_template_strings() {
+    assert_fmt!(
+        r#"set BASE_URL base
+
+let hey = `asdf ${
+    `${`${"adsfasdf"}`}asdfa`
+} asdfasdf ${base} asdf`
+
+let port = "3000""#
     );
 }

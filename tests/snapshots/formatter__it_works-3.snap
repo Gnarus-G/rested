@@ -1,0 +1,7 @@
+---
+source: tests/formatter.rs
+expression: formatter.into_output()
+---
+//let base = env("base")
+
+set BASE_URL base

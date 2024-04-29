@@ -63,6 +63,10 @@ impl<'source> FormattedPrinter<'source> {
         self.output.push('\n');
     }
 
+    fn two_new_lines(&mut self) {
+        self.output.push_str("\n\n");
+    }
+
     fn push_indent(&mut self) {
         self.indent += 1;
         self.put_indentation();
@@ -83,6 +87,14 @@ impl<'source> FormattedPrinter<'source> {
 
     /// Prints one or two new lines when applicable.
     fn hanle_new_line_before_item(&mut self, item: &Item) {
+        if self.is_first_item {
+            return self.is_first_item = false;
+        }
+
+        if self.is_after_attribute {
+            return self.new_line();
+        }
+
         match item {
             Item::LineComment(_) => {
                 self.let_statement_streak = 0;
@@ -90,10 +102,10 @@ impl<'source> FormattedPrinter<'source> {
                 self.line_comment_streak += 1;
 
                 if self.line_comment_streak == 1 {
+                    self.two_new_lines();
+                } else {
                     self.new_line();
                 }
-
-                self.new_line();
             }
             Item::Let(_) => {
                 self.line_comment_streak = 0;
@@ -101,24 +113,16 @@ impl<'source> FormattedPrinter<'source> {
                 self.let_statement_streak += 1;
 
                 if self.let_statement_streak == 1 {
+                    self.two_new_lines();
+                } else {
                     self.new_line();
                 }
-
-                self.new_line();
             }
             _ => {
                 self.line_comment_streak = 0;
                 self.let_statement_streak = 0;
 
-                if !self.is_first_item {
-                    if !self.is_after_attribute {
-                        self.new_line();
-                    }
-
-                    self.new_line();
-                } else {
-                    self.is_first_item = false;
-                }
+                self.two_new_lines();
             }
         }
     }
