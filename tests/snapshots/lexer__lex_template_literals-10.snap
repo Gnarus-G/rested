@@ -4,14 +4,20 @@ description: "`asdf ${`hello${\"world\"}`} ${asdf} jkl`"
 expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
-    TemplateString { head: true, tail: false }("`asdf ") at Position { value: 0, line: 0, col: 0 },
+    OpeningBackTick("`") at Position { value: 0, line: 0, col: 0 },
+    StringLiteral("asdf ") at Position { value: 1, line: 0, col: 1 },
     DollarSignLBracket("${") at Position { value: 6, line: 0, col: 6 },
-    TemplateString { head: true, tail: false }("`hello") at Position { value: 8, line: 0, col: 8 },
+    OpeningBackTick("`") at Position { value: 8, line: 0, col: 8 },
+    StringLiteral("hello") at Position { value: 9, line: 0, col: 9 },
     DollarSignLBracket("${") at Position { value: 14, line: 0, col: 14 },
     StringLiteral("\"world\"") at Position { value: 16, line: 0, col: 16 },
-    TemplateString { head: false, tail: true }("`") at Position { value: 24, line: 0, col: 24 },
-    TemplateString { head: false, tail: false }(" ") at Position { value: 26, line: 0, col: 26 },
+    RBracket("}") at Position { value: 23, line: 0, col: 23 },
+    ClosingBackTick("`") at Position { value: 24, line: 0, col: 24 },
+    RBracket("}") at Position { value: 25, line: 0, col: 25 },
+    StringLiteral(" ") at Position { value: 26, line: 0, col: 26 },
     DollarSignLBracket("${") at Position { value: 27, line: 0, col: 27 },
     Ident("asdf") at Position { value: 29, line: 0, col: 29 },
-    TemplateString { head: false, tail: true }(" jkl`") at Position { value: 34, line: 0, col: 34 },
+    RBracket("}") at Position { value: 33, line: 0, col: 33 },
+    StringLiteral(" jkl") at Position { value: 34, line: 0, col: 34 },
+    ClosingBackTick("`") at Position { value: 38, line: 0, col: 38 },
 ]

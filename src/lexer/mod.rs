@@ -1,6 +1,8 @@
 mod display;
 pub mod locations;
 
+use std::collections::VecDeque;
+
 use locations::Location;
 
 use self::locations::Position;
@@ -25,7 +27,6 @@ pub enum TokenKind {
     Boolean,
     Number,
     StringLiteral,
-    TemplateString { head: bool, tail: bool },
     Url,
     Pathname,
 
@@ -45,6 +46,8 @@ pub enum TokenKind {
     RSquare,
     Colon,
     AttributePrefix,
+    OpeningBackTick,
+    ClosingBackTick,
     Comma,
     End,
 
@@ -107,6 +110,7 @@ pub struct Lexer<'i> {
     input: &'i [u8],
     position: Position,
     template_str_depth: u8,
+    template_str_token_buffer: VecDeque<Token<'i>>,
 }
 
 impl<'i> Lexer<'i> {
@@ -115,6 +119,7 @@ impl<'i> Lexer<'i> {
             input: input.as_bytes(),
             position: Default::default(),
             template_str_depth: 0,
+            template_str_token_buffer: VecDeque::new(),
         }
     }
 
@@ -180,6 +185,15 @@ impl<'i> Lexer<'i> {
     }
 
     pub fn next_token(&mut self) -> Token<'i> {
+        if !self.template_str_token_buffer.is_empty() {
+            let t = self
+                .template_str_token_buffer
+                .pop_front()
+                .expect("we checked that isn't empty");
+
+            return t;
+        }
+
         use TokenKind::*;
 
         self.skip_whitespace();
@@ -280,65 +294,116 @@ impl<'i> Lexer<'i> {
     }
 
     fn multiline_string_literal(&mut self) -> Token<'i> {
-        let mut is_head = false;
-        let mut is_tail = false;
-
-        let start_pos = match self.ch() {
+        match self.ch() {
             Some(b'`') if self.peek_char().is(b'`') => return self.empty_string_literal(),
             Some(b'`') if self.peek_char().is(b'$') && self.peek_n_char(1).is(b'{') => {
                 self.template_str_depth += 1;
-                return Token {
-                    kind: TokenKind::TemplateString {
-                        head: true,
-                        tail: false,
-                    },
-                    text: "`",
+
+                self.template_str_token_buffer.push_back(Token {
                     start: self.position,
-                };
+                    text: "`",
+                    kind: TokenKind::OpeningBackTick,
+                });
+
+                self.step();
+
+                self.template_str_token_buffer.push_back(Token {
+                    kind: TokenKind::DollarSignLBracket,
+                    text: "${",
+                    start: self.position,
+                });
+
+                self.step();
+
+                return self.template_str_token_buffer.pop_front().expect(
+                    "there must be a token in the template_str_token_buffer at this point",
+                );
             }
             Some(b'`') => {
                 self.template_str_depth += 1;
                 let p = self.position;
+                self.template_str_token_buffer.push_back(Token {
+                    start: p,
+                    text: "`",
+                    kind: TokenKind::OpeningBackTick,
+                });
                 self.step();
-                is_head = true;
-                p
             }
+            // End of template string
             Some(b'}') if self.peek_char().is(b'`') && self.template_str_depth > 0 => {
-                self.step(); // eat the curly
                 self.template_str_depth -= 1;
 
-                return Token {
-                    kind: TokenKind::TemplateString {
-                        head: false,
-                        tail: true,
-                    },
+                self.template_str_token_buffer.push_back(Token {
+                    kind: TokenKind::RBracket,
+                    start: self.position,
+                    text: "}",
+                });
+
+                self.step(); // eat the curly
+
+                self.template_str_token_buffer.push_back(Token {
+                    kind: TokenKind::ClosingBackTick,
                     start: self.position,
                     text: "`",
-                };
+                });
+
+                return self.template_str_token_buffer.pop_front().expect(
+                    "there must be a token in the template_str_token_buffer at this point",
+                );
             }
+            // End of expression part. Here we know that we've tokenized an expression
+            // and are proceeding to the rest of the template string
             Some(b'}') => {
+                self.template_str_token_buffer.push_back(Token {
+                    kind: TokenKind::RBracket,
+                    start: self.position,
+                    text: "}",
+                });
+
                 self.step();
-                self.position
             }
             _ => unreachable!("should only start tokenizing template strings on a '`' or a '}}'"),
         };
+
+        let start_pos = self.position;
 
         let (s, e) = loop {
             match self.ch() {
                 _ if self.peek_char().is(b'$') && self.peek_n_char(1).is(b'{') => {
                     break (start_pos, self.position.value + 1);
                 }
+                // End of template string
                 Some(b'`') => {
                     self.template_str_depth -= 1;
-                    is_tail = true;
-                    break (start_pos, self.position.value + 1);
+
+                    let string = self.input_slice(start_pos.value..self.position.value);
+
+                    self.template_str_token_buffer.push_back(Token {
+                        kind: TokenKind::StringLiteral,
+                        start: start_pos,
+                        text: string,
+                    });
+
+                    self.template_str_token_buffer.push_back(Token {
+                        kind: TokenKind::ClosingBackTick,
+                        text: "`",
+                        start: self.position,
+                    });
+
+                    return self.template_str_token_buffer.pop_front().expect(
+                        "there must be a token in the template_str_token_buffer at this point",
+                    );
                 }
                 None => {
-                    return Token {
+                    self.template_str_token_buffer.push_back(Token {
                         kind: TokenKind::UnfinishedMultiLineStringLiteral,
                         start: start_pos,
                         text: self.input_slice(start_pos.value..self.position.value),
-                    };
+                    });
+
+                    return self.template_str_token_buffer.pop_front().expect(
+                        "there must be a token in the template_str_token_buffer at this point",
+                    );
                 }
                 _ => self.step(),
             }
@@ -346,14 +411,16 @@ impl<'i> Lexer<'i> {
 
         let string = self.input_slice(s.value..e);
 
-        Token {
-            kind: TokenKind::TemplateString {
-                head: is_head,
-                tail: is_tail,
-            },
+        self.template_str_token_buffer.push_back(Token {
+            kind: TokenKind::StringLiteral,
             start: start_pos,
             text: string,
-        }
+        });
+
+        return self
+            .template_str_token_buffer
+            .pop_front()
+            .expect("there must be a token in the template_str_token_buffer at this point");
     }
 
     fn string_literal(&mut self) -> Token<'i> {

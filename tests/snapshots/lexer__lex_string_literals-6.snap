@@ -4,6 +4,9 @@ description: "`\n{\n    stuff\n}`\n\n`\nstuff"
 expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
-    TemplateString { head: true, tail: true }("`\n{\n    stuff\n}`") at Position { value: 0, line: 0, col: 0 },
-    UnfinishedMultiLineStringLiteral("`\nstuff") at Position { value: 18, line: 5, col: 0 },
+    OpeningBackTick("`") at Position { value: 0, line: 0, col: 0 },
+    StringLiteral("\n{\n    stuff\n}") at Position { value: 1, line: 0, col: 1 },
+    ClosingBackTick("`") at Position { value: 15, line: 3, col: 1 },
+    OpeningBackTick("`") at Position { value: 18, line: 5, col: 0 },
+    UnfinishedMultiLineStringLiteral("\nstuff") at Position { value: 19, line: 5, col: 1 },
 ]

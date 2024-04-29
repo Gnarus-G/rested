@@ -202,7 +202,7 @@ impl<'source> Parser<'source> {
             Ident if peek_kind == LParen => self.parse_call_expression().into(),
             Ident => Expression::Identifier(self.curr_token().into()),
             StringLiteral => Expression::String(self.curr_token().into()),
-            TemplateString { head: true, .. } => self.parse_multiline_string_literal(),
+            OpeningBackTick => self.parse_multiline_string_literal(),
             _ => Expression::Error(
                 e.expected_one_of_tokens(self.curr_token(), &[Url, Pathname, StringLiteral, Ident])
                     .into(),
@@ -342,7 +342,7 @@ impl<'source> Parser<'source> {
                     .parse()
                     .expect("failed to parse as an unsigned int"),
             )),
-            TemplateString { head: true, .. } => self.parse_multiline_string_literal(),
+            OpeningBackTick => self.parse_multiline_string_literal(),
             LBracket => self.parse_object_literal(),
             LSquare => self.parse_array_literal(),
             Null => Expression::Null(self.curr_token().span()),
@@ -478,31 +478,23 @@ impl<'source> Parser<'source> {
             let kind = self.curr_token().kind;
 
             match kind {
-                TemplateString {
-                    head: true,
-                    tail: true,
-                } => {
-                    return Expression::String(self.curr_token().into());
-                }
-                TemplateString { tail: true, .. } => {
+                ClosingBackTick => {
                     end = self.curr_token().end_position();
                     parts.push(Expression::String(self.curr_token().into()));
                     break;
                 }
-                TemplateString { .. } => {
+                StringLiteral => {
                     let s_literal = Expression::String(self.curr_token().into());
                     parts.push(s_literal);
                 }
-                DollarSignLBracket
-                    if matches!(self.peek_token().kind, TemplateString { head: true, .. }) =>
-                {
+                DollarSignLBracket if matches!(self.peek_token().kind, OpeningBackTick) => {
                     self.next_token();
                     parts.push(match self.parse_expression() {
                         Ok(expr) => expr,
                         Err(e) => Expression::Error(e),
                     })
                 }
-                DollarSignLBracket if matches!(self.peek_token().kind, TemplateString { .. }) => {}
+                DollarSignLBracket if matches!(self.peek_token().kind, StringLiteral) => {}
                 DollarSignLBracket => {
                     self.next_token();
 

@@ -4,15 +4,20 @@ description: "`stuff${\"interpolated\"}(things${env(\"dead_night\")}` `dohickeys
 expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
-    TemplateString { head: true, tail: false }("`stuff") at Position { value: 0, line: 0, col: 0 },
+    OpeningBackTick("`") at Position { value: 0, line: 0, col: 0 },
+    StringLiteral("stuff") at Position { value: 1, line: 0, col: 1 },
     DollarSignLBracket("${") at Position { value: 6, line: 0, col: 6 },
     StringLiteral("\"interpolated\"") at Position { value: 8, line: 0, col: 8 },
-    TemplateString { head: false, tail: false }("(things") at Position { value: 23, line: 0, col: 23 },
+    RBracket("}") at Position { value: 22, line: 0, col: 22 },
+    StringLiteral("(things") at Position { value: 23, line: 0, col: 23 },
     DollarSignLBracket("${") at Position { value: 30, line: 0, col: 30 },
     Ident("env") at Position { value: 32, line: 0, col: 32 },
     LParen("(") at Position { value: 35, line: 0, col: 35 },
     StringLiteral("\"dead_night\"") at Position { value: 36, line: 0, col: 36 },
     RParen(")") at Position { value: 48, line: 0, col: 48 },
-    TemplateString { head: false, tail: true }("`") at Position { value: 50, line: 0, col: 50 },
-    TemplateString { head: true, tail: true }("`dohickeys`") at Position { value: 52, line: 0, col: 52 },
+    RBracket("}") at Position { value: 49, line: 0, col: 49 },
+    ClosingBackTick("`") at Position { value: 50, line: 0, col: 50 },
+    OpeningBackTick("`") at Position { value: 52, line: 0, col: 52 },
+    StringLiteral("dohickeys") at Position { value: 53, line: 0, col: 53 },
+    ClosingBackTick("`") at Position { value: 62, line: 0, col: 62 },
 ]

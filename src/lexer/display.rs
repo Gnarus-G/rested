@@ -17,7 +17,6 @@ impl std::fmt::Display for TokenKind {
             Boolean => "boolean",
             Number => "number",
             StringLiteral => "string",
-            TemplateString { .. } => "template string",
             Pathname => "pathname",
             Url => "url",
             Linecomment => "comment",
@@ -38,6 +37,8 @@ impl std::fmt::Display for TokenKind {
             UnfinishedMultiLineStringLiteral => "`...",
             IllegalToken => "illegal",
             Null => "null",
+            OpeningBackTick => "`",
+            ClosingBackTick => "`",
         };
 
         f.write_str(str)
