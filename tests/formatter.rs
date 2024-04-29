@@ -261,3 +261,19 @@ let port = "3000""#
     }` // line comment"#
     );
 }
+
+#[test]
+fn it_formats_json_object() {
+    assert_fmt!(
+        r#"
+    let   o = {
+    get: "value",
+    post: 123,
+    put: { author: "Me" },
+    patch: true, delete: false, set: "true",
+    let: view,
+    null: null, header: "",
+    body: "",
+}"#
+    );
+}

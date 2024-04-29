@@ -450,7 +450,9 @@ impl<'source> Parser<'source> {
         let key_token = self.curr_token();
 
         let key = match_or_throw! { key_token.kind; e; self;
-            Ident | StringLiteral => key_token.into(),
+            Get | Post | Put | Patch | Delete
+                | Header | Body | Set | Let
+                | Null | Ident | StringLiteral => key_token.into(),
         };
 
         Ok(key)

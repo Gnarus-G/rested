@@ -171,4 +171,14 @@ let obj = {
 }
 "#
     );
+
+    assert_lexes!(
+        r#"
+let o = {
+    key: "value",
+    post: {
+        author: "Me"
+    }
+}"#
+    );
 }
