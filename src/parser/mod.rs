@@ -504,12 +504,9 @@ impl<'source> Parser<'source> {
                         Err(e) => TemplateSringPart::ExpressionPart(Expression::Error(e)),
                     });
 
-                    // if !self.curr_token().is(RBracket) {
-                    //     let error = expectations.expected_token(self.curr_token(), RBracket);
-                    //     parts.push(TemplateSringPart::ExpressionPart(Expression::Error(
-                    //         error.into(),
-                    //     )));
-                    // }
+                    if let Err(error) = expectations.expect_peek_ahead(self, RBracket) {
+                        parts.push(TemplateSringPart::ExpressionPart(Expression::Error(error)));
+                    }
                 }
                 _ => {
                     end = self.curr_token().end_position();
