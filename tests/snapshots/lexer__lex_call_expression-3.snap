@@ -1,0 +1,25 @@
+---
+source: tests/lexer.rs
+description: "get `http://localhost:8080/api?sort=${sort}&filter=${filter}`\nlet a = read(\"testasdf.rd\")"
+expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
+---
+[
+    Get("get") at Position { value: 0, line: 0, col: 0 },
+    OpeningBackTick("`") at Position { value: 4, line: 0, col: 4 },
+    StringLiteral("http://localhost:8080/api?sort=") at Position { value: 5, line: 0, col: 5 },
+    DollarSignLBracket("${") at Position { value: 36, line: 0, col: 36 },
+    Ident("sort") at Position { value: 38, line: 0, col: 38 },
+    RBracket("}") at Position { value: 42, line: 0, col: 42 },
+    StringLiteral("&filter=") at Position { value: 43, line: 0, col: 43 },
+    DollarSignLBracket("${") at Position { value: 51, line: 0, col: 51 },
+    Ident("filter") at Position { value: 53, line: 0, col: 53 },
+    RBracket("}") at Position { value: 59, line: 0, col: 59 },
+    ClosingBackTick("`") at Position { value: 60, line: 0, col: 60 },
+    Let("let") at Position { value: 62, line: 1, col: 0 },
+    Ident("a") at Position { value: 66, line: 1, col: 4 },
+    Assign("=") at Position { value: 68, line: 1, col: 6 },
+    Ident("read") at Position { value: 70, line: 1, col: 8 },
+    LParen("(") at Position { value: 74, line: 1, col: 12 },
+    StringLiteral("\"testasdf.rd\"") at Position { value: 75, line: 1, col: 13 },
+    RParen(")") at Position { value: 88, line: 1, col: 26 },
+]

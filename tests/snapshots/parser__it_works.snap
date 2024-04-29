@@ -286,19 +286,19 @@ Program(
                 ),
                 end: Position(
                   value: 279,
-                  line: 14,
-                  col: 35,
+                  line: 15,
+                  col: 3,
                 ),
               ),
               parts: [
-                String(StringLiteral(
-                  raw: "`{\n      \"neet\": \"",
+                StringPart(StringLiteral(
+                  raw: "{\n      \"neet\": \"",
                   value: "{\n      \"neet\": \"",
                   span: Span(
                     start: Position(
-                      value: 210,
+                      value: 211,
                       line: 12,
-                      col: 7,
+                      col: 8,
                     ),
                     end: Position(
                       value: 227,
@@ -307,7 +307,7 @@ Program(
                     ),
                   ),
                 )),
-                Call(CallExpr(
+                ExpressionPart(Call(CallExpr(
                   identifier: Ok(Token(
                     kind: Ident,
                     text: "env",
@@ -349,8 +349,8 @@ Program(
                       )),
                     ],
                   ),
-                )),
-                String(StringLiteral(
+                ))),
+                StringPart(StringLiteral(
                   raw: "\",\n      \"nerd\": \"",
                   value: ",\n      \"nerd\": ",
                   span: Span(
@@ -366,7 +366,7 @@ Program(
                     ),
                   ),
                 )),
-                Identifier(Ok(Token(
+                ExpressionPart(Identifier(Ok(Token(
                   kind: Ident,
                   text: "output_file",
                   start: Position(
@@ -374,9 +374,9 @@ Program(
                     line: 14,
                     col: 17,
                   ),
-                ))),
-                String(StringLiteral(
-                  raw: "\",\n  }`",
+                )))),
+                StringPart(StringLiteral(
+                  raw: "\",\n  }",
                   value: "\",\n  }",
                   span: Span(
                     start: Position(
@@ -385,9 +385,9 @@ Program(
                       col: 29,
                     ),
                     end: Position(
-                      value: 279,
+                      value: 278,
                       line: 14,
-                      col: 35,
+                      col: 34,
                     ),
                   ),
                 )),

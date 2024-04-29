@@ -40,14 +40,14 @@ Program(
                 ),
               ),
               parts: [
-                String(StringLiteral(
-                  raw: "`{\"neet\": ",
+                StringPart(StringLiteral(
+                  raw: "{\"neet\": ",
                   value: "{\"neet\": ",
                   span: Span(
                     start: Position(
-                      value: 38,
+                      value: 39,
                       line: 2,
-                      col: 17,
+                      col: 18,
                     ),
                     end: Position(
                       value: 47,
@@ -56,7 +56,7 @@ Program(
                     ),
                   ),
                 )),
-                Call(CallExpr(
+                ExpressionPart(Call(CallExpr(
                   identifier: Ok(Token(
                     kind: Ident,
                     text: "env",
@@ -98,8 +98,8 @@ Program(
                       )),
                     ],
                   ),
-                )),
-                String(StringLiteral(
+                ))),
+                StringPart(StringLiteral(
                   raw: ", 2: ",
                   value: ", 2: ",
                   span: Span(
@@ -115,7 +115,7 @@ Program(
                     ),
                   ),
                 )),
-                String(StringLiteral(
+                ExpressionPart(String(StringLiteral(
                   raw: "\"two\"",
                   value: "two",
                   span: Span(
@@ -130,9 +130,9 @@ Program(
                       col: 52,
                     ),
                   ),
-                )),
-                String(StringLiteral(
-                  raw: "}`",
+                ))),
+                StringPart(StringLiteral(
+                  raw: "}",
                   value: "}",
                   span: Span(
                     start: Position(
@@ -141,9 +141,9 @@ Program(
                       col: 54,
                     ),
                     end: Position(
-                      value: 76,
+                      value: 75,
                       line: 2,
-                      col: 55,
+                      col: 54,
                     ),
                   ),
                 )),

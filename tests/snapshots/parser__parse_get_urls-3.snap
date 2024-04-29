@@ -22,23 +22,7 @@ Program(
           ),
         ),
         parts: [
-          String(StringLiteral(
-            raw: "`",
-            value: "",
-            span: Span(
-              start: Position(
-                value: 4,
-                line: 0,
-                col: 4,
-              ),
-              end: Position(
-                value: 4,
-                line: 0,
-                col: 4,
-              ),
-            ),
-          )),
-          Identifier(Ok(Token(
+          ExpressionPart(Identifier(Ok(Token(
             kind: Ident,
             text: "url",
             start: Position(
@@ -46,9 +30,9 @@ Program(
               line: 0,
               col: 7,
             ),
-          ))),
-          String(StringLiteral(
-            raw: "/api`",
+          )))),
+          StringPart(StringLiteral(
+            raw: "/api",
             value: "/api",
             span: Span(
               start: Position(
@@ -57,9 +41,9 @@ Program(
                 col: 11,
               ),
               end: Position(
-                value: 15,
+                value: 14,
                 line: 0,
-                col: 15,
+                col: 14,
               ),
             ),
           )),
@@ -95,23 +79,7 @@ Program(
           ),
         ),
         parts: [
-          String(StringLiteral(
-            raw: "`",
-            value: "",
-            span: Span(
-              start: Position(
-                value: 29,
-                line: 1,
-                col: 12,
-              ),
-              end: Position(
-                value: 29,
-                line: 1,
-                col: 12,
-              ),
-            ),
-          )),
-          Call(CallExpr(
+          ExpressionPart(Call(CallExpr(
             identifier: Ok(Token(
               kind: Ident,
               text: "env",
@@ -149,23 +117,7 @@ Program(
                     ),
                   ),
                   parts: [
-                    String(StringLiteral(
-                      raw: "`",
-                      value: "",
-                      span: Span(
-                        start: Position(
-                          value: 36,
-                          line: 1,
-                          col: 19,
-                        ),
-                        end: Position(
-                          value: 36,
-                          line: 1,
-                          col: 19,
-                        ),
-                      ),
-                    )),
-                    Identifier(Ok(Token(
+                    ExpressionPart(Identifier(Ok(Token(
                       kind: Ident,
                       text: "uri",
                       start: Position(
@@ -173,9 +125,9 @@ Program(
                         line: 1,
                         col: 22,
                       ),
-                    ))),
-                    String(StringLiteral(
-                      raw: ":8080`",
+                    )))),
+                    StringPart(StringLiteral(
+                      raw: ":8080",
                       value: ":8080",
                       span: Span(
                         start: Position(
@@ -184,9 +136,9 @@ Program(
                           col: 26,
                         ),
                         end: Position(
-                          value: 48,
+                          value: 47,
                           line: 1,
-                          col: 31,
+                          col: 30,
                         ),
                       ),
                     )),
@@ -194,9 +146,9 @@ Program(
                 ),
               ],
             ),
-          )),
-          String(StringLiteral(
-            raw: "/api`",
+          ))),
+          StringPart(StringLiteral(
+            raw: "/api",
             value: "/api",
             span: Span(
               start: Position(
@@ -205,9 +157,9 @@ Program(
                 col: 34,
               ),
               end: Position(
-                value: 55,
+                value: 54,
                 line: 1,
-                col: 38,
+                col: 37,
               ),
             ),
           )),
@@ -243,23 +195,7 @@ Program(
           ),
         ),
         parts: [
-          String(StringLiteral(
-            raw: "`",
-            value: "",
-            span: Span(
-              start: Position(
-                value: 69,
-                line: 2,
-                col: 12,
-              ),
-              end: Position(
-                value: 69,
-                line: 2,
-                col: 12,
-              ),
-            ),
-          )),
-          Call(CallExpr(
+          ExpressionPart(Call(CallExpr(
             identifier: Ok(Token(
               kind: Ident,
               text: "env",
@@ -301,9 +237,9 @@ Program(
                 )),
               ],
             ),
-          )),
-          String(StringLiteral(
-            raw: "/api`",
+          ))),
+          StringPart(StringLiteral(
+            raw: "/api",
             value: "/api",
             span: Span(
               start: Position(
@@ -312,9 +248,9 @@ Program(
                 col: 26,
               ),
               end: Position(
-                value: 87,
+                value: 86,
                 line: 2,
-                col: 30,
+                col: 29,
               ),
             ),
           )),

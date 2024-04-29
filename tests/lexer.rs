@@ -102,6 +102,11 @@ fn lex_call_expression() {
 let a = env(")
 "#
     );
+
+    assert_lexes!(
+        r#"get `http://localhost:8080/api?sort=${sort}&filter=${filter}`
+let a = read("testasdf.rd")"#
+    );
 }
 
 #[test]
@@ -150,6 +155,10 @@ let c = {}
 
         "#
     );
+
+    assert_lexes!(r#"`string${env("base")}morestring${true}evenmore${"expr string"}`"#);
+
+    assert_lexes!(r#"`asdf ${`hello${"world"}`} jkl`"#);
 }
 
 #[test]

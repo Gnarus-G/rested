@@ -471,7 +471,7 @@ impl<'source> Parser<'source> {
 
     fn parse_multiline_string_literal(&mut self) -> Expression<'source> {
         let mut parts = vec![];
-        let e = Expectations::new(self);
+        let expectations = Expectations::new(self);
         let end;
 
         loop {
@@ -479,22 +479,23 @@ impl<'source> Parser<'source> {
 
             match kind {
                 OpeningBackTick => {}
+                RBracket if matches!(self.peek_token().kind, StringLiteral) => {}
+                RBracket if matches!(self.peek_token().kind, ClosingBackTick) => {
+                    self.next_token();
+                    end = self.curr_token().end_position();
+                    break;
+                }
                 ClosingBackTick => {
                     end = self.curr_token().end_position();
-                    self.next_token();
                     break;
                 }
                 StringLiteral => {
                     parts.push(TemplateSringPart::StringPart(self.curr_token().into()));
                 }
-                DollarSignLBracket if matches!(self.peek_token().kind, OpeningBackTick) => {
-                    self.next_token();
-                    parts.push(match self.parse_expression() {
-                        Ok(expr) => TemplateSringPart::ExpressionPart(expr),
-                        Err(e) => TemplateSringPart::ExpressionPart(Expression::Error(e)),
-                    })
+                DollarSignLBracket if matches!(self.peek_token().kind, RBracket) => {
+                    // `${}` is nothing and is equivalent to ``
+                    self.next_token(); // so we just move on
                 }
-                DollarSignLBracket if matches!(self.peek_token().kind, StringLiteral) => {}
                 DollarSignLBracket => {
                     self.next_token();
 
@@ -502,6 +503,13 @@ impl<'source> Parser<'source> {
                         Ok(e) => TemplateSringPart::ExpressionPart(e),
                         Err(e) => TemplateSringPart::ExpressionPart(Expression::Error(e)),
                     });
+
+                    // if !self.curr_token().is(RBracket) {
+                    //     let error = expectations.expected_token(self.curr_token(), RBracket);
+                    //     parts.push(TemplateSringPart::ExpressionPart(Expression::Error(
+                    //         error.into(),
+                    //     )));
+                    // }
                 }
                 _ => {
                     end = self.curr_token().end_position();
@@ -513,7 +521,7 @@ impl<'source> Parser<'source> {
         }
 
         Expression::TemplateSringLiteral {
-            span: Span::new(e.start, end),
+            span: Span::new(expectations.start, end),
             parts: parts.into(),
         }
     }

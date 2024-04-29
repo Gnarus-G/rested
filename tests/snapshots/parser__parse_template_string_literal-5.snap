@@ -20,14 +20,14 @@ Program(
         ),
       ),
       parts: [
-        String(StringLiteral(
-          raw: "`asdf ",
+        StringPart(StringLiteral(
+          raw: "asdf ",
           value: "asdf ",
           span: Span(
             start: Position(
-              value: 1,
+              value: 2,
               line: 1,
-              col: 0,
+              col: 1,
             ),
             end: Position(
               value: 6,
@@ -36,7 +36,7 @@ Program(
             ),
           ),
         )),
-        Identifier(Ok(Token(
+        ExpressionPart(Identifier(Ok(Token(
           kind: Ident,
           text: "test",
           start: Position(
@@ -44,8 +44,8 @@ Program(
             line: 1,
             col: 8,
           ),
-        ))),
-        String(StringLiteral(
+        )))),
+        StringPart(StringLiteral(
           raw: " ",
           value: " ",
           span: Span(
@@ -61,7 +61,7 @@ Program(
             ),
           ),
         )),
-        Identifier(Ok(Token(
+        ExpressionPart(Identifier(Ok(Token(
           kind: Ident,
           text: "a",
           start: Position(
@@ -69,23 +69,7 @@ Program(
             line: 1,
             col: 16,
           ),
-        ))),
-        String(StringLiteral(
-          raw: "`",
-          value: "",
-          span: Span(
-            start: Position(
-              value: 19,
-              line: 1,
-              col: 18,
-            ),
-            end: Position(
-              value: 19,
-              line: 1,
-              col: 18,
-            ),
-          ),
-        )),
+        )))),
       ],
     )),
   ],

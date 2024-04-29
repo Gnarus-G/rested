@@ -30,14 +30,14 @@ Program(
           ),
         ),
         parts: [
-          String(StringLiteral(
-            raw: "`asdf ",
+          StringPart(StringLiteral(
+            raw: "asdf ",
             value: "asdf ",
             span: Span(
               start: Position(
-                value: 9,
+                value: 10,
                 line: 1,
-                col: 8,
+                col: 9,
               ),
               end: Position(
                 value: 14,
@@ -46,7 +46,7 @@ Program(
               ),
             ),
           )),
-          Identifier(Ok(Token(
+          ExpressionPart(Identifier(Ok(Token(
             kind: Ident,
             text: "test",
             start: Position(
@@ -54,8 +54,8 @@ Program(
               line: 1,
               col: 16,
             ),
-          ))),
-          String(StringLiteral(
+          )))),
+          StringPart(StringLiteral(
             raw: " ",
             value: " ",
             span: Span(
@@ -71,7 +71,7 @@ Program(
               ),
             ),
           )),
-          String(StringLiteral(
+          StringPart(StringLiteral(
             raw: " ",
             value: " ",
             span: Span(
@@ -87,7 +87,7 @@ Program(
               ),
             ),
           )),
-          String(StringLiteral(
+          ExpressionPart(String(StringLiteral(
             raw: "\"word\"",
             value: "word",
             span: Span(
@@ -102,23 +102,7 @@ Program(
                 col: 33,
               ),
             ),
-          )),
-          String(StringLiteral(
-            raw: "`",
-            value: "",
-            span: Span(
-              start: Position(
-                value: 36,
-                line: 1,
-                col: 35,
-              ),
-              end: Position(
-                value: 36,
-                line: 1,
-                col: 35,
-              ),
-            ),
-          )),
+          ))),
         ],
       ),
     )),

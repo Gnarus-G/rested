@@ -60,9 +60,7 @@ Program(
             )),
           ),
           Body(
-            value: String(StringLiteral(
-              raw: "`\n        {\"neet\": 1337}\n        `",
-              value: "\n        {\"neet\": 1337}\n        ",
+            value: TemplateSringLiteral(
               span: Span(
                 start: Position(
                   value: 92,
@@ -71,11 +69,29 @@ Program(
                 ),
                 end: Position(
                   value: 125,
-                  line: 3,
-                  col: 46,
+                  line: 5,
+                  col: 8,
                 ),
               ),
-            )),
+              parts: [
+                StringPart(StringLiteral(
+                  raw: "\n        {\"neet\": 1337}\n        ",
+                  value: "\n        {\"neet\": 1337}\n        ",
+                  span: Span(
+                    start: Position(
+                      value: 93,
+                      line: 3,
+                      col: 14,
+                    ),
+                    end: Position(
+                      value: 124,
+                      line: 3,
+                      col: 45,
+                    ),
+                  ),
+                )),
+              ],
+            ),
             start: Position(
               value: 87,
               line: 3,
