@@ -8,17 +8,11 @@ macro_rules! assert_fmt {
     ($input:literal) => {
         let program = Program::from($input);
 
-        let mut formatter = fmt::FormattedPrinter::new();
+        let formatted_text = program
+            .to_formatted_string()
+            .expect("formatted text should contain only valid syntax");
 
-        program.visit_with(&mut formatter);
-
-        assert!(
-            formatter.error.is_none(),
-            "formatter has errors {:?}",
-            formatter.error
-        );
-
-        assert_display_snapshot!(formatter.into_output());
+        assert_display_snapshot!(formatted_text);
     };
 }
 
