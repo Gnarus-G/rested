@@ -478,9 +478,10 @@ impl<'source> Parser<'source> {
             let kind = self.curr_token().kind;
 
             match kind {
+                OpeningBackTick => {}
                 ClosingBackTick => {
                     end = self.curr_token().end_position();
-                    parts.push(TemplateSringPart::StringPart(self.curr_token().into()));
+                    self.next_token();
                     break;
                 }
                 StringLiteral => {

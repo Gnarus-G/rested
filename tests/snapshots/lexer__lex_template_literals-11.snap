@@ -1,6 +1,6 @@
 ---
 source: tests/lexer.rs
-description: "\n        post /api {\n            body `{\"neet\": ${env(\"love\")}, 2: ${\"two\"}}`\n        }"
+description: "\n        post /api {\n            body `{\"neet\": ${env(\"love\")}, 2: ${\"two\"}}`\n        }\n\n        post http://localhost {\n          header \"Authorization\" \"Bearer token\"\n          body `{\"neet\": 1337}`\n        }\n\n        "
 expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
@@ -23,4 +23,15 @@ expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
     StringLiteral("}") at Position { value: 75, line: 2, col: 54 },
     ClosingBackTick("`") at Position { value: 76, line: 2, col: 55 },
     RBracket("}") at Position { value: 86, line: 3, col: 8 },
+    Post("post") at Position { value: 97, line: 5, col: 8 },
+    Url("http://localhost") at Position { value: 102, line: 5, col: 13 },
+    LBracket("{") at Position { value: 119, line: 5, col: 30 },
+    Header("header") at Position { value: 131, line: 6, col: 10 },
+    StringLiteral("\"Authorization\"") at Position { value: 138, line: 6, col: 17 },
+    StringLiteral("\"Bearer token\"") at Position { value: 154, line: 6, col: 33 },
+    Body("body") at Position { value: 179, line: 7, col: 10 },
+    OpeningBackTick("`") at Position { value: 184, line: 7, col: 15 },
+    StringLiteral("{\"neet\": 1337}") at Position { value: 185, line: 7, col: 16 },
+    ClosingBackTick("`") at Position { value: 199, line: 7, col: 30 },
+    RBracket("}") at Position { value: 209, line: 8, col: 8 },
 ]

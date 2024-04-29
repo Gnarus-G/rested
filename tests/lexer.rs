@@ -141,7 +141,14 @@ let c = {}
         r#"
         post /api {
             body `{"neet": ${env("love")}, 2: ${"two"}}`
-        }"#
+        }
+
+        post http://localhost {
+          header "Authorization" "Bearer token"
+          body `{"neet": 1337}`
+        }
+
+        "#
     );
 }
 

@@ -293,6 +293,7 @@ impl<'source> Visitor<'source> for FormattedPrinter<'source> {
             Expression::EmptyArray(_) => self.push_str("[]"),
             Expression::EmptyObject(_) => self.push_str("{}"),
             Expression::TemplateSringLiteral { parts, .. } => {
+                self.push('`');
                 for expr in parts.iter() {
                     match expr {
                         ast::TemplateSringPart::ExpressionPart(expr) => {
@@ -303,6 +304,7 @@ impl<'source> Visitor<'source> for FormattedPrinter<'source> {
                         ast::TemplateSringPart::StringPart(s) => self.push_str(s.raw),
                     }
                 }
+                self.push('`');
             }
         }
     }
