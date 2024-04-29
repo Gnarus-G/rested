@@ -295,12 +295,12 @@ impl<'source> Visitor<'source> for FormattedPrinter<'source> {
             Expression::TemplateSringLiteral { parts, .. } => {
                 for expr in parts.iter() {
                     match expr {
-                        Expression::String(s) => self.push_str(s.raw),
-                        _ => {
+                        ast::TemplateSringPart::ExpressionPart(expr) => {
                             self.push_str("${");
                             self.visit_expr(expr);
                             self.push_str("}");
                         }
+                        ast::TemplateSringPart::StringPart(s) => self.push_str(s.raw),
                     }
                 }
             }

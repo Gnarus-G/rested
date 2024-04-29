@@ -7,7 +7,7 @@ pub mod error;
 use ast::{Endpoint, Expression, Item, RequestMethod, Statement};
 
 use self::ast::result::ParsedNode;
-use self::ast::{Block, ExpressionList};
+use self::ast::{Block, ExpressionList, TemplateSringPart};
 use self::error::{Expectations, ParseError};
 
 use crate::error_meta::ContextualError;
@@ -480,18 +480,17 @@ impl<'source> Parser<'source> {
             match kind {
                 ClosingBackTick => {
                     end = self.curr_token().end_position();
-                    parts.push(Expression::String(self.curr_token().into()));
+                    parts.push(TemplateSringPart::StringPart(self.curr_token().into()));
                     break;
                 }
                 StringLiteral => {
-                    let s_literal = Expression::String(self.curr_token().into());
-                    parts.push(s_literal);
+                    parts.push(TemplateSringPart::StringPart(self.curr_token().into()));
                 }
                 DollarSignLBracket if matches!(self.peek_token().kind, OpeningBackTick) => {
                     self.next_token();
                     parts.push(match self.parse_expression() {
-                        Ok(expr) => expr,
-                        Err(e) => Expression::Error(e),
+                        Ok(expr) => TemplateSringPart::ExpressionPart(expr),
+                        Err(e) => TemplateSringPart::ExpressionPart(Expression::Error(e)),
                     })
                 }
                 DollarSignLBracket if matches!(self.peek_token().kind, StringLiteral) => {}
@@ -499,8 +498,8 @@ impl<'source> Parser<'source> {
                     self.next_token();
 
                     parts.push(match self.parse_expression() {
-                        Ok(e) => e,
-                        Err(e) => Expression::Error(e),
+                        Ok(e) => TemplateSringPart::ExpressionPart(e),
+                        Err(e) => TemplateSringPart::ExpressionPart(Expression::Error(e)),
                     });
                 }
                 _ => {

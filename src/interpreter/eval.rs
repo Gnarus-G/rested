@@ -8,7 +8,7 @@ use crate::interpreter::ir::LogDestination;
 use crate::interpreter::value::ValueTag;
 use crate::lexer;
 use crate::parser::ast::{
-    self, ConstantDeclaration, Endpoint, Expression, Item, VariableDeclaration,
+    self, ConstantDeclaration, Endpoint, Expression, Item, TemplateSringPart, VariableDeclaration,
 };
 
 use crate::lexer::locations::GetSpan;
@@ -424,21 +424,29 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
 
     fn evaluate_template_string_literal_parts(
         &self,
-        parts: &[Expression<'source>],
+        parts: &[TemplateSringPart<'source>],
     ) -> Result<Value> {
         let mut strings = vec![];
 
         for part in parts {
-            let value = match self.evaluate_expression(part)? {
-                Value::String(value) => value,
-                val => {
-                    return Err(Box::new(
-                        self.error_factory
-                            .type_mismatch(ValueTag::String, val, part.span())
-                            .with_message("try a json(..) call to stringify this expression"),
-                    ))
+            let value = match part {
+                TemplateSringPart::ExpressionPart(expr) => {
+                    match self.evaluate_expression(&expr)? {
+                        Value::String(value) => value,
+                        val => {
+                            return Err(Box::new(
+                                self.error_factory
+                                    .type_mismatch(ValueTag::String, val, expr.span())
+                                    .with_message(
+                                        "try a json(..) call to stringify this expression",
+                                    ),
+                            ))
+                        }
+                    }
                 }
+                TemplateSringPart::StringPart(string) => string.value.into(),
             };
+
             strings.push(value.to_string());
         }
 
