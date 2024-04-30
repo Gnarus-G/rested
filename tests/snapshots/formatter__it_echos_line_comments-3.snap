@@ -1,0 +1,15 @@
+---
+source: tests/formatter.rs
+expression: formatted_text
+---
+let a = [true, 12, 34, 
+// line comment
+1253, "asdf", 
+// wow
+{
+  a: b,
+  c: "d",
+  e: ["asdfv", 3, 
+  // well
+  ]
+}]

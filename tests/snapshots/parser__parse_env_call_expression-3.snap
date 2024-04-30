@@ -29,8 +29,8 @@ Program(
             col: 17,
           ),
         ),
-        exprs: [
-          String(StringLiteral(
+        items: [
+          This(String(StringLiteral(
             raw: "\"base\"",
             value: "base",
             span: Span(
@@ -45,8 +45,23 @@ Program(
                 col: 9,
               ),
             ),
+          ))),
+          That(Literal(
+            value: "//aasdf",
+            span: Span(
+              start: Position(
+                value: 24,
+                line: 1,
+                col: 12,
+              ),
+              end: Position(
+                value: 30,
+                line: 1,
+                col: 18,
+              ),
+            ),
           )),
-          String(StringLiteral(
+          This(String(StringLiteral(
             raw: "\"url\"",
             value: "url",
             span: Span(
@@ -61,7 +76,7 @@ Program(
                 col: 16,
               ),
             ),
-          )),
+          ))),
         ],
       ),
     ))),

@@ -1,0 +1,11 @@
+---
+source: tests/formatter.rs
+expression: formatted_text
+---
+let o = {
+  key: "value",
+  // akey: 123,
+  love: ["asdf", 
+  // asdf,
+  12]
+}

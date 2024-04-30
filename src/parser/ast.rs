@@ -8,6 +8,7 @@ use crate::{
         locations::{GetSpan, Position, Span},
         Token,
     },
+    utils::OneOf,
 };
 
 use self::result::ParsedNode;
@@ -77,11 +78,13 @@ pub struct Attribute<'source> {
     pub arguments: Option<ExpressionList<'source>>,
 }
 
+type Comment<'source> = Literal<'source>;
+
 #[derive(Debug, PartialEq, Serialize)]
 pub enum Item<'source> {
     Set(ConstantDeclaration<'source>),
     Let(VariableDeclaration<'source>),
-    LineComment(Literal<'source>),
+    LineComment(Comment<'source>),
     Request(Request<'source>),
     Expr(Expression<'source>),
     Attribute(Attribute<'source>),
@@ -113,19 +116,19 @@ pub enum Statement<'i> {
         value: Expression<'i>,
         start: Position,
     },
-    LineComment(Literal<'i>),
+    LineComment(Comment<'i>),
     Error(Box<Error<'i>>),
 }
 
 #[derive(Debug, PartialEq, Serialize)]
 pub struct ExpressionList<'source> {
     pub span: Span,
-    pub exprs: Box<[Expression<'source>]>,
+    pub items: Box<[OneOf<Expression<'source>, Comment<'source>>]>,
 }
 
 impl<'source> ExpressionList<'source> {
-    pub fn iter(&self) -> impl Iterator<Item = &Expression<'source>> {
-        self.exprs.iter()
+    pub fn expressions(&self) -> impl Iterator<Item = &Expression<'source>> {
+        self.items.iter().filter_map(|e| e.this())
     }
 }
 
@@ -143,7 +146,7 @@ pub enum Expression<'source> {
     Number((Span, f64)),
     Call(CallExpr<'source>),
     Array(ExpressionList<'source>),
-    Object((Span, Box<[ParsedNode<'source, ObjectEntry<'source>>]>)),
+    Object(ObjectEntryList<'source>),
     Null(Span),
     EmptyArray(Span),
     EmptyObject(Span),
@@ -172,6 +175,22 @@ impl<'source> ObjectEntry<'source> {
         value: Expression<'source>,
     ) -> Self {
         Self { key, value }
+    }
+}
+
+#[derive(Debug, PartialEq, Serialize)]
+pub struct ObjectEntryList<'source> {
+    pub span: Span,
+    pub items: Box<[OneOf<ParsedNode<'source, ObjectEntry<'source>>, Comment<'source>>]>,
+}
+
+impl<'source> ObjectEntryList<'source> {
+    pub fn nodes(&self) -> impl Iterator<Item = &ParsedNode<'source, ObjectEntry<'source>>> {
+        self.items.iter().filter_map(|e| e.this())
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = &ObjectEntry<'source>> {
+        self.nodes().flat_map(|node| node.get())
     }
 }
 

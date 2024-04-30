@@ -16,6 +16,7 @@ use crate::lexer::TokenKind;
 use crate::lexer::TokenKind::*;
 use crate::lexer::{Lexer, Token};
 use crate::parser::ast::Attribute;
+use crate::utils::OneOf;
 
 macro_rules! match_or_throw {
     ($expression:expr; $expectations:ident; $self:ident; $( $( $pattern:ident )|+ $( if $guard: expr )? => $arm:expr $(,)? )+ $( ,$message:literal )? ) => {
@@ -383,18 +384,19 @@ impl<'source> Parser<'source> {
 
         while self.curr_token().kind != RBracket && self.curr_token().kind != End {
             if self.curr_token().is(Linecomment) {
+                entries.push(OneOf::That(self.curr_token().into()));
                 self.next_token();
                 continue;
             }
 
             let entry = self.parse_object_property();
 
-            entries.push(ParsedNode::Ok(entry));
+            entries.push(OneOf::This(ParsedNode::Ok(entry)));
 
             if !self.peek_token().is(RBracket) && !self.peek_token().is(Linecomment) {
                 let e = Expectations::new(self);
                 if let Err(e) = e.expect_peek(self, Comma) {
-                    entries.push(ParsedNode::Error(e));
+                    entries.push(OneOf::This(ParsedNode::Error(e)));
                 }
             }
 
@@ -406,7 +408,10 @@ impl<'source> Parser<'source> {
 
         let span = e.start.to_end_of(self.curr_token().span());
 
-        Expression::Object((span, entries.into()))
+        Expression::Object(ast::ObjectEntryList {
+            span,
+            items: entries.into(),
+        })
     }
 
     fn parse_array_literal(&mut self) -> ast::Expression<'source> {
@@ -563,6 +568,7 @@ impl<'source> Parser<'source> {
 
         while self.curr_token().kind != end && self.curr_token().kind != TokenKind::End {
             if self.curr_token().is(Linecomment) {
+                expressions.push(OneOf::That(self.curr_token().into()));
                 self.next_token();
                 continue;
             }
@@ -572,12 +578,12 @@ impl<'source> Parser<'source> {
                 Err(error) => Expression::Error(error),
             };
 
-            expressions.push(exp);
+            expressions.push(OneOf::This(exp));
 
             if !self.peek_token().is(end) && !self.peek_token().is(Linecomment) {
                 let e = Expectations::new(self);
                 if let Err(e) = e.expect_peek(self, Comma) {
-                    expressions.push(Expression::Error(e));
+                    expressions.push(OneOf::This(Expression::Error(e)));
                 }
             }
 
@@ -592,7 +598,7 @@ impl<'source> Parser<'source> {
                 start: start_of_expressions_list,
                 end: last_token.span().end,
             },
-            exprs: expressions.into(),
+            items: expressions.into(),
         }
     }
 

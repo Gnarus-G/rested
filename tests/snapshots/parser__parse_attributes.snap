@@ -34,8 +34,8 @@ Program(
             col: 19,
           ),
         ),
-        exprs: [
-          String(StringLiteral(
+        items: [
+          This(String(StringLiteral(
             raw: "\"path/to/file\"",
             value: "path/to/file",
             span: Span(
@@ -50,7 +50,7 @@ Program(
                 col: 18,
               ),
             ),
-          )),
+          ))),
         ],
       )),
     )),

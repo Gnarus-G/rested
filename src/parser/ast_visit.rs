@@ -221,7 +221,7 @@ impl<'source> VisitWith<'source> for ExpressionList<'source> {
     }
 
     fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
-        for expr in self.exprs.iter() {
+        for expr in self.expressions() {
             visitor.visit_expr(expr);
         }
     }
@@ -248,17 +248,14 @@ impl<'source> VisitWith<'source> for Expression<'source> {
     fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
         match self {
             Expression::Call(expr) => visitor.visit_call_expr(expr),
-            Expression::Array(ExpressionList { exprs, .. }) => {
-                for expr in exprs.iter() {
+            Expression::Array(list) => {
+                for expr in list.expressions() {
                     visitor.visit_expr(expr)
                 }
             }
-            Expression::Object((_, entries)) => {
-                for entry in entries.iter() {
-                    match entry {
-                        ParsedNode::Ok(entry) => visitor.visit_object_entry(entry),
-                        ParsedNode::Error(e) => visitor.visit_error(e),
-                    }
+            Expression::Object(entry_list) => {
+                for entry in entry_list.entries() {
+                    visitor.visit_object_entry(entry)
                 }
             }
             Expression::TemplateSringLiteral { parts, .. } => {
@@ -298,7 +295,7 @@ impl<'source> VisitWith<'source> for Attribute<'source> {
             ..
         } = self
         {
-            for arg in arguments.exprs.iter() {
+            for arg in arguments.expressions() {
                 visitor.visit_expr(arg);
             }
         }
@@ -336,7 +333,7 @@ impl<'source> VisitWith<'source> for CallExpr<'source> {
 
     fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
         visitor.visit_parsed_node(&self.identifier);
-        for arg in self.arguments.exprs.iter() {
+        for arg in self.arguments.expressions() {
             visitor.visit_expr(arg)
         }
     }

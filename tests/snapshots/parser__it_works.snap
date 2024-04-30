@@ -153,8 +153,8 @@ Program(
               col: 28,
             ),
           ),
-          exprs: [
-            String(StringLiteral(
+          items: [
+            This(String(StringLiteral(
               raw: "\"auth-token\"",
               value: "auth-token",
               span: Span(
@@ -169,7 +169,7 @@ Program(
                   col: 27,
                 ),
               ),
-            )),
+            ))),
           ],
         ),
       )),
@@ -202,8 +202,8 @@ Program(
             col: 16,
           ),
         ),
-        exprs: [
-          Identifier(Ok(Token(
+        items: [
+          This(Identifier(Ok(Token(
             kind: Ident,
             text: "output_file",
             start: Position(
@@ -211,7 +211,7 @@ Program(
               line: 8,
               col: 5,
             ),
-          ))),
+          )))),
         ],
       )),
     )),
@@ -330,8 +330,8 @@ Program(
                         col: 26,
                       ),
                     ),
-                    exprs: [
-                      String(StringLiteral(
+                    items: [
+                      This(String(StringLiteral(
                         raw: "\"var\"",
                         value: "var",
                         span: Span(
@@ -346,7 +346,7 @@ Program(
                             col: 25,
                           ),
                         ),
-                      )),
+                      ))),
                     ],
                   ),
                 ))),

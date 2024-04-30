@@ -199,7 +199,7 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
                 }
 
                 if let Some(args) = arguments {
-                    for param in args.iter() {
+                    for param in args.expressions() {
                         self.visit_expr(param)
                     }
 
@@ -271,8 +271,7 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
                 }) => {
                     if arguments.span.contains(&self.position) {
                         match arguments
-                            .exprs
-                            .iter()
+                            .expressions()
                             .find(|p| p.span().contains(&self.position))
                         {
                             Some(Expression::String(..)) => {
@@ -311,8 +310,8 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
                 self.suggest(SuggestionKind::Identifiers);
             }
             Expression::EmptyObject(_) => self.suggest(SuggestionKind::Nothing),
-            Expression::Object((_, entries)) => {
-                for entry in entries.iter().flat_map(|e| e.get()) {
+            Expression::Object(entry_list) => {
+                for entry in entry_list.entries() {
                     if let Expression::Error(_) = entry.value {
                         self.suggest(SuggestionKind::Identifiers)
                     } else {

@@ -8,6 +8,7 @@ use crate::{
         },
         ast_visit::{VisitWith, Visitor},
     },
+    utils,
 };
 
 impl<'source> ast::Program<'source> {
@@ -258,18 +259,23 @@ impl<'source> Visitor<'source> for FormattedPrinter<'source> {
 
                 self.push_str("]")
             }
-            Expression::Object((_, entries)) => {
+            Expression::Object(entry_list) => {
                 self.push_str("{");
 
                 self.new_line();
 
-                for (i, node) in entries.iter().enumerate() {
+                for (i, item) in entry_list.items.iter().enumerate() {
                     self.push_indent();
 
-                    self.visit_parsed_node(node);
+                    match item {
+                        utils::OneOf::This(node) => {
+                            self.visit_parsed_node(node);
 
-                    if i != entries.len() - 1 {
-                        self.push_str(",");
+                            if i != entry_list.items.len() - 1 {
+                                self.push_str(",");
+                            }
+                        }
+                        utils::OneOf::That(comment) => self.visit_line_comment(comment),
                     }
 
                     self.new_line();
@@ -333,10 +339,22 @@ impl<'source> Visitor<'source> for FormattedPrinter<'source> {
     }
 
     fn visit_expr_list(&mut self, expr_list: &parser::ast::ExpressionList<'source>) {
-        for (i, expr) in expr_list.exprs.iter().enumerate() {
-            self.visit_expr(expr);
-            if i != expr_list.exprs.len() - 1 {
-                self.push_str(", ");
+        for (i, item) in expr_list.items.iter().enumerate() {
+            match item {
+                crate::utils::OneOf::This(expr) => {
+                    self.visit_expr(expr);
+
+                    if i != expr_list.items.len() - 1 {
+                        self.push_str(", ");
+                    }
+                }
+                crate::utils::OneOf::That(comment) => {
+                    self.new_line();
+                    self.put_indentation();
+                    self.visit_line_comment(comment);
+                    self.new_line();
+                    self.put_indentation();
+                }
             }
         }
     }

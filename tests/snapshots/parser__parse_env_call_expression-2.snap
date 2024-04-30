@@ -39,8 +39,8 @@ Program(
               col: 14,
             ),
           ),
-          exprs: [
-            String(StringLiteral(
+          items: [
+            This(String(StringLiteral(
               raw: "\"\"",
               value: "",
               span: Span(
@@ -55,7 +55,7 @@ Program(
                   col: 13,
                 ),
               ),
-            )),
+            ))),
           ],
         ),
       )),

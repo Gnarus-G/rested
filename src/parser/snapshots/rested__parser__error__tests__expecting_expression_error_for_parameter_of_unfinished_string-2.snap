@@ -29,8 +29,8 @@ Program(
             col: 15,
           ),
         ),
-        exprs: [
-          Call(CallExpr(
+        items: [
+          This(Call(CallExpr(
             identifier: Ok(Token(
               kind: Ident,
               text: "env",
@@ -53,8 +53,8 @@ Program(
                   col: 15,
                 ),
               ),
-              exprs: [
-                Error(ContextualError(
+              items: [
+                This(Error(ContextualError(
                   inner_error: ExpectedEitherOfTokens(
                     found: Token(
                       kind: UnfinishedStringLiteral,
@@ -93,8 +93,8 @@ Program(
                     line: "let b = [env(\")]",
                     below: None,
                   ),
-                )),
-                Error(ContextualError(
+                ))),
+                This(Error(ContextualError(
                   inner_error: ExpectedToken(
                     found: Token(
                       kind: End,
@@ -125,11 +125,11 @@ Program(
                     line: "let b = [env(\")]",
                     below: None,
                   ),
-                )),
+                ))),
               ],
             ),
-          )),
-          Error(ContextualError(
+          ))),
+          This(Error(ContextualError(
             inner_error: ExpectedToken(
               found: Token(
                 kind: End,
@@ -160,7 +160,7 @@ Program(
               line: "let b = [env(\")]",
               below: None,
             ),
-          )),
+          ))),
         ],
       )),
     )),

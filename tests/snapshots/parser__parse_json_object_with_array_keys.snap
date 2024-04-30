@@ -16,300 +16,306 @@ Program(
           col: 4,
         ),
       )),
-      value: Object((Span(
-        start: Position(
-          value: 9,
-          line: 1,
-          col: 8,
+      value: Object(ObjectEntryList(
+        span: Span(
+          start: Position(
+            value: 9,
+            line: 1,
+            col: 8,
+          ),
+          end: Position(
+            value: 153,
+            line: 9,
+            col: 0,
+          ),
         ),
-        end: Position(
-          value: 153,
-          line: 9,
-          col: 0,
-        ),
-      ), [
-        Ok(ObjectEntry(
-          key: Ok(StringLiteral(
-            raw: "key",
-            value: "key",
-            span: Span(
-              start: Position(
-                value: 15,
-                line: 2,
-                col: 4,
-              ),
-              end: Position(
-                value: 17,
-                line: 2,
-                col: 6,
-              ),
-            ),
-          )),
-          value: String(StringLiteral(
-            raw: "\"value\"",
-            value: "value",
-            span: Span(
-              start: Position(
-                value: 20,
-                line: 2,
-                col: 9,
-              ),
-              end: Position(
-                value: 26,
-                line: 2,
-                col: 15,
-              ),
-            ),
-          )),
-        )),
-        Ok(ObjectEntry(
-          key: Ok(StringLiteral(
-            raw: "akey",
-            value: "akey",
-            span: Span(
-              start: Position(
-                value: 33,
-                line: 3,
-                col: 4,
-              ),
-              end: Position(
-                value: 36,
-                line: 3,
-                col: 7,
-              ),
-            ),
-          )),
-          value: String(StringLiteral(
-            raw: "\"234va\"",
-            value: "234va",
-            span: Span(
-              start: Position(
-                value: 39,
-                line: 3,
-                col: 10,
-              ),
-              end: Position(
-                value: 45,
-                line: 3,
-                col: 16,
-              ),
-            ),
-          )),
-        )),
-        Ok(ObjectEntry(
-          key: Ok(StringLiteral(
-            raw: "oKey",
-            value: "oKey",
-            span: Span(
-              start: Position(
-                value: 52,
-                line: 4,
-                col: 4,
-              ),
-              end: Position(
-                value: 55,
-                line: 4,
-                col: 7,
-              ),
-            ),
-          )),
-          value: Array(ExpressionList(
-            span: Span(
-              start: Position(
-                value: 58,
-                line: 4,
-                col: 10,
-              ),
-              end: Position(
-                value: 72,
-                line: 4,
-                col: 24,
-              ),
-            ),
-            exprs: [
-              String(StringLiteral(
-                raw: "\"val\"",
-                value: "val",
-                span: Span(
-                  start: Position(
-                    value: 59,
-                    line: 4,
-                    col: 11,
-                  ),
-                  end: Position(
-                    value: 63,
-                    line: 4,
-                    col: 15,
-                  ),
-                ),
-              )),
-              String(StringLiteral(
-                raw: "\"val2\"",
-                value: "val2",
-                span: Span(
-                  start: Position(
-                    value: 66,
-                    line: 4,
-                    col: 18,
-                  ),
-                  end: Position(
-                    value: 71,
-                    line: 4,
-                    col: 23,
-                  ),
-                ),
-              )),
-            ],
-          )),
-        )),
-        Ok(ObjectEntry(
-          key: Ok(StringLiteral(
-            raw: "aoKay",
-            value: "aoKay",
-            span: Span(
-              start: Position(
-                value: 79,
-                line: 5,
-                col: 4,
-              ),
-              end: Position(
-                value: 83,
-                line: 5,
-                col: 8,
-              ),
-            ),
-          )),
-          value: Array(ExpressionList(
-            span: Span(
-              start: Position(
-                value: 86,
-                line: 5,
-                col: 11,
-              ),
-              end: Position(
-                value: 151,
-                line: 8,
-                col: 5,
-              ),
-            ),
-            exprs: [
-              String(StringLiteral(
-                raw: "\"val\"",
-                value: "val",
-                span: Span(
-                  start: Position(
-                    value: 87,
-                    line: 5,
-                    col: 12,
-                  ),
-                  end: Position(
-                    value: 91,
-                    line: 5,
-                    col: 16,
-                  ),
-                ),
-              )),
-              String(StringLiteral(
-                raw: "\"123\"",
-                value: "123",
-                span: Span(
-                  start: Position(
-                    value: 94,
-                    line: 5,
-                    col: 19,
-                  ),
-                  end: Position(
-                    value: 98,
-                    line: 5,
-                    col: 23,
-                  ),
-                ),
-              )),
-              Object((Span(
+        items: [
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "key",
+              value: "key",
+              span: Span(
                 start: Position(
-                  value: 101,
-                  line: 5,
-                  col: 26,
-                ),
-                end: Position(
-                  value: 150,
-                  line: 8,
+                  value: 15,
+                  line: 2,
                   col: 4,
                 ),
-              ), [
-                Ok(ObjectEntry(
-                  key: Ok(StringLiteral(
-                    raw: "hey",
-                    value: "hey",
-                    span: Span(
-                      start: Position(
-                        value: 111,
-                        line: 6,
-                        col: 8,
-                      ),
-                      end: Position(
-                        value: 113,
-                        line: 6,
-                        col: 10,
-                      ),
+                end: Position(
+                  value: 17,
+                  line: 2,
+                  col: 6,
+                ),
+              ),
+            )),
+            value: String(StringLiteral(
+              raw: "\"value\"",
+              value: "value",
+              span: Span(
+                start: Position(
+                  value: 20,
+                  line: 2,
+                  col: 9,
+                ),
+                end: Position(
+                  value: 26,
+                  line: 2,
+                  col: 15,
+                ),
+              ),
+            )),
+          ))),
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "akey",
+              value: "akey",
+              span: Span(
+                start: Position(
+                  value: 33,
+                  line: 3,
+                  col: 4,
+                ),
+                end: Position(
+                  value: 36,
+                  line: 3,
+                  col: 7,
+                ),
+              ),
+            )),
+            value: String(StringLiteral(
+              raw: "\"234va\"",
+              value: "234va",
+              span: Span(
+                start: Position(
+                  value: 39,
+                  line: 3,
+                  col: 10,
+                ),
+                end: Position(
+                  value: 45,
+                  line: 3,
+                  col: 16,
+                ),
+              ),
+            )),
+          ))),
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "oKey",
+              value: "oKey",
+              span: Span(
+                start: Position(
+                  value: 52,
+                  line: 4,
+                  col: 4,
+                ),
+                end: Position(
+                  value: 55,
+                  line: 4,
+                  col: 7,
+                ),
+              ),
+            )),
+            value: Array(ExpressionList(
+              span: Span(
+                start: Position(
+                  value: 58,
+                  line: 4,
+                  col: 10,
+                ),
+                end: Position(
+                  value: 72,
+                  line: 4,
+                  col: 24,
+                ),
+              ),
+              items: [
+                This(String(StringLiteral(
+                  raw: "\"val\"",
+                  value: "val",
+                  span: Span(
+                    start: Position(
+                      value: 59,
+                      line: 4,
+                      col: 11,
                     ),
-                  )),
-                  value: String(StringLiteral(
-                    raw: "\"yo!\"",
-                    value: "yo!",
-                    span: Span(
-                      start: Position(
-                        value: 116,
-                        line: 6,
-                        col: 13,
-                      ),
-                      end: Position(
-                        value: 120,
-                        line: 6,
-                        col: 17,
-                      ),
+                    end: Position(
+                      value: 63,
+                      line: 4,
+                      col: 15,
                     ),
-                  )),
-                )),
-                Ok(ObjectEntry(
-                  key: Ok(StringLiteral(
-                    raw: "hello",
-                    value: "hello",
-                    span: Span(
-                      start: Position(
-                        value: 131,
-                        line: 7,
-                        col: 8,
-                      ),
-                      end: Position(
-                        value: 135,
-                        line: 7,
-                        col: 12,
-                      ),
+                  ),
+                ))),
+                This(String(StringLiteral(
+                  raw: "\"val2\"",
+                  value: "val2",
+                  span: Span(
+                    start: Position(
+                      value: 66,
+                      line: 4,
+                      col: 18,
                     ),
-                  )),
-                  value: String(StringLiteral(
-                    raw: "\"world\"",
-                    value: "world",
-                    span: Span(
-                      start: Position(
-                        value: 138,
-                        line: 7,
-                        col: 15,
-                      ),
-                      end: Position(
-                        value: 144,
-                        line: 7,
-                        col: 21,
-                      ),
+                    end: Position(
+                      value: 71,
+                      line: 4,
+                      col: 23,
                     ),
-                  )),
-                )),
-              ])),
-            ],
-          )),
-        )),
-      ])),
+                  ),
+                ))),
+              ],
+            )),
+          ))),
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "aoKay",
+              value: "aoKay",
+              span: Span(
+                start: Position(
+                  value: 79,
+                  line: 5,
+                  col: 4,
+                ),
+                end: Position(
+                  value: 83,
+                  line: 5,
+                  col: 8,
+                ),
+              ),
+            )),
+            value: Array(ExpressionList(
+              span: Span(
+                start: Position(
+                  value: 86,
+                  line: 5,
+                  col: 11,
+                ),
+                end: Position(
+                  value: 151,
+                  line: 8,
+                  col: 5,
+                ),
+              ),
+              items: [
+                This(String(StringLiteral(
+                  raw: "\"val\"",
+                  value: "val",
+                  span: Span(
+                    start: Position(
+                      value: 87,
+                      line: 5,
+                      col: 12,
+                    ),
+                    end: Position(
+                      value: 91,
+                      line: 5,
+                      col: 16,
+                    ),
+                  ),
+                ))),
+                This(String(StringLiteral(
+                  raw: "\"123\"",
+                  value: "123",
+                  span: Span(
+                    start: Position(
+                      value: 94,
+                      line: 5,
+                      col: 19,
+                    ),
+                    end: Position(
+                      value: 98,
+                      line: 5,
+                      col: 23,
+                    ),
+                  ),
+                ))),
+                This(Object(ObjectEntryList(
+                  span: Span(
+                    start: Position(
+                      value: 101,
+                      line: 5,
+                      col: 26,
+                    ),
+                    end: Position(
+                      value: 150,
+                      line: 8,
+                      col: 4,
+                    ),
+                  ),
+                  items: [
+                    This(Ok(ObjectEntry(
+                      key: Ok(StringLiteral(
+                        raw: "hey",
+                        value: "hey",
+                        span: Span(
+                          start: Position(
+                            value: 111,
+                            line: 6,
+                            col: 8,
+                          ),
+                          end: Position(
+                            value: 113,
+                            line: 6,
+                            col: 10,
+                          ),
+                        ),
+                      )),
+                      value: String(StringLiteral(
+                        raw: "\"yo!\"",
+                        value: "yo!",
+                        span: Span(
+                          start: Position(
+                            value: 116,
+                            line: 6,
+                            col: 13,
+                          ),
+                          end: Position(
+                            value: 120,
+                            line: 6,
+                            col: 17,
+                          ),
+                        ),
+                      )),
+                    ))),
+                    This(Ok(ObjectEntry(
+                      key: Ok(StringLiteral(
+                        raw: "hello",
+                        value: "hello",
+                        span: Span(
+                          start: Position(
+                            value: 131,
+                            line: 7,
+                            col: 8,
+                          ),
+                          end: Position(
+                            value: 135,
+                            line: 7,
+                            col: 12,
+                          ),
+                        ),
+                      )),
+                      value: String(StringLiteral(
+                        raw: "\"world\"",
+                        value: "world",
+                        span: Span(
+                          start: Position(
+                            value: 138,
+                            line: 7,
+                            col: 15,
+                          ),
+                          end: Position(
+                            value: 144,
+                            line: 7,
+                            col: 21,
+                          ),
+                        ),
+                      )),
+                    ))),
+                  ],
+                ))),
+              ],
+            )),
+          ))),
+        ],
+      )),
     )),
   ],
 )

@@ -79,8 +79,8 @@ Program(
                         col: 39,
                       ),
                     ),
-                    exprs: [
-                      String(StringLiteral(
+                    items: [
+                      This(String(StringLiteral(
                         raw: "\"love\"",
                         value: "love",
                         span: Span(
@@ -95,7 +95,7 @@ Program(
                             col: 38,
                           ),
                         ),
-                      )),
+                      ))),
                     ],
                   ),
                 ))),

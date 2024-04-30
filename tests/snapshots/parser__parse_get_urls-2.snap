@@ -63,8 +63,8 @@ Program(
               col: 21,
             ),
           ),
-          exprs: [
-            String(StringLiteral(
+          items: [
+            This(String(StringLiteral(
               raw: "\"url\"",
               value: "url",
               span: Span(
@@ -79,7 +79,7 @@ Program(
                   col: 20,
                 ),
               ),
-            )),
+            ))),
           ],
         ),
       ))),

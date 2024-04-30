@@ -16,82 +16,117 @@ Program(
           col: 4,
         ),
       )),
-      value: Object((Span(
-        start: Position(
-          value: 9,
-          line: 1,
-          col: 8,
+      value: Object(ObjectEntryList(
+        span: Span(
+          start: Position(
+            value: 9,
+            line: 1,
+            col: 8,
+          ),
+          end: Position(
+            value: 40,
+            line: 4,
+            col: 0,
+          ),
         ),
-        end: Position(
-          value: 40,
-          line: 4,
-          col: 0,
-        ),
-      ), [
-        Ok(ObjectEntry(
-          key: Ok(StringLiteral(
-            raw: "\"key\"",
-            value: "key",
-            span: Span(
+        items: [
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "\"key\"",
+              value: "key",
+              span: Span(
+                start: Position(
+                  value: 13,
+                  line: 2,
+                  col: 2,
+                ),
+                end: Position(
+                  value: 17,
+                  line: 2,
+                  col: 6,
+                ),
+              ),
+            )),
+            value: Identifier(Ok(Token(
+              kind: Ident,
+              text: "value",
               start: Position(
-                value: 13,
+                value: 20,
                 line: 2,
-                col: 2,
+                col: 9,
               ),
-              end: Position(
-                value: 17,
-                line: 2,
-                col: 6,
-              ),
-            ),
-          )),
-          value: Identifier(Ok(Token(
-            kind: Ident,
-            text: "value",
-            start: Position(
-              value: 20,
-              line: 2,
-              col: 9,
-            ),
+            ))),
           ))),
-        )),
-        Ok(ObjectEntry(
-          key: Ok(StringLiteral(
-            raw: "\"key2\"",
-            value: "key2",
-            span: Span(
-              start: Position(
-                value: 30,
-                line: 3,
-                col: 2,
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "\"key2\"",
+              value: "key2",
+              span: Span(
+                start: Position(
+                  value: 30,
+                  line: 3,
+                  col: 2,
+                ),
+                end: Position(
+                  value: 35,
+                  line: 3,
+                  col: 7,
+                ),
               ),
-              end: Position(
-                value: 35,
-                line: 3,
-                col: 7,
+            )),
+            value: Error(ContextualError(
+              inner_error: ExpectedEitherOfTokens(
+                found: Token(
+                  kind: RBracket,
+                  text: "}",
+                  start: Position(
+                    value: 39,
+                    line: 4,
+                    col: 0,
+                  ),
+                ),
+                expected: [
+                  Ident,
+                  StringLiteral,
+                  Boolean,
+                  Number,
+                  LBracket,
+                  LSquare,
+                  Null,
+                ],
               ),
-            ),
-          )),
-          value: Error(ContextualError(
-            inner_error: ExpectedEitherOfTokens(
-              found: Token(
-                kind: RBracket,
-                text: "}",
+              span: Span(
                 start: Position(
                   value: 39,
                   line: 4,
                   col: 0,
                 ),
+                end: Position(
+                  value: 39,
+                  line: 4,
+                  col: 0,
+                ),
               ),
-              expected: [
-                Ident,
-                StringLiteral,
-                Boolean,
-                Number,
-                LBracket,
-                LSquare,
-                Null,
-              ],
+              message: None,
+              context: ErrorSourceContext(
+                above: Some("  \"key2\": "),
+                line: "}",
+                below: None,
+              ),
+            )),
+          ))),
+          This(Error(ContextualError(
+            inner_error: ExpectedToken(
+              found: Token(
+                kind: End,
+                text: "",
+                start: Position(
+                  value: 41,
+                  line: 4,
+                  col: 1,
+                ),
+              ),
+              expected: Comma,
             ),
             span: Span(
               start: Position(
@@ -100,7 +135,7 @@ Program(
                 col: 0,
               ),
               end: Position(
-                value: 39,
+                value: 40,
                 line: 4,
                 col: 0,
               ),
@@ -111,41 +146,9 @@ Program(
               line: "}",
               below: None,
             ),
-          )),
-        )),
-        Error(ContextualError(
-          inner_error: ExpectedToken(
-            found: Token(
-              kind: End,
-              text: "",
-              start: Position(
-                value: 41,
-                line: 4,
-                col: 1,
-              ),
-            ),
-            expected: Comma,
-          ),
-          span: Span(
-            start: Position(
-              value: 39,
-              line: 4,
-              col: 0,
-            ),
-            end: Position(
-              value: 40,
-              line: 4,
-              col: 0,
-            ),
-          ),
-          message: None,
-          context: ErrorSourceContext(
-            above: Some("  \"key2\": "),
-            line: "}",
-            below: None,
-          ),
-        )),
-      ])),
+          ))),
+        ],
+      )),
     )),
   ],
 )

@@ -170,6 +170,35 @@ post `${env
 //         let l = [null, t]
 "#
     );
+
+    assert_fmt!(
+        r#"
+    let a = [true, 12, 34,
+
+    // line comment
+    1253, "asdf"
+    // wow
+    ]
+    "#
+    );
+
+    assert_fmt!(
+        r#"
+    let a = [true, 12, 34,
+
+    // line comment
+    1253, "asdf"
+    // wow
+    {
+        a: b,
+        c: "d",
+        e: ["asdfv", 3, 
+         // well
+        ]
+    }
+    ]
+    "#
+    );
 }
 
 #[test]
@@ -274,6 +303,39 @@ fn it_formats_json_object() {
     let: view,
     null: null, header: "",
     body: "",
+}"#
+    );
+}
+
+#[test]
+fn it_formats_object_literals_with_line_comments() {
+    assert_fmt!(
+        r#"
+let o = {
+    key: "value",
+    // akey: 123,
+    love: [
+        "asdf",
+        // asdf,
+        12
+    ]
+}"#
+    );
+
+    assert_fmt!(
+        r#"
+let o = { key: "value",
+// akey: 123,
+        love: [
+        "asdf",
+            // asdf,
+        {
+            then: "able",
+            arr: ["asdfv,", 123, true, 
+                 // asdf
+         false,
+                 null
+            ] } ]
 }"#
     );
 }

@@ -271,17 +271,17 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
             Array(values) => {
                 let mut v = vec![];
 
-                for value in values.iter() {
+                for value in values.expressions() {
                     v.push(self.evaluate_expression(value)?);
                 }
 
                 Value::Array(v.into())
             }
-            Object((.., fields)) => {
+            Object(list) => {
                 let mut props = HashMap::new();
 
-                for node in fields.iter() {
-                    let ast::ObjectEntry { key, value } = node.get()?;
+                for entry in list.entries() {
+                    let ast::ObjectEntry { key, value } = entry;
                     let value = self.evaluate_expression(value)?;
                     props.insert(key.get()?.value.to_string(), value);
                 }
@@ -457,10 +457,10 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
         &self,
         args: &'a ast::ExpressionList<'source>,
     ) -> Result<[&'a ast::Expression; N]> {
-        if args.exprs.len() != N {
+        if args.items.len() != N {
             return Err(self
                 .error_factory
-                .required_args(args.span, N, args.exprs.len())
+                .required_args(args.span, N, args.items.len())
                 .into());
         };
 
@@ -471,7 +471,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
             [&*null; N]
         };
 
-        for (i, arg) in args.iter().enumerate() {
+        for (i, arg) in args.expressions().enumerate() {
             arguments[i] = arg;
         }
 

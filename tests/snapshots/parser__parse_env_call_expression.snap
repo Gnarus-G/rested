@@ -65,8 +65,8 @@ Program(
                     col: 48,
                   ),
                 ),
-                exprs: [
-                  String(StringLiteral(
+                items: [
+                  This(String(StringLiteral(
                     raw: "\"auth\"",
                     value: "auth",
                     span: Span(
@@ -81,7 +81,7 @@ Program(
                         col: 47,
                       ),
                     ),
-                  )),
+                  ))),
                 ],
               ),
             )),
@@ -110,8 +110,8 @@ Program(
                     col: 65,
                   ),
                 ),
-                exprs: [
-                  String(StringLiteral(
+                items: [
+                  This(String(StringLiteral(
                     raw: "\"data\"",
                     value: "data",
                     span: Span(
@@ -126,7 +126,7 @@ Program(
                         col: 64,
                       ),
                     ),
-                  )),
+                  ))),
                 ],
               ),
             )),

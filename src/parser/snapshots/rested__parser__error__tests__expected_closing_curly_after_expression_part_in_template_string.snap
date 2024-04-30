@@ -91,8 +91,8 @@ Program(
                 col: 42,
               ),
             ),
-            exprs: [
-              String(StringLiteral(
+            items: [
+              This(String(StringLiteral(
                 raw: "\"base\"",
                 value: "base",
                 span: Span(
@@ -107,7 +107,7 @@ Program(
                     col: 41,
                   ),
                 ),
-              )),
+              ))),
             ],
           ),
         ))),
