@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "@log(\"path/to/file\") get /api",
   items: [
-    Attribute(
+    Attribute(Attribute(
       location: Position(
         value: 0,
         line: 0,
@@ -29,13 +29,13 @@ Program(
             col: 4,
           ),
           end: Position(
-            value: 20,
+            value: 19,
             line: 0,
-            col: 20,
+            col: 19,
           ),
         ),
-        exprs: [
-          String(StringLiteral(
+        items: [
+          This(String(StringLiteral(
             raw: "\"path/to/file\"",
             value: "path/to/file",
             span: Span(
@@ -45,15 +45,15 @@ Program(
                 col: 5,
               ),
               end: Position(
-                value: 19,
+                value: 18,
                 line: 0,
-                col: 19,
+                col: 18,
               ),
             ),
-          )),
+          ))),
         ],
       )),
-    ),
+    )),
     Request(Request(
       method: GET,
       endpoint: Pathname(Literal(
@@ -65,9 +65,9 @@ Program(
             col: 25,
           ),
           end: Position(
-            value: 29,
+            value: 28,
             line: 0,
-            col: 29,
+            col: 28,
           ),
         ),
       )),
@@ -79,9 +79,9 @@ Program(
           col: 21,
         ),
         end: Position(
-          value: 29,
+          value: 28,
           line: 0,
-          col: 29,
+          col: 28,
         ),
       ),
     )),

@@ -14,29 +14,29 @@ Program(
           col: 0,
         ),
         end: Position(
-          value: 20,
+          value: 19,
           line: 1,
-          col: 19,
+          col: 18,
         ),
       ),
       parts: [
-        String(StringLiteral(
-          raw: "`asdf ",
+        StringPart(StringLiteral(
+          raw: "asdf ",
           value: "asdf ",
           span: Span(
             start: Position(
-              value: 1,
+              value: 2,
               line: 1,
-              col: 0,
+              col: 1,
             ),
             end: Position(
-              value: 7,
+              value: 6,
               line: 1,
-              col: 6,
+              col: 5,
             ),
           ),
         )),
-        Identifier(Ok(Token(
+        ExpressionPart(Identifier(Ok(Token(
           kind: Ident,
           text: "test",
           start: Position(
@@ -44,8 +44,8 @@ Program(
             line: 1,
             col: 8,
           ),
-        ))),
-        String(StringLiteral(
+        )))),
+        StringPart(StringLiteral(
           raw: " ",
           value: " ",
           span: Span(
@@ -55,13 +55,13 @@ Program(
               col: 13,
             ),
             end: Position(
-              value: 15,
+              value: 14,
               line: 1,
-              col: 14,
+              col: 13,
             ),
           ),
         )),
-        Identifier(Ok(Token(
+        ExpressionPart(Identifier(Ok(Token(
           kind: Ident,
           text: "a",
           start: Position(
@@ -69,23 +69,7 @@ Program(
             line: 1,
             col: 16,
           ),
-        ))),
-        String(StringLiteral(
-          raw: "`",
-          value: "",
-          span: Span(
-            start: Position(
-              value: 19,
-              line: 1,
-              col: 18,
-            ),
-            end: Position(
-              value: 20,
-              line: 1,
-              col: 19,
-            ),
-          ),
-        )),
+        )))),
       ],
     )),
   ],

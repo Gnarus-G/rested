@@ -16,168 +16,171 @@ Program(
           col: 4,
         ),
       )),
-      value: Object((Span(
-        start: Position(
-          value: 9,
-          line: 1,
-          col: 8,
+      value: Object(ObjectEntryList(
+        span: Span(
+          start: Position(
+            value: 9,
+            line: 1,
+            col: 8,
+          ),
+          end: Position(
+            value: 28,
+            line: 3,
+            col: 0,
+          ),
         ),
-        end: Position(
-          value: 29,
-          line: 3,
-          col: 1,
-        ),
-      ), [
-        Ok(ObjectEntry(
-          key: Ok(StringLiteral(
-            raw: "key",
-            value: "key",
-            span: Span(
-              start: Position(
-                value: 15,
-                line: 2,
-                col: 4,
-              ),
-              end: Position(
-                value: 18,
-                line: 2,
-                col: 7,
-              ),
-            ),
-          )),
-          value: Call(CallExpr(
-            identifier: Ok(Token(
-              kind: Ident,
-              text: "env",
-              start: Position(
-                value: 20,
-                line: 2,
-                col: 9,
-              ),
-            )),
-            arguments: ExpressionList(
+        items: [
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "key",
+              value: "key",
               span: Span(
                 start: Position(
-                  value: 23,
+                  value: 15,
                   line: 2,
-                  col: 12,
+                  col: 4,
                 ),
                 end: Position(
-                  value: 29,
-                  line: 3,
-                  col: 1,
+                  value: 17,
+                  line: 2,
+                  col: 6,
                 ),
               ),
-              exprs: [
-                Error(ContextualError(
-                  inner_error: ExpectedEitherOfTokens(
-                    found: Token(
-                      kind: UnfinishedStringLiteral,
-                      text: "\")",
+            )),
+            value: Call(CallExpr(
+              identifier: Ok(Token(
+                kind: Ident,
+                text: "env",
+                start: Position(
+                  value: 20,
+                  line: 2,
+                  col: 9,
+                ),
+              )),
+              arguments: ExpressionList(
+                span: Span(
+                  start: Position(
+                    value: 23,
+                    line: 2,
+                    col: 12,
+                  ),
+                  end: Position(
+                    value: 28,
+                    line: 3,
+                    col: 0,
+                  ),
+                ),
+                items: [
+                  This(Error(ContextualError(
+                    inner_error: ExpectedEitherOfTokens(
+                      found: Token(
+                        kind: UnfinishedStringLiteral,
+                        text: "\")",
+                        start: Position(
+                          value: 24,
+                          line: 2,
+                          col: 13,
+                        ),
+                      ),
+                      expected: [
+                        Ident,
+                        StringLiteral,
+                        Boolean,
+                        Number,
+                        LBracket,
+                        LSquare,
+                        Null,
+                      ],
+                    ),
+                    span: Span(
                       start: Position(
                         value: 24,
                         line: 2,
                         col: 13,
                       ),
+                      end: Position(
+                        value: 25,
+                        line: 2,
+                        col: 14,
+                      ),
                     ),
-                    expected: [
-                      Ident,
-                      StringLiteral,
-                      Boolean,
-                      Number,
-                      LBracket,
-                      LSquare,
-                      Null,
-                    ],
-                  ),
-                  span: Span(
-                    start: Position(
-                      value: 24,
-                      line: 2,
-                      col: 13,
+                    message: None,
+                    context: ErrorSourceContext(
+                      above: Some("let b = {"),
+                      line: "    key: env(\")",
+                      below: Some("}"),
                     ),
-                    end: Position(
-                      value: 26,
-                      line: 2,
-                      col: 15,
+                  ))),
+                  This(Error(ContextualError(
+                    inner_error: ExpectedToken(
+                      found: Token(
+                        kind: RBracket,
+                        text: "}",
+                        start: Position(
+                          value: 27,
+                          line: 3,
+                          col: 0,
+                        ),
+                      ),
+                      expected: Comma,
                     ),
-                  ),
-                  message: None,
-                  context: ErrorSourceContext(
-                    above: Some("let b = {"),
-                    line: "    key: env(\")",
-                    below: Some("}"),
-                  ),
-                )),
-                Error(ContextualError(
-                  inner_error: ExpectedToken(
-                    found: Token(
-                      kind: RBracket,
-                      text: "}",
+                    span: Span(
                       start: Position(
+                        value: 24,
+                        line: 2,
+                        col: 13,
+                      ),
+                      end: Position(
                         value: 27,
                         line: 3,
                         col: 0,
                       ),
                     ),
-                    expected: Comma,
-                  ),
-                  span: Span(
-                    start: Position(
-                      value: 24,
-                      line: 2,
-                      col: 13,
+                    message: None,
+                    context: ErrorSourceContext(
+                      above: Some("    key: env(\")"),
+                      line: "}",
+                      below: None,
                     ),
-                    end: Position(
-                      value: 28,
-                      line: 3,
-                      col: 1,
-                    ),
-                  ),
-                  message: None,
-                  context: ErrorSourceContext(
-                    above: Some("    key: env(\")"),
-                    line: "}",
-                    below: None,
-                  ),
-                )),
-              ],
+                  ))),
+                ],
+              ),
+            )),
+          ))),
+          This(Error(ContextualError(
+            inner_error: ExpectedToken(
+              found: Token(
+                kind: End,
+                text: "",
+                start: Position(
+                  value: 29,
+                  line: 3,
+                  col: 1,
+                ),
+              ),
+              expected: Comma,
             ),
-          )),
-        )),
-        Error(ContextualError(
-          inner_error: ExpectedToken(
-            found: Token(
-              kind: End,
-              text: "",
+            span: Span(
               start: Position(
                 value: 29,
                 line: 3,
                 col: 1,
               ),
+              end: Position(
+                value: 28,
+                line: 3,
+                col: 0,
+              ),
             ),
-            expected: Comma,
-          ),
-          span: Span(
-            start: Position(
-              value: 29,
-              line: 3,
-              col: 1,
+            message: None,
+            context: ErrorSourceContext(
+              above: Some("    key: env(\")"),
+              line: "}",
+              below: None,
             ),
-            end: Position(
-              value: 29,
-              line: 3,
-              col: 1,
-            ),
-          ),
-          message: None,
-          context: ErrorSourceContext(
-            above: Some("    key: env(\")"),
-            line: "}",
-            below: None,
-          ),
-        )),
-      ])),
+          ))),
+        ],
+      )),
     )),
   ],
 )

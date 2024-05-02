@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "\nset BASE_URL \"httas...\"\npost http://lasdf.. {}\n// asdfasdf\n\nlet output_file = \"output/file.json\"\nlet token = env(\"auth-token\")\n\n@log(output_file)\npost /asd {\n  // asdfasd\n  header \"Authorization\" token\n  body `{\n      \"neet\": \"${env(\"var\")}\",\n      \"nerd\": \"${output_file}\",\n  }`\n}\n\n@skip\nget /api {}\n\nput /api {}\npatch /api {}\ndelete /api {}\n",
   items: [
-    Set(
+    Set(ConstantDeclaration(
       identifier: Ok(Token(
         kind: Ident,
         text: "BASE_URL",
@@ -26,13 +26,13 @@ Program(
             col: 13,
           ),
           end: Position(
-            value: 24,
+            value: 23,
             line: 1,
-            col: 23,
+            col: 22,
           ),
         ),
       )),
-    ),
+    )),
     Request(Request(
       method: POST,
       endpoint: Url(Literal(
@@ -44,9 +44,9 @@ Program(
             col: 5,
           ),
           end: Position(
-            value: 44,
+            value: 43,
             line: 2,
-            col: 19,
+            col: 18,
           ),
         ),
       )),
@@ -87,9 +87,9 @@ Program(
           col: 0,
         ),
         end: Position(
-          value: 59,
+          value: 58,
           line: 3,
-          col: 11,
+          col: 10,
         ),
       ),
     )),
@@ -113,9 +113,9 @@ Program(
             col: 18,
           ),
           end: Position(
-            value: 97,
+            value: 96,
             line: 5,
-            col: 36,
+            col: 35,
           ),
         ),
       )),
@@ -148,13 +148,13 @@ Program(
               col: 15,
             ),
             end: Position(
-              value: 127,
+              value: 126,
               line: 6,
-              col: 29,
+              col: 28,
             ),
           ),
-          exprs: [
-            String(StringLiteral(
+          items: [
+            This(String(StringLiteral(
               raw: "\"auth-token\"",
               value: "auth-token",
               span: Span(
@@ -164,17 +164,17 @@ Program(
                   col: 16,
                 ),
                 end: Position(
-                  value: 126,
+                  value: 125,
                   line: 6,
-                  col: 28,
+                  col: 27,
                 ),
               ),
-            )),
+            ))),
           ],
         ),
       )),
     )),
-    Attribute(
+    Attribute(Attribute(
       location: Position(
         value: 129,
         line: 8,
@@ -197,13 +197,13 @@ Program(
             col: 4,
           ),
           end: Position(
-            value: 146,
+            value: 145,
             line: 8,
-            col: 17,
+            col: 16,
           ),
         ),
-        exprs: [
-          Identifier(Ok(Token(
+        items: [
+          This(Identifier(Ok(Token(
             kind: Ident,
             text: "output_file",
             start: Position(
@@ -211,10 +211,10 @@ Program(
               line: 8,
               col: 5,
             ),
-          ))),
+          )))),
         ],
       )),
-    ),
+    )),
     Request(Request(
       method: POST,
       endpoint: Pathname(Literal(
@@ -226,9 +226,9 @@ Program(
             col: 5,
           ),
           end: Position(
-            value: 156,
+            value: 155,
             line: 9,
-            col: 9,
+            col: 8,
           ),
         ),
       )),
@@ -243,9 +243,9 @@ Program(
                 col: 2,
               ),
               end: Position(
-                value: 171,
+                value: 170,
                 line: 10,
-                col: 12,
+                col: 11,
               ),
             ),
           )),
@@ -260,9 +260,9 @@ Program(
                   col: 9,
                 ),
                 end: Position(
-                  value: 196,
+                  value: 195,
                   line: 11,
-                  col: 24,
+                  col: 23,
                 ),
               ),
             )),
@@ -285,29 +285,29 @@ Program(
                   col: 7,
                 ),
                 end: Position(
-                  value: 280,
-                  line: 14,
-                  col: 36,
+                  value: 279,
+                  line: 15,
+                  col: 3,
                 ),
               ),
               parts: [
-                String(StringLiteral(
-                  raw: "`{\n      \"neet\": \"",
+                StringPart(StringLiteral(
+                  raw: "{\n      \"neet\": \"",
                   value: "{\n      \"neet\": \"",
                   span: Span(
                     start: Position(
-                      value: 210,
+                      value: 211,
                       line: 12,
-                      col: 7,
+                      col: 8,
                     ),
                     end: Position(
-                      value: 228,
+                      value: 227,
                       line: 12,
-                      col: 25,
+                      col: 24,
                     ),
                   ),
                 )),
-                Call(CallExpr(
+                ExpressionPart(Call(CallExpr(
                   identifier: Ok(Token(
                     kind: Ident,
                     text: "env",
@@ -325,13 +325,13 @@ Program(
                         col: 20,
                       ),
                       end: Position(
-                        value: 240,
+                        value: 239,
                         line: 13,
-                        col: 27,
+                        col: 26,
                       ),
                     ),
-                    exprs: [
-                      String(StringLiteral(
+                    items: [
+                      This(String(StringLiteral(
                         raw: "\"var\"",
                         value: "var",
                         span: Span(
@@ -341,16 +341,16 @@ Program(
                             col: 21,
                           ),
                           end: Position(
-                            value: 239,
+                            value: 238,
                             line: 13,
-                            col: 26,
+                            col: 25,
                           ),
                         ),
-                      )),
+                      ))),
                     ],
                   ),
-                )),
-                String(StringLiteral(
+                ))),
+                StringPart(StringLiteral(
                   raw: "\",\n      \"nerd\": \"",
                   value: ",\n      \"nerd\": ",
                   span: Span(
@@ -360,13 +360,13 @@ Program(
                       col: 28,
                     ),
                     end: Position(
-                      value: 259,
+                      value: 258,
                       line: 13,
-                      col: 46,
+                      col: 45,
                     ),
                   ),
                 )),
-                Identifier(Ok(Token(
+                ExpressionPart(Identifier(Ok(Token(
                   kind: Ident,
                   text: "output_file",
                   start: Position(
@@ -374,9 +374,9 @@ Program(
                     line: 14,
                     col: 17,
                   ),
-                ))),
-                String(StringLiteral(
-                  raw: "\",\n  }`",
+                )))),
+                StringPart(StringLiteral(
+                  raw: "\",\n  }",
                   value: "\",\n  }",
                   span: Span(
                     start: Position(
@@ -385,9 +385,9 @@ Program(
                       col: 29,
                     ),
                     end: Position(
-                      value: 280,
+                      value: 278,
                       line: 14,
-                      col: 36,
+                      col: 34,
                     ),
                   ),
                 )),
@@ -426,7 +426,7 @@ Program(
         ),
       ),
     )),
-    Attribute(
+    Attribute(Attribute(
       location: Position(
         value: 284,
         line: 18,
@@ -442,7 +442,7 @@ Program(
         ),
       )),
       arguments: None,
-    ),
+    )),
     Request(Request(
       method: GET,
       endpoint: Pathname(Literal(
@@ -454,9 +454,9 @@ Program(
             col: 4,
           ),
           end: Position(
-            value: 298,
+            value: 297,
             line: 19,
-            col: 8,
+            col: 7,
           ),
         ),
       )),
@@ -499,9 +499,9 @@ Program(
             col: 4,
           ),
           end: Position(
-            value: 311,
+            value: 310,
             line: 21,
-            col: 8,
+            col: 7,
           ),
         ),
       )),
@@ -544,9 +544,9 @@ Program(
             col: 6,
           ),
           end: Position(
-            value: 325,
+            value: 324,
             line: 22,
-            col: 10,
+            col: 9,
           ),
         ),
       )),
@@ -589,9 +589,9 @@ Program(
             col: 7,
           ),
           end: Position(
-            value: 340,
+            value: 339,
             line: 23,
-            col: 11,
+            col: 10,
           ),
         ),
       )),

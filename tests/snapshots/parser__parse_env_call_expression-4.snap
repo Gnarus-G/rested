@@ -24,13 +24,13 @@ Program(
             col: 3,
           ),
           end: Position(
-            value: 114,
+            value: 113,
             line: 5,
-            col: 13,
+            col: 12,
           ),
         ),
-        exprs: [
-          String(StringLiteral(
+        items: [
+          This(String(StringLiteral(
             raw: "\"base\"",
             value: "base",
             span: Span(
@@ -40,13 +40,43 @@ Program(
                 col: 4,
               ),
               end: Position(
-                value: 10,
+                value: 9,
                 line: 0,
-                col: 10,
+                col: 9,
+              ),
+            ),
+          ))),
+          That(Literal(
+            value: "//aasdf",
+            span: Span(
+              start: Position(
+                value: 24,
+                line: 1,
+                col: 12,
+              ),
+              end: Position(
+                value: 30,
+                line: 1,
+                col: 18,
               ),
             ),
           )),
-          String(StringLiteral(
+          That(Literal(
+            value: "// asdf",
+            span: Span(
+              start: Position(
+                value: 44,
+                line: 2,
+                col: 12,
+              ),
+              end: Position(
+                value: 50,
+                line: 2,
+                col: 18,
+              ),
+            ),
+          )),
+          This(String(StringLiteral(
             raw: "\"url\"",
             value: "url",
             span: Span(
@@ -56,9 +86,24 @@ Program(
                 col: 12,
               ),
               end: Position(
-                value: 69,
+                value: 68,
                 line: 3,
-                col: 17,
+                col: 16,
+              ),
+            ),
+          ))),
+          That(Literal(
+            value: "//trailing comment",
+            span: Span(
+              start: Position(
+                value: 82,
+                line: 4,
+                col: 12,
+              ),
+              end: Position(
+                value: 99,
+                line: 4,
+                col: 29,
               ),
             ),
           )),

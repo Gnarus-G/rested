@@ -14,29 +14,29 @@ Program(
           col: 0,
         ),
         end: Position(
-          value: 31,
+          value: 30,
           line: 0,
-          col: 31,
+          col: 30,
         ),
       ),
       parts: [
-        String(StringLiteral(
-          raw: "`asdf ",
+        StringPart(StringLiteral(
+          raw: "asdf ",
           value: "asdf ",
           span: Span(
             start: Position(
-              value: 0,
+              value: 1,
               line: 0,
-              col: 0,
+              col: 1,
             ),
             end: Position(
-              value: 6,
+              value: 5,
               line: 0,
-              col: 6,
+              col: 5,
             ),
           ),
         )),
-        TemplateSringLiteral(
+        ExpressionPart(TemplateSringLiteral(
           span: Span(
             start: Position(
               value: 8,
@@ -44,29 +44,29 @@ Program(
               col: 8,
             ),
             end: Position(
-              value: 25,
+              value: 24,
               line: 0,
-              col: 25,
+              col: 24,
             ),
           ),
           parts: [
-            String(StringLiteral(
-              raw: "`hello",
+            StringPart(StringLiteral(
+              raw: "hello",
               value: "hello",
               span: Span(
                 start: Position(
-                  value: 8,
+                  value: 9,
                   line: 0,
-                  col: 8,
+                  col: 9,
                 ),
                 end: Position(
-                  value: 14,
+                  value: 13,
                   line: 0,
-                  col: 14,
+                  col: 13,
                 ),
               ),
             )),
-            String(StringLiteral(
+            ExpressionPart(String(StringLiteral(
               raw: "\"world\"",
               value: "world",
               span: Span(
@@ -76,32 +76,16 @@ Program(
                   col: 16,
                 ),
                 end: Position(
-                  value: 23,
+                  value: 22,
                   line: 0,
-                  col: 23,
+                  col: 22,
                 ),
               ),
-            )),
-            String(StringLiteral(
-              raw: "`",
-              value: "",
-              span: Span(
-                start: Position(
-                  value: 24,
-                  line: 0,
-                  col: 24,
-                ),
-                end: Position(
-                  value: 25,
-                  line: 0,
-                  col: 25,
-                ),
-              ),
-            )),
+            ))),
           ],
-        ),
-        String(StringLiteral(
-          raw: " jkl`",
+        )),
+        StringPart(StringLiteral(
+          raw: " jkl",
           value: " jkl",
           span: Span(
             start: Position(
@@ -110,9 +94,9 @@ Program(
               col: 26,
             ),
             end: Position(
-              value: 31,
+              value: 29,
               line: 0,
-              col: 31,
+              col: 29,
             ),
           ),
         )),

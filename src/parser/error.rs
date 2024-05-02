@@ -108,6 +108,22 @@ impl<'i> Expectations<'i> {
         Err(error.into())
     }
 
+    /// Like `expect_peek` but it doesn't advance the parser.
+    pub fn expect_peek_ahead<'p>(
+        &self,
+        parser: &'p mut Parser<'i>,
+        expected_kind: TokenKind,
+    ) -> Result<'i, &'p Token<'i>> {
+        let peeked = parser.peek_token();
+        if peeked.is(expected_kind) {
+            return Ok(peeked);
+        }
+
+        let error = self.expected_token(peeked, expected_kind);
+
+        Err(error.into())
+    }
+
     pub fn expect_peek_one_of(
         &self,
         parser: &mut Parser<'i>,
@@ -297,5 +313,12 @@ let b = {
     fn expected_comma_before_more_parameters() {
         assert_ast!(r#"env("base" "url")"#);
         assert_ast!(r#"env("", false 12)"#);
+    }
+
+    #[test]
+    fn expected_closing_curly_after_expression_part_in_template_string() {
+        assert_ast!(r#"`wowee ${"hello"} error ahead ${env("base")`"#);
+        assert_ast!(r#"`wowee ${"hello"} error ahead ${variable_name`"#);
+        assert_ast!(r#"`error ahead ${variable_name `"#);
     }
 }

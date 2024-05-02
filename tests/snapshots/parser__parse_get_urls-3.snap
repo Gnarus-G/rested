@@ -16,29 +16,13 @@ Program(
             col: 4,
           ),
           end: Position(
-            value: 16,
+            value: 15,
             line: 0,
-            col: 16,
+            col: 15,
           ),
         ),
         parts: [
-          String(StringLiteral(
-            raw: "`",
-            value: "",
-            span: Span(
-              start: Position(
-                value: 4,
-                line: 0,
-                col: 4,
-              ),
-              end: Position(
-                value: 5,
-                line: 0,
-                col: 5,
-              ),
-            ),
-          )),
-          Identifier(Ok(Token(
+          ExpressionPart(Identifier(Ok(Token(
             kind: Ident,
             text: "url",
             start: Position(
@@ -46,9 +30,9 @@ Program(
               line: 0,
               col: 7,
             ),
-          ))),
-          String(StringLiteral(
-            raw: "/api`",
+          )))),
+          StringPart(StringLiteral(
+            raw: "/api",
             value: "/api",
             span: Span(
               start: Position(
@@ -57,9 +41,9 @@ Program(
                 col: 11,
               ),
               end: Position(
-                value: 16,
+                value: 14,
                 line: 0,
-                col: 16,
+                col: 14,
               ),
             ),
           )),
@@ -73,9 +57,9 @@ Program(
           col: 0,
         ),
         end: Position(
-          value: 16,
+          value: 15,
           line: 0,
-          col: 16,
+          col: 15,
         ),
       ),
     )),
@@ -89,29 +73,13 @@ Program(
             col: 12,
           ),
           end: Position(
-            value: 56,
+            value: 55,
             line: 1,
-            col: 39,
+            col: 38,
           ),
         ),
         parts: [
-          String(StringLiteral(
-            raw: "`",
-            value: "",
-            span: Span(
-              start: Position(
-                value: 29,
-                line: 1,
-                col: 12,
-              ),
-              end: Position(
-                value: 30,
-                line: 1,
-                col: 13,
-              ),
-            ),
-          )),
-          Call(CallExpr(
+          ExpressionPart(Call(CallExpr(
             identifier: Ok(Token(
               kind: Ident,
               text: "env",
@@ -129,13 +97,13 @@ Program(
                   col: 18,
                 ),
                 end: Position(
-                  value: 50,
+                  value: 49,
                   line: 1,
-                  col: 33,
+                  col: 32,
                 ),
               ),
-              exprs: [
-                TemplateSringLiteral(
+              items: [
+                This(TemplateSringLiteral(
                   span: Span(
                     start: Position(
                       value: 36,
@@ -143,29 +111,13 @@ Program(
                       col: 19,
                     ),
                     end: Position(
-                      value: 49,
+                      value: 48,
                       line: 1,
-                      col: 32,
+                      col: 31,
                     ),
                   ),
                   parts: [
-                    String(StringLiteral(
-                      raw: "`",
-                      value: "",
-                      span: Span(
-                        start: Position(
-                          value: 36,
-                          line: 1,
-                          col: 19,
-                        ),
-                        end: Position(
-                          value: 37,
-                          line: 1,
-                          col: 20,
-                        ),
-                      ),
-                    )),
-                    Identifier(Ok(Token(
+                    ExpressionPart(Identifier(Ok(Token(
                       kind: Ident,
                       text: "uri",
                       start: Position(
@@ -173,9 +125,9 @@ Program(
                         line: 1,
                         col: 22,
                       ),
-                    ))),
-                    String(StringLiteral(
-                      raw: ":8080`",
+                    )))),
+                    StringPart(StringLiteral(
+                      raw: ":8080",
                       value: ":8080",
                       span: Span(
                         start: Position(
@@ -184,19 +136,19 @@ Program(
                           col: 26,
                         ),
                         end: Position(
-                          value: 49,
+                          value: 47,
                           line: 1,
-                          col: 32,
+                          col: 30,
                         ),
                       ),
                     )),
                   ],
-                ),
+                )),
               ],
             ),
-          )),
-          String(StringLiteral(
-            raw: "/api`",
+          ))),
+          StringPart(StringLiteral(
+            raw: "/api",
             value: "/api",
             span: Span(
               start: Position(
@@ -205,9 +157,9 @@ Program(
                 col: 34,
               ),
               end: Position(
-                value: 56,
+                value: 54,
                 line: 1,
-                col: 39,
+                col: 37,
               ),
             ),
           )),
@@ -221,9 +173,9 @@ Program(
           col: 8,
         ),
         end: Position(
-          value: 56,
+          value: 55,
           line: 1,
-          col: 39,
+          col: 38,
         ),
       ),
     )),
@@ -237,29 +189,13 @@ Program(
             col: 12,
           ),
           end: Position(
-            value: 88,
+            value: 87,
             line: 2,
-            col: 31,
+            col: 30,
           ),
         ),
         parts: [
-          String(StringLiteral(
-            raw: "`",
-            value: "",
-            span: Span(
-              start: Position(
-                value: 69,
-                line: 2,
-                col: 12,
-              ),
-              end: Position(
-                value: 70,
-                line: 2,
-                col: 13,
-              ),
-            ),
-          )),
-          Call(CallExpr(
+          ExpressionPart(Call(CallExpr(
             identifier: Ok(Token(
               kind: Ident,
               text: "env",
@@ -277,13 +213,13 @@ Program(
                   col: 18,
                 ),
                 end: Position(
-                  value: 82,
+                  value: 81,
                   line: 2,
-                  col: 25,
+                  col: 24,
                 ),
               ),
-              exprs: [
-                String(StringLiteral(
+              items: [
+                This(String(StringLiteral(
                   raw: "\"url\"",
                   value: "url",
                   span: Span(
@@ -293,17 +229,17 @@ Program(
                       col: 19,
                     ),
                     end: Position(
-                      value: 81,
+                      value: 80,
                       line: 2,
-                      col: 24,
+                      col: 23,
                     ),
                   ),
-                )),
+                ))),
               ],
             ),
-          )),
-          String(StringLiteral(
-            raw: "/api`",
+          ))),
+          StringPart(StringLiteral(
+            raw: "/api",
             value: "/api",
             span: Span(
               start: Position(
@@ -312,9 +248,9 @@ Program(
                 col: 26,
               ),
               end: Position(
-                value: 88,
+                value: 86,
                 line: 2,
-                col: 31,
+                col: 29,
               ),
             ),
           )),
@@ -328,9 +264,9 @@ Program(
           col: 8,
         ),
         end: Position(
-          value: 88,
+          value: 87,
           line: 2,
-          col: 31,
+          col: 30,
         ),
       ),
     )),

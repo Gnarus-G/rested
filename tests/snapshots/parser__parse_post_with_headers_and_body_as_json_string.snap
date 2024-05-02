@@ -17,9 +17,9 @@ Program(
             col: 13,
           ),
           end: Position(
-            value: 30,
+            value: 29,
             line: 1,
-            col: 29,
+            col: 28,
           ),
         ),
       )),
@@ -36,9 +36,9 @@ Program(
                   col: 15,
                 ),
                 end: Position(
-                  value: 63,
+                  value: 62,
                   line: 2,
-                  col: 30,
+                  col: 29,
                 ),
               ),
             )),
@@ -52,17 +52,15 @@ Program(
                   col: 31,
                 ),
                 end: Position(
-                  value: 78,
+                  value: 77,
                   line: 2,
-                  col: 45,
+                  col: 44,
                 ),
               ),
             )),
           ),
           Body(
-            value: String(StringLiteral(
-              raw: "`\n        {\"neet\": 1337}\n        `",
-              value: "\n        {\"neet\": 1337}\n        ",
+            value: TemplateSringLiteral(
               span: Span(
                 start: Position(
                   value: 92,
@@ -70,12 +68,30 @@ Program(
                   col: 13,
                 ),
                 end: Position(
-                  value: 126,
-                  line: 3,
-                  col: 47,
+                  value: 125,
+                  line: 5,
+                  col: 8,
                 ),
               ),
-            )),
+              parts: [
+                StringPart(StringLiteral(
+                  raw: "\n        {\"neet\": 1337}\n        ",
+                  value: "\n        {\"neet\": 1337}\n        ",
+                  span: Span(
+                    start: Position(
+                      value: 93,
+                      line: 3,
+                      col: 14,
+                    ),
+                    end: Position(
+                      value: 124,
+                      line: 3,
+                      col: 45,
+                    ),
+                  ),
+                )),
+              ],
+            ),
             start: Position(
               value: 87,
               line: 3,

@@ -102,6 +102,11 @@ fn lex_call_expression() {
 let a = env(")
 "#
     );
+
+    assert_lexes!(
+        r#"get `http://localhost:8080/api?sort=${sort}&filter=${filter}`
+let a = read("testasdf.rd")"#
+    );
 }
 
 #[test]
@@ -141,8 +146,19 @@ let c = {}
         r#"
         post /api {
             body `{"neet": ${env("love")}, 2: ${"two"}}`
-        }"#
+        }
+
+        post http://localhost {
+          header "Authorization" "Bearer token"
+          body `{"neet": 1337}`
+        }
+
+        "#
     );
+
+    assert_lexes!(r#"`string${env("base")}morestring${true}evenmore${"expr string"}`"#);
+
+    assert_lexes!(r#"`asdf ${`hello${"world"}`} jkl`"#);
 }
 
 #[test]
@@ -154,5 +170,15 @@ let obj = {
     otherKey: ["val", "vlue"]
 }
 "#
+    );
+
+    assert_lexes!(
+        r#"
+let o = {
+    key: "value",
+    post: {
+        author: "Me"
+    }
+}"#
     );
 }

@@ -1,0 +1,24 @@
+---
+source: tests/lexer.rs
+description: "`string${env(\"base\")}morestring${true}evenmore${\"expr string\"}`"
+expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
+---
+[
+    OpeningBackTick("`") at Position { value: 0, line: 0, col: 0 },
+    StringLiteral("string") at Position { value: 1, line: 0, col: 1 },
+    DollarSignLBracket("${") at Position { value: 7, line: 0, col: 7 },
+    Ident("env") at Position { value: 9, line: 0, col: 9 },
+    LParen("(") at Position { value: 12, line: 0, col: 12 },
+    StringLiteral("\"base\"") at Position { value: 13, line: 0, col: 13 },
+    RParen(")") at Position { value: 19, line: 0, col: 19 },
+    RBracket("}") at Position { value: 20, line: 0, col: 20 },
+    StringLiteral("morestring") at Position { value: 21, line: 0, col: 21 },
+    DollarSignLBracket("${") at Position { value: 31, line: 0, col: 31 },
+    Boolean("true") at Position { value: 33, line: 0, col: 33 },
+    RBracket("}") at Position { value: 37, line: 0, col: 37 },
+    StringLiteral("evenmore") at Position { value: 38, line: 0, col: 38 },
+    DollarSignLBracket("${") at Position { value: 46, line: 0, col: 46 },
+    StringLiteral("\"expr string\"") at Position { value: 48, line: 0, col: 48 },
+    RBracket("}") at Position { value: 61, line: 0, col: 61 },
+    ClosingBackTick("`") at Position { value: 62, line: 0, col: 62 },
+]

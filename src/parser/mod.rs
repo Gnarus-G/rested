@@ -7,7 +7,7 @@ pub mod error;
 use ast::{Endpoint, Expression, Item, RequestMethod, Statement};
 
 use self::ast::result::ParsedNode;
-use self::ast::{Block, ExpressionList};
+use self::ast::{Block, ExpressionList, TemplateSringPart};
 use self::error::{Expectations, ParseError};
 
 use crate::error_meta::ContextualError;
@@ -15,6 +15,8 @@ use crate::lexer::locations::{GetSpan, Position, Span};
 use crate::lexer::TokenKind;
 use crate::lexer::TokenKind::*;
 use crate::lexer::{Lexer, Token};
+use crate::parser::ast::Attribute;
+use crate::utils::OneOf;
 
 macro_rules! match_or_throw {
     ($expression:expr; $expectations:ident; $self:ident; $( $( $pattern:ident )|+ $( if $guard: expr )? => $arm:expr $(,)? )+ $( ,$message:literal )? ) => {
@@ -201,7 +203,7 @@ impl<'source> Parser<'source> {
             Ident if peek_kind == LParen => self.parse_call_expression().into(),
             Ident => Expression::Identifier(self.curr_token().into()),
             StringLiteral => Expression::String(self.curr_token().into()),
-            TemplateString { head: true, .. } => self.parse_multiline_string_literal(),
+            OpeningBackTick => self.parse_multiline_string_literal(),
             _ => Expression::Error(
                 e.expected_one_of_tokens(self.curr_token(), &[Url, Pathname, StringLiteral, Ident])
                     .into(),
@@ -216,27 +218,27 @@ impl<'source> Parser<'source> {
         let identifier = match e.expect_peek(self, TokenKind::Ident) {
             Ok(i) => i.into(),
             Err(error) => {
-                return Ok(Item::Set {
+                return Ok(Item::Set(ast::ConstantDeclaration {
                     identifier: ParsedNode::Error(error.clone()),
                     value: Expression::Error(error),
-                })
+                }))
             }
         };
 
         self.next_token();
 
-        Ok(Item::Set {
+        Ok(Item::Set(ast::ConstantDeclaration {
             value: match self.parse_expression() {
                 Ok(expr) => expr,
                 Err(error) => {
-                    return Ok(Item::Set {
+                    return Ok(Item::Set(ast::ConstantDeclaration {
                         identifier,
                         value: Expression::Error(error),
-                    })
+                    }))
                 }
             },
             identifier,
-        })
+        }))
     }
 
     fn parse_block(&mut self) -> Option<Block<'source>> {
@@ -341,7 +343,7 @@ impl<'source> Parser<'source> {
                     .parse()
                     .expect("failed to parse as an unsigned int"),
             )),
-            TemplateString { head: true, .. } => self.parse_multiline_string_literal(),
+            OpeningBackTick => self.parse_multiline_string_literal(),
             LBracket => self.parse_object_literal(),
             LSquare => self.parse_array_literal(),
             Null => Expression::Null(self.curr_token().span()),
@@ -382,18 +384,19 @@ impl<'source> Parser<'source> {
 
         while self.curr_token().kind != RBracket && self.curr_token().kind != End {
             if self.curr_token().is(Linecomment) {
+                entries.push(OneOf::That(self.curr_token().into()));
                 self.next_token();
                 continue;
             }
 
             let entry = self.parse_object_property();
 
-            entries.push(ParsedNode::Ok(entry));
+            entries.push(OneOf::This(ParsedNode::Ok(entry)));
 
             if !self.peek_token().is(RBracket) && !self.peek_token().is(Linecomment) {
                 let e = Expectations::new(self);
                 if let Err(e) = e.expect_peek(self, Comma) {
-                    entries.push(ParsedNode::Error(e));
+                    entries.push(OneOf::This(ParsedNode::Error(e)));
                 }
             }
 
@@ -405,7 +408,10 @@ impl<'source> Parser<'source> {
 
         let span = e.start.to_end_of(self.curr_token().span());
 
-        Expression::Object((span, entries.into()))
+        Expression::Object(ast::ObjectEntryList {
+            span,
+            items: entries.into(),
+        })
     }
 
     fn parse_array_literal(&mut self) -> ast::Expression<'source> {
@@ -449,7 +455,9 @@ impl<'source> Parser<'source> {
         let key_token = self.curr_token();
 
         let key = match_or_throw! { key_token.kind; e; self;
-            Ident | StringLiteral => key_token.into(),
+            Get | Post | Put | Patch | Delete
+                | Header | Body | Set | Let
+                | Null | Ident | StringLiteral => key_token.into(),
         };
 
         Ok(key)
@@ -470,45 +478,42 @@ impl<'source> Parser<'source> {
 
     fn parse_multiline_string_literal(&mut self) -> Expression<'source> {
         let mut parts = vec![];
-        let e = Expectations::new(self);
+        let expectations = Expectations::new(self);
         let end;
 
         loop {
             let kind = self.curr_token().kind;
 
             match kind {
-                TemplateString {
-                    head: true,
-                    tail: true,
-                } => {
-                    return Expression::String(self.curr_token().into());
-                }
-                TemplateString { tail: true, .. } => {
+                OpeningBackTick => {}
+                RBracket if matches!(self.peek_token().kind, StringLiteral) => {}
+                RBracket if matches!(self.peek_token().kind, ClosingBackTick) => {
+                    self.next_token();
                     end = self.curr_token().end_position();
-                    parts.push(Expression::String(self.curr_token().into()));
                     break;
                 }
-                TemplateString { .. } => {
-                    let s_literal = Expression::String(self.curr_token().into());
-                    parts.push(s_literal);
+                ClosingBackTick => {
+                    end = self.curr_token().end_position();
+                    break;
                 }
-                DollarSignLBracket
-                    if matches!(self.peek_token().kind, TemplateString { head: true, .. }) =>
-                {
-                    self.next_token();
-                    parts.push(match self.parse_expression() {
-                        Ok(expr) => expr,
-                        Err(e) => Expression::Error(e),
-                    })
+                StringLiteral => {
+                    parts.push(TemplateSringPart::StringPart(self.curr_token().into()));
                 }
-                DollarSignLBracket if matches!(self.peek_token().kind, TemplateString { .. }) => {}
+                DollarSignLBracket if matches!(self.peek_token().kind, RBracket) => {
+                    // `${}` is nothing and is equivalent to ``
+                    self.next_token(); // so we just move on
+                }
                 DollarSignLBracket => {
                     self.next_token();
 
                     parts.push(match self.parse_expression() {
-                        Ok(e) => e,
-                        Err(e) => Expression::Error(e),
+                        Ok(e) => TemplateSringPart::ExpressionPart(e),
+                        Err(e) => TemplateSringPart::ExpressionPart(Expression::Error(e)),
                     });
+
+                    if let Err(error) = expectations.expect_peek_ahead(self, RBracket) {
+                        parts.push(TemplateSringPart::ExpressionPart(Expression::Error(error)));
+                    }
                 }
                 _ => {
                     end = self.curr_token().end_position();
@@ -520,7 +525,7 @@ impl<'source> Parser<'source> {
         }
 
         Expression::TemplateSringLiteral {
-            span: Span::new(e.start, end),
+            span: Span::new(expectations.start, end),
             parts: parts.into(),
         }
     }
@@ -531,22 +536,22 @@ impl<'source> Parser<'source> {
         let identifier = e.expect_peek(self, TokenKind::Ident)?.into();
 
         if self.peek_token().kind != TokenKind::LParen {
-            return Ok(Item::Attribute {
+            return Ok(Item::Attribute(Attribute {
                 location: e.start,
                 identifier,
                 arguments: None,
-            });
+            }));
         }
 
         let l_paren = self.next_token().clone();
 
         debug_assert!(l_paren.kind == LParen);
 
-        Ok(Item::Attribute {
+        Ok(Item::Attribute(Attribute {
             location: e.start,
             identifier,
             arguments: Some(self.parse_expression_list(&l_paren, RParen)),
-        })
+        }))
     }
 
     fn parse_expression_list(
@@ -563,6 +568,7 @@ impl<'source> Parser<'source> {
 
         while self.curr_token().kind != end && self.curr_token().kind != TokenKind::End {
             if self.curr_token().is(Linecomment) {
+                expressions.push(OneOf::That(self.curr_token().into()));
                 self.next_token();
                 continue;
             }
@@ -572,12 +578,12 @@ impl<'source> Parser<'source> {
                 Err(error) => Expression::Error(error),
             };
 
-            expressions.push(exp);
+            expressions.push(OneOf::This(exp));
 
             if !self.peek_token().is(end) && !self.peek_token().is(Linecomment) {
                 let e = Expectations::new(self);
                 if let Err(e) = e.expect_peek(self, Comma) {
-                    expressions.push(Expression::Error(e));
+                    expressions.push(OneOf::This(Expression::Error(e)));
                 }
             }
 
@@ -592,7 +598,7 @@ impl<'source> Parser<'source> {
                 start: start_of_expressions_list,
                 end: last_token.span().end,
             },
-            exprs: expressions.into(),
+            items: expressions.into(),
         }
     }
 
@@ -616,5 +622,43 @@ impl<'source> Parser<'source> {
             },
             identifier,
         }))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        lexer::locations::{self, GetSpan, Span},
+        parser::ast::Program,
+    };
+
+    #[test]
+    fn it_collects_the_full_span_of_request_blocks() {
+        let s = r#"
+get `http://localhost:8080/api?sort=${sort}&filter=${filter}`
+
+post /time {
+  body a
+}"#;
+
+        let p = Program::from(s);
+
+        let item = p.items.first().unwrap();
+        assert_eq!(
+            item.span(),
+            Span::new(
+                locations::Position::new(1, 0, 1),
+                locations::Position::new(1, 60, 61)
+            )
+        );
+
+        let item = p.items.last().unwrap();
+        assert_eq!(
+            item.span(),
+            Span::new(
+                locations::Position::new(3, 0, 64),
+                locations::Position::new(5, 0, 86)
+            )
+        );
     }
 }

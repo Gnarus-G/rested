@@ -16,83 +16,101 @@ Program(
           col: 4,
         ),
       )),
-      value: Object((Span(
-        start: Position(
-          value: 9,
-          line: 1,
-          col: 8,
+      value: Object(ObjectEntryList(
+        span: Span(
+          start: Position(
+            value: 9,
+            line: 1,
+            col: 8,
+          ),
+          end: Position(
+            value: 71,
+            line: 5,
+            col: 0,
+          ),
         ),
-        end: Position(
-          value: 72,
-          line: 5,
-          col: 1,
-        ),
-      ), [
-        Ok(ObjectEntry(
-          key: Ok(StringLiteral(
-            raw: "akesy",
-            value: "akesy",
-            span: Span(
+        items: [
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "akesy",
+              value: "akesy",
+              span: Span(
+                start: Position(
+                  value: 15,
+                  line: 2,
+                  col: 4,
+                ),
+                end: Position(
+                  value: 19,
+                  line: 2,
+                  col: 8,
+                ),
+              ),
+            )),
+            value: Number((Span(
               start: Position(
-                value: 15,
+                value: 22,
                 line: 2,
-                col: 4,
+                col: 11,
               ),
               end: Position(
-                value: 20,
+                value: 25,
                 line: 2,
-                col: 9,
+                col: 14,
               ),
-            ),
-          )),
-          value: Number((Span(
-            start: Position(
-              value: 22,
-              line: 2,
-              col: 11,
-            ),
-            end: Position(
-              value: 26,
-              line: 2,
-              col: 15,
-            ),
-          ), 1323.0)),
-        )),
-        Ok(ObjectEntry(
-          key: Ok(StringLiteral(
-            raw: "love",
-            value: "love",
+            ), 1323.0)),
+          ))),
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "love",
+              value: "love",
+              span: Span(
+                start: Position(
+                  value: 32,
+                  line: 3,
+                  col: 4,
+                ),
+                end: Position(
+                  value: 35,
+                  line: 3,
+                  col: 7,
+                ),
+              ),
+            )),
+            value: String(StringLiteral(
+              raw: "\"you\"",
+              value: "you",
+              span: Span(
+                start: Position(
+                  value: 38,
+                  line: 3,
+                  col: 10,
+                ),
+                end: Position(
+                  value: 42,
+                  line: 3,
+                  col: 14,
+                ),
+              ),
+            )),
+          ))),
+          That(Literal(
+            value: "//trailing comment",
             span: Span(
               start: Position(
-                value: 32,
-                line: 3,
-                col: 4,
-              ),
-              end: Position(
-                value: 36,
-                line: 3,
+                value: 52,
+                line: 4,
                 col: 8,
               ),
-            ),
-          )),
-          value: String(StringLiteral(
-            raw: "\"you\"",
-            value: "you",
-            span: Span(
-              start: Position(
-                value: 38,
-                line: 3,
-                col: 10,
-              ),
               end: Position(
-                value: 43,
-                line: 3,
-                col: 15,
+                value: 69,
+                line: 4,
+                col: 25,
               ),
             ),
           )),
-        )),
-      ])),
+        ],
+      )),
     )),
   ],
 )

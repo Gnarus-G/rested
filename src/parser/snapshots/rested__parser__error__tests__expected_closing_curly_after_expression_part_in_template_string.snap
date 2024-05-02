@@ -1,0 +1,149 @@
+---
+source: src/parser/error.rs
+description: "`wowee ${\"hello\"} error ahead ${env(\"base\")`"
+expression: ast
+---
+Program(
+  source: "`wowee ${\"hello\"} error ahead ${env(\"base\")`",
+  items: [
+    Expr(TemplateSringLiteral(
+      span: Span(
+        start: Position(
+          value: 0,
+          line: 0,
+          col: 0,
+        ),
+        end: Position(
+          value: 43,
+          line: 0,
+          col: 42,
+        ),
+      ),
+      parts: [
+        StringPart(StringLiteral(
+          raw: "wowee ",
+          value: "wowee ",
+          span: Span(
+            start: Position(
+              value: 1,
+              line: 0,
+              col: 1,
+            ),
+            end: Position(
+              value: 6,
+              line: 0,
+              col: 6,
+            ),
+          ),
+        )),
+        ExpressionPart(String(StringLiteral(
+          raw: "\"hello\"",
+          value: "hello",
+          span: Span(
+            start: Position(
+              value: 9,
+              line: 0,
+              col: 9,
+            ),
+            end: Position(
+              value: 15,
+              line: 0,
+              col: 15,
+            ),
+          ),
+        ))),
+        StringPart(StringLiteral(
+          raw: " error ahead ",
+          value: " error ahead ",
+          span: Span(
+            start: Position(
+              value: 17,
+              line: 0,
+              col: 17,
+            ),
+            end: Position(
+              value: 29,
+              line: 0,
+              col: 29,
+            ),
+          ),
+        )),
+        ExpressionPart(Call(CallExpr(
+          identifier: Ok(Token(
+            kind: Ident,
+            text: "env",
+            start: Position(
+              value: 32,
+              line: 0,
+              col: 32,
+            ),
+          )),
+          arguments: ExpressionList(
+            span: Span(
+              start: Position(
+                value: 35,
+                line: 0,
+                col: 35,
+              ),
+              end: Position(
+                value: 42,
+                line: 0,
+                col: 42,
+              ),
+            ),
+            items: [
+              This(String(StringLiteral(
+                raw: "\"base\"",
+                value: "base",
+                span: Span(
+                  start: Position(
+                    value: 36,
+                    line: 0,
+                    col: 36,
+                  ),
+                  end: Position(
+                    value: 41,
+                    line: 0,
+                    col: 41,
+                  ),
+                ),
+              ))),
+            ],
+          ),
+        ))),
+        ExpressionPart(Error(ContextualError(
+          inner_error: ExpectedToken(
+            found: Token(
+              kind: OpeningBackTick,
+              text: "`",
+              start: Position(
+                value: 43,
+                line: 0,
+                col: 43,
+              ),
+            ),
+            expected: RBracket,
+          ),
+          span: Span(
+            start: Position(
+              value: 0,
+              line: 0,
+              col: 0,
+            ),
+            end: Position(
+              value: 43,
+              line: 0,
+              col: 43,
+            ),
+          ),
+          message: None,
+          context: ErrorSourceContext(
+            above: None,
+            line: "`wowee ${\"hello\"} error ahead ${env(\"base\")`",
+            below: None,
+          ),
+        ))),
+      ],
+    )),
+  ],
+)

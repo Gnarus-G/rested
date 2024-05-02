@@ -1,0 +1,388 @@
+---
+source: tests/parser.rs
+description: "\nlet o = {\n    get: \"value\",\n    post: 123,\n    put: {\n        author: \"Me\"\n    },\n    patch: true,\n    delete: false,\n    set: \"true\",\n    let: view,\n    null: null,\n    header: \"\",\n    body: \"\",\n}"
+expression: ast
+---
+Program(
+  source: "\nlet o = {\n    get: \"value\",\n    post: 123,\n    put: {\n        author: \"Me\"\n    },\n    patch: true,\n    delete: false,\n    set: \"true\",\n    let: view,\n    null: null,\n    header: \"\",\n    body: \"\",\n}",
+  items: [
+    Let(VariableDeclaration(
+      identifier: Ok(Token(
+        kind: Ident,
+        text: "o",
+        start: Position(
+          value: 5,
+          line: 1,
+          col: 4,
+        ),
+      )),
+      value: Object(ObjectEntryList(
+        span: Span(
+          start: Position(
+            value: 9,
+            line: 1,
+            col: 8,
+          ),
+          end: Position(
+            value: 197,
+            line: 14,
+            col: 0,
+          ),
+        ),
+        items: [
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "get",
+              value: "get",
+              span: Span(
+                start: Position(
+                  value: 15,
+                  line: 2,
+                  col: 4,
+                ),
+                end: Position(
+                  value: 17,
+                  line: 2,
+                  col: 6,
+                ),
+              ),
+            )),
+            value: String(StringLiteral(
+              raw: "\"value\"",
+              value: "value",
+              span: Span(
+                start: Position(
+                  value: 20,
+                  line: 2,
+                  col: 9,
+                ),
+                end: Position(
+                  value: 26,
+                  line: 2,
+                  col: 15,
+                ),
+              ),
+            )),
+          ))),
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "post",
+              value: "post",
+              span: Span(
+                start: Position(
+                  value: 33,
+                  line: 3,
+                  col: 4,
+                ),
+                end: Position(
+                  value: 36,
+                  line: 3,
+                  col: 7,
+                ),
+              ),
+            )),
+            value: Number((Span(
+              start: Position(
+                value: 39,
+                line: 3,
+                col: 10,
+              ),
+              end: Position(
+                value: 41,
+                line: 3,
+                col: 12,
+              ),
+            ), 123.0)),
+          ))),
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "put",
+              value: "put",
+              span: Span(
+                start: Position(
+                  value: 48,
+                  line: 4,
+                  col: 4,
+                ),
+                end: Position(
+                  value: 50,
+                  line: 4,
+                  col: 6,
+                ),
+              ),
+            )),
+            value: Object(ObjectEntryList(
+              span: Span(
+                start: Position(
+                  value: 53,
+                  line: 4,
+                  col: 9,
+                ),
+                end: Position(
+                  value: 80,
+                  line: 6,
+                  col: 4,
+                ),
+              ),
+              items: [
+                This(Ok(ObjectEntry(
+                  key: Ok(StringLiteral(
+                    raw: "author",
+                    value: "author",
+                    span: Span(
+                      start: Position(
+                        value: 63,
+                        line: 5,
+                        col: 8,
+                      ),
+                      end: Position(
+                        value: 68,
+                        line: 5,
+                        col: 13,
+                      ),
+                    ),
+                  )),
+                  value: String(StringLiteral(
+                    raw: "\"Me\"",
+                    value: "Me",
+                    span: Span(
+                      start: Position(
+                        value: 71,
+                        line: 5,
+                        col: 16,
+                      ),
+                      end: Position(
+                        value: 74,
+                        line: 5,
+                        col: 19,
+                      ),
+                    ),
+                  )),
+                ))),
+              ],
+            )),
+          ))),
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "patch",
+              value: "patch",
+              span: Span(
+                start: Position(
+                  value: 87,
+                  line: 7,
+                  col: 4,
+                ),
+                end: Position(
+                  value: 91,
+                  line: 7,
+                  col: 8,
+                ),
+              ),
+            )),
+            value: Bool((Span(
+              start: Position(
+                value: 94,
+                line: 7,
+                col: 11,
+              ),
+              end: Position(
+                value: 97,
+                line: 7,
+                col: 14,
+              ),
+            ), true)),
+          ))),
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "delete",
+              value: "delete",
+              span: Span(
+                start: Position(
+                  value: 104,
+                  line: 8,
+                  col: 4,
+                ),
+                end: Position(
+                  value: 109,
+                  line: 8,
+                  col: 9,
+                ),
+              ),
+            )),
+            value: Bool((Span(
+              start: Position(
+                value: 112,
+                line: 8,
+                col: 12,
+              ),
+              end: Position(
+                value: 116,
+                line: 8,
+                col: 16,
+              ),
+            ), false)),
+          ))),
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "set",
+              value: "set",
+              span: Span(
+                start: Position(
+                  value: 123,
+                  line: 9,
+                  col: 4,
+                ),
+                end: Position(
+                  value: 125,
+                  line: 9,
+                  col: 6,
+                ),
+              ),
+            )),
+            value: String(StringLiteral(
+              raw: "\"true\"",
+              value: "true",
+              span: Span(
+                start: Position(
+                  value: 128,
+                  line: 9,
+                  col: 9,
+                ),
+                end: Position(
+                  value: 133,
+                  line: 9,
+                  col: 14,
+                ),
+              ),
+            )),
+          ))),
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "let",
+              value: "let",
+              span: Span(
+                start: Position(
+                  value: 140,
+                  line: 10,
+                  col: 4,
+                ),
+                end: Position(
+                  value: 142,
+                  line: 10,
+                  col: 6,
+                ),
+              ),
+            )),
+            value: Identifier(Ok(Token(
+              kind: Ident,
+              text: "view",
+              start: Position(
+                value: 145,
+                line: 10,
+                col: 9,
+              ),
+            ))),
+          ))),
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "null",
+              value: "null",
+              span: Span(
+                start: Position(
+                  value: 155,
+                  line: 11,
+                  col: 4,
+                ),
+                end: Position(
+                  value: 158,
+                  line: 11,
+                  col: 7,
+                ),
+              ),
+            )),
+            value: Null(Span(
+              start: Position(
+                value: 161,
+                line: 11,
+                col: 10,
+              ),
+              end: Position(
+                value: 164,
+                line: 11,
+                col: 13,
+              ),
+            )),
+          ))),
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "header",
+              value: "header",
+              span: Span(
+                start: Position(
+                  value: 171,
+                  line: 12,
+                  col: 4,
+                ),
+                end: Position(
+                  value: 176,
+                  line: 12,
+                  col: 9,
+                ),
+              ),
+            )),
+            value: String(StringLiteral(
+              raw: "\"\"",
+              value: "",
+              span: Span(
+                start: Position(
+                  value: 179,
+                  line: 12,
+                  col: 12,
+                ),
+                end: Position(
+                  value: 180,
+                  line: 12,
+                  col: 13,
+                ),
+              ),
+            )),
+          ))),
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "body",
+              value: "body",
+              span: Span(
+                start: Position(
+                  value: 187,
+                  line: 13,
+                  col: 4,
+                ),
+                end: Position(
+                  value: 190,
+                  line: 13,
+                  col: 7,
+                ),
+              ),
+            )),
+            value: String(StringLiteral(
+              raw: "\"\"",
+              value: "",
+              span: Span(
+                start: Position(
+                  value: 193,
+                  line: 13,
+                  col: 10,
+                ),
+                end: Position(
+                  value: 194,
+                  line: 13,
+                  col: 11,
+                ),
+              ),
+            )),
+          ))),
+        ],
+      )),
+    )),
+  ],
+)

@@ -211,6 +211,24 @@ let o = {
         //trailing comment
 }"#
     );
+
+    assert_ast!(
+        r#"
+let o = {
+    get: "value",
+    post: 123,
+    put: {
+        author: "Me"
+    },
+    patch: true,
+    delete: false,
+    set: "true",
+    let: view,
+    null: null,
+    header: "",
+    body: "",
+}"#
+    );
 }
 
 #[test]

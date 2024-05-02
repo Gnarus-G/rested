@@ -17,9 +17,9 @@ Program(
             col: 13,
           ),
           end: Position(
-            value: 18,
+            value: 17,
             line: 1,
-            col: 17,
+            col: 16,
           ),
         ),
       )),
@@ -34,29 +34,29 @@ Program(
                   col: 17,
                 ),
                 end: Position(
-                  value: 77,
+                  value: 76,
                   line: 2,
-                  col: 56,
+                  col: 55,
                 ),
               ),
               parts: [
-                String(StringLiteral(
-                  raw: "`{\"neet\": ",
+                StringPart(StringLiteral(
+                  raw: "{\"neet\": ",
                   value: "{\"neet\": ",
                   span: Span(
                     start: Position(
-                      value: 38,
+                      value: 39,
                       line: 2,
-                      col: 17,
+                      col: 18,
                     ),
                     end: Position(
-                      value: 48,
+                      value: 47,
                       line: 2,
-                      col: 27,
+                      col: 26,
                     ),
                   ),
                 )),
-                Call(CallExpr(
+                ExpressionPart(Call(CallExpr(
                   identifier: Ok(Token(
                     kind: Ident,
                     text: "env",
@@ -74,13 +74,13 @@ Program(
                         col: 32,
                       ),
                       end: Position(
-                        value: 61,
+                        value: 60,
                         line: 2,
-                        col: 40,
+                        col: 39,
                       ),
                     ),
-                    exprs: [
-                      String(StringLiteral(
+                    items: [
+                      This(String(StringLiteral(
                         raw: "\"love\"",
                         value: "love",
                         span: Span(
@@ -90,16 +90,16 @@ Program(
                             col: 33,
                           ),
                           end: Position(
-                            value: 60,
+                            value: 59,
                             line: 2,
-                            col: 39,
+                            col: 38,
                           ),
                         ),
-                      )),
+                      ))),
                     ],
                   ),
-                )),
-                String(StringLiteral(
+                ))),
+                StringPart(StringLiteral(
                   raw: ", 2: ",
                   value: ", 2: ",
                   span: Span(
@@ -109,13 +109,13 @@ Program(
                       col: 41,
                     ),
                     end: Position(
-                      value: 67,
+                      value: 66,
                       line: 2,
-                      col: 46,
+                      col: 45,
                     ),
                   ),
                 )),
-                String(StringLiteral(
+                ExpressionPart(String(StringLiteral(
                   raw: "\"two\"",
                   value: "two",
                   span: Span(
@@ -125,14 +125,14 @@ Program(
                       col: 48,
                     ),
                     end: Position(
-                      value: 74,
+                      value: 73,
                       line: 2,
-                      col: 53,
+                      col: 52,
                     ),
                   ),
-                )),
-                String(StringLiteral(
-                  raw: "}`",
+                ))),
+                StringPart(StringLiteral(
+                  raw: "}",
                   value: "}",
                   span: Span(
                     start: Position(
@@ -141,9 +141,9 @@ Program(
                       col: 54,
                     ),
                     end: Position(
-                      value: 77,
+                      value: 75,
                       line: 2,
-                      col: 56,
+                      col: 54,
                     ),
                   ),
                 )),

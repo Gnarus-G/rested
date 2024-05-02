@@ -1,0 +1,8 @@
+---
+source: tests/formatter.rs
+expression: formatter.into_output()
+---
+set BASE_URL base
+
+let hey = `asdf ${`${`${"adsfasdf"}`}asdfa`} asdfasdf ${base} asdf`
+let port = "3000"

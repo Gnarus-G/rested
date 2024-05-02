@@ -8,6 +8,7 @@ use crate::{
         locations::{GetSpan, Position, Span},
         Token,
     },
+    utils::OneOf,
 };
 
 use self::result::ParsedNode;
@@ -65,20 +66,28 @@ pub struct VariableDeclaration<'source> {
 }
 
 #[derive(Debug, PartialEq, Serialize)]
+pub struct ConstantDeclaration<'source> {
+    pub identifier: ParsedNode<'source, Token<'source>>,
+    pub value: Expression<'source>,
+}
+
+#[derive(Debug, PartialEq, Serialize)]
+pub struct Attribute<'source> {
+    pub location: Position,
+    pub identifier: ParsedNode<'source, Token<'source>>,
+    pub arguments: Option<ExpressionList<'source>>,
+}
+
+type Comment<'source> = Literal<'source>;
+
+#[derive(Debug, PartialEq, Serialize)]
 pub enum Item<'source> {
-    Set {
-        identifier: ParsedNode<'source, Token<'source>>,
-        value: Expression<'source>,
-    },
+    Set(ConstantDeclaration<'source>),
     Let(VariableDeclaration<'source>),
-    LineComment(Literal<'source>),
+    LineComment(Comment<'source>),
     Request(Request<'source>),
     Expr(Expression<'source>),
-    Attribute {
-        location: Position,
-        identifier: ParsedNode<'source, Token<'source>>,
-        arguments: Option<ExpressionList<'source>>,
-    },
+    Attribute(Attribute<'source>),
     Error(Box<Error<'source>>),
 }
 
@@ -107,20 +116,26 @@ pub enum Statement<'i> {
         value: Expression<'i>,
         start: Position,
     },
-    LineComment(Literal<'i>),
+    LineComment(Comment<'i>),
     Error(Box<Error<'i>>),
 }
 
 #[derive(Debug, PartialEq, Serialize)]
 pub struct ExpressionList<'source> {
     pub span: Span,
-    pub exprs: Box<[Expression<'source>]>,
+    pub items: Box<[OneOf<Expression<'source>, Comment<'source>>]>,
 }
 
 impl<'source> ExpressionList<'source> {
-    pub fn iter(&self) -> impl Iterator<Item = &Expression<'source>> {
-        self.exprs.iter()
+    pub fn expressions(&self) -> impl Iterator<Item = &Expression<'source>> {
+        self.items.iter().filter_map(|e| e.this())
     }
+}
+
+#[derive(Debug, PartialEq, Serialize)]
+pub enum TemplateSringPart<'source> {
+    ExpressionPart(Expression<'source>),
+    StringPart(StringLiteral<'source>),
 }
 
 #[derive(Debug, PartialEq, Serialize)]
@@ -131,13 +146,13 @@ pub enum Expression<'source> {
     Number((Span, f64)),
     Call(CallExpr<'source>),
     Array(ExpressionList<'source>),
-    Object((Span, Box<[ParsedNode<'source, ObjectEntry<'source>>]>)),
+    Object(ObjectEntryList<'source>),
     Null(Span),
     EmptyArray(Span),
     EmptyObject(Span),
     TemplateSringLiteral {
         span: Span,
-        parts: Box<[Expression<'source>]>,
+        parts: Box<[TemplateSringPart<'source>]>,
     },
     Error(Box<Error<'source>>),
 }
@@ -160,6 +175,22 @@ impl<'source> ObjectEntry<'source> {
         value: Expression<'source>,
     ) -> Self {
         Self { key, value }
+    }
+}
+
+#[derive(Debug, PartialEq, Serialize)]
+pub struct ObjectEntryList<'source> {
+    pub span: Span,
+    pub items: Box<[OneOf<ParsedNode<'source, ObjectEntry<'source>>, Comment<'source>>]>,
+}
+
+impl<'source> ObjectEntryList<'source> {
+    pub fn nodes(&self) -> impl Iterator<Item = &ParsedNode<'source, ObjectEntry<'source>>> {
+        self.items.iter().filter_map(|e| e.this())
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = &ObjectEntry<'source>> {
+        self.nodes().flat_map(|node| node.get())
     }
 }
 

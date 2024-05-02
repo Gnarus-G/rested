@@ -32,7 +32,7 @@ impl<'env, 'source> ast_visit::Visitor<'source> for EnvVarsNotInAllNamespaces<'e
             identifier: ParsedNode::Ok(Token { text: "env", .. }),
         } = expr
         {
-            if let Some(Expression::String(value)) = &arguments.exprs.first() {
+            if let Some(Expression::String(value)) = &arguments.expressions().nth(0) {
                 let namespaces_from_which_var_is_missing = self
                     .env
                     .namespaced_variables

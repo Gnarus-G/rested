@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "\n            @skip\n            @dbg\n            let k = \"v\"\n            get http://localhost { header \"name\" k }",
   items: [
-    Attribute(
+    Attribute(Attribute(
       location: Position(
         value: 13,
         line: 1,
@@ -22,7 +22,7 @@ Program(
         ),
       )),
       arguments: None,
-    ),
+    )),
     Error(ContextualError(
       inner_error: ExpectedEitherOfTokens(
         found: Token(
@@ -51,9 +51,9 @@ Program(
           col: 12,
         ),
         end: Position(
-          value: 51,
+          value: 50,
           line: 3,
-          col: 15,
+          col: 14,
         ),
       ),
       message: Some("after attributes should come requests or more attributes"),
@@ -83,9 +83,9 @@ Program(
             col: 20,
           ),
           end: Position(
-            value: 59,
+            value: 58,
             line: 3,
-            col: 23,
+            col: 22,
           ),
         ),
       )),
@@ -101,9 +101,9 @@ Program(
             col: 16,
           ),
           end: Position(
-            value: 92,
+            value: 91,
             line: 4,
-            col: 32,
+            col: 31,
           ),
         ),
       )),
@@ -120,9 +120,9 @@ Program(
                   col: 42,
                 ),
                 end: Position(
-                  value: 108,
+                  value: 107,
                   line: 4,
-                  col: 48,
+                  col: 47,
                 ),
               ),
             )),

@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "set BASE_URL \"stuff\"",
   items: [
-    Set(
+    Set(ConstantDeclaration(
       identifier: Ok(Token(
         kind: Ident,
         text: "BASE_URL",
@@ -26,12 +26,12 @@ Program(
             col: 13,
           ),
           end: Position(
-            value: 20,
+            value: 19,
             line: 0,
-            col: 20,
+            col: 19,
           ),
         ),
       )),
-    ),
+    )),
   ],
 )

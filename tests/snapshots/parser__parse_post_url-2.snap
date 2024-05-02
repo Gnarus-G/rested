@@ -17,9 +17,9 @@ Program(
             col: 5,
           ),
           end: Position(
-            value: 12,
+            value: 11,
             line: 0,
-            col: 12,
+            col: 11,
           ),
         ),
       )),
@@ -31,9 +31,9 @@ Program(
           col: 0,
         ),
         end: Position(
-          value: 12,
+          value: 11,
           line: 0,
-          col: 12,
+          col: 11,
         ),
       ),
     )),

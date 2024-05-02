@@ -1,0 +1,81 @@
+---
+source: tests/formatter.rs
+expression: formatted_text
+---
+set BASE_URL env("hi")
+
+let t = {
+  value: 23,
+  love: "you",
+  hello: {
+    world: true,
+    test: {
+      ing: "true",
+      wow: {
+        b: 122
+      }
+    }
+  }
+}
+let l = t
+let l = [null, t]
+let l = {
+  l: l,
+  k: "asdf"
+}
+let m = json(l)
+let a = [m]
+let c = json([{
+  asdf: true,
+  test: 12434,
+  a: 124,
+  b: [{
+    we: 123
+  }]
+}])
+
+get /admin {
+  header "Content-Type" "application/json"
+  body json({
+    a: 12,
+    t: true
+  })
+}
+
+[test, 12, {
+  ness: false,
+  wow: [1, 2, 3]
+}]
+
+post `${env("b_url")}/asdf` {
+  header "Content-Type" "application/json"
+  body m
+}
+
+let sort = "asc"
+let filter = "active"
+
+@dbg
+get `http://localhost:8080/api?sort=${sort}&filter=${filter}`
+
+@name("lovely")
+get `http://localhost:8080/api?sort=${sort}&filter=${filter}`
+
+let a = read("testasdf.rd")
+let string = `
+${a}
+content
+text content
+
+`
+
+post /time {
+  body a
+}
+
+get `${env("base")}/wer` {}
+
+post /adsf {
+  header "Authorization" env("token")
+  body json(true)
+}

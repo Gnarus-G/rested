@@ -4,10 +4,12 @@ description: "`a${\"temp\"}` }}"
 expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
 ---
 [
-    TemplateString { head: true, tail: false }("`a") at Position { value: 0, line: 0, col: 0 },
+    OpeningBackTick("`") at Position { value: 0, line: 0, col: 0 },
+    StringLiteral("a") at Position { value: 1, line: 0, col: 1 },
     DollarSignLBracket("${") at Position { value: 2, line: 0, col: 2 },
     StringLiteral("\"temp\"") at Position { value: 4, line: 0, col: 4 },
-    TemplateString { head: false, tail: true }("`") at Position { value: 11, line: 0, col: 11 },
+    RBracket("}") at Position { value: 10, line: 0, col: 10 },
+    ClosingBackTick("`") at Position { value: 11, line: 0, col: 11 },
     RBracket("}") at Position { value: 13, line: 0, col: 13 },
     RBracket("}") at Position { value: 14, line: 0, col: 14 },
 ]

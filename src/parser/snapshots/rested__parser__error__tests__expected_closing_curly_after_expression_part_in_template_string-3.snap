@@ -1,0 +1,83 @@
+---
+source: src/parser/error.rs
+description: "`error ahead ${variable_name `"
+expression: ast
+---
+Program(
+  source: "`error ahead ${variable_name `",
+  items: [
+    Expr(TemplateSringLiteral(
+      span: Span(
+        start: Position(
+          value: 0,
+          line: 0,
+          col: 0,
+        ),
+        end: Position(
+          value: 29,
+          line: 0,
+          col: 28,
+        ),
+      ),
+      parts: [
+        StringPart(StringLiteral(
+          raw: "error ahead ",
+          value: "error ahead ",
+          span: Span(
+            start: Position(
+              value: 1,
+              line: 0,
+              col: 1,
+            ),
+            end: Position(
+              value: 12,
+              line: 0,
+              col: 12,
+            ),
+          ),
+        )),
+        ExpressionPart(Identifier(Ok(Token(
+          kind: Ident,
+          text: "variable_name",
+          start: Position(
+            value: 15,
+            line: 0,
+            col: 15,
+          ),
+        )))),
+        ExpressionPart(Error(ContextualError(
+          inner_error: ExpectedToken(
+            found: Token(
+              kind: OpeningBackTick,
+              text: "`",
+              start: Position(
+                value: 29,
+                line: 0,
+                col: 29,
+              ),
+            ),
+            expected: RBracket,
+          ),
+          span: Span(
+            start: Position(
+              value: 0,
+              line: 0,
+              col: 0,
+            ),
+            end: Position(
+              value: 29,
+              line: 0,
+              col: 29,
+            ),
+          ),
+          message: None,
+          context: ErrorSourceContext(
+            above: None,
+            line: "`error ahead ${variable_name `",
+            below: None,
+          ),
+        ))),
+      ],
+    )),
+  ],
+)

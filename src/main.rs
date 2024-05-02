@@ -2,6 +2,7 @@ mod cli;
 
 use clap::{CommandFactory, Parser, Subcommand};
 use cli::config::ConfigArgs;
+use cli::format::FormatArgs;
 use cli::run::RunArgs;
 use cli::scratch::ScratchCommandArgs;
 use cli::snaphot::SnapshotArgs;
@@ -28,6 +29,8 @@ struct Cli {
 enum Command {
     /// Run a script written in the language
     Run(RunArgs),
+    /// Format a script written in the language
+    Fmt(FormatArgs),
     /// Open your default editor to start editing a temporary file
     Scratch(ScratchCommandArgs),
     /// Generate a static snapshot of the requests with all dynamic values evaluated.
@@ -171,6 +174,7 @@ fn run(cli: Cli) -> anyhow::Result<()> {
             scratch.handle(env)?
         }
         Command::Config(config) => config.handle()?,
+        Command::Fmt(fmt) => fmt.handle()?,
         Command::Snap(snap) => {
             let full_path = snap.file.as_ref().and_then(|path| path.canonicalize().ok());
             let workspace = full_path.as_ref().and_then(|p| p.parent());

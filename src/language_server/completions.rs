@@ -10,7 +10,9 @@ use crate::{
     language_server::position::ContainsPosition,
     lexer::{self, locations::GetSpan},
     parser::{
-        ast::{self, result::ParsedNode, Expression, Item, Statement},
+        ast::{
+            self, result::ParsedNode, Attribute, ConstantDeclaration, Expression, Item, Statement,
+        },
         ast_visit::{self, VisitWith},
         error::ParseError,
     },
@@ -144,7 +146,7 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
         }
 
         match item {
-            Item::Set { identifier, value } => {
+            Item::Set(ConstantDeclaration { identifier, value }) => {
                 if identifier.span().is_on_or_after(&self.position) {
                     return self.suggest(SuggestionKind::SetIdentifiers);
                 }
@@ -187,17 +189,17 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
                 self.visit_endpoint(endpoint);
                 self.suggest(SuggestionKind::Identifiers);
             }
-            Item::Attribute {
+            Item::Attribute(Attribute {
                 identifier,
                 arguments,
                 ..
-            } => {
+            }) => {
                 if identifier.span().is_on_or_after(&self.position) {
                     return self.suggest(SuggestionKind::Attributes);
                 }
 
                 if let Some(args) = arguments {
-                    for param in args.iter() {
+                    for param in args.expressions() {
                         self.visit_expr(param)
                     }
 
@@ -269,8 +271,7 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
                 }) => {
                     if arguments.span.contains(&self.position) {
                         match arguments
-                            .exprs
-                            .iter()
+                            .expressions()
                             .find(|p| p.span().contains(&self.position))
                         {
                             Some(Expression::String(..)) => {
@@ -309,8 +310,8 @@ impl<'source> ast_visit::Visitor<'source> for CompletionsCollector<'source> {
                 self.suggest(SuggestionKind::Identifiers);
             }
             Expression::EmptyObject(_) => self.suggest(SuggestionKind::Nothing),
-            Expression::Object((_, entries)) => {
-                for entry in entries.iter().flat_map(|e| e.get()) {
+            Expression::Object(entry_list) => {
+                for entry in entry_list.entries() {
                     if let Expression::Error(_) = entry.value {
                         self.suggest(SuggestionKind::Identifiers)
                     } else {

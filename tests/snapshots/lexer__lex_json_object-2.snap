@@ -1,0 +1,23 @@
+---
+source: tests/lexer.rs
+description: "\nlet o = {\n    key: \"value\",\n    post: {\n        author: \"Me\"\n    }\n}"
+expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
+---
+[
+    Let("let") at Position { value: 1, line: 1, col: 0 },
+    Ident("o") at Position { value: 5, line: 1, col: 4 },
+    Assign("=") at Position { value: 7, line: 1, col: 6 },
+    LBracket("{") at Position { value: 9, line: 1, col: 8 },
+    Ident("key") at Position { value: 15, line: 2, col: 4 },
+    Colon(":") at Position { value: 18, line: 2, col: 7 },
+    StringLiteral("\"value\"") at Position { value: 20, line: 2, col: 9 },
+    Comma(",") at Position { value: 27, line: 2, col: 16 },
+    Post("post") at Position { value: 33, line: 3, col: 4 },
+    Colon(":") at Position { value: 37, line: 3, col: 8 },
+    LBracket("{") at Position { value: 39, line: 3, col: 10 },
+    Ident("author") at Position { value: 49, line: 4, col: 8 },
+    Colon(":") at Position { value: 55, line: 4, col: 14 },
+    StringLiteral("\"Me\"") at Position { value: 57, line: 4, col: 16 },
+    RBracket("}") at Position { value: 66, line: 5, col: 4 },
+    RBracket("}") at Position { value: 68, line: 6, col: 0 },
+]

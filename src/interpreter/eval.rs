@@ -7,7 +7,9 @@ use crate::error_meta::ContextualError;
 use crate::interpreter::ir::LogDestination;
 use crate::interpreter::value::ValueTag;
 use crate::lexer;
-use crate::parser::ast::{self, Endpoint, Expression, Item, VariableDeclaration};
+use crate::parser::ast::{
+    self, ConstantDeclaration, Endpoint, Expression, Item, TemplateSringPart, VariableDeclaration,
+};
 
 use crate::lexer::locations::GetSpan;
 
@@ -196,7 +198,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
 
                 return Ok(Some(r));
             }
-            Set { identifier, value } => {
+            Set(ConstantDeclaration { identifier, value }) => {
                 let identifier = identifier.get()?;
                 if identifier.text != "BASE_URL" {
                     return Err(self.error_factory.unknown_constant(identifier).into());
@@ -213,11 +215,11 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
                 };
             }
             LineComment(_) => {}
-            Attribute {
+            Attribute(ast::Attribute {
                 identifier,
                 arguments,
                 ..
-            } => {
+            }) => {
                 let identifier = identifier.get()?;
 
                 match identifier.text {
@@ -269,17 +271,17 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
             Array(values) => {
                 let mut v = vec![];
 
-                for value in values.iter() {
+                for value in values.expressions() {
                     v.push(self.evaluate_expression(value)?);
                 }
 
                 Value::Array(v.into())
             }
-            Object((.., fields)) => {
+            Object(list) => {
                 let mut props = HashMap::new();
 
-                for node in fields.iter() {
-                    let ast::ObjectEntry { key, value } = node.get()?;
+                for entry in list.entries() {
+                    let ast::ObjectEntry { key, value } = entry;
                     let value = self.evaluate_expression(value)?;
                     props.insert(key.get()?.value.to_string(), value);
                 }
@@ -422,21 +424,29 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
 
     fn evaluate_template_string_literal_parts(
         &self,
-        parts: &[Expression<'source>],
+        parts: &[TemplateSringPart<'source>],
     ) -> Result<Value> {
         let mut strings = vec![];
 
         for part in parts {
-            let value = match self.evaluate_expression(part)? {
-                Value::String(value) => value,
-                val => {
-                    return Err(Box::new(
-                        self.error_factory
-                            .type_mismatch(ValueTag::String, val, part.span())
-                            .with_message("try a json(..) call to stringify this expression"),
-                    ))
+            let value = match part {
+                TemplateSringPart::ExpressionPart(expr) => {
+                    match self.evaluate_expression(&expr)? {
+                        Value::String(value) => value,
+                        val => {
+                            return Err(Box::new(
+                                self.error_factory
+                                    .type_mismatch(ValueTag::String, val, expr.span())
+                                    .with_message(
+                                        "try a json(..) call to stringify this expression",
+                                    ),
+                            ))
+                        }
+                    }
                 }
+                TemplateSringPart::StringPart(string) => string.value.into(),
             };
+
             strings.push(value.to_string());
         }
 
@@ -447,10 +457,10 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
         &self,
         args: &'a ast::ExpressionList<'source>,
     ) -> Result<[&'a ast::Expression; N]> {
-        if args.exprs.len() != N {
+        if args.items.len() != N {
             return Err(self
                 .error_factory
-                .required_args(args.span, N, args.exprs.len())
+                .required_args(args.span, N, args.items.len())
                 .into());
         };
 
@@ -461,7 +471,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
             [&*null; N]
         };
 
-        for (i, arg) in args.iter().enumerate() {
+        for (i, arg) in args.expressions().enumerate() {
             arguments[i] = arg;
         }
 

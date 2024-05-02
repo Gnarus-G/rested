@@ -16,270 +16,282 @@ Program(
           col: 4,
         ),
       )),
-      value: Object((Span(
-        start: Position(
-          value: 9,
-          line: 1,
-          col: 8,
+      value: Object(ObjectEntryList(
+        span: Span(
+          start: Position(
+            value: 9,
+            line: 1,
+            col: 8,
+          ),
+          end: Position(
+            value: 194,
+            line: 13,
+            col: 0,
+          ),
         ),
-        end: Position(
-          value: 195,
-          line: 13,
-          col: 1,
-        ),
-      ), [
-        Ok(ObjectEntry(
-          key: Ok(StringLiteral(
-            raw: "key",
-            value: "key",
-            span: Span(
-              start: Position(
-                value: 15,
-                line: 2,
-                col: 4,
-              ),
-              end: Position(
-                value: 18,
-                line: 2,
-                col: 7,
-              ),
-            ),
-          )),
-          value: String(StringLiteral(
-            raw: "\"value\"",
-            value: "value",
-            span: Span(
-              start: Position(
-                value: 20,
-                line: 2,
-                col: 9,
-              ),
-              end: Position(
-                value: 27,
-                line: 2,
-                col: 16,
-              ),
-            ),
-          )),
-        )),
-        Ok(ObjectEntry(
-          key: Ok(StringLiteral(
-            raw: "akey",
-            value: "akey",
-            span: Span(
-              start: Position(
-                value: 33,
-                line: 3,
-                col: 4,
-              ),
-              end: Position(
-                value: 37,
-                line: 3,
-                col: 8,
-              ),
-            ),
-          )),
-          value: Bool((Span(
-            start: Position(
-              value: 39,
-              line: 3,
-              col: 10,
-            ),
-            end: Position(
-              value: 44,
-              line: 3,
-              col: 15,
-            ),
-          ), false)),
-        )),
-        Ok(ObjectEntry(
-          key: Ok(StringLiteral(
-            raw: "love",
-            value: "love",
-            span: Span(
-              start: Position(
-                value: 50,
-                line: 4,
-                col: 4,
-              ),
-              end: Position(
-                value: 54,
-                line: 4,
-                col: 8,
-              ),
-            ),
-          )),
-          value: Object((Span(
-            start: Position(
-              value: 56,
-              line: 4,
-              col: 10,
-            ),
-            end: Position(
-              value: 193,
-              line: 12,
-              col: 5,
-            ),
-          ), [
-            Ok(ObjectEntry(
-              key: Ok(StringLiteral(
-                raw: "hello",
-                value: "hello",
-                span: Span(
-                  start: Position(
-                    value: 66,
-                    line: 5,
-                    col: 8,
-                  ),
-                  end: Position(
-                    value: 71,
-                    line: 5,
-                    col: 13,
-                  ),
-                ),
-              )),
-              value: Object((Span(
+        items: [
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "key",
+              value: "key",
+              span: Span(
                 start: Position(
-                  value: 73,
-                  line: 5,
-                  col: 15,
+                  value: 15,
+                  line: 2,
+                  col: 4,
                 ),
                 end: Position(
-                  value: 187,
-                  line: 11,
+                  value: 17,
+                  line: 2,
+                  col: 6,
+                ),
+              ),
+            )),
+            value: String(StringLiteral(
+              raw: "\"value\"",
+              value: "value",
+              span: Span(
+                start: Position(
+                  value: 20,
+                  line: 2,
                   col: 9,
                 ),
-              ), [
-                Ok(ObjectEntry(
+                end: Position(
+                  value: 26,
+                  line: 2,
+                  col: 15,
+                ),
+              ),
+            )),
+          ))),
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "akey",
+              value: "akey",
+              span: Span(
+                start: Position(
+                  value: 33,
+                  line: 3,
+                  col: 4,
+                ),
+                end: Position(
+                  value: 36,
+                  line: 3,
+                  col: 7,
+                ),
+              ),
+            )),
+            value: Bool((Span(
+              start: Position(
+                value: 39,
+                line: 3,
+                col: 10,
+              ),
+              end: Position(
+                value: 43,
+                line: 3,
+                col: 14,
+              ),
+            ), false)),
+          ))),
+          This(Ok(ObjectEntry(
+            key: Ok(StringLiteral(
+              raw: "love",
+              value: "love",
+              span: Span(
+                start: Position(
+                  value: 50,
+                  line: 4,
+                  col: 4,
+                ),
+                end: Position(
+                  value: 53,
+                  line: 4,
+                  col: 7,
+                ),
+              ),
+            )),
+            value: Object(ObjectEntryList(
+              span: Span(
+                start: Position(
+                  value: 56,
+                  line: 4,
+                  col: 10,
+                ),
+                end: Position(
+                  value: 192,
+                  line: 12,
+                  col: 4,
+                ),
+              ),
+              items: [
+                This(Ok(ObjectEntry(
                   key: Ok(StringLiteral(
-                    raw: "w",
-                    value: "w",
+                    raw: "hello",
+                    value: "hello",
                     span: Span(
                       start: Position(
-                        value: 87,
-                        line: 6,
-                        col: 12,
+                        value: 66,
+                        line: 5,
+                        col: 8,
                       ),
                       end: Position(
-                        value: 88,
-                        line: 6,
-                        col: 13,
+                        value: 70,
+                        line: 5,
+                        col: 12,
                       ),
                     ),
                   )),
-                  value: String(StringLiteral(
-                    raw: "\"1\"",
-                    value: "1",
+                  value: Object(ObjectEntryList(
                     span: Span(
                       start: Position(
-                        value: 90,
-                        line: 6,
+                        value: 73,
+                        line: 5,
                         col: 15,
                       ),
                       end: Position(
-                        value: 93,
-                        line: 6,
-                        col: 18,
+                        value: 186,
+                        line: 11,
+                        col: 8,
                       ),
                     ),
+                    items: [
+                      This(Ok(ObjectEntry(
+                        key: Ok(StringLiteral(
+                          raw: "w",
+                          value: "w",
+                          span: Span(
+                            start: Position(
+                              value: 87,
+                              line: 6,
+                              col: 12,
+                            ),
+                            end: Position(
+                              value: 87,
+                              line: 6,
+                              col: 12,
+                            ),
+                          ),
+                        )),
+                        value: String(StringLiteral(
+                          raw: "\"1\"",
+                          value: "1",
+                          span: Span(
+                            start: Position(
+                              value: 90,
+                              line: 6,
+                              col: 15,
+                            ),
+                            end: Position(
+                              value: 92,
+                              line: 6,
+                              col: 17,
+                            ),
+                          ),
+                        )),
+                      ))),
+                      This(Ok(ObjectEntry(
+                        key: Ok(StringLiteral(
+                          raw: "o",
+                          value: "o",
+                          span: Span(
+                            start: Position(
+                              value: 107,
+                              line: 7,
+                              col: 12,
+                            ),
+                            end: Position(
+                              value: 107,
+                              line: 7,
+                              col: 12,
+                            ),
+                          ),
+                        )),
+                        value: Object(ObjectEntryList(
+                          span: Span(
+                            start: Position(
+                              value: 110,
+                              line: 7,
+                              col: 15,
+                            ),
+                            end: Position(
+                              value: 176,
+                              line: 10,
+                              col: 12,
+                            ),
+                          ),
+                          items: [
+                            This(Ok(ObjectEntry(
+                              key: Ok(StringLiteral(
+                                raw: "two",
+                                value: "two",
+                                span: Span(
+                                  start: Position(
+                                    value: 128,
+                                    line: 8,
+                                    col: 16,
+                                  ),
+                                  end: Position(
+                                    value: 130,
+                                    line: 8,
+                                    col: 18,
+                                  ),
+                                ),
+                              )),
+                              value: Number((Span(
+                                start: Position(
+                                  value: 133,
+                                  line: 8,
+                                  col: 21,
+                                ),
+                                end: Position(
+                                  value: 137,
+                                  line: 8,
+                                  col: 25,
+                                ),
+                              ), 2.123)),
+                            ))),
+                            This(Ok(ObjectEntry(
+                              key: Ok(StringLiteral(
+                                raw: "and",
+                                value: "and",
+                                span: Span(
+                                  start: Position(
+                                    value: 156,
+                                    line: 9,
+                                    col: 16,
+                                  ),
+                                  end: Position(
+                                    value: 158,
+                                    line: 9,
+                                    col: 18,
+                                  ),
+                                ),
+                              )),
+                              value: EmptyObject(Span(
+                                start: Position(
+                                  value: 161,
+                                  line: 9,
+                                  col: 21,
+                                ),
+                                end: Position(
+                                  value: 162,
+                                  line: 9,
+                                  col: 22,
+                                ),
+                              )),
+                            ))),
+                          ],
+                        )),
+                      ))),
+                    ],
                   )),
-                )),
-                Ok(ObjectEntry(
-                  key: Ok(StringLiteral(
-                    raw: "o",
-                    value: "o",
-                    span: Span(
-                      start: Position(
-                        value: 107,
-                        line: 7,
-                        col: 12,
-                      ),
-                      end: Position(
-                        value: 108,
-                        line: 7,
-                        col: 13,
-                      ),
-                    ),
-                  )),
-                  value: Object((Span(
-                    start: Position(
-                      value: 110,
-                      line: 7,
-                      col: 15,
-                    ),
-                    end: Position(
-                      value: 177,
-                      line: 10,
-                      col: 13,
-                    ),
-                  ), [
-                    Ok(ObjectEntry(
-                      key: Ok(StringLiteral(
-                        raw: "two",
-                        value: "two",
-                        span: Span(
-                          start: Position(
-                            value: 128,
-                            line: 8,
-                            col: 16,
-                          ),
-                          end: Position(
-                            value: 131,
-                            line: 8,
-                            col: 19,
-                          ),
-                        ),
-                      )),
-                      value: Number((Span(
-                        start: Position(
-                          value: 133,
-                          line: 8,
-                          col: 21,
-                        ),
-                        end: Position(
-                          value: 138,
-                          line: 8,
-                          col: 26,
-                        ),
-                      ), 2.123)),
-                    )),
-                    Ok(ObjectEntry(
-                      key: Ok(StringLiteral(
-                        raw: "and",
-                        value: "and",
-                        span: Span(
-                          start: Position(
-                            value: 156,
-                            line: 9,
-                            col: 16,
-                          ),
-                          end: Position(
-                            value: 159,
-                            line: 9,
-                            col: 19,
-                          ),
-                        ),
-                      )),
-                      value: EmptyObject(Span(
-                        start: Position(
-                          value: 161,
-                          line: 9,
-                          col: 21,
-                        ),
-                        end: Position(
-                          value: 163,
-                          line: 9,
-                          col: 23,
-                        ),
-                      )),
-                    )),
-                  ])),
-                )),
-              ])),
+                ))),
+              ],
             )),
-          ])),
-        )),
-      ])),
+          ))),
+        ],
+      )),
     )),
   ],
 )

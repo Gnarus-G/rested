@@ -1,8 +1,8 @@
 use crate::lexer::locations::{GetSpan, Span};
 
 use super::ast::{
-    result::ParsedNode, CallExpr, Endpoint, Expression, Item, ObjectEntry, Request, Statement,
-    StringLiteral, VariableDeclaration,
+    result::ParsedNode, Attribute, CallExpr, ConstantDeclaration, Endpoint, Expression, Item,
+    ObjectEntry, Request, Statement, StringLiteral, VariableDeclaration,
 };
 
 impl<'source> GetSpan for Statement<'source> {
@@ -40,7 +40,7 @@ impl<'source> GetSpan for Expression<'source> {
             Expression::Call(expr) => expr.span(),
             Expression::TemplateSringLiteral { span, .. } => *span,
             Expression::Array(list) => list.span,
-            Expression::Object((span, ..)) => *span,
+            Expression::Object(ol) => ol.span,
             Expression::Bool((span, _)) => *span,
             Expression::Number((span, _)) => *span,
             Expression::EmptyArray(s) => *s,
@@ -54,15 +54,17 @@ impl<'source> GetSpan for Expression<'source> {
 impl<'source> GetSpan for Item<'source> {
     fn span(&self) -> Span {
         match self {
-            Item::Set { identifier, value } => identifier.span().to_end_of(value.span()),
+            Item::Set(ConstantDeclaration { identifier, value }) => {
+                identifier.span().to_end_of(value.span())
+            }
             Item::Let(decl) => decl.span(),
             Item::LineComment(l) => l.span,
             Item::Request(Request { span, .. }) => *span,
-            Item::Attribute {
+            Item::Attribute(Attribute {
                 location,
                 identifier,
                 arguments,
-            } => arguments
+            }) => arguments
                 .as_ref()
                 .map(|p| p.span)
                 .unwrap_or(Span::new(*location, identifier.span().end)),

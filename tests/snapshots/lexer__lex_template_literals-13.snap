@@ -1,0 +1,19 @@
+---
+source: tests/lexer.rs
+description: "`asdf ${`hello${\"world\"}`} jkl`"
+expression: "lexer.into_iter().collect::<Vec<rested::lexer::Token>>()"
+---
+[
+    OpeningBackTick("`") at Position { value: 0, line: 0, col: 0 },
+    StringLiteral("asdf ") at Position { value: 1, line: 0, col: 1 },
+    DollarSignLBracket("${") at Position { value: 6, line: 0, col: 6 },
+    OpeningBackTick("`") at Position { value: 8, line: 0, col: 8 },
+    StringLiteral("hello") at Position { value: 9, line: 0, col: 9 },
+    DollarSignLBracket("${") at Position { value: 14, line: 0, col: 14 },
+    StringLiteral("\"world\"") at Position { value: 16, line: 0, col: 16 },
+    RBracket("}") at Position { value: 23, line: 0, col: 23 },
+    ClosingBackTick("`") at Position { value: 24, line: 0, col: 24 },
+    RBracket("}") at Position { value: 25, line: 0, col: 25 },
+    StringLiteral(" jkl") at Position { value: 26, line: 0, col: 26 },
+    ClosingBackTick("`") at Position { value: 30, line: 0, col: 30 },
+]
