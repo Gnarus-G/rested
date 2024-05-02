@@ -67,7 +67,7 @@ pub fn get_env_from_home_dir() -> anyhow::Result<Environment> {
     return Ok(env);
 }
 
-fn get_env_from_dir_path(path: &std::path::Path) -> anyhow::Result<Environment> {
+pub fn get_env_from_dir_path(path: &std::path::Path) -> anyhow::Result<Environment> {
     if !path.is_dir() {
         return Err(anyhow::anyhow!(
             "path given needs to be a directory: '{}'",
