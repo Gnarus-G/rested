@@ -9,7 +9,7 @@ function getPlatform() {
     case "Linux x64":
       return "x86_64-unknown-linux-gnu";
     case "Darwin x64":
-      return "x86_64-apple-darwin";
+      return "aarch64-apple-darwin";
   }
 
   throw new Error(`Unsupported platform: ${type} ${arch}`);
