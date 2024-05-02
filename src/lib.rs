@@ -7,6 +7,8 @@ pub mod language_server;
 pub mod lexer;
 pub mod parser;
 
+pub const ENV_FILE_NAME: &str = ".env.rd.json";
+
 mod utils {
     use std::sync::Arc;
 
