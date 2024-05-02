@@ -2,7 +2,7 @@ use core::panic;
 use std::{fs, path::PathBuf};
 
 use anyhow::{anyhow, Context};
-use tracing::warn;
+use tracing::{info, warn};
 
 use crate::{interpreter::environment::Environment, ENV_FILE_NAME};
 
@@ -79,7 +79,8 @@ fn get_env_from_dir_path(path: &std::path::Path) -> anyhow::Result<Environment> 
 
     if !path.exists() {
         return Err(anyhow::anyhow!("no such file `{ENV_FILE_NAME}`")
-            .context("the workspace doesn't have an env its own environment values"));
+            .context("the workspace doesn't have an env its own environment values"))
+            .context("you may create a new env file in the current workspace with rstd env --cwd set <key> <value>");
     }
 
     let env = Environment::new(path).context("failed to load the environment for rstd")?;
@@ -97,6 +98,8 @@ pub fn get_env_from_dir_path_or_from_home_dir(
     return get_env_from_dir_path(path).or_else(|e| {
         let error = e.context(anyhow!("failed to get env from path, {}", path.display()));
         warn!("{error:#}");
+
+        info!("you may create a new env file in the current workspace with `rstd env --cwd set <key> <value>`");
 
         warn!("falling back to `{ENV_FILE_NAME}` in home dir");
 
