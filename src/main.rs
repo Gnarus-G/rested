@@ -1,13 +1,18 @@
 mod cli;
 
+use anyhow::Context;
 use clap::{CommandFactory, Parser, Subcommand};
 use cli::config::ConfigArgs;
 use cli::format::FormatArgs;
 use cli::run::RunArgs;
 use cli::scratch::ScratchCommandArgs;
 use cli::snaphot::SnapshotArgs;
-use rested::config::{get_env_from_dir_path_or_from_home_dir, get_env_from_home_dir};
+use rested::config::{
+    get_env_from_dir_path, get_env_from_dir_path_or_from_home_dir, get_env_from_home_dir,
+};
 use rested::editing::edit;
+use rested::interpreter::environment::Environment;
+use rested::ENV_FILE_NAME;
 use tracing::{error, info};
 
 use std::collections::HashMap;
@@ -114,13 +119,15 @@ fn main() {
 fn run(cli: Cli) -> anyhow::Result<()> {
     match cli.command {
         Command::Env { command, cwd } => {
-            let cwd = if cwd {
-                Some(std::env::current_dir()?)
+            let mut env = if cwd {
+                let path = std::env::current_dir()?;
+                get_env_from_dir_path(&path).or_else(|_| {
+                    Environment::new(path.join(ENV_FILE_NAME))
+                        .context("failed to load the environment for rstd")
+                })?
             } else {
-                None
+                get_env_from_home_dir()?
             };
-
-            let mut env = get_env_from_dir_path_or_from_home_dir(cwd.as_deref())?;
 
             match command {
                 EnvCommand::Set {

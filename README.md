@@ -33,9 +33,10 @@ Usage: rstd [OPTIONS] <COMMAND>
 
 Commands:
   run         Run a script written in the language
+  fmt         Format a script written in the language
   scratch     Open your default editor to start editing a temporary file
   snap        Generate a static snapshot of the requests with all dynamic values evaluated
-  env         Operate on the environment variables available in the runtime
+  env         Operate on the environment variables available in the runtime. Looking into the `.env.rd.json` in the current directory, or that in the home directory
   completion  Generate a completions file for a specified shell
   lsp         Start the rested language server
   config      Configure, or view current configurations
@@ -123,7 +124,7 @@ rstd env set <name> <value> -n <namespace>
 ```
 
 ```
-Operate on the environment variables available in the runtime
+Operate on the environment variables available in the runtime. Looking into the `.env.rd.json` in the current directory, or that in the home directory
 
 Usage: rstd env [OPTIONS] <COMMAND>
 
@@ -135,6 +136,7 @@ Commands:
   help  Print this message or the help of the given subcommand(s)
 
 Options:
+      --cwd            Set to look at the `.env.rd.json` file in the current working directory. Otherwise this command and its subcommands operate on the `.env.rd.json` file in your home directory
   -l, --level <LEVEL>  Set log level, one of trace, debug, info, warn, error [default: info]
   -h, --help           Print help
 ```

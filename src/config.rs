@@ -1,10 +1,10 @@
 use core::panic;
 use std::{fs, path::PathBuf};
 
-use anyhow::Context;
-use tracing::warn;
+use anyhow::{anyhow, Context};
+use tracing::{info, warn};
 
-use crate::interpreter::environment::Environment;
+use crate::{interpreter::environment::Environment, ENV_FILE_NAME};
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Config {
@@ -58,8 +58,8 @@ fn get_home_dir() -> anyhow::Result<PathBuf> {
 
 pub fn get_env_from_home_dir() -> anyhow::Result<Environment> {
     let env = get_home_dir()
-        .map(|home| home.join(".env.rd.json"))
-        .context("failed to resolve the environment vars definition file from home dir: should be `.env.rd.json` in your home dir")
+        .map(|home| home.join(ENV_FILE_NAME))
+        .context(anyhow!("failed to resolve the environment vars definition file from home dir: should be `{ENV_FILE_NAME}` in your home dir"))
         .and_then(|path| {
             Environment::new(path).context("failed to load the environment for rstd")
         })?;
@@ -67,7 +67,7 @@ pub fn get_env_from_home_dir() -> anyhow::Result<Environment> {
     return Ok(env);
 }
 
-fn get_env_from_dir_path(path: &std::path::Path) -> anyhow::Result<Environment> {
+pub fn get_env_from_dir_path(path: &std::path::Path) -> anyhow::Result<Environment> {
     if !path.is_dir() {
         return Err(anyhow::anyhow!(
             "path given needs to be a directory: '{}'",
@@ -75,7 +75,13 @@ fn get_env_from_dir_path(path: &std::path::Path) -> anyhow::Result<Environment> 
         ));
     }
 
-    let path = std::path::Path::new(&path).join(".env.rd.json");
+    let path = std::path::Path::new(&path).join(ENV_FILE_NAME);
+
+    if !path.exists() {
+        return Err(anyhow::anyhow!("no such file `{ENV_FILE_NAME}`")
+            .context("the workspace doesn't have an env its own environment values"))
+            .context("you may create a new env file in the current workspace with rstd env --cwd set <key> <value>");
+    }
 
     let env = Environment::new(path).context("failed to load the environment for rstd")?;
 
@@ -90,12 +96,12 @@ pub fn get_env_from_dir_path_or_from_home_dir(
     };
 
     return get_env_from_dir_path(path).or_else(|e| {
-        warn!(
-            "{:#}",
-            e.context(format!("failed to get env from path: {}", path.display()))
-        );
+        let error = e.context(anyhow!("failed to get env from path, {}", path.display()));
+        warn!("{error:#}");
 
-        warn!("falling back to `.env.rd.json` in home dir");
+        info!("you may create a new env file in the current workspace with `rstd env --cwd set <key> <value>`");
+
+        warn!("falling back to `{ENV_FILE_NAME}` in home dir");
 
         get_env_from_home_dir().context("failed to get env from home dir")
     });
