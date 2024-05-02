@@ -1,6 +1,6 @@
 [package]
 name = "rested"
-version = "0.9.2"
+version = "0.10.0"
 description = "Language/Interpreter for easily defining and running requests to an http server."
 homepage = "https://github.com/Gnarus-G/rested"
 repository = "https://github.com/Gnarus-G/rested"
