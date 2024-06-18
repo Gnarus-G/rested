@@ -133,7 +133,7 @@ impl<'source> ExpressionList<'source> {
 }
 
 #[derive(Debug, PartialEq, Serialize)]
-pub enum TemplateSringPart<'source> {
+pub enum TemplateStringPart<'source> {
     ExpressionPart(Expression<'source>),
     StringPart(StringLiteral<'source>),
 }
@@ -150,9 +150,9 @@ pub enum Expression<'source> {
     Null(Span),
     EmptyArray(Span),
     EmptyObject(Span),
-    TemplateSringLiteral {
+    TemplateStringLiteral {
         span: Span,
-        parts: Box<[TemplateSringPart<'source>]>,
+        parts: Box<[TemplateStringPart<'source>]>,
     },
     Error(Box<Error<'source>>),
 }

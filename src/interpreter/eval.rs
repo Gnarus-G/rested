@@ -8,7 +8,7 @@ use crate::interpreter::ir::LogDestination;
 use crate::interpreter::value::ValueTag;
 use crate::lexer;
 use crate::parser::ast::{
-    self, ConstantDeclaration, Endpoint, Expression, Item, TemplateSringPart, VariableDeclaration,
+    self, ConstantDeclaration, Endpoint, Expression, Item, TemplateStringPart, VariableDeclaration,
 };
 
 use crate::lexer::locations::GetSpan;
@@ -262,7 +262,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
         let value = match exp {
             Identifier(token) => self.evaluate_identifier(token.get()?)?,
             String(token) => token.value.into(),
-            TemplateSringLiteral { parts, .. } => {
+            TemplateStringLiteral { parts, .. } => {
                 self.evaluate_template_string_literal_parts(parts)?
             }
             Bool((_, b)) => Value::Bool(*b),
@@ -424,13 +424,13 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
 
     fn evaluate_template_string_literal_parts(
         &self,
-        parts: &[TemplateSringPart<'source>],
+        parts: &[TemplateStringPart<'source>],
     ) -> Result<Value> {
         let mut strings = vec![];
 
         for part in parts {
             let value = match part {
-                TemplateSringPart::ExpressionPart(expr) => {
+                TemplateStringPart::ExpressionPart(expr) => {
                     match self.evaluate_expression(&expr)? {
                         Value::String(value) => value,
                         val => {
@@ -444,7 +444,7 @@ impl<'source, 'p, 'env> Evaluator<'source, 'p, 'env> {
                         }
                     }
                 }
-                TemplateSringPart::StringPart(string) => string.value.into(),
+                TemplateStringPart::StringPart(string) => string.value.into(),
             };
 
             strings.push(value.to_string());

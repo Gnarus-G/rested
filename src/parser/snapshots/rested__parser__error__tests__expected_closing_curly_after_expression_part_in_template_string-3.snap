@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "`error ahead ${variable_name `",
   items: [
-    Expr(TemplateSringLiteral(
+    Expr(TemplateStringLiteral(
       span: Span(
         start: Position(
           value: 0,

@@ -8,7 +8,7 @@ Program(
   items: [
     Request(Request(
       method: GET,
-      endpoint: Expr(TemplateSringLiteral(
+      endpoint: Expr(TemplateStringLiteral(
         span: Span(
           start: Position(
             value: 4,
@@ -65,7 +65,7 @@ Program(
     )),
     Request(Request(
       method: GET,
-      endpoint: Expr(TemplateSringLiteral(
+      endpoint: Expr(TemplateStringLiteral(
         span: Span(
           start: Position(
             value: 29,
@@ -103,7 +103,7 @@ Program(
                 ),
               ),
               items: [
-                This(TemplateSringLiteral(
+                This(TemplateStringLiteral(
                   span: Span(
                     start: Position(
                       value: 36,
@@ -181,7 +181,7 @@ Program(
     )),
     Request(Request(
       method: GET,
-      endpoint: Expr(TemplateSringLiteral(
+      endpoint: Expr(TemplateStringLiteral(
         span: Span(
           start: Position(
             value: 69,

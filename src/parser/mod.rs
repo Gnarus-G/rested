@@ -7,7 +7,7 @@ pub mod error;
 use ast::{Endpoint, Expression, Item, RequestMethod, Statement};
 
 use self::ast::result::ParsedNode;
-use self::ast::{Block, ExpressionList, TemplateSringPart};
+use self::ast::{Block, ExpressionList, TemplateStringPart};
 use self::error::{Expectations, ParseError};
 
 use crate::error_meta::ContextualError;
@@ -497,7 +497,7 @@ impl<'source> Parser<'source> {
                     break;
                 }
                 StringLiteral => {
-                    parts.push(TemplateSringPart::StringPart(self.curr_token().into()));
+                    parts.push(TemplateStringPart::StringPart(self.curr_token().into()));
                 }
                 DollarSignLBracket if matches!(self.peek_token().kind, RBracket) => {
                     // `${}` is nothing and is equivalent to ``
@@ -507,12 +507,12 @@ impl<'source> Parser<'source> {
                     self.next_token();
 
                     parts.push(match self.parse_expression() {
-                        Ok(e) => TemplateSringPart::ExpressionPart(e),
-                        Err(e) => TemplateSringPart::ExpressionPart(Expression::Error(e)),
+                        Ok(e) => TemplateStringPart::ExpressionPart(e),
+                        Err(e) => TemplateStringPart::ExpressionPart(Expression::Error(e)),
                     });
 
                     if let Err(error) = expectations.expect_peek_ahead(self, RBracket) {
-                        parts.push(TemplateSringPart::ExpressionPart(Expression::Error(error)));
+                        parts.push(TemplateStringPart::ExpressionPart(Expression::Error(error)));
                     }
                 }
                 _ => {
@@ -524,7 +524,7 @@ impl<'source> Parser<'source> {
             self.next_token();
         }
 
-        Expression::TemplateSringLiteral {
+        Expression::TemplateStringLiteral {
             span: Span::new(expectations.start, end),
             parts: parts.into(),
         }

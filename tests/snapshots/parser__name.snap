@@ -15,7 +15,7 @@ Program(
           col: 4,
         ),
       )),
-      value: TemplateSringLiteral(
+      value: TemplateStringLiteral(
         span: Span(
           start: Position(
             value: 9,

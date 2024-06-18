@@ -6,7 +6,7 @@ use cli::config::ConfigArgs;
 use cli::format::FormatArgs;
 use cli::run::RunArgs;
 use cli::scratch::ScratchCommandArgs;
-use cli::snaphot::SnapshotArgs;
+use cli::snapshot::SnapshotArgs;
 use rested::config::{
     get_env_from_dir_path, get_env_from_dir_path_or_from_home_dir, get_env_from_home_dir,
 };
@@ -170,7 +170,7 @@ fn run(cli: Cli) -> anyhow::Result<()> {
             }
 
             if let Some(workspace) = workspace.as_ref() {
-                info!("indentified workspace: {:?}", workspace);
+                info!("identified workspace: {:?}", workspace);
             }
 
             let env = get_env_from_dir_path_or_from_home_dir(workspace)?;
@@ -191,7 +191,7 @@ fn run(cli: Cli) -> anyhow::Result<()> {
             }
 
             if let Some(workspace) = workspace.as_ref() {
-                info!("indentified workspace: {:?}", workspace);
+                info!("identified workspace: {:?}", workspace);
             }
 
             let env = get_env_from_dir_path_or_from_home_dir(workspace)?;

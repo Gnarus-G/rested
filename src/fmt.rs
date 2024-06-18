@@ -87,7 +87,7 @@ impl<'source> FormattedPrinter<'source> {
     }
 
     /// Prints one or two new lines when applicable.
-    fn hanle_new_line_before_item(&mut self, item: &Item) {
+    fn handle_new_line_before_item(&mut self, item: &Item) {
         if self.is_first_item {
             return self.is_first_item = false;
         }
@@ -131,7 +131,7 @@ impl<'source> FormattedPrinter<'source> {
 
 impl<'source> Visitor<'source> for FormattedPrinter<'source> {
     fn visit_item(&mut self, item: &crate::parser::ast::Item<'source>) {
-        self.hanle_new_line_before_item(item);
+        self.handle_new_line_before_item(item);
 
         item.visit_children_with(self);
 
@@ -298,16 +298,16 @@ impl<'source> Visitor<'source> for FormattedPrinter<'source> {
             }
             Expression::EmptyArray(_) => self.push_str("[]"),
             Expression::EmptyObject(_) => self.push_str("{}"),
-            Expression::TemplateSringLiteral { parts, .. } => {
+            Expression::TemplateStringLiteral { parts, .. } => {
                 self.push('`');
                 for part in parts.iter() {
                     match part {
-                        ast::TemplateSringPart::ExpressionPart(expr) => {
+                        ast::TemplateStringPart::ExpressionPart(expr) => {
                             self.push_str("${");
                             self.visit_expr(expr);
                             self.push_str("}");
                         }
-                        ast::TemplateSringPart::StringPart(s) => self.push_str(s.raw),
+                        ast::TemplateStringPart::StringPart(s) => self.push_str(s.raw),
                     }
                 }
                 self.push('`');

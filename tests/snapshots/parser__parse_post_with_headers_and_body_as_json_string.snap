@@ -60,7 +60,7 @@ Program(
             )),
           ),
           Body(
-            value: TemplateSringLiteral(
+            value: TemplateStringLiteral(
               span: Span(
                 start: Position(
                   value: 92,

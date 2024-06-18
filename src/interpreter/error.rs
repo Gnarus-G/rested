@@ -10,7 +10,7 @@ use super::value::{Value, ValueTag};
 #[derive(Clone, Debug, PartialEq)]
 pub enum InterpreterErrorKind {
     UnknownConstant { constant: String },
-    RequiredArguments { required: usize, recieved: usize },
+    RequiredArguments { required: usize, received: usize },
     EnvVariableNotFound { name: String },
     RequestWithPathnameWithoutBaseUrl,
     UndefinedCallable { name: String },
@@ -29,10 +29,10 @@ impl std::fmt::Display for InterpreterErrorKind {
             InterpreterErrorKind::UnknownConstant { constant } => {
                 format!("trying to set an unknown constant {}", constant)
             }
-            InterpreterErrorKind::RequiredArguments { required, recieved } => {
+            InterpreterErrorKind::RequiredArguments { required, received } => {
                 match required {
-                    1usize =>  format!("{} argument expected, recieved {}", required, recieved),
-                    _ => format!("{} arguments expected, recieved {}", required, recieved)
+                    1usize =>  format!("{} argument expected, received {}", required, received),
+                    _ => format!("{} arguments expected, received {}", required, received)
                 }
             }
             InterpreterErrorKind::EnvVariableNotFound { name } => {
@@ -159,10 +159,10 @@ impl<'i> InterpErrorFactory<'i> {
         &self,
         at: Span,
         required: usize,
-        recieved: usize,
+        received: usize,
     ) -> ContextualError<InterpreterErrorKind> {
         ContextualError::new(
-            InterpreterErrorKind::RequiredArguments { required, recieved },
+            InterpreterErrorKind::RequiredArguments { required, received },
             at,
             self.source_code,
         )

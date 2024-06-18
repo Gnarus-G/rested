@@ -5,7 +5,7 @@ expression: name_att_without_arg_err
         set BASE_URL env("b_url")
         @name
          ≈≈≈≈
-         ↳ [3:10] 1 argument expected, recieved 0
+         ↳ [3:10] 1 argument expected, received 0
                   @name(..) must be given an argument, like @name("req_1")
         get /api {}
 

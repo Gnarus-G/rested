@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "\n`asdf ${test} ${a}`\n",
   items: [
-    Expr(TemplateSringLiteral(
+    Expr(TemplateStringLiteral(
       span: Span(
         start: Position(
           value: 1,

@@ -6,7 +6,7 @@ expression: ast
 Program(
   source: "`asdf ${`hello${\"world\"}`} jkl`",
   items: [
-    Expr(TemplateSringLiteral(
+    Expr(TemplateStringLiteral(
       span: Span(
         start: Position(
           value: 0,
@@ -36,7 +36,7 @@ Program(
             ),
           ),
         )),
-        ExpressionPart(TemplateSringLiteral(
+        ExpressionPart(TemplateStringLiteral(
           span: Span(
             start: Position(
               value: 8,

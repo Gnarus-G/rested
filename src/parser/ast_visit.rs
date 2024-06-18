@@ -7,7 +7,7 @@ use super::{
     ast::{
         result::ParsedNode, Attribute, CallExpr, ConstantDeclaration, Endpoint, Expression,
         ExpressionList, Item, Literal, ObjectEntry, Program, Request, Statement, StringLiteral,
-        TemplateSringPart, VariableDeclaration,
+        TemplateStringPart, VariableDeclaration,
     },
     error::ParseError,
 };
@@ -44,7 +44,7 @@ where
         endpoint.visit_children_with(self);
     }
 
-    fn visit_template_string_part(&mut self, part: &TemplateSringPart<'source>) {
+    fn visit_template_string_part(&mut self, part: &TemplateStringPart<'source>) {
         part.visit_children_with(self);
     }
 
@@ -227,15 +227,15 @@ impl<'source> VisitWith<'source> for ExpressionList<'source> {
     }
 }
 
-impl<'source> VisitWith<'source> for TemplateSringPart<'source> {
+impl<'source> VisitWith<'source> for TemplateStringPart<'source> {
     fn visit_with<V: Visitor<'source>>(&self, visitor: &mut V) {
         visitor.visit_template_string_part(self)
     }
 
     fn visit_children_with<V: Visitor<'source>>(&self, visitor: &mut V) {
         match self {
-            TemplateSringPart::ExpressionPart(expr) => visitor.visit_expr(expr),
-            TemplateSringPart::StringPart(s) => visitor.visit_string(s),
+            TemplateStringPart::ExpressionPart(expr) => visitor.visit_expr(expr),
+            TemplateStringPart::StringPart(s) => visitor.visit_string(s),
         };
     }
 }
@@ -258,7 +258,7 @@ impl<'source> VisitWith<'source> for Expression<'source> {
                     visitor.visit_object_entry(entry)
                 }
             }
-            Expression::TemplateSringLiteral { parts, .. } => {
+            Expression::TemplateStringLiteral { parts, .. } => {
                 for expr in parts.iter() {
                     visitor.visit_template_string_part(expr)
                 }

@@ -89,14 +89,14 @@ impl<'i> std::fmt::Debug for Token<'i> {
     }
 }
 
-trait CharaterTest {
+trait CharacterTest {
     fn passes<P: Fn(&u8) -> bool>(&self, predicate: P) -> bool;
     fn is(&self, ch: u8) -> bool {
         self.passes(|&c| ch == c)
     }
 }
 
-impl CharaterTest for Option<&u8> {
+impl CharacterTest for Option<&u8> {
     fn passes<P: Fn(&u8) -> bool>(&self, predicate: P) -> bool {
         match self {
             Some(c) => predicate(c),
