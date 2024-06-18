@@ -35,8 +35,8 @@ Program(
             ),
             end: Position(
               value: 15,
-              line: 1,
-              col: 13,
+              line: 2,
+              col: 0,
             ),
           ),
           items: [
@@ -86,9 +86,9 @@ Program(
                   kind: End,
                   text: "",
                   start: Position(
-                    value: 16,
-                    line: 1,
-                    col: 14,
+                    value: 15,
+                    line: 2,
+                    col: 0,
                   ),
                 ),
                 expected: Comma,
@@ -101,14 +101,14 @@ Program(
                 ),
                 end: Position(
                   value: 15,
-                  line: 1,
-                  col: 13,
+                  line: 2,
+                  col: 0,
                 ),
               ),
               message: None,
               context: ErrorSourceContext(
-                above: Some(""),
-                line: "let a = env(\")",
+                above: Some("let a = env(\")"),
+                line: "",
                 below: None,
               ),
             ))),

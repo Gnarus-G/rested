@@ -182,3 +182,200 @@ let o = {
 }"#
     );
 }
+
+#[test]
+fn lex_eof_position() {
+    let src = "let varname = ";
+
+    let mut lexer = Lexer::new(src);
+
+    use rested::lexer::*;
+
+    assert_eq!(
+        lexer.next_token(),
+        Token {
+            kind: TokenKind::Let,
+            text: "let",
+            start: rested::lexer::locations::Position::default()
+        }
+    );
+
+    assert_eq!(
+        lexer.next_token(),
+        Token {
+            kind: TokenKind::Ident,
+            text: "varname",
+            start: locations::Position {
+                line: 0,
+                col: 4,
+                value: 4
+            }
+        }
+    );
+
+    assert_eq!(
+        lexer.next_token(),
+        Token {
+            kind: TokenKind::Assign,
+            text: "=",
+            start: locations::Position {
+                line: 0,
+                col: 12,
+                value: 12
+            }
+        }
+    );
+
+    assert_eq!(
+        lexer.next_token(),
+        Token {
+            kind: TokenKind::End,
+            text: "",
+            start: locations::Position {
+                line: 0,
+                col: 13,
+                value: 13
+            }
+        }
+    );
+}
+
+#[test]
+fn lex_eof_position_with_newline() {
+    let src = "let varname = \n";
+    let mut lexer = Lexer::new(src);
+
+    use rested::lexer::*;
+
+    assert_eq!(
+        lexer.next_token(),
+        Token {
+            kind: TokenKind::Let,
+            text: "let",
+            start: rested::lexer::locations::Position::default()
+        }
+    );
+
+    assert_eq!(
+        lexer.next_token(),
+        Token {
+            kind: TokenKind::Ident,
+            text: "varname",
+            start: locations::Position {
+                line: 0,
+                col: 4,
+                value: 4
+            }
+        }
+    );
+
+    assert_eq!(
+        lexer.next_token(),
+        Token {
+            kind: TokenKind::Assign,
+            text: "=",
+            start: locations::Position {
+                line: 0,
+                col: 12,
+                value: 12
+            }
+        }
+    );
+
+    assert_eq!(
+        lexer.next_token(),
+        Token {
+            kind: TokenKind::End,
+            text: "",
+            start: locations::Position {
+                line: 1,
+                col: 0,
+                value: 14
+            }
+        }
+    );
+}
+
+#[test]
+fn lex_eof_position_with_newlines() {
+    let src = r#"let varname = "value"
+        let
+"#;
+    let mut lexer = Lexer::new(src);
+
+    use rested::lexer::*;
+
+    assert_eq!(
+        lexer.next_token(),
+        Token {
+            kind: TokenKind::Let,
+            text: "let",
+            start: rested::lexer::locations::Position::default()
+        }
+    );
+
+    assert_eq!(
+        lexer.next_token(),
+        Token {
+            kind: TokenKind::Ident,
+            text: "varname",
+            start: locations::Position {
+                line: 0,
+                col: 4,
+                value: 4
+            }
+        }
+    );
+
+    assert_eq!(
+        lexer.next_token(),
+        Token {
+            kind: TokenKind::Assign,
+            text: "=",
+            start: locations::Position {
+                line: 0,
+                col: 12,
+                value: 12
+            }
+        }
+    );
+
+    assert_eq!(
+        lexer.next_token(),
+        Token {
+            kind: TokenKind::StringLiteral,
+            text: "\"value\"",
+            start: locations::Position {
+                line: 0,
+                col: 14,
+                value: 14
+            }
+        }
+    );
+
+    assert_eq!(
+        lexer.next_token(),
+        Token {
+            kind: TokenKind::Let,
+            text: "let",
+            start: locations::Position {
+                line: 1,
+                col: 8,
+                value: 30
+            }
+        }
+    );
+
+    assert_eq!(
+        lexer.next_token(),
+        Token {
+            kind: TokenKind::End,
+            text: "",
+            start: locations::Position {
+                line: 2,
+                col: 0,
+                value: 33
+            }
+        }
+    );
+}

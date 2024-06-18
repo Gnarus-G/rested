@@ -71,10 +71,8 @@ impl ErrorSourceContext {
         let get_line = |lnum: usize| code.lines().nth(lnum).map(|s| s.to_string());
 
         ErrorSourceContext {
-            above: line_before.map(|lnum| get_line(lnum).expect("code should not be empty").into()),
-            line: get_line(line_of_token)
-                .expect("code should not be empty")
-                .into(),
+            above: line_before.and_then(get_line).map(|line| line.into()),
+            line: get_line(line_of_token).unwrap_or_default().into(),
             below: get_line(line_after).map(|l| l.into()),
         }
     }

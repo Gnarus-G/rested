@@ -64,7 +64,7 @@ Program(
                   kind: End,
                   text: "",
                   start: Position(
-                    value: 30,
+                    value: 29,
                     line: 0,
                     col: 29,
                   ),
@@ -81,14 +81,14 @@ Program(
               ),
               span: Span(
                 start: Position(
-                  value: 30,
+                  value: 29,
                   line: 0,
                   col: 29,
                 ),
                 end: Position(
                   value: 29,
                   line: 0,
-                  col: 28,
+                  col: 29,
                 ),
               ),
               message: None,
@@ -107,7 +107,7 @@ Program(
             col: 22,
           ),
           end: Position(
-            value: 30,
+            value: 29,
             line: 0,
             col: 29,
           ),
@@ -120,7 +120,7 @@ Program(
           col: 0,
         ),
         end: Position(
-          value: 30,
+          value: 29,
           line: 0,
           col: 29,
         ),

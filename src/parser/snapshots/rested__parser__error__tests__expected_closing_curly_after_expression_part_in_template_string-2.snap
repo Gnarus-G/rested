@@ -14,9 +14,9 @@ Program(
           col: 0,
         ),
         end: Position(
-          value: 45,
+          value: 46,
           line: 0,
-          col: 44,
+          col: 46,
         ),
       ),
       parts: [

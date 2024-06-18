@@ -14,7 +14,7 @@ Program(
             kind: End,
             text: "",
             start: Position(
-              value: 3,
+              value: 2,
               line: 0,
               col: 2,
             ),
@@ -35,7 +35,7 @@ Program(
           end: Position(
             value: 2,
             line: 0,
-            col: 1,
+            col: 2,
           ),
         ),
         message: None,
@@ -55,7 +55,7 @@ Program(
         end: Position(
           value: 2,
           line: 0,
-          col: 1,
+          col: 2,
         ),
       ),
     )),

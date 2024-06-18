@@ -73,12 +73,12 @@ impl<'source> Token<'source> {
     }
 
     pub fn end_position(&self) -> Position {
-        let len = self.text.len();
+        let distance_to_last_char_inclusive = self.text.len().saturating_sub(1);
         Position {
             line: self.start.line,
             // Columns are zero-indexed so we must subtract one for each
-            value: self.start.value + len - 1,
-            col: self.start.col + len - 1,
+            value: self.start.value + distance_to_last_char_inclusive,
+            col: self.start.col + distance_to_last_char_inclusive,
         }
     }
 }
@@ -109,6 +109,7 @@ impl CharaterTest for Option<&u8> {
 pub struct Lexer<'i> {
     input: &'i [u8],
     position: Position,
+    eof_pos: Position,
     template_str_depth: u8,
     template_str_token_buffer: VecDeque<Token<'i>>,
 }
@@ -118,6 +119,7 @@ impl<'i> Lexer<'i> {
         Self {
             input: input.as_bytes(),
             position: Default::default(),
+            eof_pos: Default::default(),
             template_str_depth: 0,
             template_str_token_buffer: VecDeque::new(),
         }
@@ -143,9 +145,7 @@ impl<'i> Lexer<'i> {
     }
 
     fn step(&mut self) {
-        if self.peek_char().is_some() {
-            self.check_and_bump_new_line();
-        }
+        self.check_and_bump_new_line();
         self.position.value += 1;
     }
 
@@ -153,7 +153,13 @@ impl<'i> Lexer<'i> {
         if let Some(b'\n') = self.ch() {
             self.position.line += 1;
             self.position.col = 0;
+            if self.peek_char().is_none() {
+                self.eof_pos = self.position;
+            }
         } else {
+            if self.peek_char().is_none() {
+                self.eof_pos = self.position;
+            }
             self.position.col += 1;
         };
     }
@@ -203,7 +209,7 @@ impl<'i> Lexer<'i> {
             None => {
                 return Token {
                     kind: TokenKind::End,
-                    start: self.position,
+                    start: self.eof_pos,
                     text: "",
                 }
             }

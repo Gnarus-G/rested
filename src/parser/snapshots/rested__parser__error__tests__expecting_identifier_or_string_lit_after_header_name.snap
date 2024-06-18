@@ -91,7 +91,7 @@ Program(
             col: 21,
           ),
           end: Position(
-            value: 38,
+            value: 37,
             line: 0,
             col: 37,
           ),
@@ -104,7 +104,7 @@ Program(
           col: 0,
         ),
         end: Position(
-          value: 38,
+          value: 37,
           line: 0,
           col: 37,
         ),
