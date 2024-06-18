@@ -8,7 +8,8 @@ Language/Interpreter for easily defining and running requests to an http server.
 # Why?
 
 To easily test apis during development, and the Postman experience is slow. As someone who edits text files professionally, it seems natural to have a DSL for this usecase as well. It's a much better workflow to use curl commands in shell scripts than clicking around a GUI.
-Many developers have great success with that strategy, and it's powerful because linux (piping files) is powerful. But it could be simpler to still to have a DSL. Hence this experiment.
+Many developers have great success with that strategy, and it's powerful because linux (piping files) is powerful. But it could be simpler still to have a DSL for something more powerful than curl.
+Hence this experiment.
 
 # Install (the CLI Interpreter)
 
@@ -165,30 +166,6 @@ get /yams
 
 There are more, but I'm kind of ashamed of these attributes, so let's stop.
 
-# Lsp setup
+# Neovim Plugin
 
-I doubt this language server will ever land into `neovim/nvim-lspconfig`, so here's an example
-of my lsp config setup.
-
-```lua
-local nvim_lsp = require("lspconfig");
-
-local configs = require 'lspconfig.configs'
-
-if not configs.rstdls then
-  configs.rstdls = {
-    default_config = {
-      cmd = { "rstd", "lsp" },
-      filetypes = { "rd" },
-    },
-  }
-end
-
-nvim_lsp.rstdls.setup({
-  on_attach = on_attach, --[[your on_attach function goes here]]
-  single_file_support = true,
-  root_dir = nvim_lsp.util.root_pattern(".env.rd.json"),
-  capabilities = require('cmp_nvim_lsp')
-      .default_capabilities(vim.lsp.protocol.make_client_capabilities())
-})
-```
+For Syntax Highlighting and Intellisense with the lsp, use [restedlang.nvim](https://github.com/gnarus-g/restedlang.nvim)
