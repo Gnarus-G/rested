@@ -3,10 +3,10 @@ use std::path::PathBuf;
 use clap::{Args, ValueEnum};
 use rested::interpreter::{
     environment::Environment,
+    interpret_program,
     ir::{LogDestination, RequestItem},
+    read_program_text,
 };
-
-use super::run::{interpret_program_file, read_program_text};
 
 #[derive(Debug, Args)]
 pub struct SnapshotArgs {
@@ -25,7 +25,7 @@ pub enum Format {
 impl SnapshotArgs {
     pub fn handle(self, env: Environment) -> anyhow::Result<()> {
         let code = read_program_text(self.file)?;
-        let program = interpret_program_file(&code, env)?;
+        let program = interpret_program(&code, env)?;
 
         for item in program.items.iter() {
             println!("{}\n", item.to_curl_string());
