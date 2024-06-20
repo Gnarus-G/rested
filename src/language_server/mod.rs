@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::str::FromStr;
 use std::sync::Mutex;
 mod completions;
 mod hover;
@@ -7,12 +8,12 @@ mod warnings;
 
 use crate::config::get_env_from_dir_path_or_from_home_dir;
 use crate::interpreter::environment::Environment;
-use crate::interpreter::{self};
+use crate::interpreter::{self, runner};
 use crate::lexer;
 use crate::lexer::locations::{GetSpan, Location};
 use crate::parser::ast_visit::VisitWith;
 use crate::parser::{self, ast};
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use completions::*;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::{lsp_types::*, LspService, Server};
@@ -117,6 +118,12 @@ impl Backend {
         return Ok(env);
     }
 
+    async fn log_error(&self, err: impl Into<Box<dyn std::error::Error>>) {
+        self.client
+            .log_message(MessageType::ERROR, format!("{:#}", err.into()))
+            .await;
+    }
+
     async fn on_change(&self, params: ChangedDocumentItem) {
         let Ok(env) = self.get_env().await else {
             self.client
@@ -217,6 +224,13 @@ impl LanguageServer for Backend {
                 }),
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
                 document_formatting_provider: Some(OneOf::Left(true)),
+                code_lens_provider: Some(CodeLensOptions {
+                    resolve_provider: None,
+                }),
+                execute_command_provider: Some(ExecuteCommandOptions {
+                    commands: vec!["run".to_string()],
+                    ..Default::default()
+                }),
                 ..ServerCapabilities::default()
             },
         })
@@ -418,6 +432,161 @@ impl LanguageServer for Backend {
             range: Range::new(start, end),
             new_text: formatted_text,
         }]))
+    }
+
+    async fn code_lens(&self, params: CodeLensParams) -> Result<Option<Vec<CodeLens>>> {
+        let env = match self.get_env().await {
+            Ok(env) => env,
+            Err(err) => {
+                self.client
+                    .log_message(MessageType::ERROR, format!("{err:#}"))
+                    .await;
+                return Ok(None);
+            }
+        };
+
+        let uri = params.text_document.uri;
+        let Some(text) = self.documents.get(&uri) else {
+            warn!("codeLens request for an unknown document, by uri: {}", uri);
+            return Ok(None);
+        };
+
+        let program = parser::Parser::new(&text).parse();
+
+        let program = match program.interpret(&env) {
+            Ok(p) => p,
+            Err(err) => {
+                self.log_error(anyhow!("{err:#}")).await;
+                return Ok(None);
+            }
+        };
+
+        let codelenses = program
+            .items
+            .iter()
+            .map(|item| {
+                let range = Range {
+                    start: item.span.start.into_position(),
+                    end: item.span.end.into_position(),
+                };
+                let arg = runner::request_id::RequestId::from(item);
+
+                CodeLens {
+                    range,
+                    command: Some(Command {
+                        title: "Run".to_string(),
+                        command: "run".to_string(),
+                        arguments: Some(vec![
+                            serde_json::Value::String(uri.to_string()),
+                            serde_json::Value::String(arg.as_string()),
+                        ]),
+                    }),
+                    data: None,
+                }
+            })
+            .collect();
+
+        Ok(Some(codelenses))
+    }
+
+    async fn execute_command(
+        &self,
+        params: ExecuteCommandParams,
+    ) -> Result<Option<serde_json::Value>> {
+        match params.command.as_ref() {
+            "run" => {
+                let args = params
+                    .arguments
+                    .into_iter()
+                    .map(|arg| {
+                        arg.as_str()
+                            .expect("we should have passed args from the code_lens method")
+                            .to_string()
+                    })
+                    .collect::<Vec<_>>();
+
+                let [path, request_id] = args.as_slice() else {
+                    self.log_error(anyhow!(
+                        "incorrect number of arguments for 'run' command: {:?}",
+                        args
+                    ))
+                    .await;
+                    return Ok(None);
+                };
+
+                let uri = Url::from_str(path).expect("failed to read path argument as a Url");
+                let path = uri.path();
+
+                let request_id = runner::request_id::RequestId::from_str(request_id)
+                    .expect("found invalid request id passed to 'run' command")
+                    .url_or_name;
+
+                let Ok(code) = interpreter::read_program_text(Some(path.into())) else {
+                    self.log_error(anyhow!("failed to read file from path: {}", path))
+                        .await;
+                    return Ok(None);
+                };
+
+                let env = match self.get_env().await {
+                    Ok(env) => env,
+                    Err(err) => {
+                        self.client
+                            .log_message(MessageType::ERROR, format!("{err:#}"))
+                            .await;
+                        return Ok(None);
+                    }
+                };
+
+                let Ok(program) = interpreter::interpret_program(&code, env) else {
+                    self.log_error(anyhow!("failed to interpret program")).await;
+                    return Ok(None);
+                };
+
+                info!("running request, id: {}", request_id);
+
+                let response = program
+                    .run_ureq(Some(&[request_id]))
+                    .iter()
+                    .map(|(id, res)| {
+                        let mut text = String::new();
+                        text.push('`');
+                        text.push_str(&id.as_string());
+                        text.push('`');
+                        text.push('\n');
+
+                        let res = match res {
+                            runner::RunResponse::Success(s) => {
+                                text.push_str("```json\n");
+                                s
+                            }
+                            runner::RunResponse::Failure(s) => {
+                                text.push_str("```sh\n");
+                                s
+                            }
+                        };
+
+                        text.push_str(res);
+                        text.push_str("\n```");
+                        return text;
+                    })
+                    .collect::<Vec<_>>()
+                    .join("\n\n");
+
+                assert_ne!(
+                    response.len(),
+                    0,
+                    "there must be response(s) to the request"
+                );
+
+                return Ok(Some(serde_json::Value::Array(
+                    response
+                        .lines()
+                        .map(|line| serde_json::Value::String(line.to_string()))
+                        .collect(),
+                )));
+            }
+            _ => Ok(None),
+        }
     }
 
     async fn shutdown(&self) -> Result<()> {

@@ -1,16 +1,10 @@
-use std::{
-    fs,
-    io::{stdin, Read},
-    path::PathBuf,
-    str::FromStr,
-};
+use std::{path::PathBuf, str::FromStr};
 
-use anyhow::{anyhow, Context};
+use anyhow::Context;
 use clap::Args;
-use rested::{
-    error::ColoredMetaError,
-    interpreter::{environment::Environment, error::InterpreterError, ir},
-    parser::ast::Program,
+use rested::interpreter::{
+    environment::Environment, interpret_program, ir, read_program_text,
+    runner::request_id::RequestId,
 };
 
 #[derive(Debug, Args)]
@@ -32,52 +26,6 @@ pub struct RunArgs {
     pub prompt: bool,
 }
 
-#[derive(Debug)]
-struct PromptEntry {
-    method: String,
-    url_or_name: String,
-}
-
-impl From<&ir::RequestItem> for PromptEntry {
-    fn from(r: &ir::RequestItem) -> Self {
-        let (m, n) = match r.name.clone() {
-            Some(name) => (r.request.method.to_string(), name),
-            None => (r.request.method.to_string(), r.request.url.clone()),
-        };
-
-        return PromptEntry {
-            method: m,
-            url_or_name: n,
-        };
-    }
-}
-
-impl FromStr for PromptEntry {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut split = s.split("::");
-
-        let m = split
-            .next()
-            .context("can't get a prompt entry from an empty string")?;
-        let n = split
-            .next()
-            .context("failed to get url or name from string")?;
-
-        return Ok(PromptEntry {
-            method: m.to_owned(),
-            url_or_name: n.to_owned(),
-        });
-    }
-}
-
-impl PromptEntry {
-    fn to_identifier(&self) -> String {
-        return format!("{}::{}", self.method, self.url_or_name);
-    }
-}
-
 impl RunArgs {
     pub fn handle(self, mut env: Environment) -> anyhow::Result<()> {
         if let Some(ns) = self.namespace {
@@ -85,7 +33,7 @@ impl RunArgs {
         }
 
         let code = read_program_text(self.file)?;
-        let program = interpret_program_file(&code, env)?;
+        let program = interpret_program(&code, env)?;
 
         let requests = if self.prompt {
             Some(prompt_for_selected_request(&program)?)
@@ -103,8 +51,8 @@ fn prompt_for_selected_request(program: &ir::Program) -> anyhow::Result<Vec<Stri
     let request_names: Vec<_> = program
         .items
         .iter()
-        .map(PromptEntry::from)
-        .map(|p| p.to_identifier())
+        .map(RequestId::from)
+        .map(|p| p.as_string())
         .collect();
 
     let fuzzy_search_input = request_names.join("\n");
@@ -123,47 +71,11 @@ fn prompt_for_selected_request(program: &ir::Program) -> anyhow::Result<Vec<Stri
         .iter()
         .map(|item| {
             let s = item.output();
-            PromptEntry::from_str(&s)
+            RequestId::from_str(&s)
                 .expect("failed to parse prompt result entry")
                 .url_or_name
         })
         .collect();
 
     return Ok(selected_items);
-}
-
-pub fn interpret_program_file(code: &str, env: Environment) -> anyhow::Result<ir::Program<'_>> {
-    let program = Program::from(code);
-
-    let program = program.interpret(&env).map_err(|value| match value {
-        InterpreterError::ParseErrors(p) => {
-            let error_string: String = p
-                .errors
-                .iter()
-                .map(|e| ColoredMetaError(e).to_string())
-                .collect();
-
-            return anyhow!(error_string);
-        }
-        InterpreterError::EvalErrors(errors) => {
-            let error_string: String = errors
-                .iter()
-                .map(|e| ColoredMetaError(e).to_string())
-                .collect();
-
-            return anyhow!(error_string);
-        }
-    })?;
-
-    Ok(program)
-}
-
-pub fn read_program_text(file: Option<PathBuf>) -> anyhow::Result<String> {
-    let code = file.map(fs::read_to_string).unwrap_or_else(|| {
-        let mut buf = String::new();
-        stdin().read_to_string(&mut buf)?;
-        Ok(buf)
-    })?;
-
-    Ok(code)
 }

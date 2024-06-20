@@ -14,8 +14,17 @@ use std::error::Error;
 
 use tracing::{error, info};
 
+#[derive(Debug)]
+pub enum RunResponse {
+    Success(String),
+    Failure(String),
+}
+
 impl<'source> ir::Program<'source> {
-    pub fn run_ureq(self, request_names: Option<&[String]>) {
+    pub fn run_ureq(
+        self,
+        request_names: Option<&[String]>,
+    ) -> Vec<(request_id::RequestId, RunResponse)> {
         Runner::new(self, Box::new(UreqRun)).run(request_names)
     }
 }
@@ -35,7 +44,10 @@ impl<'source> Runner<'source> {
         Self { program, strategy }
     }
 
-    pub fn run(&mut self, request_names: Option<&[String]>) {
+    pub fn run(
+        &mut self,
+        request_names: Option<&[String]>,
+    ) -> Vec<(request_id::RequestId, RunResponse)> {
         let requests = self.program.items.iter().filter(|r| {
             match (&request_names, r.name.as_deref().unwrap_or(&r.request.url)) {
                 (None, _) => true,
@@ -43,14 +55,18 @@ impl<'source> Runner<'source> {
             }
         });
 
-        for RequestItem {
-            span,
-            request,
-            dbg,
-            log_destination,
-            ..
-        } in requests
-        {
+        let mut responses = Vec::with_capacity(request_names.map(|names| names.len()).unwrap_or(2));
+
+        for item in requests {
+            let request_id = request_id::RequestId::from(item);
+            let RequestItem {
+                span,
+                request,
+                dbg,
+                log_destination,
+                ..
+            } = item;
+
             info!(
                 "sending {} request to {}",
                 request.method.to_string().yellow().bold(),
@@ -58,31 +74,17 @@ impl<'source> Runner<'source> {
             );
 
             if *dbg {
-                info!(" \u{21B3} with request data:");
-                eprintln!("{}", indent_lines(&format!("{:#?}", request), 6));
-
-                eprintln!(
-                    "{}",
-                    indent_lines(
-                        &format!(
-                            "Body: {}",
-                            request.body.clone().unwrap_or("(no body)".to_string())
-                        ),
-                        6
-                    )
-                );
+                eprintln!("{}", &format!("{:#?}", request));
             }
 
             let res = match self.strategy.run_request(request) {
                 Ok(res) => res,
                 Err(error) => {
-                    error!(
-                        "{:#}",
-                        ColoredMetaError(
-                            &error::RunError(error.to_string())
-                                .to_contextual_error(*span, self.program.source)
-                        )
-                    );
+                    let err = &error::RunError(error.to_string())
+                        .to_contextual_error(*span, self.program.source);
+                    let err = ColoredMetaError(err);
+                    error!("{err:#}");
+                    responses.push((request_id, RunResponse::Failure(format!("{err:#}"))));
                     continue;
                 }
             };
@@ -106,8 +108,12 @@ impl<'source> Runner<'source> {
                 }
             }
 
-            println!("{}", indent_lines(&res, 4));
+            println!("{res}");
+
+            responses.push((request_id, RunResponse::Success(res)));
         }
+
+        return responses;
     }
 }
 
@@ -135,14 +141,6 @@ mod string_utils {
         io::{self, Write},
     };
 
-    pub fn indent_lines(string: &str, indent: u8) -> std::string::String {
-        string
-            .lines()
-            .map(|line| (" ".repeat(indent as usize) + line))
-            .collect::<Vec<_>>()
-            .join("\n")
-    }
-
     pub fn log(content: &str, to_file: &std::path::PathBuf) -> std::io::Result<()> {
         if let Some(dir_path) = to_file.parent() {
             fs::create_dir_all(dir_path)?
@@ -157,5 +155,59 @@ mod string_utils {
         let mut w = io::BufWriter::new(file);
 
         write!(w, "{content}")
+    }
+}
+
+pub mod request_id {
+    use std::str::FromStr;
+
+    use anyhow::Context;
+
+    use crate::interpreter::ir;
+
+    #[derive(Debug)]
+    pub struct RequestId {
+        pub method: String,
+        pub url_or_name: String,
+    }
+
+    impl From<&ir::RequestItem> for RequestId {
+        fn from(r: &ir::RequestItem) -> Self {
+            let (m, n) = match r.name.clone() {
+                Some(name) => (r.request.method.to_string(), name),
+                None => (r.request.method.to_string(), r.request.url.clone()),
+            };
+
+            return RequestId {
+                method: m,
+                url_or_name: n,
+            };
+        }
+    }
+
+    impl FromStr for RequestId {
+        type Err = anyhow::Error;
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            let mut split = s.split("::");
+
+            let m = split
+                .next()
+                .context("can't get a prompt entry from an empty string")?;
+            let n = split
+                .next()
+                .context("failed to get url or name from string")?;
+
+            return Ok(RequestId {
+                method: m.to_owned(),
+                url_or_name: n.to_owned(),
+            });
+        }
+    }
+
+    impl RequestId {
+        pub fn as_string(&self) -> String {
+            return format!("{}::{}", self.method, self.url_or_name);
+        }
     }
 }
