@@ -15,7 +15,7 @@ use std::error::Error;
 use tracing::{error, info};
 
 impl<'source> ir::Program<'source> {
-    pub fn run_ureq(self, request_names: Option<&[String]>) {
+    pub fn run_ureq(self, request_names: Option<&[String]>) -> Vec<String> {
         Runner::new(self, Box::new(UreqRun)).run(request_names)
     }
 }
@@ -35,13 +35,15 @@ impl<'source> Runner<'source> {
         Self { program, strategy }
     }
 
-    pub fn run(&mut self, request_names: Option<&[String]>) {
+    pub fn run(&mut self, request_names: Option<&[String]>) -> Vec<String> {
         let requests = self.program.items.iter().filter(|r| {
             match (&request_names, r.name.as_deref().unwrap_or(&r.request.url)) {
                 (None, _) => true,
                 (Some(desired), name) => desired.iter().any(|n| n == name),
             }
         });
+
+        let mut responses = Vec::with_capacity(request_names.map(|names| names.len()).unwrap_or(2));
 
         for RequestItem {
             span,
@@ -58,19 +60,7 @@ impl<'source> Runner<'source> {
             );
 
             if *dbg {
-                info!(" \u{21B3} with request data:");
-                eprintln!("{}", indent_lines(&format!("{:#?}", request), 6));
-
-                eprintln!(
-                    "{}",
-                    indent_lines(
-                        &format!(
-                            "Body: {}",
-                            request.body.clone().unwrap_or("(no body)".to_string())
-                        ),
-                        6
-                    )
-                );
+                eprintln!("{}", &format!("{:#?}", request));
             }
 
             let res = match self.strategy.run_request(request) {
@@ -106,8 +96,12 @@ impl<'source> Runner<'source> {
                 }
             }
 
-            println!("{}", indent_lines(&res, 4));
+            println!("{res}");
+
+            responses.push(res);
         }
+
+        return responses;
     }
 }
 
@@ -134,14 +128,6 @@ mod string_utils {
         fs,
         io::{self, Write},
     };
-
-    pub fn indent_lines(string: &str, indent: u8) -> std::string::String {
-        string
-            .lines()
-            .map(|line| (" ".repeat(indent as usize) + line))
-            .collect::<Vec<_>>()
-            .join("\n")
-    }
 
     pub fn log(content: &str, to_file: &std::path::PathBuf) -> std::io::Result<()> {
         if let Some(dir_path) = to_file.parent() {
