@@ -474,7 +474,7 @@ impl LanguageServer for Backend {
                 CodeLens {
                     range,
                     command: Some(Command {
-                        title: "run".to_string(),
+                        title: "Run".to_string(),
                         command: "run".to_string(),
                         arguments: Some(vec![
                             serde_json::Value::String(uri.to_string()),
