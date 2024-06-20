@@ -11,6 +11,10 @@ To easily test apis during development, and the Postman experience is slow. As s
 Many developers have great success with that strategy, and it's powerful because linux (piping files) is powerful. But it could be simpler still to have a DSL for something more powerful than curl.
 Hence this experiment.
 
+# Demo
+
+https://github.com/Gnarus-G/rested/assets/37311893/b03e5d14-658c-4086-8075-f518d6e8b6a1
+
 # Install (the CLI Interpreter)
 
 From `crates.io`
